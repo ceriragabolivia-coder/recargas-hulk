@@ -51,7 +51,7 @@ export default function Login({ onGoToRegister }) {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group" style={{ marginBottom: '16px' }}>
-            <label className="form-label">Correo electrónicoCorrecto </label>
+            <label className="form-label">Correo electrónico</label>
             <input
               type="email"
               className="form-input"
