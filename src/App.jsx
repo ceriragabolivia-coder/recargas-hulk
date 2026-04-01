@@ -22,6 +22,8 @@ import Billetera from './components/Billetera'
 import GestionCupones from './components/GestionCupones'
 import MisCupones from './components/MisCupones'
 import Revendedores from './components/Revendedores'
+import { Analytics } from "@vercel/analytics/react"
+
 const Placeholder = ({ title }) => (
   <div className="page-content">
     <div className="card">
@@ -39,31 +41,31 @@ const PendingView = ({ onLogout, onRefresh }) => (
       <p style={{ color: 'var(--text-muted)', marginBottom: '32px', lineHeight: '1.6' }}>
         Tu registro ha sido recibido. Por seguridad, un administrador debe aprobar tu cuenta antes de que puedas acceder al catálogo.
       </p>
-      
+
       <div style={{ padding: '16px', backgroundColor: 'rgba(255, 193, 7, 0.1)', borderRadius: '12px', color: '#ffc107', marginBottom: '24px', fontSize: '14px' }}>
         🔔 Tu cuenta está siendo revisada por el equipo administrativo.
       </div>
 
-      <button 
-        className="btn btn-primary" 
-        style={{ width: '100%', height: '48px', marginBottom: '12px' }} 
+      <button
+        className="btn btn-primary"
+        style={{ width: '100%', height: '48px', marginBottom: '12px' }}
         onClick={onRefresh}
       >
         🔄 Verificar Estado
       </button>
 
-      <a 
-        href="https://wa.me/584164287761?text=Hola,%20quiero%20validar%20mi%20cuenta%20en%20el%20sistema%20de%20recargas" 
-        target="_blank" 
+      <a
+        href="https://wa.me/584164287761?text=Hola,%20quiero%20validar%20mi%20cuenta%20en%20el%20sistema%20de%20recargas"
+        target="_blank"
         rel="noopener noreferrer"
         className="btn"
-        style={{ 
-          width: '100%', 
-          height: '48px', 
-          backgroundColor: '#2b2d42', 
-          color: 'white', 
-          display: 'flex', 
-          alignItems: 'center', 
+        style={{
+          width: '100%',
+          height: '48px',
+          backgroundColor: '#2b2d42',
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'center',
           gap: '10px',
           textDecoration: 'none',
@@ -90,10 +92,10 @@ const RejectedView = ({ onLogout, onRefresh }) => (
       <p style={{ color: 'var(--text-muted)', marginBottom: '32px', lineHeight: '1.6' }}>
         Lo sentimos, tu solicitud de acceso ha sido rechazada por el administrador.
       </p>
-      
-      <button 
-        className="btn btn-primary" 
-        style={{ width: '100%', height: '48px', marginBottom: '12px' }} 
+
+      <button
+        className="btn btn-primary"
+        style={{ width: '100%', height: '48px', marginBottom: '12px' }}
         onClick={onRefresh}
       >
         🔄 Reintentar Verificación
@@ -112,14 +114,14 @@ const SuspendedView = ({ onLogout, onRefresh, type = 'suspendido' }) => (
       <div style={{ fontSize: '64px', marginBottom: '24px' }}>🚫</div>
       <h2 className="login-title">{type === 'baneado' ? 'Cuenta Baneada' : 'Cuenta Suspendida'}</h2>
       <p style={{ color: 'var(--text-muted)', marginBottom: '32px', lineHeight: '1.6' }}>
-        {type === 'baneado' 
-          ? 'Tu cuenta ha sido expulsada permanentemente del sistema por incumplir las normas.' 
+        {type === 'baneado'
+          ? 'Tu cuenta ha sido expulsada permanentemente del sistema por incumplir las normas.'
           : 'Tu cuenta ha sido temporalmente suspendida. Por favor, contacta al soporte para más información.'}
       </p>
 
-      <button 
-        className="btn btn-primary" 
-        style={{ width: '100%', height: '48px', marginBottom: '12px' }} 
+      <button
+        className="btn btn-primary"
+        style={{ width: '100%', height: '48px', marginBottom: '12px' }}
         onClick={onRefresh}
       >
         🔄 Verificar Estado
@@ -161,7 +163,7 @@ export default function App() {
       if (config.favicon_url.toLowerCase().endsWith('.svg')) link.type = 'image/svg+xml'
       else if (config.favicon_url.toLowerCase().endsWith('.png')) link.type = 'image/png'
       else if (config.favicon_url.toLowerCase().endsWith('.ico')) link.type = 'image/x-icon'
-      
+
       document.head.appendChild(link)
     }
   }, [config?.favicon_url])
@@ -195,7 +197,7 @@ export default function App() {
   }
 
   if (!user) {
-    return isRegistering 
+    return isRegistering
       ? <Register onBackToLogin={() => setIsRegistering(false)} />
       : <Login onGoToRegister={() => setIsRegistering(true)} />
   }
@@ -221,7 +223,7 @@ export default function App() {
       case 'productos': return <GestionProductos />
       case 'config': return <Configuracion />
       case 'usuarios': return <Usuarios onNavigate={handleNavigate} />
-      case 'chats': 
+      case 'chats':
         const chatKey = currentParams?.targetClientId ? `${currentParams.targetClientId}_${currentParams.prefill}` : 'default'
         return <SalaDeChat key={chatKey} perfil={perfil} params={currentParams} />
       case 'pedidos': return <Pedidos params={currentParams} onNavigate={handleNavigate} />
