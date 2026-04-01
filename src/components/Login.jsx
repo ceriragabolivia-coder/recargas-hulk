@@ -35,10 +35,10 @@ export default function Login({ onGoToRegister }) {
         </div>
 
         {error && (
-          <div style={{ 
-            padding: '12px', 
-            backgroundColor: 'rgba(255, 107, 107, 0.1)', 
-            border: '1px solid rgba(255, 107, 107, 0.2)', 
+          <div style={{
+            padding: '12px',
+            backgroundColor: 'rgba(255, 107, 107, 0.1)',
+            border: '1px solid rgba(255, 107, 107, 0.2)',
             borderRadius: '8px',
             color: '#ff6b6b',
             fontSize: '14px',
@@ -51,7 +51,7 @@ export default function Login({ onGoToRegister }) {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group" style={{ marginBottom: '16px' }}>
-            <label className="form-label">Correo electrónico</label>
+            <label className="form-label">Correo electrónicoCorrecto </label>
             <input
               type="email"
               className="form-input"
@@ -84,11 +84,11 @@ export default function Login({ onGoToRegister }) {
           <span style={{ color: 'var(--text-muted)' }}>¿No tienes cuenta? </span>
           <button
             type="button"
-            style={{ 
-              color: 'var(--accent-primary)', 
-              cursor: 'pointer', 
-              fontWeight: 600, 
-              border: 'none', 
+            style={{
+              color: 'var(--accent-primary)',
+              cursor: 'pointer',
+              fontWeight: 600,
+              border: 'none',
               background: 'none',
               padding: '0 4px'
             }}
