@@ -692,14 +692,20 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
           )}
         </nav>
         <div style={{ padding: 12, borderTop: '1px solid var(--border-color)' }}>
-          <div className="flex items-center justify-between" style={{ padding: '8px 4px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '4px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0, color: 'var(--text-primary)' }}>
                 {perfil?.avatar_url ? <img src={perfil.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span>{user?.email?.[0].toUpperCase()}</span>}
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80px' }}>{user?.email?.split('@')[0]}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>{user?.email?.split('@')[0]}</div>
             </div>
-            <button className="btn btn-ghost btn-sm" onClick={logout} title="Cerrar sesión">🚪</button>
+            <button 
+              className="btn" 
+              onClick={logout} 
+              style={{ width: '100%', backgroundColor: 'rgba(255, 82, 82, 0.1)', color: '#ff5252', border: '1px solid rgba(255, 82, 82, 0.2)', justifyContent: 'center' }}
+            >
+              🚪 Cerrar sesión
+            </button>
           </div>
         </div>
       </aside>

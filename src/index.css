@@ -79,13 +79,13 @@ body {
 /* ============ LAYOUT ============ */
 .app-layout {
   display: flex;
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
 .sidebar {
   width: var(--sidebar-width);
-  height: 100vh;
+  height: 100dvh;
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border-color);
   display: flex;
