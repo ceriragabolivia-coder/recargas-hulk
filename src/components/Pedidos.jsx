@@ -685,7 +685,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
     const est = getEstadoStyle(selectedPedido.estado)
     return (
       <div style={{ paddingLeft: '16px' }}>
-        <div className="page-header mb-8" style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'space-between' }}>
+        <div className="page-header mb-8 pedidos-header-responsive" style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button className="btn btn-ghost btn-sm" onClick={() => setSelectedPedido(null)} style={{ padding: '4px 10px', backgroundColor: 'var(--bg-panel)', fontSize: '11px' }}>
               ← Volver
@@ -702,7 +702,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
 
           {/* Acciones Rápidas en la Cabecera */}
           {isAdmin && (
-            <div style={{ display: 'flex', gap: '6px' }}>
+            <div className="pedidos-header-actions" style={{ display: 'flex', gap: '6px' }}>
               <button
                 className="btn btn-ghost btn-sm"
                 style={{ padding: '4px 8px', fontSize: '11px', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '4px' }}
@@ -779,7 +779,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
         {renderClientModal()}
         {renderReembolsoModal()}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+        <div className="pedidos-grid-responsive" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
           {renderAlertModal()}
           {/* Info del pedido lateral (más compacto) */}
           <div className="card" style={{ padding: '12px' }}>
@@ -944,7 +944,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
             {/* Panel de Gestión (Unificado) */}
             {isAdmin && (
               <div style={{ marginTop: '10px', borderTop: '1px solid var(--border-color)', paddingTop: '8px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px' }}>
+                <div className="pedidos-gestion-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px' }}>
                   <div>
                     <label style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', display: 'block' }}>Observaciones</label>
                     <textarea

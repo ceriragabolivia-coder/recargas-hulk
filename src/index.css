@@ -1994,3 +1994,22 @@ tr:last-child td { border-bottom: none; }
   display: flex !important;
   width: 100% !important;
 }
+
+/* ============ PEDIDOS RESPONSIVE ============ */
+@media (max-width: 768px) {
+  .pedidos-header-responsive {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+  }
+  .pedidos-header-actions {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  .pedidos-grid-responsive {
+    grid-template-columns: 1fr !important;
+  }
+  .pedidos-gestion-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
