@@ -143,7 +143,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                   nickname: user.user_metadata?.nickname || 'Admin',
                   whatsapp: user.user_metadata?.whatsapp || 'No especificado'
                 } : {
-                  nombres: 'Usuario Antiguo (Sin Enlace)',
+                  nombres: 'Usuario antiguo (Sin Enlace)',
                   apellidos: '',
                   auth_user_id: selectedPedido.cliente_id,
                   usuario: 'Desconocido'
@@ -363,7 +363,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
           position: 'relative', overflow: 'hidden'
         }} onClick={e => e.stopPropagation()}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(to right, #e040fb, #8b5cf6)' }}></div>
-          
+
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
             <div style={{ fontSize: '40px', marginBottom: '12px' }}>💸</div>
             <h2 style={{ fontSize: '20px', color: '#fff', marginBottom: '4px' }}>Reembolsar Pedido #{reembolsoPedido.numero_pedido}</h2>
@@ -762,9 +762,9 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                     </button>
                   )}
                   {selectedPedido.pago_verificado === true && !['completado', 'cancelado', 'reembolsado'].includes(selectedPedido.estado) && (
-                    <button 
-                      className="btn btn-sm" 
-                      style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: 'rgba(224, 64, 251, 0.1)', color: '#e040fb', border: '1px solid #e040fb' }} 
+                    <button
+                      className="btn btn-sm"
+                      style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: 'rgba(224, 64, 251, 0.1)', color: '#e040fb', border: '1px solid #e040fb' }}
                       onClick={() => handleReembolsoSelect(selectedPedido)}
                     >
                       💸 Reembolsar
@@ -922,9 +922,9 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
 
             {/* Observaciones de la Administración (Nuevo: Visible para el Cliente) */}
             {selectedPedido.observaciones && (
-              <div style={{ 
-                marginTop: '16px', padding: '16px', borderRadius: '12px', 
-                backgroundColor: 'rgba(245, 158, 11, 0.06)', 
+              <div style={{
+                marginTop: '16px', padding: '16px', borderRadius: '12px',
+                backgroundColor: 'rgba(245, 158, 11, 0.06)',
                 border: '1px solid rgba(245, 158, 11, 0.3)',
                 animation: 'pulseGlow 2s infinite ease-in-out'
               }}>
@@ -932,9 +932,9 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                   <span style={{ fontSize: '18px' }}>📝</span>
                   <span style={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '12px', letterSpacing: '1px' }}>Nota de Administración</span>
                 </div>
-                <p style={{ 
-                  margin: 0, fontSize: '15px', color: 'var(--text-primary)', 
-                  fontWeight: 500, lineHeight: '1.5', whiteSpace: 'pre-line' 
+                <p style={{
+                  margin: 0, fontSize: '15px', color: 'var(--text-primary)',
+                  fontWeight: 500, lineHeight: '1.5', whiteSpace: 'pre-line'
                 }}>
                   {selectedPedido.observaciones}
                 </p>
