@@ -3,8 +3,8 @@
 -- ============================================
 
 -- 1. Insertar configuración por defecto para cashback si no existe
-INSERT INTO configuracion (clave, valor)
-VALUES ('cashback_activo', 'false')
+INSERT INTO configuracion (clave, valor, valor_texto)
+VALUES ('cashback_activo', 0, 'false')
 ON CONFLICT (clave) DO NOTHING;
 
 INSERT INTO configuracion (clave, valor)
