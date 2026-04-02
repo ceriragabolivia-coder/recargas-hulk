@@ -157,6 +157,11 @@ export default function Checkout({ onFinish }) {
   }
 
   const handleNextStep = () => {
+    if (discountedTotalUSD === 0) {
+      handleFinalizar()
+      return
+    }
+
     // Validar que tiene método seleccionado
     if (!selectedMetodoId && !useWalletPartial && !useWalletBs) {
       alert('Por favor selecciona un método de pago.')
@@ -182,7 +187,7 @@ export default function Checkout({ onFinish }) {
   }
 
   const handleFinalizar = async () => {
-    if (!isWalletOnly && !isWalletBsOnly && !referencia.trim()) {
+    if (!isWalletOnly && !isWalletBsOnly && !referencia.trim() && discountedTotalUSD > 0) {
       alert('Por favor ingresa el número de referencia de tu pago.')
       return
     }
@@ -193,8 +198,11 @@ export default function Checkout({ onFinish }) {
       let finalMetodoId = selectedMetodoId
       let finalReferencia = referencia
 
-      // Normalizar datos si se usa la billetera para pagar todo o una parte
-      if (useWalletPartial && walletAmountToUse > 0) {
+      // Normalizar datos si es gratis por cupón, o se usa billetera
+      if (discountedTotalUSD === 0) {
+        finalMetodoId = null
+        finalReferencia = `PAGO_CUPON_${activeCupon?.codigo || 'TOTAL'}`
+      } else if (useWalletPartial && walletAmountToUse > 0) {
         if (isWalletOnly) {
           finalMetodoId = null
           finalReferencia = 'PAGO_BILLETERA_USD_TOTAL'
@@ -403,7 +411,7 @@ export default function Checkout({ onFinish }) {
             {currentStep === 1 ? (
               <div className="form-group mb-24">
                 {/* Toggle de Billetera USD */}
-                {hasAnySaldo && (
+                {hasAnySaldo && discountedTotalUSD > 0 && (
                   <div 
                     onClick={handleToggleWalletPartial}
                     style={{
@@ -447,7 +455,7 @@ export default function Checkout({ onFinish }) {
                 )}
 
                 {/* Toggle de Billetera Bs */}
-                {hasAnySaldoBs && (
+                {hasAnySaldoBs && discountedTotalUSD > 0 && (
                   <div 
                     onClick={handleToggleWalletBs}
                     style={{
@@ -490,8 +498,17 @@ export default function Checkout({ onFinish }) {
                   </div>
                 )}
 
+                {/* Opciones cuando es gratis */}
+                {discountedTotalUSD === 0 && (
+                   <div style={{ padding: '24px', textAlign: 'center', backgroundColor: 'rgba(34, 197, 94, 0.1)', borderRadius: '16px', color: 'var(--accent-success)', border: '2px dashed var(--accent-success)' }}>
+                     <div style={{ fontSize: '40px', marginBottom: '8px' }}>🎉</div>
+                     <h3 style={{ fontSize: '20px', fontWeight: 'bold' }}>¡Pedido Gratuito!</h3>
+                     <p style={{ marginTop: '8px' }}>Tu cupón cubre el 100% del pedido. Puedes finalizar tu pedido directamente.</p>
+                   </div>
+                )}
+
                 {/* Métodos de pago (solo si necesita pagar algo más) */}
-                {(!useWalletPartial && !useWalletBs) || (!hasEnoughBalance && useWalletPartial) || (!hasEnoughBalanceBs && useWalletBs) ? (
+                {discountedTotalUSD > 0 && ((!useWalletPartial && !useWalletBs) || (!hasEnoughBalance && useWalletPartial) || (!hasEnoughBalanceBs && useWalletBs)) ? (
                   <>
                     <label className="form-label" style={{ marginBottom: '12px', display: 'block' }}>
                       {useWalletPartial && !hasEnoughBalance 
@@ -642,12 +659,12 @@ export default function Checkout({ onFinish }) {
               style={{ width: '100%', height: '56px', fontSize: '18px', boxShadow: '0 8px 24px rgba(0, 210, 255, 0.3)' }}
               disabled={
                 isProcessing || 
-                (currentStep === 1 && !selectedMetodoId && !(useWalletPartial && hasEnoughBalance) && !(useWalletBs && hasEnoughBalanceBs)) || 
-                (currentStep === 2 && !referencia)
+                (currentStep === 1 && !selectedMetodoId && !(useWalletPartial && hasEnoughBalance) && !(useWalletBs && hasEnoughBalanceBs) && discountedTotalUSD > 0) || 
+                (currentStep === 2 && !referencia && discountedTotalUSD > 0)
               }
               onClick={currentStep === 1 ? handleNextStep : handleFinalizar}
             >
-              {isProcessing ? 'Procesando...' : currentStep === 1 ? 'Confirmar y Pagar' : 'Finalizar Pedido'}
+              {isProcessing ? 'Procesando...' : (currentStep === 1 && discountedTotalUSD > 0) ? 'Confirmar y Pagar' : 'Finalizar Pedido'}
             </button>
           </div>
         </div>
