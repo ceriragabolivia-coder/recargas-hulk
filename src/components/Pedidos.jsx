@@ -1252,9 +1252,16 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                               {est.label}
                             </span>
                             {pedido.cashback_aplicado && (
-                              <div style={{ marginTop: '6px', fontSize: '10px', color: '#10b981', fontWeight: 700 }}>
-                                💸 +CashBack
-                              </div>
+                              (() => {
+                                const p = pedido.cashback_porcentaje || config?.cashback_porcentaje || 0;
+                                const isBs = pedido.cashback_moneda === 'bs' || (!pedido.cashback_moneda && (pedido.referencia_pago?.toLowerCase().includes('bs') || pedido.referencia_pago?.toLowerCase().includes('móvil') || pedido.referencia_pago?.toLowerCase().includes('movil')));
+                                const monto = pedido.cashback_monto || (isBs ? Number(pedido.total_bs) * (p/100) : Number(pedido.total_usd) * (p/100));
+                                return (
+                                  <div style={{ marginTop: '6px', fontSize: '10px', color: '#10b981', fontWeight: 700 }}>
+                                    💸 +CashBack {p}% ({isBs ? formatBs(monto) : formatUSD(monto)})
+                                  </div>
+                                );
+                              })()
                             )}
                           </td>
                           <td>
