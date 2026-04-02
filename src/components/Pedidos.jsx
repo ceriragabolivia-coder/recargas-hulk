@@ -297,6 +297,8 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                    p_nuevo_saldo: baseBs + returnBs,
                    p_nota: `💸 Cash Back (${p}%) por Pedido #${pedidoActual.numero_pedido}`
                  })
+                 updateData.cashback_monto = returnBs
+                 updateData.cashback_moneda = 'bs'
                }
             } else {
                const returnUsd = Number(pedidoActual.total_usd) * (p / 100)
@@ -307,9 +309,12 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                    p_nuevo_saldo: baseUsd + returnUsd,
                    p_nota: `💸 Cash Back (${p}%) por Pedido #${pedidoActual.numero_pedido}`
                  })
+                 updateData.cashback_monto = returnUsd
+                 updateData.cashback_moneda = 'usd'
                }
             }
             updateData.cashback_aplicado = true
+            updateData.cashback_porcentaje = p
           }
         } catch (cbError) {
           console.error("Error aplicando cashback:", cbError)
@@ -919,10 +924,20 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
               </div>
 
               {selectedPedido.cashback_aplicado && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', backgroundColor: 'rgba(34, 197, 94, 0.08)', borderRadius: '6px', border: '1px solid rgba(34, 197, 94, 0.2)', marginTop: '4px' }}>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>💸 <span style={{color: '#22c55e', fontWeight: 600}}>Cash Back</span></span>
-                  <span style={{ fontWeight: 800, color: 'var(--accent-success)', fontSize: '15px', alignSelf: 'center' }}>Aplicado a Billetera</span>
-                </div>
+                (() => {
+                  const p = selectedPedido.cashback_porcentaje || config?.cashback_porcentaje || 0;
+                  const isBs = selectedPedido.cashback_moneda === 'bs' || (!selectedPedido.cashback_moneda && (selectedPedido.referencia_pago?.toLowerCase().includes('bs') || selectedPedido.referencia_pago?.toLowerCase().includes('móvil') || selectedPedido.referencia_pago?.toLowerCase().includes('movil')));
+                  const monto = selectedPedido.cashback_monto || (isBs ? Number(selectedPedido.total_bs) * (p/100) : Number(selectedPedido.total_usd) * (p/100));
+                  return (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', backgroundColor: 'rgba(34, 197, 94, 0.08)', borderRadius: '6px', border: '1px solid rgba(34, 197, 94, 0.2)', marginTop: '4px' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>💸 <span style={{color: '#22c55e', fontWeight: 600}}>Cash Back ({p}%)</span></span>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontWeight: 800, color: 'var(--accent-success)', fontSize: '15px' }}>+{isBs ? formatBs(monto) : formatUSD(monto)}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Monto retornado a Billetera</div>
+                      </div>
+                    </div>
+                  );
+                })()
               )}
 
               {/* Administrador que procesa */}
