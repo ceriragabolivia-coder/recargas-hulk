@@ -918,6 +918,13 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                 </div>
               </div>
 
+              {selectedPedido.cashback_aplicado && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', backgroundColor: 'rgba(34, 197, 94, 0.08)', borderRadius: '6px', border: '1px solid rgba(34, 197, 94, 0.2)', marginTop: '4px' }}>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>💸 <span style={{color: '#22c55e', fontWeight: 600}}>Cash Back</span></span>
+                  <span style={{ fontWeight: 800, color: 'var(--accent-success)', fontSize: '15px', alignSelf: 'center' }}>Aplicado a Billetera</span>
+                </div>
+              )}
+
               {/* Administrador que procesa */}
               {selectedPedido.atendido_por_id && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', backgroundColor: 'rgba(139, 92, 246, 0.08)', borderRadius: '8px', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
@@ -1229,6 +1236,11 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                             }}>
                               {est.label}
                             </span>
+                            {pedido.cashback_aplicado && (
+                              <div style={{ marginTop: '6px', fontSize: '10px', color: '#10b981', fontWeight: 700 }}>
+                                💸 +CashBack
+                              </div>
+                            )}
                           </td>
                           <td>
                             <button className="btn btn-ghost btn-sm" style={{ fontSize: '13px' }}>
