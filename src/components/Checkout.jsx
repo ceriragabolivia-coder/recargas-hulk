@@ -133,16 +133,41 @@ export default function Checkout({ onFinish }) {
         throw new Error('Este cupón ya ha agotado su límite de usos.')
       }
 
-      // 4. Verificar si el usuario ya lo usó (Lógica: solo 1 vez por cuenta)
-      const { data: yaUsado } = await supabase
+      // 4. Verificar uso del usuario y frecuencias
+      const { data: usosAnteriores } = await supabase
         .from('cupones_usados')
-        .select('id')
+        .select('created_at')
         .eq('cupon_id', cupon.id)
         .eq('cliente_id', currentClienteId)
-        .maybeSingle()
+        .order('created_at', { ascending: false })
 
-      if (yaUsado) {
-        throw new Error('Ya has utilizado este cupón anteriormente.')
+      const usosCount = usosAnteriores ? usosAnteriores.length : 0;
+      const ultimoUso = usosCount > 0 ? new Date(usosAnteriores[0].created_at) : null;
+
+      // a. Límite total absoluto por usuario
+      const limiteUsuario = cupon.limite_usos_por_usuario || null;
+      if (limiteUsuario && usosCount >= limiteUsuario) {
+        throw new Error(`Has alcanzado el límite máximo de veces (${limiteUsuario}) para reclamar este cupón.`);
+      }
+
+      // b. Frecuencia de uso temporal
+      const frecuencia = cupon.frecuencia_uso || 'unico';
+      if (ultimoUso && frecuencia !== 'ilimitado') {
+        const ahora = new Date();
+        const diffHoras = (ahora - ultimoUso) / (1000 * 60 * 60);
+
+        if (frecuencia === 'unico' && usosCount > 0) {
+          throw new Error('Ya has utilizado este cupón anteriormente.');
+        } else if (frecuencia === '24h' && diffHoras < 24) {
+          const esperando = Math.ceil(24 - diffHoras);
+          throw new Error(`Debes esperar ${esperando} hora(s) para volver a usar este cupón.`);
+        } else if (frecuencia === 'semanal' && diffHoras < (24 * 7)) {
+          const esperando = Math.ceil((24 * 7) - diffHoras);
+          throw new Error(`Debes esperar ${esperando} hora(s) para volver a usar este cupón.`);
+        } else if (frecuencia === 'mensual' && diffHoras < (24 * 30)) {
+          const esperandoDias = Math.ceil(30 - (diffHoras / 24));
+          throw new Error(`Debes esperar ${esperandoDias} día(s) para volver a usar este cupón.`);
+        }
       }
 
       setActiveCupon(cupon)

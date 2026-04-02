@@ -15,7 +15,9 @@ export default function GestionCupones() {
     porcentaje: 0,
     fecha_expiracion: '',
     limite_usos: 0,
-    activo: true
+    activo: true,
+    limite_usos_por_usuario: 1,
+    frecuencia_uso: 'unico'
   })
 
   const fetchCupones = async () => {
@@ -49,8 +51,10 @@ export default function GestionCupones() {
         codigo: cupon.codigo,
         porcentaje: cupon.porcentaje,
         fecha_expiracion: cupon.fecha_expiracion ? new Date(cupon.fecha_expiracion).toISOString().split('T')[0] : '',
-        limite_usos: cupon.limite_usos || 0,
-        activo: cupon.activo
+        limite_usos: cupon.limite_usos || '',
+        activo: cupon.activo,
+        limite_usos_por_usuario: cupon.limite_usos_por_usuario || '',
+        frecuencia_uso: cupon.frecuencia_uso || 'unico'
       })
     } else {
       setEditingCupon(null)
@@ -58,8 +62,10 @@ export default function GestionCupones() {
         codigo: '',
         porcentaje: 10,
         fecha_expiracion: '',
-        limite_usos: 100,
-        activo: true
+        limite_usos: '',
+        activo: true,
+        limite_usos_por_usuario: 1,
+        frecuencia_uso: 'unico'
       })
     }
     setShowModal(true)
@@ -80,7 +86,9 @@ export default function GestionCupones() {
       porcentaje: parseInt(formData.porcentaje),
       fecha_expiracion: expireDate,
       limite_usos: parseInt(formData.limite_usos) || null,
-      activo: formData.activo
+      activo: formData.activo,
+      limite_usos_por_usuario: parseInt(formData.limite_usos_por_usuario) || null,
+      frecuencia_uso: formData.frecuencia_uso
     }
 
     try {
@@ -264,6 +272,35 @@ export default function GestionCupones() {
                     onChange={(e) => setFormData({...formData, limite_usos: e.target.value})}
                   />
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Dejar vacío para límite infinito</div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+                <div className="form-group">
+                  <label className="form-label">Frecuencia por Usuario</label>
+                  <select 
+                    className="form-input"
+                    value={formData.frecuencia_uso}
+                    onChange={(e) => setFormData({...formData, frecuencia_uso: e.target.value})}
+                  >
+                    <option value="unico">Solo 1 vez (Única vez)</option>
+                    <option value="24h">Una vez cada 24 Horas</option>
+                    <option value="semanal">Una vez a la Semana</option>
+                    <option value="mensual">Una vez al Mes</option>
+                    <option value="ilimitado">Sin restricciones de espera</option>
+                  </select>
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Total de usos por mismo usuario</label>
+                  <input 
+                    type="number" 
+                    className="form-input" 
+                    min="1" placeholder="Ej: 3"
+                    value={formData.limite_usos_por_usuario}
+                    onChange={(e) => setFormData({...formData, limite_usos_por_usuario: e.target.value})}
+                  />
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Dejar vacío permite usarlo infinitamente.</div>
                 </div>
               </div>
 
