@@ -684,7 +684,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
   if (selectedPedido) {
     const est = getEstadoStyle(selectedPedido.estado)
     return (
-      <div style={{ paddingLeft: '16px' }}>
+      <div style={{ paddingLeft: '16px', paddingBottom: '32px' }}>
         <div className="page-header mb-8 pedidos-header-responsive" style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button className="btn btn-ghost btn-sm" onClick={() => setSelectedPedido(null)} style={{ padding: '4px 10px', backgroundColor: 'var(--bg-panel)', fontSize: '11px' }}>

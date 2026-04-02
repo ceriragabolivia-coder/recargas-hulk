@@ -185,7 +185,7 @@ body {
 .main-content {
   flex: 1;
   margin-left: var(--sidebar-width);
-  height: 100vh;
+  height: 100dvh;
   overflow-y: auto;
   overflow-x: hidden;
   background: var(--bg-primary);
