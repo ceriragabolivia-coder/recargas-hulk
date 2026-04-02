@@ -251,6 +251,13 @@ export default function Configuracion() {
           >
             🔔 Notificaciones Push
           </button>
+          <button 
+            className={`btn ${activeTab === 'cashback' ? 'btn-primary' : 'btn-ghost'}`}
+            style={{ justifyContent: 'flex-start', textAlign: 'left' }}
+            onClick={() => setActiveTab('cashback')}
+          >
+            💸 Cash Back
+          </button>
         </div>
 
         {/* Contenido Principal */}
@@ -1019,6 +1026,73 @@ export default function Configuracion() {
                       </p>
                     </div>
                   </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'cashback' && (
+            <>
+              <div className="card-header">
+                <h2 className="card-title">Retorno (Cash Back)</h2>
+              </div>
+              <div style={{ padding: '24px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', maxWidth: '600px' }}>
+                  
+                  <div style={{ padding: '24px', backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>Sistema de Cash Back Global</h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px' }}>
+                      Cuando está activo, el sistema retornará un porcentaje del monto total de los pedidos completados a la billetera del usuario.
+                    </p>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                      {/* Toggle Visibilidad */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', backgroundColor: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                        <div>
+                          <p style={{ fontWeight: 700, fontSize: '15px' }}>Habilitar Cash Back</p>
+                          <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Otorgará el saldo automáticamente al completar pedidos</p>
+                        </div>
+                        <button 
+                          onClick={() => updateConfig('cashback_activo', config?.cashback_activo === 'true' ? 'false' : 'true', true)}
+                          style={{
+                            width: '44px', height: '22px', borderRadius: '11px', 
+                            backgroundColor: config?.cashback_activo === 'true' ? 'var(--accent-success)' : '#3f3f46',
+                            position: 'relative', cursor: 'pointer', border: 'none', transition: 'all 0.3s'
+                          }}
+                        >
+                          <div style={{
+                            width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'white',
+                            position: 'absolute', top: '3px', 
+                            left: config?.cashback_activo === 'true' ? '25px' : '3px',
+                            transition: 'all 0.3s'
+                          }} />
+                        </button>
+                      </div>
+
+                      {/* Porcentaje */}
+                      <div className="form-group" style={{ opacity: config?.cashback_activo === 'true' ? 1 : 0.5, pointerEvents: config?.cashback_activo === 'true' ? 'auto' : 'none' }}>
+                        <label className="form-label" style={{ fontSize: '13px' }}>Porcentaje de Retorno (%)</label>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                          <input 
+                            type="number" 
+                            className="form-input" 
+                            style={{ maxWidth: '150px', fontSize: '18px', fontWeight: 'bold' }}
+                            value={config?.cashback_porcentaje || '0'} 
+                            onChange={(e) => updateConfig('cashback_porcentaje', e.target.value)}
+                            onBlur={(e) => updateConfig('cashback_porcentaje', e.target.value, true)}
+                            step="0.1" 
+                            min="0"
+                            placeholder="Ej: 5.0" 
+                          />
+                          <span style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-muted)' }}>%</span>
+                        </div>
+                        <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px' }}>
+                          Ejemplo: Si el porcentaje es 5% y el usuario gastó $100, recibirá $5.00 en su billetera al completar la recarga.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </>

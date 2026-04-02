@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { useAuth } from '../hooks/useData'
+import { useAuth, useConfiguracion } from '../hooks/useData'
 import { playSuccessSound, playCashRegisterSound, playErrorSound, formatBs } from '../utils/helpers'
 import AlertModal from './AlertModal'
 
@@ -9,6 +9,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
   const incomingFilterKey = normalizedParams.filterKey || filterKey;
   const targetOrderId = normalizedParams.orderId;
   const { user, perfil } = useAuth()
+  const { config } = useConfiguracion()
   const isAdmin = perfil?.rol === 'admin'
   const [pedidos, setPedidos] = useState([])
   const [loading, setLoading] = useState(true)
@@ -261,6 +262,58 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
         console.error('Error al registrar venta:', err)
         showAlert('Error al registrar la venta: ' + err.message, 'error')
         return // No procedemos con el update del estado si falló el registro de venta
+      }
+
+      // 3. Sistema de Cash Back
+      if (config?.cashback_activo === 'true' && Number(config?.cashback_porcentaje) > 0 && !pedidoActual.cashback_aplicado) {
+        try {
+          const p = Number(config.cashback_porcentaje)
+          if (p > 0) {
+            const ref = (pedidoActual.referencia_pago || '').toLowerCase()
+            let isBs = ref.includes('billetera bs') || ref.includes('pago móvil') || ref.includes('pago movil') || ref.includes('bolívares') || ref.includes('bs')
+            
+            if (!isBs && pedidoActual.metodo_pago_id) {
+               const { data: mData } = await supabase.from('metodos_pago').select('nombre, habilitado_billetera_bs').eq('id', pedidoActual.metodo_pago_id).maybeSingle()
+               if (mData && (
+                   mData.habilitado_billetera_bs || 
+                   mData.nombre.toLowerCase().includes('pago') || 
+                   mData.nombre.toLowerCase().includes('bs') || 
+                   mData.nombre.toLowerCase().includes('bolívares')
+               )) {
+                   isBs = true
+               }
+            }
+
+            const { data: walletData } = await supabase.from('billeteras').select('*').eq('auth_user_id', pedidoActual.cliente_id).maybeSingle()
+            const baseUsd = walletData?.saldo || 0
+            const baseBs = walletData?.saldo_bs || 0
+
+            if (isBs) {
+               const returnBs = Number(pedidoActual.total_bs) * (p / 100)
+               if (returnBs > 0) {
+                 await supabase.rpc('ajustar_saldo_billetera_bs_rpc', {
+                   p_user_id: pedidoActual.cliente_id,
+                   p_admin_id: user.id,
+                   p_nuevo_saldo: baseBs + returnBs,
+                   p_nota: `💸 Cash Back (${p}%) por Pedido #${pedidoActual.numero_pedido}`
+                 })
+               }
+            } else {
+               const returnUsd = Number(pedidoActual.total_usd) * (p / 100)
+               if (returnUsd > 0) {
+                 await supabase.rpc('ajustar_saldo_billetera_rpc', {
+                   p_user_id: pedidoActual.cliente_id,
+                   p_admin_id: user.id,
+                   p_nuevo_saldo: baseUsd + returnUsd,
+                   p_nota: `💸 Cash Back (${p}%) por Pedido #${pedidoActual.numero_pedido}`
+                 })
+               }
+            }
+            updateData.cashback_aplicado = true
+          }
+        } catch (cbError) {
+          console.error("Error aplicando cashback:", cbError)
+        }
       }
     }
 
