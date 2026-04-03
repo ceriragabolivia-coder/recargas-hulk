@@ -251,8 +251,13 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
           if (potentialClients.length > 0) {
             const { data: clientsData } = await supabase.from('clientes').select('id, soporte_status').in('id', potentialClients)
             if (clientsData) {
-              const resueltos = new Set(clientsData.filter(c => c.soporte_status === 'resuelto').map(c => c.id))
-              sCount = potentialClients.filter(id => !resueltos.has(id)).length
+              const clientsStatusMap = new Map(clientsData.map(c => [c.id, c.soporte_status]))
+              sCount = potentialClients.filter(id => {
+                const status = clientsStatusMap.get(id)
+                // Filter out if it has 'resuelto' or has no tags (null/empty)
+                if (!status || status === 'resuelto') return false
+                return true
+              }).length
             }
           }
         }

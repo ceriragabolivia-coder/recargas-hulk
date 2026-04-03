@@ -93,7 +93,7 @@ export default function SalaDeChat({ perfil, params }) {
           if (currentStatus === 'resuelto' && client.soporte_status_changed_at) {
             const changedAt = new Date(client.soporte_status_changed_at)
             const diffHours = (now - changedAt) / (1000 * 60 * 60)
-            if (diffHours >= 24) {
+            if (diffHours >= 10) {
               currentStatus = null
               expiredChatIds.push(client.id)
             }
