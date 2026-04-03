@@ -1,65 +1,66 @@
 -- ============================================================
--- Migración 033: Constraint de unicidad para cupones de tipo 'unico'
--- Previene que un mismo usuario use un cupón más veces de lo permitido
--- a nivel de base de datos (defensa contra race conditions del frontend).
+-- Migración 033: Validación robusta de límites de cupón por usuario
+-- Usa pg_advisory_xact_lock para evitar condiciones de carrera
+-- cuando múltiples sesiones intentan usar el mismo cupón simultáneamente.
 -- ============================================================
 
--- 1. Función para verificar el límite de usos por usuario antes de insertar
+-- Función con advisory lock para serializar accesos concurrentes
 CREATE OR REPLACE FUNCTION check_cupon_uso_por_usuario()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-AS $$
+RETURNS TRIGGER LANGUAGE plpgsql AS $func$
 DECLARE
-  v_limite_usos_por_usuario INTEGER;
-  v_frecuencia_uso VARCHAR(20);
-  v_usos_actuales INTEGER;
-  v_ultimo_uso TIMESTAMPTZ;
-  v_diff_horas FLOAT;
+  v_limite integer;
+  v_freq varchar(20);
+  v_count integer;
+  v_last timestamptz;
+  v_hours float;
 BEGIN
-  -- Obtener configuración del cupón
-  SELECT limite_usos_por_usuario, frecuencia_uso
-  INTO v_limite_usos_por_usuario, v_frecuencia_uso
-  FROM public.cupones
-  WHERE id = NEW.cupon_id;
+  -- Advisory lock: serializa intentos concurrentes del mismo (cupon, usuario)
+  -- Evita race conditions donde dos transacciones leen count=0 simultáneamente
+  PERFORM pg_advisory_xact_lock(hashtext(NEW.cupon_id::text || '|' || NEW.cliente_id::text));
 
-  -- Si no hay límite por usuario, permitir
-  IF v_limite_usos_por_usuario IS NULL AND (v_frecuencia_uso IS NULL OR v_frecuencia_uso = 'ilimitado') THEN
+  SELECT limite_usos_por_usuario, frecuencia_uso
+  INTO v_limite, v_freq
+  FROM public.cupones WHERE id = NEW.cupon_id;
+
+  -- Sin restricciones = permitir siempre
+  IF v_limite IS NULL AND (v_freq IS NULL OR v_freq = 'ilimitado') THEN
     RETURN NEW;
   END IF;
 
-  -- Contar usos anteriores del mismo cliente para este cupón
-  SELECT COUNT(*), MAX(created_at)
-  INTO v_usos_actuales, v_ultimo_uso
+  -- Contar usos anteriores (ahora es seguro por el advisory lock)
+  SELECT COUNT(*), MAX(created_at) INTO v_count, v_last
   FROM public.cupones_usados
   WHERE cupon_id = NEW.cupon_id AND cliente_id = NEW.cliente_id;
 
   -- Verificar límite total por usuario
-  IF v_limite_usos_por_usuario IS NOT NULL AND v_usos_actuales >= v_limite_usos_por_usuario THEN
-    RAISE EXCEPTION 'CUPON_LIMITE_USUARIO: Has alcanzado el límite máximo de % usos para este cupón.', v_limite_usos_por_usuario;
+  IF v_limite IS NOT NULL AND v_count >= v_limite THEN
+    RAISE EXCEPTION 'Limite de usos por usuario alcanzado: %', v_limite;
   END IF;
 
-  -- Verificar frecuencia de uso
-  IF v_ultimo_uso IS NOT NULL THEN
-    v_diff_horas := EXTRACT(EPOCH FROM (NOW() - v_ultimo_uso)) / 3600.0;
+  -- Verificar cupón de uso único (sin importar cuándo fue el último uso)
+  IF v_freq = 'unico' AND v_count > 0 THEN
+    RAISE EXCEPTION 'Cupon de uso unico ya fue utilizado por este usuario';
+  END IF;
 
-    IF v_frecuencia_uso = 'unico' AND v_usos_actuales > 0 THEN
-      RAISE EXCEPTION 'CUPON_FRECUENCIA: Ya utilizaste este cupón y solo puede usarse una vez.';
-    ELSIF v_frecuencia_uso = '24h' AND v_diff_horas < 24 THEN
-      RAISE EXCEPTION 'CUPON_FRECUENCIA: Debes esperar % horas más para volver a usar este cupón.', CEIL(24 - v_diff_horas);
-    ELSIF v_frecuencia_uso = 'semanal' AND v_diff_horas < 168 THEN
-      RAISE EXCEPTION 'CUPON_FRECUENCIA: Debes esperar % horas más para volver a usar este cupón.', CEIL(168 - v_diff_horas);
-    ELSIF v_frecuencia_uso = 'mensual' AND v_diff_horas < 720 THEN
-      RAISE EXCEPTION 'CUPON_FRECUENCIA: Debes esperar % días más para volver a usar este cupón.', CEIL((720 - v_diff_horas) / 24);
+  -- Verificar frecuencias temporales
+  IF v_last IS NOT NULL THEN
+    v_hours := EXTRACT(EPOCH FROM (NOW() - v_last)) / 3600.0;
+    IF v_freq = '24h' AND v_hours < 24 THEN
+      RAISE EXCEPTION 'Debes esperar antes de usar este cupon de nuevo';
+    ELSIF v_freq = 'semanal' AND v_hours < 168 THEN
+      RAISE EXCEPTION 'Debes esperar antes de usar este cupon de nuevo';
+    ELSIF v_freq = 'mensual' AND v_hours < 720 THEN
+      RAISE EXCEPTION 'Debes esperar antes de usar este cupon de nuevo';
     END IF;
   END IF;
 
   RETURN NEW;
 END;
-$$;
+$func$;
 
--- 2. Trigger que se dispara ANTES de cada inserción en cupones_usados
-DROP TRIGGER IF EXISTS trg_check_cupon_uso_por_usuario ON public.cupones_usados;
-CREATE TRIGGER trg_check_cupon_uso_por_usuario
+-- Trigger BEFORE INSERT en cupones_usados
+DROP TRIGGER IF EXISTS trg_check_cupon_uso ON public.cupones_usados;
+CREATE TRIGGER trg_check_cupon_uso
   BEFORE INSERT ON public.cupones_usados
   FOR EACH ROW
   EXECUTE FUNCTION check_cupon_uso_por_usuario();
