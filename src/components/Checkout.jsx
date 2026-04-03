@@ -219,6 +219,57 @@ export default function Checkout({ onFinish }) {
       return
     }
 
+    // Re-validar el cupón al momento de finalizar para evitar condiciones de carrera
+    if (activeCupon && currentClienteId) {
+      try {
+        const { data: usosAnteriores } = await supabase
+          .from('cupones_usados')
+          .select('created_at')
+          .eq('cupon_id', activeCupon.id)
+          .eq('cliente_id', currentClienteId)
+          .order('created_at', { ascending: false })
+
+        const usosCount = usosAnteriores ? usosAnteriores.length : 0
+        const ultimoUso = usosCount > 0 ? new Date(usosAnteriores[0].created_at) : null
+        const limiteUsuario = activeCupon.limite_usos_por_usuario || null
+        const frecuencia = activeCupon.frecuencia_uso || 'unico'
+
+        // Verificar límite total por usuario
+        if (limiteUsuario && usosCount >= limiteUsuario) {
+          setActiveCupon(null)
+          alert(`El cupón ha alcanzado su límite máximo de usos (${limiteUsuario}) para tu cuenta.`)
+          return
+        }
+
+        // Verificar frecuencia
+        if (ultimoUso && frecuencia !== 'ilimitado') {
+          const ahora = new Date()
+          const diffHoras = (ahora - ultimoUso) / (1000 * 60 * 60)
+          if (frecuencia === 'unico' && usosCount > 0) {
+            setActiveCupon(null); alert('Ya has utilizado este cupón anteriormente.'); return
+          } else if (frecuencia === '24h' && diffHoras < 24) {
+            setActiveCupon(null); alert(`Debes esperar ${Math.ceil(24 - diffHoras)} hora(s) para volver a usar este cupón.`); return
+          } else if (frecuencia === 'semanal' && diffHoras < (24 * 7)) {
+            setActiveCupon(null); alert(`Debes esperar ${Math.ceil((24 * 7) - diffHoras)} hora(s) para volver a usar este cupón.`); return
+          } else if (frecuencia === 'mensual' && diffHoras < (24 * 30)) {
+            setActiveCupon(null); alert(`Debes esperar ${Math.ceil(30 - (diffHoras / 24))} día(s) para volver a usar este cupón.`); return
+          }
+        }
+
+        // Verificar stock global
+        const { data: cuponActual } = await supabase
+          .from('cupones')
+          .select('limite_usos, cupones_usados(count)')
+          .eq('id', activeCupon.id)
+          .single()
+        if (cuponActual?.limite_usos && (cuponActual.cupones_usados?.[0]?.count || 0) >= cuponActual.limite_usos) {
+          setActiveCupon(null); alert('Este cupón ya ha agotado su límite global de usos.'); return
+        }
+      } catch (err) {
+        console.error('Error re-validando cupón:', err)
+      }
+    }
+
     setIsProcessing(true)
     
     try {
