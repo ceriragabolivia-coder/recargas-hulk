@@ -20,6 +20,8 @@ import Usuarios from './components/Usuarios'
 import SalaDeChat from './components/SalaDeChat'
 import Billetera from './components/Billetera'
 import Revendedores from './components/Revendedores'
+import Ruleta from './components/Ruleta'
+import GestionRuleta from './components/GestionRuleta'
 import { Analytics } from "@vercel/analytics/react"
 
 const Placeholder = ({ title }) => (
@@ -210,7 +212,7 @@ export default function App() {
 
   const renderPage = () => {
     // Seguridad: Si el usuario NO es admin, solo puede ver catálogo, pedidos, perfil y checkout
-    if (user && !isAdmin && !['catalogo', 'perfil', 'pedidos', 'checkout', 'billetera'].includes(currentPage)) {
+    if (user && !isAdmin && !['catalogo', 'perfil', 'pedidos', 'checkout', 'billetera', 'ruleta'].includes(currentPage)) {
       return <Catalogo />
     }
 
@@ -227,6 +229,8 @@ export default function App() {
       case 'pedidos': return <Pedidos params={currentParams} onNavigate={handleNavigate} />
       case 'reportes': return <Reportes />
       case 'revendedores': return <Revendedores onNavigate={handleNavigate} />
+      case 'gestion_ruleta': return <GestionRuleta />
+      case 'ruleta': return <Ruleta />
       case 'perfil': return <Perfil />
       case 'checkout': return <Checkout onFinish={() => setCurrentPage('registro')} />
       case 'billetera': return <Billetera onNavigate={handleNavigate} />

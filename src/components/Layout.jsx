@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { key: 'chats', icon: '💬', label: 'Sala de Chat' },
   { key: 'config', icon: '⚙️', label: 'Configuración' },
   { key: 'reportes', icon: '📈', label: 'Reportes' },
+  { key: 'gestion_ruleta', icon: '🎡', label: 'Ruleta de Premios' },
   { key: 'perfil', icon: '👤', label: 'Mi Perfil' },
 ]
 
@@ -670,7 +671,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
               <div className="nav-section-label">Gestión</div>
               {NAV_ITEMS.filter(i => ['productos', 'pedidos', 'usuarios', 'revendedores', 'chats', 'config'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Análisis</div>
-              {NAV_ITEMS.filter(i => ['reportes'].includes(i.key)).map(renderNavItem)}
+              {NAV_ITEMS.filter(i => ['reportes', 'gestion_ruleta'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Cuenta</div>
               {NAV_ITEMS.filter(i => ['perfil'].includes(i.key)).map(renderNavItem)}
             </>
@@ -678,6 +679,8 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
             <>
               <div className="nav-section-label">Catálogo</div>
               {NAV_ITEMS.filter(item => ['catalogo', 'pedidos'].includes(item.key)).map(renderNavItem)}
+              <div className="nav-section-label">Extras</div>
+              {[{ key: 'ruleta', icon: '🎡', label: 'Ruleta de Premios' }].map(renderNavItem)}
               <div className="nav-section-label">Cuenta</div>
               {NAV_ITEMS.filter(i => ['billetera', 'perfil'].includes(i.key)).map(renderNavItem)}
             </>
