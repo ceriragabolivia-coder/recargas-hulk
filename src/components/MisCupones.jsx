@@ -9,12 +9,13 @@ export default function MisCupones() {
   const [copied, setCopied] = useState(null)
 
   useEffect(() => {
+    const userId = perfil?.id || user?.id
+    if (!userId) return
+
     const fetchCuponesActivos = async () => {
       setLoading(true)
-      const userId = perfil?.id || user?.id
-      if (!userId) { setLoading(false); return }
-      
-      // 1. Obtener todos los cupones activos con el conteo global de usos
+
+      // 1. Obtener cupones activos con conteo global y campos de frecuencia
       const { data: cuponesData, error } = await supabase
         .from('cupones')
         .select(`
@@ -23,68 +24,101 @@ export default function MisCupones() {
           cupones_usados(count)
         `)
         .eq('activo', true)
-        
+
       if (error) {
         console.error('Error fetching cupones:', error)
         setLoading(false)
         return
       }
 
-      // 2. Obtener usos de este usuario (con fecha del último uso por cupón)
-      const { data: misUsos } = await supabase
+      // 2. Obtener usos de ESTE usuario (con timestamps para frecuencias temporales)
+      const { data: usosUsuario } = await supabase
         .from('cupones_usados')
         .select('cupon_id, created_at')
         .eq('cliente_id', userId)
         .order('created_at', { ascending: false })
 
-      // Agrupar usos por cupón: { cupon_id: { count, lastUsed } }
+      // Agrupar: cupon_id → { totalUsos, ultimoUso }
       const usosPorCupon = {}
-      ;(misUsos || []).forEach(u => {
+      ;(usosUsuario || []).forEach(u => {
         if (!usosPorCupon[u.cupon_id]) {
-          usosPorCupon[u.cupon_id] = { count: 0, lastUsed: null }
+          usosPorCupon[u.cupon_id] = { totalUsos: 0, ultimoUso: null }
         }
-        usosPorCupon[u.cupon_id].count++
-        if (!usosPorCupon[u.cupon_id].lastUsed || new Date(u.created_at) > new Date(usosPorCupon[u.cupon_id].lastUsed)) {
-          usosPorCupon[u.cupon_id].lastUsed = u.created_at
+        usosPorCupon[u.cupon_id].totalUsos++
+        const fecha = new Date(u.created_at)
+        if (!usosPorCupon[u.cupon_id].ultimoUso || fecha > usosPorCupon[u.cupon_id].ultimoUso) {
+          usosPorCupon[u.cupon_id].ultimoUso = fecha
         }
       })
 
       const ahora = new Date()
 
-      const cuponesDisponibles = cuponesData.filter(cupon => {
+      const disponibles = (cuponesData || []).filter(cupon => {
         // Expirado globalmente
         if (cupon.fecha_expiracion && new Date(cupon.fecha_expiracion) < ahora) return false
+
         // Stock global agotado
-        const totalUsados = cupon.cupones_usados?.[0]?.count || 0
-        if (cupon.limite_usos && totalUsados >= cupon.limite_usos) return false
+        const usosGlobales = cupon.cupones_usados?.[0]?.count || 0
+        if (cupon.limite_usos && usosGlobales >= cupon.limite_usos) return false
 
+        // Verificar uso del usuario actual
         const miUso = usosPorCupon[cupon.id]
-        if (!miUso) return true // Nunca usado → mostrar
+        if (!miUso) return true // Nunca usado por este usuario → mostrar
 
-        const { count: misUsos, lastUsed } = miUso
+        const { totalUsos, ultimoUso } = miUso
         const frecuencia = cupon.frecuencia_uso || 'unico'
-        const limitePersonal = cupon.limite_usos_por_usuario || null
+        const limitePersonal = cupon.limite_usos_por_usuario ?? null
 
-        // ¿Alcancé mi límite personal total?
-        if (limitePersonal && misUsos >= limitePersonal) return false
+        // Límite personal alcanzado → ocultar
+        if (limitePersonal !== null && totalUsos >= limitePersonal) return false
 
-        // Calcular horas desde el último uso
-        const diffHoras = lastUsed ? (ahora - new Date(lastUsed)) / (1000 * 60 * 60) : Infinity
+        // Cupón de uso único → ocultar si fue usado alguna vez
+        if (frecuencia === 'unico') return false
 
-        if (frecuencia === 'unico') return false           // Uso único → fuera
-        if (frecuencia === '24h' && diffHoras < 24) return false
-        if (frecuencia === 'semanal' && diffHoras < 168) return false
-        if (frecuencia === 'mensual' && diffHoras < 720) return false
+        // Sin restricción de frecuencia → mostrar siempre
+        if (frecuencia === 'ilimitado') return true
 
-        return true // Frecuencia cumplida → mostrar de nuevo
+        // Frecuencias temporales: verificar si el período ya pasó
+        if (ultimoUso) {
+          const horasTranscurridas = (ahora - ultimoUso) / (1000 * 60 * 60)
+          if (frecuencia === '24h' && horasTranscurridas < 24) return false
+          if (frecuencia === 'semanal' && horasTranscurridas < 168) return false
+          if (frecuencia === 'mensual' && horasTranscurridas < 720) return false
+        }
+
+        return true
       })
 
-      setCupones(cuponesDisponibles)
+      setCupones(disponibles)
       setLoading(false)
     }
 
-    if (perfil || user) fetchCuponesActivos()
-  }, [perfil, user])
+    // Cargar al montar o cuando cambia el usuario
+    fetchCuponesActivos()
+
+    // Suscripción en tiempo real: cuando este usuario usa un cupón,
+    // la lista se refresca automáticamente
+    const channel = supabase
+      .channel(`mis_cupones_${userId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'cupones_usados',
+        filter: `cliente_id=eq.${userId}`
+      }, () => {
+        fetchCuponesActivos()
+      })
+      .subscribe()
+
+    // También refrescar cuando el usuario regresa a la pestaña
+    const handleFocus = () => fetchCuponesActivos()
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      supabase.removeChannel(channel)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [perfil?.id, user?.id])
 
   const copyToClipboard = (codigo) => {
     navigator.clipboard.writeText(codigo)
