@@ -5,8 +5,8 @@ import { removeWhiteBackground } from '../utils/helpers'
 import AlertModal from './AlertModal'
 
 export default function Configuracion() {
-  const { metodos, loading, createMetodo, updateMetodo, deleteMetodo } = useMetodosPago()
-  const { config, updateConfig, refetch: refetchConfig } = useConfiguracion()
+  const { metodos, loading: metodosLoading, createMetodo, updateMetodo, deleteMetodo } = useMetodosPago()
+  const { config, updateConfig, refetch: refetchConfig, loading: configLoading } = useConfiguracion()
   const { mensajes, createMensaje, updateMensaje, deleteMensaje } = useMensajesSistema()
   const { enviarNotificacion } = useNotificacionesPush()
   const [activeTab, setActiveTab] = useState('pagos')
@@ -36,16 +36,21 @@ export default function Configuracion() {
   const [sidebarSubtitle, setSidebarSubtitle] = useState('')
   const [cashbackPorcentaje, setCashbackPorcentaje] = useState('')
   const [cashbackActivo, setCashbackActivo] = useState(false)
+  
+  // Ref para evitar que las actualizaciones de Realtime sobrescriban lo que el admin está escribiendo
+  const initialized = useRef(false)
 
   // Sincronizar estado local con config al cargar
   React.useEffect(() => {
-    if (config) {
-      if (!sidebarTitle) setSidebarTitle(config.sidebar_title || 'Ceriraga')
-      if (!sidebarSubtitle) setSidebarSubtitle(config.sidebar_subtitle || 'Centro de Recargas')
+    // Solo inicializar si no se ha hecho ya y si config tiene datos reales (no {})
+    if (!configLoading && config && Object.keys(config).length > 0 && !initialized.current) {
+      setSidebarTitle(config.sidebar_title || 'Ceriraga')
+      setSidebarSubtitle(config.sidebar_subtitle || 'Centro de Recargas')
       setCashbackPorcentaje(config.cashback_porcentaje || '0')
       setCashbackActivo(config.cashback_activo === 'true')
+      initialized.current = true
     }
-  }, [config])
+  }, [config, configLoading])
 
   const handleEdit = (metodo) => {
     setCurrentMetodo(metodo)
@@ -1082,14 +1087,16 @@ export default function Configuracion() {
                         <label className="form-label" style={{ fontSize: '13px' }}>Porcentaje de Retorno (%)</label>
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                           <input 
-                            type="number" 
+                            type="text" 
+                            inputMode="decimal"
                             className="form-input" 
                             style={{ maxWidth: '150px', fontSize: '18px', fontWeight: 'bold' }}
                             value={cashbackPorcentaje} 
-                            onChange={(e) => setCashbackPorcentaje(e.target.value)}
-                            onBlur={(e) => updateConfig('cashback_porcentaje', e.target.value, true)}
-                            step="0.1" 
-                            min="0"
+                            onChange={(e) => setCashbackPorcentaje(e.target.value.replace(',', '.'))}
+                            onBlur={(e) => {
+                              const cleanValue = e.target.value.replace(',', '.')
+                              updateConfig('cashback_porcentaje', cleanValue, true)
+                            }}
                             placeholder="Ej: 5.0" 
                           />
                           <span style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-muted)' }}>%</span>
