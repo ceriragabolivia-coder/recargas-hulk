@@ -34,12 +34,16 @@ export default function Configuracion() {
 
   const [sidebarTitle, setSidebarTitle] = useState('')
   const [sidebarSubtitle, setSidebarSubtitle] = useState('')
+  const [cashbackPorcentaje, setCashbackPorcentaje] = useState('')
+  const [cashbackActivo, setCashbackActivo] = useState(false)
 
   // Sincronizar estado local con config al cargar
   React.useEffect(() => {
     if (config) {
       if (!sidebarTitle) setSidebarTitle(config.sidebar_title || 'Ceriraga')
       if (!sidebarSubtitle) setSidebarSubtitle(config.sidebar_subtitle || 'Centro de Recargas')
+      setCashbackPorcentaje(config.cashback_porcentaje || '0')
+      setCashbackActivo(config.cashback_activo === 'true')
     }
   }, [config])
 
@@ -1053,32 +1057,36 @@ export default function Configuracion() {
                           <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Otorgará el saldo automáticamente al completar pedidos</p>
                         </div>
                         <button 
-                          onClick={() => updateConfig('cashback_activo', config?.cashback_activo === 'true' ? 'false' : 'true', true)}
+                          onClick={() => {
+                            const newValue = !cashbackActivo
+                            setCashbackActivo(newValue)
+                            updateConfig('cashback_activo', newValue ? 'true' : 'false', true)
+                          }}
                           style={{
                             width: '44px', height: '22px', borderRadius: '11px', 
-                            backgroundColor: config?.cashback_activo === 'true' ? 'var(--accent-success)' : '#3f3f46',
+                            backgroundColor: cashbackActivo ? 'var(--accent-success)' : '#3f3f46',
                             position: 'relative', cursor: 'pointer', border: 'none', transition: 'all 0.3s'
                           }}
                         >
                           <div style={{
                             width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'white',
                             position: 'absolute', top: '3px', 
-                            left: config?.cashback_activo === 'true' ? '25px' : '3px',
+                            left: cashbackActivo ? '25px' : '3px',
                             transition: 'all 0.3s'
                           }} />
                         </button>
                       </div>
 
                       {/* Porcentaje */}
-                      <div className="form-group" style={{ opacity: config?.cashback_activo === 'true' ? 1 : 0.5, pointerEvents: config?.cashback_activo === 'true' ? 'auto' : 'none' }}>
+                      <div className="form-group" style={{ opacity: cashbackActivo ? 1 : 0.5, pointerEvents: cashbackActivo ? 'auto' : 'none' }}>
                         <label className="form-label" style={{ fontSize: '13px' }}>Porcentaje de Retorno (%)</label>
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                           <input 
                             type="number" 
                             className="form-input" 
                             style={{ maxWidth: '150px', fontSize: '18px', fontWeight: 'bold' }}
-                            value={config?.cashback_porcentaje || '0'} 
-                            onChange={(e) => updateConfig('cashback_porcentaje', e.target.value)}
+                            value={cashbackPorcentaje} 
+                            onChange={(e) => setCashbackPorcentaje(e.target.value)}
                             onBlur={(e) => updateConfig('cashback_porcentaje', e.target.value, true)}
                             step="0.1" 
                             min="0"

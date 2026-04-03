@@ -21,13 +21,29 @@ export default function Checkout({ onFinish }) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [orderFinished, setOrderFinished] = useState(false)
 
+  // Descuentos ganados en la ruleta (pendientes de usar)
+  const [ruletaDescuentos, setRuletaDescuentos] = useState([])
+  const [selectedRuletaDesc, setSelectedRuletaDesc] = useState(null)
+
+  useEffect(() => {
+    if (!user?.id) return
+    supabase
+      .from('ruleta_descuentos_pendientes')
+      .select('id,nombre,porcentaje')
+      .eq('cliente_id', user.id)
+      .eq('usado', false)
+      .order('created_at')
+      .then(({ data }) => setRuletaDescuentos(data || []))
+  }, [user?.id])
+
   const currentClienteId = user?.id || perfil?.id || null
   const walletSaldo = wallet?.saldo || 0
   const walletSaldoBs = wallet?.saldo_bs || 0
-  
-  // Totales (sin cupón)
-  const discountedTotalUSD = totalUSD
-  const discountedTotalBs = totalBs
+
+  // Totales: aplica descuento de ruleta si hay uno seleccionado
+  const ruletaFactor = selectedRuletaDesc ? (1 - selectedRuletaDesc.porcentaje / 100) : 1
+  const discountedTotalUSD = +(totalUSD * ruletaFactor).toFixed(2)
+  const discountedTotalBs  = Math.round(totalBs * ruletaFactor)
 
   const isGratis = discountedTotalUSD <= 0
 
@@ -204,6 +220,15 @@ export default function Checkout({ onFinish }) {
           console.error("Error debitando wallet Bs:", payErrorBs)
           alert("Aviso: El pedido fue registrado pero hubo un error al descontar de tu billetera de Bolívares. Contacta a soporte.")
         }
+      }
+
+      // 3. Marcar descuento de ruleta como usado
+      if (selectedRuletaDesc) {
+        await supabase
+          .from('ruleta_descuentos_pendientes')
+          .update({ usado: true, pedido_id: pedidoId })
+          .eq('id', selectedRuletaDesc.id)
+          .eq('cliente_id', user.id)
       }
 
       playCashRegisterSound()
@@ -514,16 +539,51 @@ export default function Checkout({ onFinish }) {
                 </div>
               </>
             )}
-
+            {/* ── Descuentos de Ruleta ── */}
+            {ruletaDescuentos.length > 0 && (
+              <div style={{ marginBottom: 20 }}>
+                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span>🎡</span> Aplicar descuento ganado en la ruleta
+                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                  {ruletaDescuentos.map(d => (
+                    <button key={d.id}
+                      onClick={() => setSelectedRuletaDesc(prev => prev?.id === d.id ? null : d)}
+                      style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        padding: '12px 16px', borderRadius: 14, cursor: 'pointer',
+                        border: `2px solid ${selectedRuletaDesc?.id === d.id ? '#FFD700' : 'rgba(255,215,0,.2)'}`,
+                        background: selectedRuletaDesc?.id === d.id ? 'rgba(255,215,0,.08)' : 'rgba(255,215,0,.03)',
+                        color: 'var(--text-primary)', textAlign: 'left', transition: 'all .2s'
+                      }}>
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: 14 }}>🎟️ {d.nombre}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                          {selectedRuletaDesc?.id === d.id ? '✅ Aplicado — ahorra ' + formatUSD(totalUSD - discountedTotalUSD) : 'Toca para aplicar'}
+                        </div>
+                      </div>
+                      <span style={{ fontWeight: 900, fontSize: 22, color: '#FFD700' }}>-{d.porcentaje}%</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Resumen de Montos */}
             <div style={{ backgroundColor: 'var(--bg-panel)', padding: '20px', borderRadius: '16px', marginBottom: '24px', border: '1px solid var(--border-color)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Monto Total:</span>
-                <span style={{ fontWeight: 600 }}>
+                <span style={{ fontWeight: 600, textDecoration: selectedRuletaDesc ? 'line-through' : 'none', color: selectedRuletaDesc ? 'var(--text-muted)' : 'inherit' }}>
                   {formatUSD(totalUSD)}
                 </span>
               </div>
+
+              {selectedRuletaDesc && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                  <span style={{ color: '#FFD700' }}>🎡 Descuento Ruleta ({selectedRuletaDesc.porcentaje}%):</span>
+                  <span style={{ fontWeight: 700, color: '#FFD700' }}>-{formatUSD(totalUSD - discountedTotalUSD)}</span>
+                </div>
+              )}
               
               {useWalletPartial && walletAmountToUse > 0 && (
                 <>

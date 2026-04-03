@@ -4,10 +4,11 @@ import { formatUSD, formatBs } from '../utils/helpers'
 
 const COLORS_PRESET = ['#FF6B6B','#FF8E53','#FFCA28','#66BB6A','#26C6DA','#5C6BC0','#AB47BC','#EC407A','#FF7043','#26A69A']
 const TIPOS = [
-  { value: 'saldo_usd', label: '💵 Saldo USD (Billetera)', hasValue: true },
-  { value: 'saldo_bs',  label: '💜 Saldo Bs (Billetera)',  hasValue: true },
-  { value: 'mensaje',   label: '🎁 Premio Especial / Mensaje', hasValue: false },
-  { value: 'sin_premio',label: '😢 Sin Premio',            hasValue: false },
+  { value: 'saldo_usd',   label: '💵 Saldo USD (Billetera)', hasValue: true },
+  { value: 'saldo_bs',   label: '💜 Saldo Bs (Billetera)',  hasValue: true },
+  { value: 'descuento',  label: '🎟️ Descuento (%)',          hasValue: true },
+  { value: 'mensaje',    label: '🎁 Premio Especial / Mensaje', hasValue: false },
+  { value: 'sin_premio', label: '😢 Sin Premio',               hasValue: false },
 ]
 const EMOJIS = ['🎁','💰','⭐','🏆','💎','🎉','🎊','🌟','🔥','💥','🍀','🎯','🥇','🎀']
 
@@ -43,8 +44,29 @@ export default function GestionRuleta() {
     setPremios(data || [])
   }
   const fetchAllClients = async () => {
-    const { data } = await supabase.from('perfiles').select('id,email').in('rol', ['cliente', 'revendedor']).order('email')
-    setAllClients(data || [])
+    // perfiles has id (auth uid), rol, cliente_uuid
+    // clientes has id (=cliente_uuid), correo, nombres
+    const { data: perfs } = await supabase
+      .from('perfiles')
+      .select('id, cliente_uuid')
+      .in('rol', ['cliente', 'revendedor'])
+
+    if (!perfs || perfs.length === 0) { setAllClients([]); return }
+
+    const clienteUuids = perfs.map(p => p.cliente_uuid).filter(Boolean)
+    const { data: clientes } = await supabase
+      .from('clientes')
+      .select('id, nombres, correo')
+      .in('id', clienteUuids)
+
+    setAllClients(perfs.map(p => {
+      const cl = clientes?.find(c => c.id === p.cliente_uuid)
+      return {
+        id: p.id,                                              // auth uid (para girar_ruleta)
+        email: cl?.correo || cl?.nombres || p.id.slice(0,8) + '…',
+        nombre: cl?.nombres || ''
+      }
+    }).filter(u => u.email))
   }
   const fetchConfig = async () => {
     const { data } = await supabase.from('configuracion').select('ruleta_activa,ruleta_titulo,ruleta_descripcion').single()
@@ -232,8 +254,10 @@ export default function GestionRuleta() {
 
                 {TIPOS.find(t=>t.value===form.tipo)?.hasValue && (
                   <div className="form-group" style={{ marginBottom:14 }}>
-                    <label className="form-label">Valor ({form.tipo === 'saldo_usd' ? 'USD' : 'Bs'}) *</label>
-                    <input className="form-input" type="number" min="0" step="0.01" value={form.valor} onChange={e=>setForm(p=>({...p,valor:e.target.value}))} placeholder="0.00" />
+                    <label className="form-label">
+                      {form.tipo === 'descuento' ? 'Porcentaje de descuento (%)' : `Valor (${form.tipo === 'saldo_usd' ? 'USD' : 'Bs'})`} *
+                    </label>
+                    <input className="form-input" type="number" min="0" step={form.tipo === 'descuento' ? '1' : '0.01'} max={form.tipo === 'descuento' ? '100' : undefined} value={form.valor} onChange={e=>setForm(p=>({...p,valor:e.target.value}))} placeholder={form.tipo === 'descuento' ? '10 (= 10% de descuento)' : '0.00'} />
                   </div>
                 )}
 
@@ -424,7 +448,9 @@ export default function GestionRuleta() {
                 .map(c => (
                   <button key={c.id} onClick={() => setGiftTarget(c.id)}
                     style={{ padding:'10px 14px', borderRadius:10, border:`2px solid ${giftTarget === c.id ? '#a855f7' : 'rgba(255,255,255,.08)'}`, background: giftTarget === c.id ? 'rgba(168,85,247,.12)' : 'rgba(255,255,255,.03)', color: giftTarget === c.id ? '#c084fc' : 'var(--text-primary)', textAlign:'left', cursor:'pointer', fontWeight: giftTarget === c.id ? 700 : 400, transition:'all .15s' }}>
-                    {giftTarget === c.id ? '✓ ' : ''}{c.email}
+                    {giftTarget === c.id ? '✓ ' : ''}
+                    <span style={{ fontWeight: 700 }}>{c.nombre || c.email}</span>
+                    {c.nombre && c.email !== c.nombre && <span style={{ fontSize:12, color:'var(--text-muted)', marginLeft:6 }}>{c.email}</span>}
                   </button>
                 ))}
               {allClients.filter(c => giftSearch === '' || c.email?.toLowerCase().includes(giftSearch.toLowerCase())).length === 0 && (
