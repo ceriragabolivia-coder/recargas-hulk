@@ -43,7 +43,7 @@ export default function Ruleta() {
     setLoading(true)
     const [cfgRes, premiosRes, girosRes, histRes] = await Promise.all([
       supabase.from('configuracion').select('ruleta_activa,ruleta_titulo,ruleta_descripcion').single(),
-      supabase.from('ruleta_premios').select('*').eq('activo', true).order('created_at'),
+      supabase.from('ruleta_premios').select('id,nombre,descripcion,tipo,valor,color,emoji,activo').eq('activo', true).order('created_at'),
       supabase.from('ruleta_giros_disponibles').select('giros_disponibles').eq('cliente_id', user.id).maybeSingle(),
       supabase.from('ruleta_giros').select('premio_nombre,tipo,valor,created_at').eq('cliente_id', user.id).order('created_at', { ascending: false }).limit(10)
     ])
@@ -54,14 +54,13 @@ export default function Ruleta() {
     setLoading(false)
   }
 
-  // Build segments
-  const totalW = premios.reduce((s, p) => s + p.probabilidad, 0)
+  // Build EQUAL-SIZE segments — probability is internal only (handled server-side by RPC)
+  const segDeg = premios.length > 0 ? 360 / premios.length : 0
   const segments = []
   let accA = 0
   premios.forEach((p, i) => {
-    const deg = totalW > 0 ? (p.probabilidad / totalW) * 360 : 360 / premios.length
-    segments.push({ ...p, startAngle: accA, endAngle: accA + deg, midAngle: accA + deg / 2, colorFallback: COLORS[i % COLORS.length] })
-    accA += deg
+    segments.push({ ...p, startAngle: accA, endAngle: accA + segDeg, midAngle: accA + segDeg / 2, colorFallback: COLORS[i % COLORS.length] })
+    accA += segDeg
   })
 
   const handleSpin = async () => {

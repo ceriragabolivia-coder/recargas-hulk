@@ -18,15 +18,20 @@ export default function GestionRuleta() {
   const [premios, setPremios]       = useState([])
   const [historial, setHistorial]   = useState([])
   const [usuarios, setUsuarios]     = useState([])
+  const [allClients, setAllClients] = useState([])
   const [config, setConfig]         = useState({ ruleta_activa: 'true', ruleta_titulo: '¡Gira y Gana!', ruleta_descripcion: '' })
   const [form, setForm]             = useState(EMPTY_FORM)
   const [editing, setEditing]       = useState(null)
   const [showForm, setShowForm]     = useState(false)
+  const [showGift, setShowGift]     = useState(false)
+  const [giftTarget, setGiftTarget] = useState('')
+  const [giftAmount, setGiftAmount] = useState(1)
+  const [giftSearch, setGiftSearch] = useState('')
   const [saving, setSaving]         = useState(false)
   const [loadingTab, setLoadingTab] = useState(false)
-  const [giroInput, setGiroInput]   = useState({}) // { clienteId: cantidad }
+  const [giroInput, setGiroInput]   = useState({})
 
-  useEffect(() => { fetchPremios(); fetchConfig() }, [])
+  useEffect(() => { fetchPremios(); fetchConfig(); fetchAllClients() }, [])
   useEffect(() => {
     if (tab === 'historial') fetchHistorial()
     if (tab === 'usuarios')  fetchUsuarios()
@@ -36,6 +41,10 @@ export default function GestionRuleta() {
   const fetchPremios = async () => {
     const { data } = await supabase.from('ruleta_premios').select('*').order('created_at')
     setPremios(data || [])
+  }
+  const fetchAllClients = async () => {
+    const { data } = await supabase.from('perfiles').select('id,email').in('rol', ['cliente', 'revendedor']).order('email')
+    setAllClients(data || [])
   }
   const fetchConfig = async () => {
     const { data } = await supabase.from('configuracion').select('ruleta_activa,ruleta_titulo,ruleta_descripcion').single()
@@ -109,18 +118,26 @@ export default function GestionRuleta() {
     alert('Configuración guardada ✔')
   }
 
-  // ── Asignar giros manuales ────────────────────────────────────
-  const asignarGiros = async (clienteId) => {
-    const cantidad = Number(giroInput[clienteId] || 1)
-    if (cantidad < 1) return
-    await supabase.from('ruleta_giros_disponibles').upsert({ cliente_id: clienteId, giros_disponibles: cantidad, total_ganados: 0 }, { onConflict: 'cliente_id' })
-    // Use RPC-less approach: just increment
-    const { data: existing } = await supabase.from('ruleta_giros_disponibles').select('giros_disponibles,total_ganados').eq('cliente_id', clienteId).single()
+  // ── Asignar giros (funciona para usuarios nuevos Y existentes) ──
+  const asignarGirosToUser = async (clienteId, cantidad) => {
+    if (!clienteId || cantidad < 1) return false
+    const { data: existing } = await supabase
+      .from('ruleta_giros_disponibles')
+      .select('giros_disponibles,total_ganados')
+      .eq('cliente_id', clienteId)
+      .maybeSingle()
     if (existing) {
-      await supabase.from('ruleta_giros_disponibles').update({ giros_disponibles: existing.giros_disponibles + cantidad, total_ganados: existing.total_ganados + cantidad, updated_at: new Date().toISOString() }).eq('cliente_id', clienteId)
+      await supabase.from('ruleta_giros_disponibles').update({
+        giros_disponibles: existing.giros_disponibles + cantidad,
+        total_ganados: existing.total_ganados + cantidad,
+        updated_at: new Date().toISOString()
+      }).eq('cliente_id', clienteId)
+    } else {
+      await supabase.from('ruleta_giros_disponibles').insert({
+        cliente_id: clienteId, giros_disponibles: cantidad, total_ganados: cantidad
+      })
     }
-    setGiroInput(prev => ({ ...prev, [clienteId]: '' }))
-    fetchUsuarios()
+    return true
   }
 
   // ── Styles ────────────────────────────────────────────────────
@@ -152,11 +169,14 @@ export default function GestionRuleta() {
       {/* ── TAB: PREMIOS ── */}
       {tab === 'premios' && (
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
             <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-              {premios.filter(p=>p.activo).length} premios activos · Total peso: <strong style={{ color: 'var(--text-primary)' }}>{totalProb}</strong>
+              {premios.filter(p=>p.activo).length} premios activos
             </div>
-            <button className="btn btn-primary" onClick={openAdd}>+ Agregar Premio</button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-primary" style={{ background: 'linear-gradient(135deg,#a855f7,#7c3aed)', boxShadow: '0 4px 14px rgba(168,85,247,.35)' }} onClick={() => setShowGift(true)}>🎁 Regalar Giros</button>
+              <button className="btn btn-primary" onClick={openAdd}>+ Agregar Premio</button>
+            </div>
           </div>
 
           {premios.length === 0 ? (
@@ -169,18 +189,15 @@ export default function GestionRuleta() {
           ) : (
             <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
               {premios.map(p => {
-                const pct = totalProb > 0 ? ((p.probabilidad / totalProb) * 100).toFixed(1) : 0
                 const tipo = TIPOS.find(t => t.value === p.tipo)
                 return (
                   <div key={p.id} className="card" style={{ padding:'16px 20px', display:'flex', alignItems:'center', gap:16, opacity: p.activo ? 1 : 0.5 }}>
-                    {/* Color swatch */}
                     <div style={{ width:44, height:44, borderRadius:12, background: p.color, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>{p.emoji}</div>
                     <div style={{ flex:1, minWidth:0 }}>
                       <div style={{ fontWeight:800, fontSize:15 }}>{p.nombre}</div>
                       <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:4 }}>
                         <span style={{ fontSize:11, padding:'2px 8px', borderRadius:20, background:'rgba(255,255,255,.06)', color:'var(--text-muted)' }}>{tipo?.label || p.tipo}</span>
                         {p.valor > 0 && <span style={{ fontSize:11, padding:'2px 8px', borderRadius:20, background:'rgba(34,197,94,.1)', color:'#22c55e' }}>{p.tipo === 'saldo_usd' ? formatUSD(p.valor) : formatBs(p.valor)}</span>}
-                        <span style={{ fontSize:11, padding:'2px 8px', borderRadius:20, background:'rgba(99,102,241,.1)', color:'#818cf8' }}>Peso: {p.probabilidad} ({pct}%)</span>
                       </div>
                       {p.descripcion && <div style={{ fontSize:12, color:'var(--text-muted)', marginTop:4, textOverflow:'ellipsis', overflow:'hidden', whiteSpace:'nowrap' }}>{p.descripcion}</div>}
                     </div>
@@ -264,11 +281,20 @@ export default function GestionRuleta() {
       {/* ── TAB: USUARIOS & GIROS ── */}
       {tab === 'usuarios' && (
         <div>
-          <p style={{ color:'var(--text-muted)', fontSize:13, marginBottom:16 }}>Gestiona los giros disponibles por usuario. Cada pedido completado asigna 1 giro automáticamente.</p>
+          {/* Gift Spins Banner */}
+          <div className="card" style={{ padding:'20px 24px', marginBottom:20, background:'linear-gradient(135deg,rgba(168,85,247,.12),rgba(124,58,237,.08))', border:'1px solid rgba(168,85,247,.25)', display:'flex', alignItems:'center', justifyContent:'space-between', gap:16, flexWrap:'wrap' }}>
+            <div>
+              <div style={{ fontWeight:900, fontSize:16, marginBottom:4 }}>🎁 Regalar Giros a un Usuario</div>
+              <div style={{ color:'var(--text-muted)', fontSize:13 }}>Selecciona cualquier cliente o revendedor y asígnale giros de manera manual.</div>
+            </div>
+            <button className="btn btn-primary" style={{ background:'linear-gradient(135deg,#a855f7,#7c3aed)', boxShadow:'0 4px 14px rgba(168,85,247,.4)', whiteSpace:'nowrap' }} onClick={()=>setShowGift(true)}>🎁 Regalar Giros</button>
+          </div>
+
+          <p style={{ color:'var(--text-muted)', fontSize:13, marginBottom:16 }}>Usuarios con giros asignados (el trigger auto-asigna 1 por cada pedido completado).</p>
           {loadingTab ? <div className="spinner" /> : usuarios.length === 0 ? (
-            <div className="card" style={{ textAlign:'center', padding:'60px 40px' }}>
+            <div className="card" style={{ textAlign:'center', padding:'40px' }}>
               <div style={{ fontSize:48, marginBottom:12 }}>👥</div>
-              <p style={{ color:'var(--text-muted)' }}>Ningún usuario tiene giros registrados aún</p>
+              <p style={{ color:'var(--text-muted)' }}>Ningún usuario tiene giros registrados. Cuando se complete un pedido se asignará automáticamente.</p>
             </div>
           ) : (
             <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
@@ -286,7 +312,7 @@ export default function GestionRuleta() {
                   </div>
                   <div style={{ display:'flex', gap:6, alignItems:'center' }}>
                     <input type="number" min="1" max="99" value={giroInput[u.cliente_id] || ''} onChange={e=>setGiroInput(prev=>({...prev,[u.cliente_id]:e.target.value}))} placeholder="N°" style={{ width:60, padding:'6px 8px', borderRadius:8, border:'1px solid rgba(255,255,255,.15)', background:'var(--bg-input,#1e2035)', color:'var(--text-primary)', fontSize:14, textAlign:'center' }} />
-                    <button className="btn btn-primary" style={{ padding:'6px 14px', fontSize:12 }} onClick={()=>asignarGiros(u.cliente_id)}>+ Asignar</button>
+                    <button className="btn btn-primary" style={{ padding:'6px 14px', fontSize:12 }} onClick={async()=>{ const ok=await asignarGirosToUser(u.cliente_id,Number(giroInput[u.cliente_id]||1)); if(ok){setGiroInput(prev=>({...prev,[u.cliente_id]:''}));fetchUsuarios()} }}>+ Asignar</button>
                   </div>
                 </div>
               ))}
@@ -360,6 +386,71 @@ export default function GestionRuleta() {
           </div>
 
           <button className="btn btn-primary" style={{ width:'100%', height:48 }} disabled={saving} onClick={saveConfig}>{saving?'Guardando…':'💾 Guardar Configuración'}</button>
+        </div>
+      )}
+
+      {/* ── MODAL: REGALAR GIROS ── */}
+      {showGift && (
+        <div style={{ position:'fixed', inset:0, zIndex:50000, background:'rgba(0,0,0,.88)', backdropFilter:'blur(10px)', display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}
+          onClick={() => setShowGift(false)}>
+          <div className="card" style={{ width:'100%', maxWidth:520, padding:28, maxHeight:'85vh', overflowY:'auto' }}
+            onClick={e => e.stopPropagation()}>
+
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+              <h3 style={{ fontWeight:900, margin:0 }}>🎁 Regalar Giros a Usuario</h3>
+              <button onClick={() => setShowGift(false)} style={{ background:'none', border:'none', fontSize:22, cursor:'pointer', color:'var(--text-muted)' }}>×</button>
+            </div>
+
+            {/* Quantity */}
+            <div className="form-group" style={{ marginBottom:16 }}>
+              <label className="form-label">Cantidad de giros a regalar</label>
+              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                <button onClick={() => setGiftAmount(g => Math.max(1, g-1))} style={{ width:36, height:36, borderRadius:8, border:'1px solid rgba(255,255,255,.15)', background:'rgba(255,255,255,.05)', color:'var(--text-primary)', fontSize:18, cursor:'pointer' }}>−</button>
+                <span style={{ fontSize:28, fontWeight:900, minWidth:40, textAlign:'center', color:'#FFD700' }}>{giftAmount}</span>
+                <button onClick={() => setGiftAmount(g => Math.min(99, g+1))} style={{ width:36, height:36, borderRadius:8, border:'1px solid rgba(255,255,255,.15)', background:'rgba(255,255,255,.05)', color:'var(--text-primary)', fontSize:18, cursor:'pointer' }}>+</button>
+              </div>
+            </div>
+
+            {/* Search */}
+            <div className="form-group" style={{ marginBottom:12 }}>
+              <label className="form-label">Buscar usuario</label>
+              <input className="form-input" value={giftSearch} onChange={e => setGiftSearch(e.target.value)} placeholder="Escribe el email o nombre…" />
+            </div>
+
+            {/* User list */}
+            <div style={{ maxHeight:280, overflowY:'auto', display:'flex', flexDirection:'column', gap:6, marginBottom:16 }}>
+              {allClients
+                .filter(c => giftSearch === '' || c.email?.toLowerCase().includes(giftSearch.toLowerCase()))
+                .map(c => (
+                  <button key={c.id} onClick={() => setGiftTarget(c.id)}
+                    style={{ padding:'10px 14px', borderRadius:10, border:`2px solid ${giftTarget === c.id ? '#a855f7' : 'rgba(255,255,255,.08)'}`, background: giftTarget === c.id ? 'rgba(168,85,247,.12)' : 'rgba(255,255,255,.03)', color: giftTarget === c.id ? '#c084fc' : 'var(--text-primary)', textAlign:'left', cursor:'pointer', fontWeight: giftTarget === c.id ? 700 : 400, transition:'all .15s' }}>
+                    {giftTarget === c.id ? '✓ ' : ''}{c.email}
+                  </button>
+                ))}
+              {allClients.filter(c => giftSearch === '' || c.email?.toLowerCase().includes(giftSearch.toLowerCase())).length === 0 && (
+                <p style={{ color:'var(--text-muted)', textAlign:'center', padding:'20px 0' }}>No se encontraron usuarios</p>
+              )}
+            </div>
+
+            <button className="btn btn-primary" style={{ width:'100%', height:50, fontSize:16, background:'linear-gradient(135deg,#a855f7,#7c3aed)', boxShadow:'0 6px 20px rgba(168,85,247,.4)' }}
+              disabled={!giftTarget || saving}
+              onClick={async () => {
+                setSaving(true)
+                const ok = await asignarGirosToUser(giftTarget, giftAmount)
+                setSaving(false)
+                if (ok) {
+                  const client = allClients.find(c => c.id === giftTarget)
+                  alert(`✅ ${giftAmount} giro${giftAmount > 1 ? 's' : ''} regalado${giftAmount > 1 ? 's' : ''} a ${client?.email}`)
+                  setShowGift(false)
+                  setGiftTarget('')
+                  setGiftAmount(1)
+                  setGiftSearch('')
+                  if (tab === 'usuarios') fetchUsuarios()
+                }
+              }}>
+              {saving ? 'Asignando…' : `🎁 Regalar ${giftAmount} giro${giftAmount > 1 ? 's' : ''}`}
+            </button>
+          </div>
         </div>
       )}
     </div>
