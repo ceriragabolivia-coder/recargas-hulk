@@ -301,7 +301,13 @@ export default function Checkout({ onFinish }) {
       const pedidoResult = results.find(r => r.id === 'pedido')
       
       if (!pedidoResult || pedidoResult.error) {
-        throw new Error(pedidoResult?.error || 'No se pudo crear el pedido')
+        const errMsg = pedidoResult?.error || 'No se pudo crear el pedido'
+        // Si el error es de cupón ya usado, limpiar el cupón del estado
+        if (typeof errMsg === 'string' && errMsg.includes('CUPON_YA_USADO')) {
+          setActiveCupon(null)
+          throw new Error('⚠️ Este cupón ya fue utilizado anteriormente. No puedes usarlo nuevamente en esta cuenta.')
+        }
+        throw new Error(errMsg)
       }
 
       const createdPedido = pedidoResult.data;

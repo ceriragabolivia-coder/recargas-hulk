@@ -819,6 +819,7 @@ export function CartProvider({ children }) {
     let pedidoCreated = false
     let errorMessage = null
     let finalPedido = null
+    let cuponPreInserted = false
 
     try {
       let pedidoTotalUSD = cart.reduce((acc, item) => acc + (item.venta_usd * item.quantity), 0)
@@ -830,6 +831,23 @@ export function CartProvider({ children }) {
         pedidoTotalBs = Math.round(pedidoTotalBs * discountFactor)
       }
 
+      // PASO 1: PRE-INSERTAR uso de cupón ANTES de crear el pedido.
+      // Esto activa el trigger con advisory lock en la BD, que bloquea
+      // cualquier uso duplicado ANTES de que el pedido (con descuento) exista.
+      if (activeCupon && clienteId) {
+        const { error: cuponError } = await supabase.from('cupones_usados').insert({
+          cupon_id: activeCupon.id,
+          cliente_id: clienteId,
+          pedido_id: null // Se actualiza después de crear el pedido
+        })
+        if (cuponError) {
+          // El trigger bloqueó el uso – el cupón ya fue utilizado
+          throw new Error('CUPON_YA_USADO: Este cupón ya fue utilizado o superaste el límite de usos permitidos.')
+        }
+        cuponPreInserted = true
+      }
+
+      // PASO 2: Crear el pedido con el precio ya descontado
       const { data: pedido, error: pedidoError } = await supabase
         .from('pedidos')
         .insert({
@@ -863,22 +881,40 @@ export function CartProvider({ children }) {
         const { error: itemsError } = await supabase.from('pedido_items').insert(items)
         if (itemsError) throw itemsError
 
-        if (activeCupon && clienteId) {
-          await supabase.from('cupones_usados').insert({
-            cupon_id: activeCupon.id,
-            cliente_id: clienteId,
-            pedido_id: finalPedido.id
-          })
+        // PASO 3: Actualizar el registro de cupón con el pedido_id real
+        if (activeCupon && clienteId && cuponPreInserted) {
+          await supabase.from('cupones_usados')
+            .update({ pedido_id: finalPedido.id })
+            .eq('cupon_id', activeCupon.id)
+            .eq('cliente_id', clienteId)
+            .is('pedido_id', null)
         }
         
         pedidoCreated = true
       } else {
         errorMessage = pedidoError?.message || 'Error al guardar el pedido'
         console.error('Error creando pedido:', pedidoError)
+        // CLEANUP: Si el pedido falló pero el cupón fue pre-insertado, eliminarlo
+        if (cuponPreInserted && activeCupon && clienteId) {
+          await supabase.from('cupones_usados')
+            .delete()
+            .eq('cupon_id', activeCupon.id)
+            .eq('cliente_id', clienteId)
+            .is('pedido_id', null)
+        }
       }
     } catch (e) {
       errorMessage = e.message || 'Error inesperado al procesar el pedido'
       console.error('Error creando pedido:', e)
+      // CLEANUP: Si hubo excepción y el cupón fue pre-insertado, eliminarlo
+      if (cuponPreInserted && activeCupon && clienteId) {
+        await supabase.from('cupones_usados')
+          .delete()
+          .eq('cupon_id', activeCupon.id)
+          .eq('cliente_id', clienteId)
+          .is('pedido_id', null)
+        cuponPreInserted = false
+      }
     }
 
     if (pedidoCreated) {
