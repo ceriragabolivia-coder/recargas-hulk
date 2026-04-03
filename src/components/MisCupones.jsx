@@ -11,12 +11,15 @@ export default function MisCupones() {
   useEffect(() => {
     const fetchCuponesActivos = async () => {
       setLoading(true)
+      const userId = perfil?.id || user?.id
+      if (!userId) { setLoading(false); return }
       
-      // 1. Obtener todos los cupones activos que no han expirado
+      // 1. Obtener todos los cupones activos con el conteo global de usos
       const { data: cuponesData, error } = await supabase
         .from('cupones')
         .select(`
           id, codigo, porcentaje, fecha_expiracion, limite_usos, activo,
+          limite_usos_por_usuario, frecuencia_uso,
           cupones_usados(count)
         `)
         .eq('activo', true)
@@ -27,32 +30,60 @@ export default function MisCupones() {
         return
       }
 
-      const activeCupones = cuponesData.filter(cupon => {
-        // Expirado
-        if (cupon.fecha_expiracion && new Date(cupon.fecha_expiracion) < new Date()) {
-          return false
-        }
-        // Agotado stock total
-        if (cupon.limite_usos && cupon.cupones_usados[0].count >= cupon.limite_usos) {
-          return false
-        }
-        return true
-      })
-
-      // 2. Filtrar los que este usuario ya usó
+      // 2. Obtener usos de este usuario (con fecha del último uso por cupón)
       const { data: misUsos } = await supabase
         .from('cupones_usados')
-        .select('cupon_id')
-        .eq('cliente_id', perfil?.id || user?.id)
+        .select('cupon_id, created_at')
+        .eq('cliente_id', userId)
+        .order('created_at', { ascending: false })
 
-      const usadosIds = new Set((misUsos || []).map(u => u.cupon_id))
-      
-      const cuponesDisponibles = activeCupones.filter(c => !usadosIds.has(c.id))
+      // Agrupar usos por cupón: { cupon_id: { count, lastUsed } }
+      const usosPorCupon = {}
+      ;(misUsos || []).forEach(u => {
+        if (!usosPorCupon[u.cupon_id]) {
+          usosPorCupon[u.cupon_id] = { count: 0, lastUsed: null }
+        }
+        usosPorCupon[u.cupon_id].count++
+        if (!usosPorCupon[u.cupon_id].lastUsed || new Date(u.created_at) > new Date(usosPorCupon[u.cupon_id].lastUsed)) {
+          usosPorCupon[u.cupon_id].lastUsed = u.created_at
+        }
+      })
+
+      const ahora = new Date()
+
+      const cuponesDisponibles = cuponesData.filter(cupon => {
+        // Expirado globalmente
+        if (cupon.fecha_expiracion && new Date(cupon.fecha_expiracion) < ahora) return false
+        // Stock global agotado
+        const totalUsados = cupon.cupones_usados?.[0]?.count || 0
+        if (cupon.limite_usos && totalUsados >= cupon.limite_usos) return false
+
+        const miUso = usosPorCupon[cupon.id]
+        if (!miUso) return true // Nunca usado → mostrar
+
+        const { count: misUsos, lastUsed } = miUso
+        const frecuencia = cupon.frecuencia_uso || 'unico'
+        const limitePersonal = cupon.limite_usos_por_usuario || null
+
+        // ¿Alcancé mi límite personal total?
+        if (limitePersonal && misUsos >= limitePersonal) return false
+
+        // Calcular horas desde el último uso
+        const diffHoras = lastUsed ? (ahora - new Date(lastUsed)) / (1000 * 60 * 60) : Infinity
+
+        if (frecuencia === 'unico') return false           // Uso único → fuera
+        if (frecuencia === '24h' && diffHoras < 24) return false
+        if (frecuencia === 'semanal' && diffHoras < 168) return false
+        if (frecuencia === 'mensual' && diffHoras < 720) return false
+
+        return true // Frecuencia cumplida → mostrar de nuevo
+      })
+
       setCupones(cuponesDisponibles)
       setLoading(false)
     }
 
-    if (perfil) fetchCuponesActivos()
+    if (perfil || user) fetchCuponesActivos()
   }, [perfil, user])
 
   const copyToClipboard = (codigo) => {
@@ -76,9 +107,10 @@ export default function MisCupones() {
       ) : cupones.length === 0 ? (
         <div className="empty-state card" style={{ padding: '80px 40px', textAlign: 'center', borderStyle: 'dashed' }}>
           <div style={{ fontSize: '64px', marginBottom: '24px' }}>🎟️</div>
-          <h3 style={{ fontSize: '24px', marginBottom: '12px', fontWeight: 800 }}>¡Vaya! No hay cupones ahora</h3>
-          <p style={{ color: 'var(--text-muted)', maxWidth: '450px', margin: '0 auto', lineHeight: '1.6' }}>
-            Actualmente no tienes promociones pendientes. Sigue atento a nuestras redes para enterarte de nuevos códigos de descuento.
+          <h3 style={{ fontSize: '24px', marginBottom: '12px', fontWeight: 800 }}>No tienes cupones disponibles</h3>
+          <p style={{ color: 'var(--text-muted)', maxWidth: '480px', margin: '0 auto', lineHeight: '1.6' }}>
+            Ya utilizaste todos los cupones disponibles para tu cuenta, o los cupones activos aún están en período de espera.
+            Sigue atento a nuestras redes para enterarte de nuevos códigos de descuento.
           </p>
         </div>
       ) : (
