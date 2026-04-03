@@ -21,22 +21,15 @@ export default function Checkout({ onFinish }) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [orderFinished, setOrderFinished] = useState(false)
 
-  // Cupones
-  const [couponCode, setCouponCode] = useState('')
-  const [activeCupon, setActiveCupon] = useState(null)
-  const [couponError, setCouponError] = useState(null)
-  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false)
-
   const currentClienteId = user?.id || perfil?.id || null
   const walletSaldo = wallet?.saldo || 0
   const walletSaldoBs = wallet?.saldo_bs || 0
   
-  // Cálculo de totales con cupón
-  const discountFactor = activeCupon ? (1 - (activeCupon.porcentaje / 100)) : 1
-  const discountedTotalUSD = +(totalUSD * discountFactor).toFixed(2)
-  const discountedTotalBs = Math.round(totalBs * discountFactor)
+  // Totales (sin cupón)
+  const discountedTotalUSD = totalUSD
+  const discountedTotalBs = totalBs
 
-  const isGratis = discountedTotalUSD <= 0 || (activeCupon && Number(activeCupon.porcentaje) >= 100);
+  const isGratis = discountedTotalUSD <= 0
 
   const hasEnoughBalance = walletSaldo >= discountedTotalUSD
   const hasAnySaldo = walletSaldo > 0
@@ -104,84 +97,6 @@ export default function Checkout({ onFinish }) {
     }
   }
 
-  const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) return
-    setIsValidatingCoupon(true)
-    setCouponError(null)
-
-    try {
-      // 1. Buscar cupón genérico
-      const { data: cupon, error } = await supabase
-        .from('cupones')
-        .select('*, cupones_usados(count)')
-        .eq('codigo', couponCode.toUpperCase().trim())
-        .eq('activo', true)
-        .maybeSingle()
-
-      if (error || !cupon) {
-        throw new Error('El cupón no es válido o no existe.')
-      }
-
-      // 2. Verificar fecha
-      if (cupon.fecha_expiracion && new Date(cupon.fecha_expiracion) < new Date()) {
-        throw new Error('Este cupón ya ha expirado.')
-      }
-
-      // 3. Verificar límite de usos global
-      const totalUsadoGlobal = cupon.cupones_usados?.[0]?.count || 0
-      if (cupon.limite_usos && totalUsadoGlobal >= cupon.limite_usos) {
-        throw new Error('Este cupón ya ha agotado su límite de usos.')
-      }
-
-      // 4. Verificar uso del usuario y frecuencias
-      const { data: usosAnteriores } = await supabase
-        .from('cupones_usados')
-        .select('created_at')
-        .eq('cupon_id', cupon.id)
-        .eq('cliente_id', currentClienteId)
-        .order('created_at', { ascending: false })
-
-      const usosCount = usosAnteriores ? usosAnteriores.length : 0;
-      const ultimoUso = usosCount > 0 ? new Date(usosAnteriores[0].created_at) : null;
-
-      // a. Límite total absoluto por usuario
-      const limiteUsuario = cupon.limite_usos_por_usuario || null;
-      if (limiteUsuario && usosCount >= limiteUsuario) {
-        throw new Error(`Has alcanzado el límite máximo de veces (${limiteUsuario}) para reclamar este cupón.`);
-      }
-
-      // b. Frecuencia de uso temporal
-      const frecuencia = cupon.frecuencia_uso || 'unico';
-      if (ultimoUso && frecuencia !== 'ilimitado') {
-        const ahora = new Date();
-        const diffHoras = (ahora - ultimoUso) / (1000 * 60 * 60);
-
-        if (frecuencia === 'unico' && usosCount > 0) {
-          throw new Error('Ya has utilizado este cupón anteriormente.');
-        } else if (frecuencia === '24h' && diffHoras < 24) {
-          const esperando = Math.ceil(24 - diffHoras);
-          throw new Error(`Debes esperar ${esperando} hora(s) para volver a usar este cupón.`);
-        } else if (frecuencia === 'semanal' && diffHoras < (24 * 7)) {
-          const esperando = Math.ceil((24 * 7) - diffHoras);
-          throw new Error(`Debes esperar ${esperando} hora(s) para volver a usar este cupón.`);
-        } else if (frecuencia === 'mensual' && diffHoras < (24 * 30)) {
-          const esperandoDias = Math.ceil(30 - (diffHoras / 24));
-          throw new Error(`Debes esperar ${esperandoDias} día(s) para volver a usar este cupón.`);
-        }
-      }
-
-      setActiveCupon(cupon)
-      setCouponCode('')
-    } catch (err) {
-      setCouponError(err.message)
-    } finally {
-      setIsValidatingCoupon(false)
-    }
-  }
-
-  const handleRemoveCoupon = () => {
-    setActiveCupon(null)
-  }
 
   const handleNextStep = () => {
     if (isGratis) {
@@ -219,67 +134,16 @@ export default function Checkout({ onFinish }) {
       return
     }
 
-    // Re-validar el cupón al momento de finalizar para evitar condiciones de carrera
-    if (activeCupon && currentClienteId) {
-      try {
-        const { data: usosAnteriores } = await supabase
-          .from('cupones_usados')
-          .select('created_at')
-          .eq('cupon_id', activeCupon.id)
-          .eq('cliente_id', currentClienteId)
-          .order('created_at', { ascending: false })
-
-        const usosCount = usosAnteriores ? usosAnteriores.length : 0
-        const ultimoUso = usosCount > 0 ? new Date(usosAnteriores[0].created_at) : null
-        const limiteUsuario = activeCupon.limite_usos_por_usuario || null
-        const frecuencia = activeCupon.frecuencia_uso || 'unico'
-
-        // Verificar límite total por usuario
-        if (limiteUsuario && usosCount >= limiteUsuario) {
-          setActiveCupon(null)
-          alert(`El cupón ha alcanzado su límite máximo de usos (${limiteUsuario}) para tu cuenta.`)
-          return
-        }
-
-        // Verificar frecuencia
-        if (ultimoUso && frecuencia !== 'ilimitado') {
-          const ahora = new Date()
-          const diffHoras = (ahora - ultimoUso) / (1000 * 60 * 60)
-          if (frecuencia === 'unico' && usosCount > 0) {
-            setActiveCupon(null); alert('Ya has utilizado este cupón anteriormente.'); return
-          } else if (frecuencia === '24h' && diffHoras < 24) {
-            setActiveCupon(null); alert(`Debes esperar ${Math.ceil(24 - diffHoras)} hora(s) para volver a usar este cupón.`); return
-          } else if (frecuencia === 'semanal' && diffHoras < (24 * 7)) {
-            setActiveCupon(null); alert(`Debes esperar ${Math.ceil((24 * 7) - diffHoras)} hora(s) para volver a usar este cupón.`); return
-          } else if (frecuencia === 'mensual' && diffHoras < (24 * 30)) {
-            setActiveCupon(null); alert(`Debes esperar ${Math.ceil(30 - (diffHoras / 24))} día(s) para volver a usar este cupón.`); return
-          }
-        }
-
-        // Verificar stock global
-        const { data: cuponActual } = await supabase
-          .from('cupones')
-          .select('limite_usos, cupones_usados(count)')
-          .eq('id', activeCupon.id)
-          .single()
-        if (cuponActual?.limite_usos && (cuponActual.cupones_usados?.[0]?.count || 0) >= cuponActual.limite_usos) {
-          setActiveCupon(null); alert('Este cupón ya ha agotado su límite global de usos.'); return
-        }
-      } catch (err) {
-        console.error('Error re-validando cupón:', err)
-      }
-    }
-
     setIsProcessing(true)
     
     try {
       let finalMetodoId = selectedMetodoId
       let finalReferencia = referencia
 
-      // Normalizar datos si es gratis por cupón, o se usa billetera
+      // Normalizar datos si es gratis, o se usa billetera
       if (isGratis) {
         finalMetodoId = null
-        finalReferencia = `PAGO_CUPON_${activeCupon?.codigo || 'TOTAL'}`
+        finalReferencia = 'PAGO_TOTAL'
       } else if (useWalletPartial && walletAmountToUse > 0) {
         if (isWalletOnly) {
           finalMetodoId = null
@@ -297,17 +161,11 @@ export default function Checkout({ onFinish }) {
       }
 
       // 1. Registrar el pedido PRIMERO para obtener su ID
-      const results = await checkout(registrarVenta, currentClienteId, finalMetodoId, finalReferencia, activeCupon)
+      const results = await checkout(registrarVenta, currentClienteId, finalMetodoId, finalReferencia, null)
       const pedidoResult = results.find(r => r.id === 'pedido')
       
       if (!pedidoResult || pedidoResult.error) {
-        const errMsg = pedidoResult?.error || 'No se pudo crear el pedido'
-        // Si el error es de cupón ya usado, limpiar el cupón del estado
-        if (typeof errMsg === 'string' && errMsg.includes('CUPON_YA_USADO')) {
-          setActiveCupon(null)
-          throw new Error('⚠️ Este cupón ya fue utilizado anteriormente. No puedes usarlo nuevamente en esta cuenta.')
-        }
-        throw new Error(errMsg)
+        throw new Error(pedidoResult?.error || 'No se pudo crear el pedido')
       }
 
       const createdPedido = pedidoResult.data;
@@ -657,60 +515,15 @@ export default function Checkout({ onFinish }) {
               </>
             )}
 
-            {/* SECCIÓN DE CUPÓN */}
-            <div style={{ marginBottom: '20px' }}>
-              <label className="form-label">Cupón de Descuento</label>
-              {activeCupon ? (
-                <div style={{ 
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '12px 16px', borderRadius: '12px', border: '1px dashed var(--accent-success)',
-                  backgroundColor: 'rgba(34, 197, 94, 0.05)'
-                }}>
-                  <div>
-                    <span style={{ color: 'var(--accent-success)', fontWeight: 'bold' }}>{activeCupon.codigo}</span>
-                    <span style={{ marginLeft: '8px', fontSize: '13px' }}>(-{activeCupon.porcentaje}%)</span>
-                  </div>
-                  <button onClick={handleRemoveCoupon} style={{ background: 'none', border: 'none', color: 'var(--accent-danger)', cursor: 'pointer' }}>✕</button>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="ESTRENO20"
-                    style={{ textTransform: 'uppercase' }}
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value)}
-                    disabled={isValidatingCoupon}
-                  />
-                  <button 
-                    className="btn btn-secondary" 
-                    style={{ padding: '0 16px', minWidth: '100px' }}
-                    onClick={handleApplyCoupon}
-                    disabled={isValidatingCoupon || !couponCode.trim()}
-                  >
-                    {isValidatingCoupon ? '...' : 'Aplicar'}
-                  </button>
-                </div>
-              )}
-              {couponError && <div style={{ fontSize: '11px', color: 'var(--accent-danger)', marginTop: '4px' }}>{couponError}</div>}
-            </div>
 
             {/* Resumen de Montos */}
             <div style={{ backgroundColor: 'var(--bg-panel)', padding: '20px', borderRadius: '16px', marginBottom: '24px', border: '1px solid var(--border-color)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Monto Total:</span>
-                <span style={{ fontWeight: 600, textDecoration: activeCupon ? 'line-through' : 'none', color: activeCupon ? 'var(--text-muted)' : 'inherit' }}>
+                <span style={{ fontWeight: 600 }}>
                   {formatUSD(totalUSD)}
                 </span>
               </div>
-
-              {activeCupon && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-                  <span style={{ color: 'var(--accent-success)' }}>🎟️ Cupón ({activeCupon.codigo}):</span>
-                  <span style={{ fontWeight: 700, color: 'var(--accent-success)' }}>-{formatUSD(totalUSD - discountedTotalUSD)}</span>
-                </div>
-              )}
               
               {useWalletPartial && walletAmountToUse > 0 && (
                 <>

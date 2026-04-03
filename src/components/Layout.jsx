@@ -15,8 +15,6 @@ const NAV_ITEMS = [
   { key: 'chats', icon: '💬', label: 'Sala de Chat' },
   { key: 'config', icon: '⚙️', label: 'Configuración' },
   { key: 'reportes', icon: '📈', label: 'Reportes' },
-  { key: 'cupones', icon: '🎟️', label: 'Gestión Cupones' },
-  { key: 'mis_cupones', icon: '🎁', label: 'Mis Promociones' },
   { key: 'perfil', icon: '👤', label: 'Mi Perfil' },
 ]
 
@@ -188,7 +186,6 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
     recargas_pendientes: 0,
     soporte_pendientes: 0,
     usuarios_online: 0,
-    active_cupones: 0,
   })
 
   const { mensajes: allMessages } = useMensajesSistema()
@@ -266,27 +263,12 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
       }
     }
 
-    let availableCupones = 0;
-    if (!isAdmin && perfil?.id) {
-       const { data: cuponesData } = await supabase.from('cupones').select('id, fecha_expiracion, limite_usos, cupones_usados(count)').eq('activo', true)
-       if (cuponesData) {
-         const { data: misUsos } = await supabase.from('cupones_usados').select('cupon_id').eq('cliente_id', perfil.id)
-         const usadosIds = new Set((misUsos || []).map(u => u.cupon_id))
-         availableCupones = cuponesData.filter(c => {
-           const expired = c.fecha_expiracion && new Date(c.fecha_expiracion) < new Date()
-           const exhausted = c.limite_usos && c.cupones_usados?.[0]?.count >= c.limite_usos
-           return !expired && !exhausted && !usadosIds.has(c.id)
-         }).length
-       }
-    }
-
     setCounts({
       pagos_pendientes: pCount,
       ordenes_pendientes: oCount,
       recargas_pendientes: rCount,
       soporte_pendientes: sCount,
       usuarios_online: 0,
-      active_cupones: availableCupones
     })
   }
 
@@ -636,8 +618,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
   const renderNavItem = (item) => {
     let label = item.label;
     if (!isAdmin && item.key === 'pedidos') label = 'Mis Pedidos';
-    const hasCoupons = item.key === 'mis_cupones' && counts.active_cupones > 0
-    const className = `nav-item ${currentPage === item.key ? 'active' : ''} ${hasCoupons ? 'nav-item-promo' : ''}`
+    const className = `nav-item ${currentPage === item.key ? 'active' : ''}`
     return (
       <div key={item.key} className={className} onClick={() => handleMobileNavigate(item.key)}>
         <span className="nav-item-icon">{item.icon}</span>
@@ -681,7 +662,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
               <div className="nav-section-label">Principal</div>
               {NAV_ITEMS.filter(i => ['dashboard', 'billetera', 'catalogo', 'ventas'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Gestión</div>
-              {NAV_ITEMS.filter(i => ['productos', 'pedidos', 'usuarios', 'revendedores', 'chats', 'cupones', 'config'].includes(i.key)).map(renderNavItem)}
+              {NAV_ITEMS.filter(i => ['productos', 'pedidos', 'usuarios', 'revendedores', 'chats', 'config'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Análisis</div>
               {NAV_ITEMS.filter(i => ['reportes'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Cuenta</div>
@@ -690,7 +671,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
           ) : (
             <>
               <div className="nav-section-label">Catálogo</div>
-              {NAV_ITEMS.filter(item => ['catalogo', 'pedidos', 'mis_cupones'].includes(item.key)).map(renderNavItem)}
+              {NAV_ITEMS.filter(item => ['catalogo', 'pedidos'].includes(item.key)).map(renderNavItem)}
               <div className="nav-section-label">Cuenta</div>
               {NAV_ITEMS.filter(i => ['billetera', 'perfil'].includes(i.key)).map(renderNavItem)}
             </>

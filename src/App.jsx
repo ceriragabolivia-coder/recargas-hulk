@@ -19,8 +19,6 @@ import Pedidos from './components/Pedidos'
 import Usuarios from './components/Usuarios'
 import SalaDeChat from './components/SalaDeChat'
 import Billetera from './components/Billetera'
-import GestionCupones from './components/GestionCupones'
-import MisCupones from './components/MisCupones'
 import Revendedores from './components/Revendedores'
 import { Analytics } from "@vercel/analytics/react"
 
@@ -212,7 +210,7 @@ export default function App() {
 
   const renderPage = () => {
     // Seguridad: Si el usuario NO es admin, solo puede ver catálogo, pedidos, perfil y checkout
-    if (user && !isAdmin && !['catalogo', 'perfil', 'pedidos', 'checkout', 'billetera', 'mis_cupones'].includes(currentPage)) {
+    if (user && !isAdmin && !['catalogo', 'perfil', 'pedidos', 'checkout', 'billetera'].includes(currentPage)) {
       return <Catalogo />
     }
 
@@ -228,9 +226,7 @@ export default function App() {
         return <SalaDeChat key={chatKey} perfil={perfil} params={currentParams} />
       case 'pedidos': return <Pedidos params={currentParams} onNavigate={handleNavigate} />
       case 'reportes': return <Reportes />
-      case 'cupones': return <GestionCupones />
       case 'revendedores': return <Revendedores onNavigate={handleNavigate} />
-      case 'mis_cupones': return <MisCupones />
       case 'perfil': return <Perfil />
       case 'checkout': return <Checkout onFinish={() => setCurrentPage('registro')} />
       case 'billetera': return <Billetera onNavigate={handleNavigate} />
