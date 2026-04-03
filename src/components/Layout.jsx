@@ -273,8 +273,11 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
   }
 
   useEffect(() => {
+    // Solo ejecutar fetchCounts cuando el perfil está completamente cargado
+    if (!perfil?.id) return
     fetchCounts()
-    const interval = setInterval(fetchCounts, 5000)
+    // Polling de respaldo cada 60s (el realtime maneja actualizaciones instantáneas)
+    const interval = setInterval(fetchCounts, 60000)
     return () => clearInterval(interval)
   }, [perfil?.id, isAdmin])
 
@@ -370,8 +373,11 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
   }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Suscripción Realtime para Notificaciones Push y Nuevos Pedidos
+  // Espera a que el perfil esté COMPLETAMENTE cargado para no re-suscribirse
+  // múltiples veces durante la carga inicial (isAdmin undefined → false, user?.id undefined → 'xxx')
+  const isReady = !!user?.id && perfil !== null && (isAdmin || !!perfil?.cliente_uuid)
   useEffect(() => {
-    console.log("v2.1 - Sistema de Alertas Listo")
+    if (!isReady) return // Salir si aun no está listo el perfil completo
     
     // 1. Suscripción a Notificaciones Genéricas (para todos)
     const channelNotis = supabase
@@ -595,7 +601,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
       if (channelUserBilletera) supabase.removeChannel(channelUserBilletera)
       if (channelUserChat) supabase.removeChannel(channelUserChat)
     }
-  }, [isAdmin, user?.id, perfil?.cliente_uuid]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isReady]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-eliminación de Toasts después de 25 segundos
   useEffect(() => {
