@@ -44,37 +44,32 @@ export default function GestionRuleta() {
     setPremios(data || [])
   }
   const fetchAllClients = async () => {
-    // Intentamos traer perfiles con roles variados (case-insensitive)
-    const { data: perfs, error: perfError } = await supabase
-      .from('perfiles')
-      .select('id, cliente_uuid, email, rol')
-      .or('rol.ilike.cliente,rol.ilike.revendedor') // Búsqueda insensible a mayúsculas
-      .limit(200)
+    // 1. Cargamos de la tabla 'clientes' (donde están nombres y correos reales)
+    // 2. Traemos su perfil asociado selectivo para filtrar roles
+    const { data: list, error: listError } = await supabase
+      .from('clientes')
+      .select('auth_user_id, correo, nombres, perfiles:auth_user_id(rol)')
+      .limit(600)
 
-    if (perfError) console.error("❌ Error fetchAllClients (perfiles):", perfError)
-    if (!perfs || perfs.length === 0) { setAllClients([]); return }
-
-    // Traer datos de la tabla clientes para nombres reales
-    const clienteUuids = perfs.map(p => p.cliente_uuid).filter(Boolean)
-    let clientesMap = {}
-    if (clienteUuids.length > 0) {
-      const { data: clientes, error: cliError } = await supabase
-        .from('clientes')
-        .select('id, nombres, correo')
-        .in('id', clienteUuids)
-      if (cliError) console.error("❌ Error fetchAllClients (clientes):", cliError)
-      ;(clientes || []).forEach(c => { clientesMap[c.id] = c })
+    if (listError) {
+      console.error("❌ Error fetching all clients:", listError)
+      return
     }
 
-    const formatted = perfs.map(p => {
-      const cl = clientesMap[p.cliente_uuid]
-      return {
-        id: p.id, // auth uid (para rpc)
-        email: cl?.correo || p.email || p.id.slice(0,8) + '…',
-        nombre: cl?.nombres || ''
-      }
-    }).filter(u => u.email)
+    // 3. Formateamos y filtramos en JS para mayor fiabilidad con mayúsculas/minúsculas
+    const formatted = (list || [])
+      .map(c => ({
+        id: c.auth_user_id, // Este es el UUID para ruleta_giros_disponibles
+        email: c.correo || '',
+        nombre: c.nombres || '',
+        rol: c.perfiles?.rol || 'cliente'
+      }))
+      .filter(u => {
+        const r = u.rol.toLowerCase()
+        return r === 'cliente' || r === 'revendedor'
+      })
 
+    console.log("👥 Clientes cargados para regalo:", formatted.length)
     setAllClients(formatted)
   }
   const fetchConfig = async () => {
@@ -454,20 +449,22 @@ export default function GestionRuleta() {
             <div style={{ maxHeight:280, overflowY:'auto', display:'flex', flexDirection:'column', gap:6, marginBottom:16 }}>
               {allClients
                 .filter(c => {
-                  if (giftSearch === '') return true // Mostrar todos si no hay búsqueda
-                  const search = giftSearch.toLowerCase()
+                  const search = giftSearch.trim().toLowerCase()
+                  if (!search) return true 
                   return (
                     c.email?.toLowerCase().includes(search) || 
-                    c.nombre?.toLowerCase().includes(search)
+                    c.nombre?.toLowerCase().includes(search) ||
+                    c.id?.toLowerCase().includes(search)
                   )
                 })
-                .slice(0, 10) // Mostrar solo los 10 primeros resultados filtrados para no saturar
+                .slice(0, 50) // Aumentamos un poco el límite por si acaso
                 .map(c => (
                   <button key={c.id} onClick={() => setGiftTarget(c.id)}
                     style={{ padding:'10px 14px', borderRadius:10, border:`2px solid ${giftTarget === c.id ? '#a855f7' : 'rgba(255,255,255,.08)'}`, background: giftTarget === c.id ? 'rgba(168,85,247,.12)' : 'rgba(255,255,255,.03)', color: giftTarget === c.id ? '#c084fc' : 'var(--text-primary)', textAlign:'left', cursor:'pointer', fontWeight: giftTarget === c.id ? 700 : 400, transition:'all .15s' }}>
                     {giftTarget === c.id ? '✓ ' : ''}
                     <span style={{ fontWeight: 700 }}>{c.nombre || c.email}</span>
-                    {c.nombre && c.email !== c.nombre && <span style={{ fontSize:12, color:'var(--text-muted)', marginLeft:6 }}>{c.email}</span>}
+                    {c.nombre && c.email !== c.nombre && <span style={{ fontSize:12, color:'var(--text-muted)', marginLeft:6 }}>({c.email})</span>}
+                    {!c.nombre && !c.email && <span style={{ fontSize:10, color:'var(--text-muted)' }}>ID: {c.id.slice(0,8)}</span>}
                   </button>
                 ))}
               {allClients.filter(c => giftSearch === '' || c.email?.toLowerCase().includes(giftSearch.toLowerCase())).length === 0 && (
