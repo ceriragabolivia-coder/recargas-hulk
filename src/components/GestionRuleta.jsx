@@ -3,19 +3,19 @@ import { supabase } from '../lib/supabase'
 import { formatUSD, formatBs } from '../utils/helpers'
 import { useAuth } from '../hooks/useData'
 
-const COLORS_PRESET = ['#FF6B6B','#FF8E53','#FFCA28','#66BB6A','#26C6DA','#5C6BC0','#AB47BC','#EC407A','#FF7043','#26A69A']
+const COLORS_PRESET = ['#a855f7','#7c3aed','#3b82f6','#2563eb','#06b6d4','#10b981','#f59e0b','#ef4444','#ec4899','#8b5cf6']
 const TIPOS = [
-  { value: 'saldo_usd',   label: '💵 Saldo USD (Billetera)', hasValue: true },
-  { value: 'saldo_bs',   label: '💜 Saldo Bs (Billetera)',  hasValue: true },
-  { value: 'descuento',  label: '🎟️ Descuento (%)',          hasValue: true },
-  { value: 'mensaje',    label: '🎁 Premio Especial / Mensaje', hasValue: false },
-  { value: 'sin_premio', label: '😢 Sin Premio',               hasValue: false },
+  { value: 'saldo_usd',   label: '💵 Saldo USD (Billetera)', emoji:'💵' },
+  { value: 'saldo_bs',   label: '💜 Saldo Bs (Billetera)',  emoji:'💜' },
+  { value: 'descuento',  label: '🎟️ Descuento (%)',          emoji:'🎟️' },
+  { value: 'mensaje',    label: '🎁 Premio Especial / Mensaje', emoji:'🎁' },
+  { value: 'sin_premio', label: '😢 Sin Premio',               emoji:'😢' },
 ]
-const EMOJIS = ['🎁','💰','⭐','🏆','💎','🎉','🎊','🌟','🔥','💥','🍀','🎯','🥇','🎀']
 
-const EMPTY_FORM = { nombre: '', descripcion: '', tipo: 'mensaje', valor: '', probabilidad: 10, color: '#FF6B6B', emoji: '🎁', activo: true }
+const EMPTY_FORM = { nombre: '', descripcion: '', tipo: 'mensaje', valor: '', probabilidad: 10, color: '#a855f7', emoji: '🎁', activo: true }
 
 export default function GestionRuleta() {
+  const { perfil: adminPerfil } = useAuth()
   const [tab, setTab]               = useState('premios')
   const [premios, setPremios]       = useState([])
   const [historial, setHistorial]   = useState([])
@@ -26,16 +26,18 @@ export default function GestionRuleta() {
   const [editing, setEditing]       = useState(null)
   const [showForm, setShowForm]     = useState(false)
   const [showGift, setShowGift]     = useState(false)
+  
+  // Gifting States
+  const [tabGift, setTabGift]       = useState('individual')
   const [giftTarget, setGiftTarget] = useState('')
+  const [giftMode, setGiftMode]     = useState('giros') // 'giros' | 'premio'
   const [giftAmount, setGiftAmount] = useState(1)
+  const [giftPremioId, setGiftPremioId] = useState('')
   const [giftSearch, setGiftSearch] = useState('')
+  
   const [saving, setSaving]         = useState(false)
   const [loadingTab, setLoadingTab] = useState(false)
   const [giroInput, setGiroInput]   = useState({})
-  const [tabGift, setTabGift]       = useState('individual')
-  const [giftPremioId, setGiftPremioId] = useState('')
-
-  const { perfil: adminPerfil } = useAuth()
 
   useEffect(() => { 
     fetchPremios()
@@ -48,39 +50,28 @@ export default function GestionRuleta() {
     if (tab === 'usuarios')  fetchUsuarios()
   }, [tab])
 
-  // ── Fetch ────────────────────────────────────────────────────
+  // ── Data Fetching ────────────────────────────────────────────────────
   const fetchPremios = async () => {
     const { data } = await supabase.from('ruleta_premios').select('*').order('created_at')
     setPremios(data || [])
   }
 
   const fetchAllClients = async () => {
-    // 1. Cargamos de la tabla 'clientes' (usando 'usuario' que es el correo real)
     const { data: list, error: listError } = await supabase
       .from('clientes')
       .select('auth_user_id, usuario, nombres')
-      .limit(800)
+      .limit(1000)
 
     if (listError) {
-      alert("❌ Error cargando clientes para buscador: " + listError.message)
+      console.error("❌ Error fetchAllClients:", listError)
       return
     }
 
-    if (!list || list.length === 0) {
-      setAllClients([])
-      return
-    }
-
-    // 2. Traemos perfiles para filtrar por rol
-    const { data: perfs } = await supabase
-      .from('perfiles')
-      .select('id, rol')
-      .in('id', list.map(c => c.auth_user_id).filter(Boolean))
-
+    const { data: perfs } = await supabase.from('perfiles').select('id, rol')
     const perfilesMap = {}
     ;(perfs || []).forEach(p => { perfilesMap[p.id] = p.rol })
 
-    const formatted = list.map(c => ({
+    const formatted = (list || []).map(c => ({
       id: c.auth_user_id, 
       email: c.usuario || '', 
       nombre: c.nombres || '',
@@ -89,20 +80,12 @@ export default function GestionRuleta() {
       const r = (u.rol || '').toLowerCase()
       return r === 'cliente' || r === 'revendedor'
     })
-
-    console.log("👥 Usuarios cargados exitosamente:", formatted.length)
     setAllClients(formatted)
   }
 
   const fetchConfig = async () => {
-    const { data, error } = await supabase
-      .from('configuracion')
-      .select('clave, valor, valor_texto')
-      .ilike('clave', 'ruleta_%')
-
-    if (error) return
-
-    const newConfig = { ruleta_activa: 'false', ruleta_titulo: '¡Gira y Gana!', ruleta_descripcion: '' }
+    const { data } = await supabase.from('configuracion').select('clave, valor, valor_texto').ilike('clave', 'ruleta_%')
+    const newConfig = { ruleta_activa: 'true', ruleta_titulo: '¡Gira y Gana!', ruleta_descripcion: '' }
     if (data) {
       data.forEach(row => {
         if (row.clave === 'ruleta_activa') newConfig.ruleta_activa = (row.valor === 1 || row.valor === '1').toString()
@@ -124,38 +107,27 @@ export default function GestionRuleta() {
       await supabase.from('configuracion').update(item).eq('clave', item.clave)
     }
     setSaving(false)
-    alert('✅ Configuración guardada')
+    alert('✅ Configuración guardada correctamente')
   }
 
   const fetchHistorial = async () => {
     setLoadingTab(true)
-    const { data: h } = await supabase
-      .from('ruleta_giros')
-      .select('id,premio_nombre,tipo,valor,acreditado,created_at,cliente_id')
-      .order('created_at', { ascending: false })
-      .limit(100)
+    const { data: h } = await supabase.from('ruleta_giros').select('*').order('created_at', { ascending: false }).limit(100)
     setHistorial(h || [])
     setLoadingTab(false)
   }
 
   const fetchUsuarios = async () => {
     setLoadingTab(true)
-    const { data } = await supabase
-      .from('ruleta_giros_disponibles')
-      .select('cliente_id,giros_disponibles,total_ganados,updated_at')
-      .order('giros_disponibles', { ascending: false })
-    
-    const ids = (data || []).map(d => d.cliente_id)
-    let emailMap = {}
-    if (ids.length > 0) {
-      const { data: perfs } = await supabase.from('perfiles').select('id,email').in('id', ids)
-      ;(perfs || []).forEach(p => { emailMap[p.id] = p.email })
-    }
-    setUsuarios((data || []).map(d => ({ ...d, email: emailMap[d.cliente_id] || d.cliente_id.slice(0,8) + '…' })))
+    const { data } = await supabase.from('ruleta_giros_disponibles').select('*').order('giros_disponibles', { ascending: false })
+    const { data: listCli } = await supabase.from('clientes').select('auth_user_id,usuario,nombres')
+    const cliMap = {}
+    ;(listCli || []).forEach(c => cliMap[c.auth_user_id] = c.usuario || c.nombres)
+    setUsuarios((data || []).map(d => ({ ...d, email: cliMap[d.cliente_id] || d.cliente_id.slice(0,8) + '…' })))
     setLoadingTab(false)
   }
 
-  // ── Actions ─────────────────────────────────────────────
+  // ── Actions ─────────────────────────────────────────────────────────
   const savePremio = async () => {
     setSaving(true)
     const payload = { ...form, valor: Number(form.valor) || 0, probabilidad: Number(form.probabilidad) || 1 }
@@ -166,190 +138,262 @@ export default function GestionRuleta() {
     setSaving(false)
   }
 
-  const toggleActivo = async (p) => {
-    await supabase.from('ruleta_premios').update({ activo: !p.activo }).eq('id', p.id)
-    fetchPremios()
+  const handleGrant = async () => {
+    setSaving(true)
+    try {
+      if (tabGift === 'masivo') {
+        if (!giftPremioId) return;
+        const { data, error } = await supabase.rpc('regalar_premio_masivo', { p_premio_id: giftPremioId, p_admin_id: adminPerfil?.id })
+        if (error) alert(error.message.includes('404') ? '⚠️ Debes ejecutar el SQL 039 en Supabase' : error.message)
+        else alert(`✅ ¡Enviado masivamente a ${data.usuarios_afectados} usuarios!`)
+      } else {
+        if (!giftTarget) return;
+        if (giftMode === 'giros') {
+          await supabase.rpc('asignar_giros_v2', { p_cliente_id: giftTarget, p_cantidad: giftAmount }) // or manual rpc if exists
+          // Fallback if rpc no existe:
+          const { data: existing } = await supabase.from('ruleta_giros_disponibles').select('giros_disponibles,total_ganados').eq('cliente_id', giftTarget).maybeSingle()
+          if (existing) {
+            await supabase.from('ruleta_giros_disponibles').update({
+              giros_disponibles: (existing.giros_disponibles || 0) + Number(giftAmount),
+              total_ganados: (existing.total_ganados || 0) + Number(giftAmount),
+              updated_at: new Date().toISOString()
+            }).eq('cliente_id', giftTarget)
+          } else {
+            await supabase.from('ruleta_giros_disponibles').insert({ cliente_id: giftTarget, giros_disponibles: giftAmount, total_ganados: giftAmount })
+          }
+          alert('✅ Giros asignados correctamente')
+        } else {
+          // Regalar PREMIO ESPECIFICO a 1 persona
+          const { data: p } = await supabase.from('ruleta_premios').select('*').eq('id', giftPremioId).single()
+          if (!p) return;
+          // Registrar giro directo
+          const { data: g } = await supabase.from('ruleta_giros').insert({
+            cliente_id: giftTarget, premio_id: p.id, premio_nombre: p.nombre, tipo: p.tipo, valor: p.valor, acreditado: true
+          }).select().single()
+          
+          if (p.tipo === 'saldo_usd') await supabase.rpc('incrementar_saldo', { p_user_id: giftTarget, p_monto: p.valor })
+          else if (p.tipo === 'saldo_bs') await supabase.rpc('incrementar_saldo_bs', { p_user_id: giftTarget, p_monto: p.valor })
+          else if (p.tipo === 'descuento') await supabase.from('ruleta_descuentos_pendientes').insert({ cliente_id: giftTarget, giro_id: g.id, porcentaje: p.valor, nombre: p.nombre })
+          
+          alert(`✅ Premio "${p.nombre}" asignado directamente.`)
+        }
+      }
+      setShowGift(false); fetchUsuarios(); setGiftTarget(''); setGiftSearch('')
+    } catch(e) { console.error(e); alert('Error al procesar regalo') }
+    setSaving(false)
   }
 
-  const asignarGirosToUser = async (clienteId, cantidad) => {
-    if (!clienteId || cantidad < 1) return false
-    const { data: existing } = await supabase.from('ruleta_giros_disponibles').select('giros_disponibles,total_ganados').eq('cliente_id', clienteId).maybeSingle()
-    if (existing) {
-      await supabase.from('ruleta_giros_disponibles').update({
-        giros_disponibles: existing.giros_disponibles + cantidad,
-        total_ganados: existing.total_ganados + cantidad,
-        updated_at: new Date().toISOString()
-      }).eq('cliente_id', clienteId)
-    } else {
-      await supabase.from('ruleta_giros_disponibles').insert({ cliente_id: clienteId, giros_disponibles: cantidad, total_ganados: cantidad })
-    }
-    return true
-  }
-
-  const tabStyle = (id) => ({
-    padding: '10px 20px', borderRadius: 12, border: 'none',
-    background: tab === id ? 'var(--accent-primary)' : 'rgba(255,255,255,.05)',
-    color: tab === id ? '#fff' : 'var(--text-muted)',
-    fontWeight: 700, cursor: 'pointer', transition: 'all .2s'
+  // ── Component Styles ──────────────────────────────────────────────
+  const tabBtn = (id) => ({
+    padding: '12px 24px', borderRadius: 16, border: 'none', fontWeight: 900, cursor: 'pointer', transition: 'all .2s',
+    background: tab === id ? 'linear-gradient(135deg,#a855f7,#7c3aed)' : 'rgba(255,255,255,.03)',
+    color: tab === id ? '#fff' : 'rgba(255,255,255,.4)',
+    boxShadow: tab === id ? '0 10px 20px rgba(168,85,247,.3)' : 'none',
   })
 
   return (
-    <div style={{ padding: '20px 0' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #f59e0b, #d97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🎡</div>
-          <div>
-            <h1 style={{ fontSize: 24, fontWeight: 900, margin: 0 }}>Gestión de Ruleta</h1>
-            <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>Configura premios y regala giros</p>
-          </div>
+    <div style={{ color:'var(--text-primary)', paddingBottom:60 }}>
+      {/* Header Area */}
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom:40 }}>
+        <div>
+          <div style={{ background:'rgba(255,215,0,.1)', color:'#FFD700', padding:'6px 14px', borderRadius:20, width:'fit-content', fontSize:12, fontWeight:800, marginBottom:10, border:'1px solid rgba(255,215,0,.2)' }}>MODO ADMINISTRADOR</div>
+          <h1 style={{ fontSize:38, fontWeight:1000, color:'#fff', margin:0, letterSpacing:'-1px' }}>Gestión de Ruleta</h1>
+          <p style={{ color:'rgba(255,255,255,.4)', fontSize:15, margin:0 }}>Control total sobre premios, giros y configuraciones premium.</p>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 12, marginBottom: 32, background: 'rgba(255,255,255,.03)', padding: 6, borderRadius: 16, width: 'fit-content' }}>
-        <button onClick={() => setTab('premios')} style={tabStyle('premios')}>🎡 Premios</button>
-        <button onClick={() => setTab('usuarios')} style={tabStyle('usuarios')}>👤 Usuarios</button>
-        <button onClick={() => setTab('historial')} style={tabStyle('historial')}>📜 Historial</button>
-        <button onClick={() => setTab('config')} style={tabStyle('config')}>⚙️ Config</button>
+      {/* Tabs Selector */}
+      <div style={{ display:'flex', gap:10, marginBottom:35, background:'rgba(255,255,255,.02)', padding:8, borderRadius:22, width:'fit-content', border:'1px solid rgba(255,255,255,.05)' }}>
+        <button onClick={() => setTab('premios')} style={tabBtn('premios')}>🎡 Premios</button>
+        <button onClick={() => setTab('usuarios')} style={tabBtn('usuarios')}>👥 Usuarios</button>
+        <button onClick={() => setTab('historial')} style={tabBtn('historial')}>📜 Historial</button>
+        <button onClick={() => setTab('config')} style={tabBtn('config')}>⚙️ Config</button>
       </div>
 
+      {/* --- PREMIOS TAB --- */}
       {tab === 'premios' && (
-        <>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
-             <span style={{ color:'var(--text-muted)' }}>{premios.filter(p=>p.activo).length} premios activos</span>
-             <div style={{ display:'flex', gap:10 }}>
-                <button onClick={() => setShowGift(true)} className="btn" style={{ background:'rgba(168,85,247,.15)', color:'#c084fc', border:'1px solid rgba(168,85,247,.3)' }}>🎁 Regalar</button>
-                <button onClick={() => { setForm(EMPTY_FORM); setEditing(null); setShowForm(true) }} className="btn btn-primary">+ Agregar</button>
-             </div>
+        <div className="tab-pane animate-in">
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
+            <h2 style={{ fontSize:22, fontWeight:900, margin:0 }}>Inventario de Premios</h2>
+            <div style={{ display:'flex', gap:12 }}>
+              <button onClick={() => setShowGift(true)} className="btn" style={{ background:'rgba(168,85,247,.1)', color:'#c084fc', border:'1px solid rgba(168,85,247,.2)', padding:'10px 20px', borderRadius:12 }}>🎁 Regalar</button>
+              <button onClick={() => { setForm(EMPTY_FORM); setEditing(null); setShowForm(true) }} className="btn btn-primary" style={{ padding:'10px 24px', borderRadius:12, boxShadow:'0 8px 15px rgba(255,255,255,.05)' }}>+ Agregar</button>
+            </div>
           </div>
-          <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(320px, 1fr))', gap:20 }}>
             {premios.map(p => (
-              <div key={p.id} className="card" style={{ padding:20, display:'flex', alignItems:'center', gap:20, borderLeft:`6px solid ${p.color}`, opacity: p.activo?1:0.5 }}>
-                <div style={{ fontSize:32 }}>{p.emoji}</div>
-                <div style={{ flex:1 }}>
-                  <h4 style={{ fontWeight:900 }}>{p.nombre}</h4>
-                  <div style={{ fontSize:12, color:'var(--text-muted)' }}>{TIPOS.find(t=>t.value===p.tipo)?.label} | {p.valor} | Prob: {p.probabilidad}%</div>
+              <div key={p.id} className="card" style={{ background:p.activo?'rgba(255,255,255,.03)':'rgba(255,255,255,.01)', borderLeft:`6px solid ${p.color}`, padding:24, borderRadius:20, position:'relative', border:'1px solid rgba(255,255,255,.05)', transition:'transform .2s', opacity:p.activo?1:0.6 }}>
+                <div style={{ fontSize:40, marginBottom:15 }}>{p.emoji}</div>
+                <h4 style={{ fontSize:19, fontWeight:900, marginBottom:5 }}>{p.nombre}</h4>
+                <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:15 }}>
+                  <span style={{ fontSize:11, padding:'4px 10px', background:'rgba(255,255,255,.05)', borderRadius:8, fontWeight:700 }}>{TIPOS.find(t=>t.value===p.tipo)?.label}</span>
+                  <span style={{ fontSize:11, padding:'4px 10px', background:'rgba(168,85,247,.1)', color:'#c084fc', borderRadius:8, fontWeight:700 }}>Prob: {p.probabilidad}%</span>
+                  {p.valor > 0 && <span style={{ fontSize:11, padding:'4px 10px', background:'rgba(34,197,94,.1)', color:'#4ade80', borderRadius:8, fontWeight:700 }}>Val: {p.valor}</span>}
                 </div>
-                <div style={{ display:'flex', gap:8 }}>
-                  <button onClick={() => toggleActivo(p)} className="btn btn-sm">{p.activo?'⏸':'▶️'}</button>
-                  <button onClick={() => { setForm(p); setEditing(p.id); setShowForm(true) }} className="btn btn-sm">✏️</button>
+                <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+                  <button onClick={() => { setForm(p); setEditing(p.id); setShowForm(true) }} className="btn btn-sm" style={{ background:'rgba(255,255,255,.05)', border:'1px solid rgba(255,255,255,.1)' }}>✏️</button>
+                  <button onClick={async () => { if(confirm('¿Seguro?')) { await supabase.from('ruleta_premios').delete().eq('id', p.id); fetchPremios() } }} className="btn btn-sm" style={{ background:'rgba(239,68,68,.1)', color:'#f87171', border:'1px solid rgba(239,68,68,.1)' }}>🗑️</button>
                 </div>
               </div>
             ))}
           </div>
-        </>
+        </div>
       )}
 
+      {/* --- USUARIOS TAB --- */}
       {tab === 'usuarios' && (
-        <div className="card" style={{ padding:0 }}>
-          <table style={{ width:'100%', borderCollapse:'collapse' }}>
-            <thead style={{ background:'rgba(255,255,255,.03)' }}>
-              <tr><th style={{ padding:16, textAlign:'left' }}>Usuario</th><th style={{ textAlign:'center' }}>Giros</th><th style={{ textAlign:'right' }}>Acción</th></tr>
-            </thead>
-            <tbody>
-              {usuarios.map(u => (
-                <tr key={u.cliente_id} style={{ borderBottom:'1px solid rgba(255,255,255,.05)' }}>
-                  <td style={{ padding:16 }}>{u.email} <br/><small style={{ color:'var(--text-muted)' }}>{u.cliente_id.slice(0,8)}</small></td>
-                  <td style={{ textAlign:'center' }}>{u.giros_disponibles}</td>
-                  <td style={{ textAlign:'right', padding:16 }}>
-                    <input type="number" value={giroInput[u.cliente_id] || ''} onChange={e=>setGiroInput(p=>({...p, [u.cliente_id]: e.target.value}))} style={{ width:50, marginRight:8 }} />
-                    <button onClick={async () => { await asignarGirosToUser(u.cliente_id, parseInt(giroInput[u.cliente_id])); setGiroInput(p=>({...p, [u.cliente_id]:''})); fetchUsuarios() }} className="btn btn-sm">+ Add</button>
-                  </td>
+        <div className="card animate-in" style={{ padding:0, borderRadius:24, overflow:'hidden', background:'rgba(255,255,255,.02)', border:'1px solid rgba(255,255,255,.05)' }}>
+          <div style={{ overflowX:'auto' }}>
+            <table style={{ width:'100%', borderCollapse:'collapse' }}>
+              <thead style={{ background:'rgba(255,255,255,.03)' }}>
+                <tr>
+                  <th style={{ padding:'20px 24px', textAlign:'left', fontSize:12, textTransform:'uppercase', letterSpacing:1, color:'rgba(255,255,255,.4)' }}>Usuario</th>
+                  <th style={{ padding:'20px 24px', textAlign:'center', fontSize:12, textTransform:'uppercase', letterSpacing:1, color:'rgba(255,255,255,.4)' }}>Giros</th>
+                  <th style={{ padding:'20px 24px', textAlign:'right', fontSize:12, textTransform:'uppercase', letterSpacing:1, color:'rgba(255,255,255,.4)' }}>Acción</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {usuarios.map(u => (
+                  <tr key={u.cliente_id} style={{ borderBottom:'1px solid rgba(255,255,255,.02)', transition:'background .15s' }}>
+                    <td style={{ padding:'18px 24px' }}>
+                      <div style={{ fontWeight:800, fontSize:15 }}>{u.email}</div>
+                      <div style={{ fontSize:11, color:'rgba(255,255,255,.3)' }}>ID: {u.cliente_id.slice(0,8)}</div>
+                    </td>
+                    <td style={{ padding:'18px 24px', textAlign:'center' }}>
+                      <div style={{ display:'inline-block', padding:'6px 14px', background:'rgba(168,85,247,.1)', color:'#c084fc', borderRadius:20, fontWeight:900, minWidth:40 }}>{u.giros_disponibles}</div>
+                    </td>
+                    <td style={{ padding:'18px 24px', textAlign:'right' }}>
+                      <div style={{ display:'flex', gap:8, justifyContent:'flex-end' }}>
+                        <input type="number" value={giroInput[u.cliente_id] || ''} onChange={e=>setGiroInput(p=>({...p, [u.cliente_id]: e.target.value}))} style={{ width:70, padding:8, background:'rgba(0,0,0,.3)', border:'1px solid rgba(255,255,255,.1)', borderRadius:10, color:'#fff', textAlign:'center' }} placeholder="0" />
+                        <button onClick={async () => { const v = parseInt(giroInput[u.cliente_id]); if(v>0){ await asignarGirosToUser(u.cliente_id, v); setGiroInput(p=>({...p, [u.cliente_id]:''})); fetchUsuarios() } }} className="btn btn-primary btn-sm" style={{ borderRadius:10 }}>+ Add</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
-      {tab === 'historial' && (
-        <div className="card" style={{ padding:0 }}>
-          <table style={{ width:'100%' }}>
-            <tbody>
-              {historial.map(h => (
-                <tr key={h.id} style={{ borderBottom:'1px solid rgba(255,255,255,.05)' }}>
-                  <td style={{ padding:12 }}>{new Date(h.created_at).toLocaleDateString()}</td>
-                  <td>{h.cliente_id.slice(0,8)}</td>
-                  <td>{h.premio_nombre}</td>
-                  <td style={{ textAlign:'right' }}>{h.acreditado ? '✅' : '❌'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
+      {/* --- CONFIG TAB --- */}
       {tab === 'config' && (
-        <div className="card" style={{ padding:28, maxWidth:500 }}>
-          <h3 style={{ marginBottom:20 }}>⚙️ Configuración</h3>
-          <div className="form-group" style={{ marginBottom:16 }}>
-            <label className="form-label">Estado</label>
-            <div style={{ display:'flex', gap:10 }}>
-              {[['true','Activa'],['false','Desact.']].map(([v,l])=>(
-                <button key={v} onClick={()=>setConfig(p=>({...p,ruleta_activa:v}))} style={{ flex:1, padding:10, borderRadius:10, border:`2px solid ${config.ruleta_activa===v?'var(--accent-primary)':'transparent'}`, background:'rgba(255,255,255,.05)', color:config.ruleta_activa===v?'var(--accent-primary)':'#fff', cursor:'pointer' }}>{l}</button>
-              ))}
+        <div className="card animate-in" style={{ padding:40, maxWidth:580, borderRadius:28 }}>
+          <h2 style={{ fontSize:26, fontWeight:1000, marginBottom:30 }}>⚙️ Configuración Global</h2>
+          <div style={{ display:'flex', flexDirection:'column', gap:24 }}>
+            <div className="form-group">
+              <label className="form-label" style={{ marginBottom:12, display:'block' }}>Estado de la Ruleta</label>
+              <div style={{ display:'flex', gap:10 }}>
+                {[['true','✅ ACTIVADA'],['false','⏸ DESACTIVADA']].map(([v,l])=>(
+                  <button key={v} onClick={()=>setConfig(p=>({...p,ruleta_activa:v}))} style={{ flex:1, padding:'15px', borderRadius:16, border:`2px solid ${config.ruleta_activa===v?'#a855f7':'rgba(255,255,255,.05)'}`, background:config.ruleta_activa===v?'rgba(168,85,247,.1)':'rgba(255,255,255,.02)', color:config.ruleta_activa===v?'#c084fc':'rgba(255,255,255,.3)', fontWeight:900, cursor:'pointer' }}>{l}</button>
+                ))}
+              </div>
             </div>
+            <div className="form-group">
+              <label className="form-label">Título del Banner</label>
+              <input className="form-input" value={config.ruleta_titulo} onChange={e=>setConfig(p=>({...p,ruleta_titulo:e.target.value}))} style={{ padding:14, borderRadius:12 }} />
+            </div>
+            <div className="form-group" style={{ marginBottom:15 }}>
+              <label className="form-label">Descripción</label>
+              <textarea className="form-input" rows={3} value={config.ruleta_descripcion} onChange={e=>setConfig(p=>({...p,ruleta_descripcion:e.target.value}))} style={{ padding:14, borderRadius:12, resize:'none' }} />
+            </div>
+            <button className="btn btn-primary" style={{ height:55, borderRadius:16, fontSize:16, fontWeight:900 }} disabled={saving} onClick={saveConfig}>{saving?'Guardando...':'💾 GUARDAR CAMBIOS'}</button>
           </div>
-          <div className="form-group" style={{ marginBottom:16 }}>
-            <label className="form-label">Título</label>
-            <input className="form-input" value={config.ruleta_titulo} onChange={e=>setConfig(p=>({...p,ruleta_titulo:e.target.value}))} />
-          </div>
-          <div className="form-group" style={{ marginBottom:20 }}>
-            <label className="form-label">Descripción</label>
-            <textarea className="form-input" value={config.ruleta_descripcion} onChange={e=>setConfig(p=>({...p,ruleta_descripcion:e.target.value}))} />
-          </div>
-          <button className="btn btn-primary" style={{ width:'100%' }} disabled={saving} onClick={saveConfig}>💾 Guardar</button>
         </div>
       )}
 
+      {/* --- MODAL REGALAR --- */}
       {showGift && (
-        <div style={{ position:'fixed', inset:0, zIndex:50000, background:'rgba(0,0,0,.8)', display:'flex', alignItems:'center', justifyContent:'center' }} onClick={() => setShowGift(false)}>
-          <div className="card" style={{ width:400, padding:24 }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ marginBottom:20 }}>🎁 Regalar</h3>
-            <div style={{ display:'flex', gap:8, marginBottom:20 }}>
-              <button onClick={()=>setTabGift('individual')} style={{ flex:1, padding:8, background:tabGift==='individual'?'#a855f7':'none', color:'#fff', border:'1px solid #fff', borderRadius:8 }}>Individual</button>
-              <button onClick={()=>setTabGift('masivo')} style={{ flex:1, padding:8, background:tabGift==='masivo'?'#a855f7':'none', color:'#fff', border:'1px solid #fff', borderRadius:8 }}>Masivo</button>
+        <div style={{ position:'fixed', inset:0, zIndex:1000, background:'rgba(0,0,0,.85)', backdropFilter:'blur(12px)', display:'flex', alignItems:'center', justifyContent:'center', padding:24 }} onClick={()=>setShowGift(false)}>
+          <div className="card shadow-lg animate-scale" style={{ width:'100%', maxWidth:480, padding:32, borderRadius:32, border:'1px solid rgba(255,255,255,.1)', maxHeight:'90vh', overflowY:'auto' }} onClick={e=>e.stopPropagation()}>
+            <h2 style={{ fontSize:28, fontWeight:1000, marginBottom:25, textAlign:'center' }}>🎁 Regalar a Usuarios</h2>
+            
+            <div style={{ display:'flex', gap:8, marginBottom:25, background:'rgba(255,255,255,.03)', padding:6, borderRadius:18 }}>
+              <button onClick={()=>setTabGift('individual')} style={{ flex:1, padding:12, borderRadius:14, border:'none', background:tabGift==='individual'?'#a855f7':'none', color:tabGift==='individual'?'#fff':'rgba(255,255,255,.4)', fontWeight:800, cursor:'pointer' }}>INDIVIDUAL</button>
+              <button onClick={()=>setTabGift('masivo')} style={{ flex:1, padding:12, borderRadius:14, border:'none', background:tabGift==='masivo'?'#a855f7':'none', color:tabGift==='masivo'?'#fff':'rgba(255,255,255,.4)', fontWeight:800, cursor:'pointer' }}>TODO EL SISTEMA</button>
             </div>
+
             {tabGift === 'individual' ? (
               <>
-                <input className="form-input" placeholder="Buscar..." value={giftSearch} onChange={e=>setGiftSearch(e.target.value)} style={{ marginBottom:10 }} />
-                <div style={{ maxHeight:200, overflowY:'auto' }}>
-                  {allClients.filter(c => c.email.toLowerCase().includes(giftSearch.toLowerCase())).map(c => (
-                    <button key={c.id} onClick={()=>setGiftTarget(c.id)} style={{ width:'100%', padding:10, textAlign:'left', background: giftTarget===c.id?'#a855f7':'none', border:'none', color:'#fff', borderRadius:6 }}>{c.nombre || c.email}</button>
-                  ))}
+                <div style={{ marginBottom:20 }}>
+                   <label className="form-label" style={{ fontSize:12, opacity:0.6 }}>🔍 Selecciona Cliente</label>
+                   <input className="form-input" placeholder="Buscar por email o nombre..." value={giftSearch} onChange={e=>setGiftSearch(e.target.value)} style={{ marginBottom:12, borderRadius:14 }} />
+                   <div style={{ maxHeight:180, overflowY:'auto', display:'flex', flexDirection:'column', gap:5, background:'rgba(0,0,0,.2)', padding:10, borderRadius:14, border:'1px solid rgba(255,255,255,.05)' }}>
+                     {allClients.filter(c => (c.email+c.nombre).toLowerCase().includes(giftSearch.toLowerCase())).slice(0,30).map(c => (
+                       <button key={c.id} onClick={()=>setGiftTarget(c.id)} style={{ padding:12, borderRadius:10, border:'none', textAlign:'left', background:giftTarget===c.id?'rgba(168,85,247,.2)':'none', color:giftTarget===c.id?'#c084fc':'#fff', cursor:'pointer', fontWeight:giftTarget===c.id?800:400 }}>{c.nombre || c.email} {c.nombre && <small style={{ opacity:0.4 }}>({c.email})</small>}</button>
+                     ))}
+                   </div>
                 </div>
+                <div style={{ display:'flex', gap:10, marginBottom:20 }}>
+                  <button onClick={()=>setGiftMode('giros')} style={{ flex:1, padding:'10px', borderRadius:12, border:giftMode==='giros'?'1px solid #c084fc':'1px solid rgba(255,255,255,.1)', background:giftMode==='giros'?'rgba(168,85,247,.1)':'none', color:giftMode==='giros'?'#c084fc':'#fff', fontSize:11, fontWeight:800 }}>MANDAR GIROS</button>
+                  <button onClick={()=>setGiftMode('premio')} style={{ flex:1, padding:'10px', borderRadius:12, border:giftMode==='premio'?'1px solid #c084fc':'1px solid rgba(255,255,255,.1)', background:giftMode==='premio'?'rgba(168,85,247,.1)':'none', color:giftMode==='premio'?'#c084fc':'#fff', fontSize:11, fontWeight:800 }}>PREMIO DIRECTO</button>
+                </div>
+                {giftMode === 'giros' ? (
+                  <div className="form-group">
+                    <label className="form-label">Cantidad de giros</label>
+                    <div style={{ display:'flex', alignItems:'center', gap:15, background:'rgba(255,255,255,.05)', padding:8, borderRadius:16, justifyContent:'center' }}>
+                      <button onClick={()=>setGiftAmount(g=>Math.max(1,g-1))} style={{ width:40, height:40, borderRadius:12, border:'none', background:'rgba(255,255,255,.1)', color:'#fff', cursor:'pointer' }}>-</button>
+                      <span style={{ fontSize:32, fontWeight:1000, color:'#a855f7' }}>{giftAmount}</span>
+                      <button onClick={()=>setGiftAmount(g=>g+1)} style={{ width:40, height:40, borderRadius:12, border:'none', background:'rgba(255,255,255,.1)', color:'#fff', cursor:'pointer' }}>+</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="form-group">
+                    <label className="form-label">Elige el Premio</label>
+                    <select className="form-input" value={giftPremioId} onChange={e=>setGiftPremioId(e.target.value)} style={{ borderRadius:14 }}>
+                      <option value="">Seleccionar premio...</option>
+                      {premios.filter(p=>p.activo).map(p=>(<option key={p.id} value={p.id}>{p.emoji} {p.nombre}</option>))}
+                    </select>
+                  </div>
+                )}
               </>
             ) : (
-              <select className="form-input" value={giftPremioId} onChange={e=>setGiftPremioId(e.target.value)}>
-                <option value="">Premio masivo...</option>
-                {premios.filter(p=>p.activo).map(p=>(<option key={p.id} value={p.id}>{p.emoji} {p.nombre}</option>))}
-              </select>
+              <div style={{ padding:'20px', background:'rgba(168,85,247,.05)', borderRadius:20, border:'1px dashed rgba(168,85,247,.3)', marginBottom:20 }}>
+                 <p style={{ margin:0, fontSize:13, color:'#c084fc', textAlign:'center', marginBottom:15 }}>¡Regala un premio a toda la comunidad!</p>
+                 <select className="form-input" value={giftPremioId} onChange={e=>setGiftPremioId(e.target.value)} style={{ borderRadius:14, background:'rgba(0,0,0,.3)' }}>
+                    <option value="">Seleccionar premio masivo...</option>
+                    {premios.filter(p=>p.activo).map(p=>(<option key={p.id} value={p.id}>{p.emoji} {p.nombre}</option>))}
+                 </select>
+              </div>
             )}
-            <button className="btn btn-primary" style={{ width:'100%', marginTop:20 }} disabled={saving} onClick={async ()=>{
-              setSaving(true)
-              if (tabGift==='masivo') {
-                const { error } = await supabase.rpc('regalar_premio_masivo', { p_premio_id: giftPremioId, p_admin_id: adminPerfil?.id })
-                if (error) alert(error.message.includes('404') ? 'Ejecuta el SQL 039' : error.message)
-                else alert('Enviado!')
-              } else {
-                await asignarGirosToUser(giftTarget, giftAmount)
-                alert('Regalado!')
-              }
-              setSaving(false); setShowGift(false)
-            }}>Enviar</button>
+
+            <button onClick={handleGrant} disabled={saving || (!giftTarget && tabGift==='individual') || (!giftPremioId && (tabGift==='masivo' || giftMode==='premio'))} className="btn btn-primary" style={{ width:'100%', height:60, borderRadius:18, marginTop:10, fontSize:16, fontWeight:1000, background:'linear-gradient(135deg,#a855f7,#7c3aed)', boxShadow:'0 10px 25px rgba(168,85,247,.4)' }}>
+              {saving ? 'PROCESANDO...' : (tabGift==='masivo'?'📢 REGALAR A TODOS':'🎁 REGALAR PREMIO')}
+            </button>
           </div>
         </div>
       )}
 
+      {/* --- FORM EDIT/NEWPREMIO --- */}
       {showForm && (
-        <div style={{ position:'fixed', inset:0, zIndex:50000, background:'rgba(0,0,0,.8)', display:'flex', alignItems:'center', justifyContent:'center' }} onClick={() => setShowForm(false)}>
-           <div className="card" style={{ width:400, padding:24 }} onClick={e => e.stopPropagation()}>
-              <h3 style={{ marginBottom:20 }}>{editing?'Editar':'Nuevo'} Premio</h3>
-              <input className="form-input" placeholder="Nombre" value={form.nombre} onChange={e=>setForm({...form, nombre:e.target.value})} style={{ marginBottom:12 }} />
-              <select className="form-input" value={form.tipo} onChange={e=>setForm({...form, tipo:e.target.value})} style={{ marginBottom:12 }}>
-                {TIPOS.map(t=>(<option key={t.value} value={t.value}>{t.label}</option>))}
-              </select>
-              <input className="form-input" type="number" placeholder="Valor" value={form.valor} onChange={e=>setForm({...form, valor:e.target.value})} style={{ marginBottom:12 }} />
-              <button className="btn btn-primary" style={{ width:'100%' }} onClick={savePremio}>Guardar</button>
+        <div style={{ position:'fixed', inset:0, zIndex:1000, background:'rgba(0,0,0,.9)', display:'flex', alignItems:'center', justifyContent:'center' }} onClick={()=>setShowForm(false)}>
+           <div className="card shadow-2xl scale-in" style={{ width:'100%', maxWidth:440, padding:35, borderRadius:32, border:'1px solid rgba(255,255,255,.1)' }} onClick={e=>e.stopPropagation()}>
+              <h2 style={{ fontSize:26, fontWeight:1000, marginBottom:25 }}>{editing?'Editar':'Nuevo'} Premio</h2>
+              <div style={{ display:'flex', flexDirection:'column', gap:18 }}>
+                <div style={{ display:'flex', gap:12 }}>
+                  <input className="form-input" placeholder="Emoji" value={form.emoji} onChange={e=>setForm({...form, emoji:e.target.value})} style={{ width:70, textAlign:'center', fontSize:24 }} />
+                  <input className="form-input" placeholder="Nombre del premio" value={form.nombre} onChange={e=>setForm({...form, nombre:e.target.value})} style={{ flex:1 }} />
+                </div>
+                <select className="form-input" value={form.tipo} onChange={e=>setForm({...form, tipo:e.target.value})}>
+                  {TIPOS.map(t=>(<option key={t.value} value={t.value}>{t.label}</option>))}
+                </select>
+                <div style={{ display:'flex', gap:12 }}>
+                  <div style={{ flex:1 }}>
+                    <label style={{ fontSize:10, opacity:0.5, marginLeft:5 }}>VALOR</label>
+                    <input className="form-input" type="number" placeholder="Monto / %" value={form.valor} onChange={e=>setForm({...form, valor:e.target.value})} />
+                  </div>
+                  <div style={{ flex:1 }}>
+                    <label style={{ fontSize:10, opacity:0.5, marginLeft:5 }}>PROBABILIDAD %</label>
+                    <input className="form-input" type="number" placeholder="1-100" value={form.probabilidad} onChange={e=>setForm({...form, probabilidad:e.target.value})} />
+                  </div>
+                </div>
+                <div style={{ display:'flex', gap:8 }}>
+                   {COLORS_PRESET.map(c => (
+                     <button key={c} onClick={()=>setForm({...form, color:c})} style={{ width:24, height:24, borderRadius:6, background:c, border:form.color===c?'2px solid #fff':'none', cursor:'pointer' }} />
+                   ))}
+                </div>
+                <button className="btn btn-primary" style={{ height:55, borderRadius:16, fontWeight:900, marginTop:10 }} onClick={savePremio}>{saving?'Guardando...':'💾 GUARDAR PREMIO'}</button>
+              </div>
            </div>
         </div>
       )}
