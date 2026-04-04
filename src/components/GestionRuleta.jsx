@@ -184,12 +184,28 @@ export default function GestionRuleta() {
           // 2. Acreditar el premio según el tipo
           if (p.tipo === 'saldo_usd' || p.tipo === 'saldo_bs') {
             const field = p.tipo === 'saldo_usd' ? 'saldo' : 'saldo_bs'
-            const { data: perf, error: fetchErr } = await supabase.from('perfiles').select(field).eq('id', giftTarget).single()
+            
+            // Usar 'billeteras' (según la migración 023/028) en lugar de 'perfiles'
+            const { data: wallet, error: fetchErr } = await supabase.from('billeteras').select(field).eq('auth_user_id', giftTarget).maybeSingle()
             if (fetchErr) throw fetchErr
             
-            const newBalance = (Number(perf[field]) || 0) + Number(p.valor)
-            const { error: balErr } = await supabase.from('perfiles').update({ [field]: newBalance }).eq('id', giftTarget)
+            const newBalance = (Number(wallet?.[field]) || 0) + Number(p.valor)
+            const { error: balErr } = await supabase.from('billeteras').upsert({ 
+              auth_user_id: giftTarget, 
+              [field]: newBalance,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'auth_user_id' })
             if (balErr) throw balErr
+
+            // Registrar transacción en historial de billetera para transparencia
+            await supabase.from('billetera_transacciones').insert({
+              auth_user_id: giftTarget,
+              monto: p.valor,
+              tipo: 'ajuste_admin',
+              descripcion: `Premio Ruleta: ${p.nombre}`,
+              moneda: p.tipo === 'saldo_usd' ? 'usd' : 'bs',
+              referencia_id: g.id
+            })
           } else if (p.tipo === 'descuento') {
             const { error: descErr } = await supabase.from('ruleta_descuentos_pendientes').insert({
               cliente_id: giftTarget, giro_id: g.id, porcentaje: p.valor, nombre: p.nombre
