@@ -815,7 +815,7 @@ export function CartProvider({ children }) {
 
   const clearCart = () => setCart([])
 
-  const checkout = async (registrarVenta, clienteId = null, metodoPagoId = null, referencia = '', activeCupon = null) => {
+  const checkout = async (registrarVenta, clienteId = null, metodoPagoId = null, referencia = '', activeCupon = null, ruletaDescuento = null) => {
     let pedidoCreated = false
     let errorMessage = null
     let finalPedido = null
@@ -825,11 +825,16 @@ export function CartProvider({ children }) {
       let pedidoTotalUSD = cart.reduce((acc, item) => acc + (item.venta_usd * item.quantity), 0)
       let pedidoTotalBs = cart.reduce((acc, item) => acc + (item.venta_bs * item.quantity), 0)
 
+      let discountFactor = 1;
       if (activeCupon) {
-        const discountFactor = 1 - (activeCupon.porcentaje / 100)
-        pedidoTotalUSD = pedidoTotalUSD * discountFactor
-        pedidoTotalBs = Math.round(pedidoTotalBs * discountFactor)
+        discountFactor *= (1 - activeCupon.porcentaje / 100)
       }
+      if (ruletaDescuento) {
+        discountFactor *= (1 - ruletaDescuento.porcentaje / 100)
+      }
+
+      pedidoTotalUSD = pedidoTotalUSD * discountFactor
+      pedidoTotalBs = Math.round(pedidoTotalBs * discountFactor)
 
       // PASO 1: PRE-INSERTAR uso de cupón ANTES de crear el pedido.
       // Esto activa el trigger con advisory lock en la BD, que bloquea

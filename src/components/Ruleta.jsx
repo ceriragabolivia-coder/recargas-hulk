@@ -261,7 +261,12 @@ export default function Ruleta() {
               {resultado.valor > 0 && resultado.tipo === 'saldo_bs' && (
                 <div style={{ fontSize: 32, fontWeight: 900, color: '#a855f7' }}>+{formatBs(resultado.valor)}</div>
               )}
-              {resultado.acreditado && <div style={{ color: '#22c55e', fontSize: 13, marginTop: 6 }}>✅ Acreditado a tu billetera</div>}
+              {resultado.acreditado && resultado.tipo !== 'descuento' && (
+                <div style={{ color: '#22c55e', fontSize: 13, marginTop: 6 }}>✅ Acreditado a tu billetera</div>
+              )}
+              {resultado.tipo === 'descuento' && (
+                <div style={{ color: '#FFD700', fontSize: 13, marginTop: 6 }}>✅ Guardado para tu próxima compra</div>
+              )}
               {resultado.premio_descripcion && <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 8, marginBottom: 0 }}>{resultado.premio_descripcion}</p>}
             </div>
 
