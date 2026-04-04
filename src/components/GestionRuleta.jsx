@@ -49,35 +49,43 @@ export default function GestionRuleta() {
   const { perfil: adminPerfil } = useAuth()
 
   const fetchAllClients = async () => {
-    // 1. Cargamos de la tabla 'clientes' (donde están nombres y correos reales)
+    // Intentamos cargar CLIENTES primero. Sin Joins anidados para evitar errores de relación.
     const { data: list, error: listError } = await supabase
       .from('clientes')
-      .select('auth_user_id, correo, nombres, perfiles:auth_user_id(rol)')
+      .select('auth_user_id, correo, nombres')
       .limit(600)
 
     if (listError) {
-      console.error("❌ Error fetching all clients:", listError)
+      alert("❌ Error cargando clientes para buscador: " + listError.message)
       return
     }
 
-    // 3. Formateamos y filtramos en JS. Null-safe para 'rol' para evitar crasheos.
-    const formatted = (list || [])
-      .map(c => {
-        const role = c.perfiles?.rol || 'cliente'
-        return {
-          id: c.auth_user_id, 
-          email: c.correo || '',
-          nombre: c.nombres || '',
-          rol: role
-        }
-      })
-      .filter(u => {
-        // Solo mostramos clientes y revendedores
-        const r = (u.rol || '').toLowerCase()
-        return r === 'cliente' || r === 'revendedor'
-      })
+    if (!list || list.length === 0) {
+      console.warn("⚠️ No se encontraron clientes en la base de datos.")
+      setAllClients([])
+      return
+    }
 
-    console.log("👥 Usuarios cargados para buscador de regalos:", formatted.length)
+    // Traemos perfiles de apoyo para filtrar roles (en una segunda consulta o join simple)
+    const { data: perfs } = await supabase
+      .from('perfiles')
+      .select('id, rol')
+      .in('id', list.map(c => c.auth_user_id).filter(Boolean))
+
+    const perfilesMap = {}
+    ;(perfs || []).forEach(p => { perfilesMap[p.id] = p.rol })
+
+    const formatted = list.map(c => ({
+      id: c.auth_user_id, 
+      email: c.correo || '',
+      nombre: c.nombres || '',
+      rol: perfilesMap[c.auth_user_id] || 'cliente'
+    })).filter(u => {
+      const r = (u.rol || '').toLowerCase()
+      return r === 'cliente' || r === 'revendedor'
+    })
+
+    console.log("👥 Usuarios cargados exitosamente:", formatted.length)
     setAllClients(formatted)
   }
   const fetchConfig = async () => {
@@ -462,10 +470,37 @@ export default function GestionRuleta() {
                   </div>
                 </div>
 
-                {/* Search */}
-                <div className="form-group" style={{ marginBottom:12 }}>
-                  <label className="form-label">Buscar usuario ({allClients.length} cargados)</label>
-                  <input className="form-input" value={giftSearch} onChange={e => setGiftSearch(e.target.value)} placeholder="Escribe el email o nombre…" />
+                {/* User list */}
+                <div style={{ maxHeight:280, overflowY:'auto', display:'flex', flexDirection:'column', gap:6, marginBottom:16 }}>
+                  {allClients
+                    .filter(c => {
+                      const search = giftSearch.trim().toLowerCase()
+                      if (!search) return true 
+                      return (
+                        c.email?.toLowerCase().includes(search) || 
+                        c.nombre?.toLowerCase().includes(search) ||
+                        c.id?.toLowerCase().includes(search)
+                      )
+                    })
+                    .slice(0, 50) 
+                    .map(c => (
+                      <button key={c.id} onClick={() => setGiftTarget(c.id)}
+                        style={{ padding:'10px 14px', borderRadius:10, border:`2px solid ${giftTarget === c.id ? '#a855f7' : 'rgba(255,255,255,.08)'}`, background: giftTarget === c.id ? 'rgba(168,85,247,.12)' : 'rgba(255,255,255,.03)', color: giftTarget === c.id ? '#c084fc' : 'var(--text-primary)', textAlign:'left', cursor:'pointer', fontWeight: giftTarget === c.id ? 700 : 400, transition:'all .15s' }}>
+                        {giftTarget === c.id ? '✓ ' : ''}
+                        <span style={{ fontWeight: 700 }}>{c.nombre || c.email}</span>
+                        {c.nombre && c.email !== c.nombre && <span style={{ fontSize:12, color:'var(--text-muted)', marginLeft:6 }}>({c.email})</span>}
+                        {!c.nombre && !c.email && <span style={{ fontSize:10, color:'var(--text-muted)' }}>ID: {c.id.slice(0,8)}</span>}
+                      </button>
+                    ))}
+                  {allClients.length === 0 && (
+                    <div style={{ textAlign:'center', color:'var(--text-muted)', padding:20 }}>No se cargaron usuarios. Revisa la consola o los permisos.</div>
+                  )}
+                  {allClients.length > 0 && allClients.filter(c => {
+                    const s = giftSearch.toLowerCase();
+                    return c.email.toLowerCase().includes(s) || c.nombre.toLowerCase().includes(s);
+                  }).length === 0 && giftSearch !== '' && (
+                    <div style={{ textAlign:'center', color:'var(--text-muted)', padding:20 }}>No se encontraron coincidencias para "{giftSearch}"</div>
+                  )}
                 </div>
               </>
             ) : (
@@ -546,7 +581,7 @@ export default function GestionRuleta() {
                     setSaving(true)
                     const { data, error } = await supabase.rpc('regalar_premio_masivo', {
                       p_premio_id: giftPremioId,
-                      p_admin_id: adminPerfil?.id || (await supabase.auth.getUser()).data.user?.id
+                      p_admin_id: (adminPerfil?.id || (await supabase.auth.getUser()).data.user?.id)
                     })
                     setSaving(false)
                     if (error) {
