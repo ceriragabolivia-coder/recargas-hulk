@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatUSD, formatBs } from '../utils/helpers'
+import { useAuth } from '../hooks/useData'
 
 const COLORS_PRESET = ['#FF6B6B','#FF8E53','#FFCA28','#66BB6A','#26C6DA','#5C6BC0','#AB47BC','#EC407A','#FF7043','#26A69A']
 const TIPOS = [
@@ -31,6 +32,8 @@ export default function GestionRuleta() {
   const [saving, setSaving]         = useState(false)
   const [loadingTab, setLoadingTab] = useState(false)
   const [giroInput, setGiroInput]   = useState({})
+  const [tabGift, setTabGift]       = useState('individual')
+  const [giftPremioId, setGiftPremioId] = useState('')
 
   useEffect(() => { fetchPremios(); fetchConfig(); fetchAllClients() }, [])
   useEffect(() => {
@@ -43,9 +46,10 @@ export default function GestionRuleta() {
     const { data } = await supabase.from('ruleta_premios').select('*').order('created_at')
     setPremios(data || [])
   }
+  const { perfil: adminPerfil } = useAuth()
+
   const fetchAllClients = async () => {
     // 1. Cargamos de la tabla 'clientes' (donde están nombres y correos reales)
-    // 2. Traemos su perfil asociado selectivo para filtrar roles
     const { data: list, error: listError } = await supabase
       .from('clientes')
       .select('auth_user_id, correo, nombres, perfiles:auth_user_id(rol)')
@@ -56,20 +60,24 @@ export default function GestionRuleta() {
       return
     }
 
-    // 3. Formateamos y filtramos en JS para mayor fiabilidad con mayúsculas/minúsculas
+    // 3. Formateamos y filtramos en JS. Null-safe para 'rol' para evitar crasheos.
     const formatted = (list || [])
-      .map(c => ({
-        id: c.auth_user_id, // Este es el UUID para ruleta_giros_disponibles
-        email: c.correo || '',
-        nombre: c.nombres || '',
-        rol: c.perfiles?.rol || 'cliente'
-      }))
+      .map(c => {
+        const role = c.perfiles?.rol || 'cliente'
+        return {
+          id: c.auth_user_id, 
+          email: c.correo || '',
+          nombre: c.nombres || '',
+          rol: role
+        }
+      })
       .filter(u => {
-        const r = u.rol.toLowerCase()
+        // Solo mostramos clientes y revendedores
+        const r = (u.rol || '').toLowerCase()
         return r === 'cliente' || r === 'revendedor'
       })
 
-    console.log("👥 Clientes cargados para regalo:", formatted.length)
+    console.log("👥 Usuarios cargados para buscador de regalos:", formatted.length)
     setAllClients(formatted)
   }
   const fetchConfig = async () => {
@@ -429,21 +437,60 @@ export default function GestionRuleta() {
               <button onClick={() => setShowGift(false)} style={{ background:'none', border:'none', fontSize:22, cursor:'pointer', color:'var(--text-muted)' }}>×</button>
             </div>
 
-            {/* Quantity */}
-            <div className="form-group" style={{ marginBottom:16 }}>
-              <label className="form-label">Cantidad de giros a regalar</label>
-              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                <button onClick={() => setGiftAmount(g => Math.max(1, g-1))} style={{ width:36, height:36, borderRadius:8, border:'1px solid rgba(255,255,255,.15)', background:'rgba(255,255,255,.05)', color:'var(--text-primary)', fontSize:18, cursor:'pointer' }}>−</button>
-                <span style={{ fontSize:28, fontWeight:900, minWidth:40, textAlign:'center', color:'#FFD700' }}>{giftAmount}</span>
-                <button onClick={() => setGiftAmount(g => Math.min(99, g+1))} style={{ width:36, height:36, borderRadius:8, border:'1px solid rgba(255,255,255,.15)', background:'rgba(255,255,255,.05)', color:'var(--text-primary)', fontSize:18, cursor:'pointer' }}>+</button>
-              </div>
+            <div style={{ display:'flex', gap:10, marginBottom:24 }}>
+              <button 
+                onClick={() => setTabGift('individual')} 
+                style={{ ...tabStyle('individual'), flex:1, background: tabGift === 'individual' ? '#a855f7' : 'rgba(255,255,255,.05)', color: tabGift === 'individual' ? '#fff' : 'var(--text-muted)' }}>
+                👤 De 1 en 1
+              </button>
+              <button 
+                onClick={() => setTabGift('masivo')} 
+                style={{ ...tabStyle('masivo'), flex:1, background: tabGift === 'masivo' ? '#a855f7' : 'rgba(255,255,255,.05)', color: tabGift === 'masivo' ? '#fff' : 'var(--text-muted)' }}>
+                📢 Para TODOS
+              </button>
             </div>
 
-            {/* Search */}
-            <div className="form-group" style={{ marginBottom:12 }}>
-              <label className="form-label">Buscar usuario</label>
-              <input className="form-input" value={giftSearch} onChange={e => setGiftSearch(e.target.value)} placeholder="Escribe el email o nombre…" />
-            </div>
+            {tabGift === 'individual' ? (
+              <>
+                {/* Quantity */}
+                <div className="form-group" style={{ marginBottom:16 }}>
+                  <label className="form-label">Cantidad de giros a regalar</label>
+                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                    <button onClick={() => setGiftAmount(g => Math.max(1, g-1))} style={{ width:36, height:36, borderRadius:8, border:'1px solid rgba(255,255,255,.15)', background:'rgba(255,255,255,.05)', color:'var(--text-primary)', fontSize:18, cursor:'pointer' }}>−</button>
+                    <span style={{ fontSize:28, fontWeight:900, minWidth:40, textAlign:'center', color:'#FFD700' }}>{giftAmount}</span>
+                    <button onClick={() => setGiftAmount(g => Math.min(99, g+1))} style={{ width:36, height:36, borderRadius:8, border:'1px solid rgba(255,255,255,.15)', background:'rgba(255,255,255,.05)', color:'var(--text-primary)', fontSize:18, cursor:'pointer' }}>+</button>
+                  </div>
+                </div>
+
+                {/* Search */}
+                <div className="form-group" style={{ marginBottom:12 }}>
+                  <label className="form-label">Buscar usuario ({allClients.length} cargados)</label>
+                  <input className="form-input" value={giftSearch} onChange={e => setGiftSearch(e.target.value)} placeholder="Escribe el email o nombre…" />
+                </div>
+              </>
+            ) : (
+              <div style={{ marginBottom:20 }}>
+                <p style={{ fontSize:13, color:'var(--text-muted)', marginBottom:16, background:'rgba(255,215,0,.05)', padding:12, borderRadius:8, border:'1px solid rgba(255,215,0,.2)' }}>
+                  ⚠️ Esta acción le regalará el premio seleccionado a <strong>TODOS</strong> los clientes y revendedores del sistema inmediatamente.
+                </p>
+                <div className="form-group" style={{ marginBottom:20 }}>
+                  <label className="form-label">Selecciona el premio que recibirán todos</label>
+                  <select 
+                    className="form-input" 
+                    value={giftPremioId} 
+                    onChange={e => setGiftPremioId(e.target.value)}
+                    style={{ background:'var(--bg-card)', border:'1px solid var(--accent-primary)' }}
+                  >
+                    <option value="">-- Elige un premio --</option>
+                    {premios.filter(p => p.activo && p.tipo !== 'sin_premio').map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.emoji} {p.nombre} ({p.tipo})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
 
             {/* User list */}
             <div style={{ maxHeight:280, overflowY:'auto', display:'flex', flexDirection:'column', gap:6, marginBottom:16 }}>
@@ -472,24 +519,50 @@ export default function GestionRuleta() {
               )}
             </div>
 
-            <button className="btn btn-primary" style={{ width:'100%', height:50, fontSize:16, background:'linear-gradient(135deg,#a855f7,#7c3aed)', boxShadow:'0 6px 20px rgba(168,85,247,.4)' }}
-              disabled={!giftTarget || saving}
-              onClick={async () => {
-                setSaving(true)
-                const ok = await asignarGirosToUser(giftTarget, giftAmount)
-                setSaving(false)
-                if (ok) {
-                  const client = allClients.find(c => c.id === giftTarget)
-                  alert(`✅ ${giftAmount} giro${giftAmount > 1 ? 's' : ''} regalado${giftAmount > 1 ? 's' : ''} a ${client?.email}`)
-                  setShowGift(false)
-                  setGiftTarget('')
-                  setGiftAmount(1)
-                  setGiftSearch('')
-                  if (tab === 'usuarios') fetchUsuarios()
-                }
-              }}>
-              {saving ? 'Asignando…' : `🎁 Regalar ${giftAmount} giro${giftAmount > 1 ? 's' : ''}`}
-            </button>
+              {tabGift === 'individual' ? (
+                <button className="btn btn-primary" style={{ width:'100%', height:50, fontSize:16, background:'linear-gradient(135deg,#a855f7,#7c3aed)', boxShadow:'0 6px 20px rgba(168,85,247,.4)' }}
+                  disabled={!giftTarget || saving}
+                  onClick={async () => {
+                    setSaving(true)
+                    const ok = await asignarGirosToUser(giftTarget, giftAmount)
+                    setSaving(false)
+                    if (ok) {
+                      const client = allClients.find(c => c.id === giftTarget)
+                      alert(`✅ ${giftAmount} giro${giftAmount > 1 ? 's' : ''} regalado${giftAmount > 1 ? 's' : ''} a ${client?.email}`)
+                      setShowGift(false)
+                      setGiftTarget('')
+                      setGiftAmount(1)
+                      setGiftSearch('')
+                      if (tab === 'usuarios') fetchUsuarios()
+                    }
+                  }}>
+                  {saving ? 'Asignando…' : `🎁 Regalar ${giftAmount} giro${giftAmount > 1 ? 's' : ''}`}
+                </button>
+              ) : (
+                <button className="btn btn-primary" style={{ width:'100%', height:50, fontSize:16, background:'linear-gradient(135deg,#22c55e,#16a34a)', boxShadow:'0 6px 20px rgba(34,197,94,.4)' }}
+                  disabled={!giftPremioId || saving}
+                  onClick={async () => {
+                    if (!confirm('¿ESTÁS SEGURO? Esto otorgará el premio a TODOS los usuarios del sistema.')) return;
+                    setSaving(true)
+                    const { data, error } = await supabase.rpc('regalar_premio_masivo', {
+                      p_premio_id: giftPremioId,
+                      p_admin_id: adminPerfil?.id || (await supabase.auth.getUser()).data.user?.id
+                    })
+                    setSaving(false)
+                    if (error) {
+                      alert('Error: ' + error.message)
+                    } else if (data?.error) {
+                      alert('Error: ' + data.error)
+                    } else {
+                      alert(`✅ ¡Éxito! Se ha regalado el premio "${data.premio}" a ${data.usuarios_afectados} usuarios.`)
+                      setShowGift(false)
+                      setGiftPremioId('')
+                      if (tab === 'historial') fetchHistorial()
+                    }
+                  }}>
+                  {saving ? 'Procesando regalo masivo…' : `📢 Regalar Premio a TODO el Sistema`}
+                </button>
+              )}
           </div>
         </div>
       )}
