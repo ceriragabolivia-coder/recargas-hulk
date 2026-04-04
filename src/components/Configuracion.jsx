@@ -7,7 +7,7 @@ import AlertModal from './AlertModal'
 export default function Configuracion() {
   const { metodos, loading: metodosLoading, createMetodo, updateMetodo, deleteMetodo } = useMetodosPago()
   const { config, updateConfig, refetch: refetchConfig, loading: configLoading } = useConfiguracion()
-  const { mensajes, createMensaje, updateMensaje, deleteMensaje } = useMensajesSistema()
+  const { mensajes, loading: mensajesLoading, createMensaje, updateMensaje, deleteMensaje } = useMensajesSistema()
   const { enviarNotificacion } = useNotificacionesPush()
   const [activeTab, setActiveTab] = useState('pagos')
   
@@ -340,7 +340,7 @@ export default function Configuracion() {
                   </form>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {loading ? (
+                    {metodosLoading ? (
                       <p style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Cargando métodos de pago...</p>
                     ) : metodos.length === 0 ? (
                       <div style={{ textAlign: 'center', padding: '60px', backgroundColor: 'var(--bg-panel)', borderRadius: '16px', border: '2px dashed var(--border-color)' }}>
@@ -856,7 +856,9 @@ export default function Configuracion() {
                   </form>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {mensajes.length === 0 ? (
+                    {mensajesLoading ? (
+                      <p style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Cargando mensajes...</p>
+                    ) : mensajes.length === 0 ? (
                       <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', border: '1px dashed var(--border-color)', borderRadius: '12px' }}>
                         No hay mensajes de sistema configurados.
                       </div>
