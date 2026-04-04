@@ -35,7 +35,14 @@ export default function GestionRuleta() {
   const [tabGift, setTabGift]       = useState('individual')
   const [giftPremioId, setGiftPremioId] = useState('')
 
-  useEffect(() => { fetchPremios(); fetchConfig(); fetchAllClients() }, [])
+  const { perfil: adminPerfil } = useAuth()
+
+  useEffect(() => { 
+    fetchPremios()
+    fetchConfig()
+    fetchAllClients() 
+  }, [])
+
   useEffect(() => {
     if (tab === 'historial') fetchHistorial()
     if (tab === 'usuarios')  fetchUsuarios()
@@ -46,14 +53,13 @@ export default function GestionRuleta() {
     const { data } = await supabase.from('ruleta_premios').select('*').order('created_at')
     setPremios(data || [])
   }
-  const { perfil: adminPerfil } = useAuth()
 
   const fetchAllClients = async () => {
-    // Intentamos cargar CLIENTES primero. Sin Joins anidados para evitar errores de relación.
+    // 1. Cargamos de la tabla 'clientes' (usando 'usuario' que es el correo real)
     const { data: list, error: listError } = await supabase
       .from('clientes')
-      .select('auth_user_id, correo, nombres')
-      .limit(600)
+      .select('auth_user_id, usuario, nombres')
+      .limit(800)
 
     if (listError) {
       alert("❌ Error cargando clientes para buscador: " + listError.message)
@@ -61,12 +67,11 @@ export default function GestionRuleta() {
     }
 
     if (!list || list.length === 0) {
-      console.warn("⚠️ No se encontraron clientes en la base de datos.")
       setAllClients([])
       return
     }
 
-    // Traemos perfiles de apoyo para filtrar roles (en una segunda consulta o join simple)
+    // 2. Traemos perfiles para filtrar por rol
     const { data: perfs } = await supabase
       .from('perfiles')
       .select('id, rol')
@@ -77,7 +82,7 @@ export default function GestionRuleta() {
 
     const formatted = list.map(c => ({
       id: c.auth_user_id, 
-      email: c.correo || '',
+      email: c.usuario || '', 
       nombre: c.nombres || '',
       rol: perfilesMap[c.auth_user_id] || 'cliente'
     })).filter(u => {
@@ -88,18 +93,42 @@ export default function GestionRuleta() {
     console.log("👥 Usuarios cargados exitosamente:", formatted.length)
     setAllClients(formatted)
   }
+
   const fetchConfig = async () => {
-    const { data } = await supabase.from('configuracion').select('ruleta_activa,ruleta_titulo,ruleta_descripcion').single()
-    if (data) setConfig(prev => ({ ...prev, ...data }))
+    const { data, error } = await supabase
+      .from('configuracion')
+      .select('clave, valor, valor_texto')
+      .ilike('clave', 'ruleta_%')
+
+    if (error) return
+
+    const newConfig = { ruleta_activa: 'false', ruleta_titulo: '¡Gira y Gana!', ruleta_descripcion: '' }
+    if (data) {
+      data.forEach(row => {
+        if (row.clave === 'ruleta_activa') newConfig.ruleta_activa = (row.valor === 1 || row.valor === '1').toString()
+        if (row.clave === 'ruleta_titulo') newConfig.ruleta_titulo = row.valor_texto || ''
+        if (row.clave === 'ruleta_descripcion') newConfig.ruleta_descripcion = row.valor_texto || ''
+      })
+    }
+    setConfig(newConfig)
   }
+
+  const saveConfig = async () => {
+    setSaving(true)
+    const updates = [
+      { clave: 'ruleta_activa', valor: config.ruleta_activa === 'true' ? 1 : 0 },
+      { clave: 'ruleta_titulo', valor_texto: config.ruleta_titulo },
+      { clave: 'ruleta_descripcion', valor_texto: config.ruleta_descripcion }
+    ]
+    for (const item of updates) {
+      await supabase.from('configuracion').update(item).eq('clave', item.clave)
+    }
+    setSaving(false)
+    alert('✅ Configuración guardada')
+  }
+
   const fetchHistorial = async () => {
     setLoadingTab(true)
-    const { data } = await supabase
-      .from('ruleta_giros')
-      .select('*, perfiles:cliente_id(email:id)')
-      .order('created_at', { ascending: false })
-      .limit(100)
-    // Fetch emails separately
     const { data: h } = await supabase
       .from('ruleta_giros')
       .select('id,premio_nombre,tipo,valor,acreditado,created_at,cliente_id')
@@ -108,13 +137,14 @@ export default function GestionRuleta() {
     setHistorial(h || [])
     setLoadingTab(false)
   }
+
   const fetchUsuarios = async () => {
     setLoadingTab(true)
     const { data } = await supabase
       .from('ruleta_giros_disponibles')
       .select('cliente_id,giros_disponibles,total_ganados,updated_at')
       .order('giros_disponibles', { ascending: false })
-    // Enrich with email
+    
     const ids = (data || []).map(d => d.cliente_id)
     let emailMap = {}
     if (ids.length > 0) {
@@ -125,18 +155,12 @@ export default function GestionRuleta() {
     setLoadingTab(false)
   }
 
-  // ── Premios CRUD ─────────────────────────────────────────────
-  const openAdd = () => { setForm(EMPTY_FORM); setEditing(null); setShowForm(true) }
-  const openEdit = (p) => { setForm({ nombre: p.nombre, descripcion: p.descripcion || '', tipo: p.tipo, valor: p.valor || '', probabilidad: p.probabilidad, color: p.color, emoji: p.emoji || '🎁', activo: p.activo }); setEditing(p.id); setShowForm(true) }
-
+  // ── Actions ─────────────────────────────────────────────
   const savePremio = async () => {
     setSaving(true)
     const payload = { ...form, valor: Number(form.valor) || 0, probabilidad: Number(form.probabilidad) || 1 }
-    if (editing) {
-      await supabase.from('ruleta_premios').update(payload).eq('id', editing)
-    } else {
-      await supabase.from('ruleta_premios').insert(payload)
-    }
+    if (editing) await supabase.from('ruleta_premios').update(payload).eq('id', editing)
+    else await supabase.from('ruleta_premios').insert(payload)
     await fetchPremios()
     setShowForm(false)
     setSaving(false)
@@ -146,28 +170,10 @@ export default function GestionRuleta() {
     await supabase.from('ruleta_premios').update({ activo: !p.activo }).eq('id', p.id)
     fetchPremios()
   }
-  const deletePremio = async (id) => {
-    if (!confirm('¿Eliminar este premio?')) return
-    await supabase.from('ruleta_premios').delete().eq('id', id)
-    fetchPremios()
-  }
 
-  // ── Config save ───────────────────────────────────────────────
-  const saveConfig = async () => {
-    setSaving(true)
-    await supabase.from('configuracion').update({ ruleta_activa: config.ruleta_activa, ruleta_titulo: config.ruleta_titulo, ruleta_descripcion: config.ruleta_descripcion })
-    setSaving(false)
-    alert('Configuración guardada ✔')
-  }
-
-  // ── Asignar giros (funciona para usuarios nuevos Y existentes) ──
   const asignarGirosToUser = async (clienteId, cantidad) => {
     if (!clienteId || cantidad < 1) return false
-    const { data: existing } = await supabase
-      .from('ruleta_giros_disponibles')
-      .select('giros_disponibles,total_ganados')
-      .eq('cliente_id', clienteId)
-      .maybeSingle()
+    const { data: existing } = await supabase.from('ruleta_giros_disponibles').select('giros_disponibles,total_ganados').eq('cliente_id', clienteId).maybeSingle()
     if (existing) {
       await supabase.from('ruleta_giros_disponibles').update({
         giros_disponibles: existing.giros_disponibles + cantidad,
@@ -175,430 +181,176 @@ export default function GestionRuleta() {
         updated_at: new Date().toISOString()
       }).eq('cliente_id', clienteId)
     } else {
-      await supabase.from('ruleta_giros_disponibles').insert({
-        cliente_id: clienteId, giros_disponibles: cantidad, total_ganados: cantidad
-      })
+      await supabase.from('ruleta_giros_disponibles').insert({ cliente_id: clienteId, giros_disponibles: cantidad, total_ganados: cantidad })
     }
     return true
   }
 
-  // ── Styles ────────────────────────────────────────────────────
-  const tabStyle = (t) => ({
-    padding: '10px 20px', fontWeight: 700, fontSize: 14, cursor: 'pointer', borderRadius: 10,
-    background: tab === t ? 'var(--accent-primary)' : 'rgba(255,255,255,.04)',
-    color: tab === t ? '#000' : 'var(--text-muted)',
-    border: tab === t ? 'none' : '1px solid rgba(255,255,255,.08)',
-    transition: 'all .2s'
+  const tabStyle = (id) => ({
+    padding: '10px 20px', borderRadius: 12, border: 'none',
+    background: tab === id ? 'var(--accent-primary)' : 'rgba(255,255,255,.05)',
+    color: tab === id ? '#fff' : 'var(--text-muted)',
+    fontWeight: 700, cursor: 'pointer', transition: 'all .2s'
   })
 
-  const totalProb = premios.filter(p => p.activo).reduce((s, p) => s + p.probabilidad, 0)
-
   return (
-    <div className="page-content">
-      {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 900, marginBottom: 4 }}>🎡 Gestión de Ruleta</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Configura los premios, asigna giros y revisa el historial</p>
+    <div style={{ padding: '20px 0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #f59e0b, #d97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🎡</div>
+          <div>
+            <h1 style={{ fontSize: 24, fontWeight: 900, margin: 0 }}>Gestión de Ruleta</h1>
+            <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>Configura premios y regala giros</p>
+          </div>
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
-        {[['premios','🎁 Premios'],['usuarios','👥 Usuarios & Giros'],['historial','📜 Historial'],['config','⚙️ Configuración']].map(([k,l]) => (
-          <button key={k} style={tabStyle(k)} onClick={() => setTab(k)}>{l}</button>
-        ))}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 32, background: 'rgba(255,255,255,.03)', padding: 6, borderRadius: 16, width: 'fit-content' }}>
+        <button onClick={() => setTab('premios')} style={tabStyle('premios')}>🎡 Premios</button>
+        <button onClick={() => setTab('usuarios')} style={tabStyle('usuarios')}>👤 Usuarios</button>
+        <button onClick={() => setTab('historial')} style={tabStyle('historial')}>📜 Historial</button>
+        <button onClick={() => setTab('config')} style={tabStyle('config')}>⚙️ Config</button>
       </div>
 
-      {/* ── TAB: PREMIOS ── */}
       {tab === 'premios' && (
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-              {premios.filter(p=>p.activo).length} premios activos
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn btn-primary" style={{ background: 'linear-gradient(135deg,#a855f7,#7c3aed)', boxShadow: '0 4px 14px rgba(168,85,247,.35)' }} onClick={() => setShowGift(true)}>🎁 Regalar Giros</button>
-              <button className="btn btn-primary" onClick={openAdd}>+ Agregar Premio</button>
-            </div>
+        <>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+             <span style={{ color:'var(--text-muted)' }}>{premios.filter(p=>p.activo).length} premios activos</span>
+             <div style={{ display:'flex', gap:10 }}>
+                <button onClick={() => setShowGift(true)} className="btn" style={{ background:'rgba(168,85,247,.15)', color:'#c084fc', border:'1px solid rgba(168,85,247,.3)' }}>🎁 Regalar</button>
+                <button onClick={() => { setForm(EMPTY_FORM); setEditing(null); setShowForm(true) }} className="btn btn-primary">+ Agregar</button>
+             </div>
           </div>
-
-          {premios.length === 0 ? (
-            <div className="card" style={{ textAlign:'center', padding:'60px 40px' }}>
-              <div style={{ fontSize:48, marginBottom:12 }}>🎁</div>
-              <h3>Aún no hay premios</h3>
-              <p style={{ color:'var(--text-muted)' }}>Agrega el primer premio para configurar la ruleta</p>
-              <button className="btn btn-primary" style={{ marginTop:12 }} onClick={openAdd}>+ Agregar Premio</button>
-            </div>
-          ) : (
-            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-              {premios.map(p => {
-                const tipo = TIPOS.find(t => t.value === p.tipo)
-                return (
-                  <div key={p.id} className="card" style={{ padding:'16px 20px', display:'flex', alignItems:'center', gap:16, opacity: p.activo ? 1 : 0.5 }}>
-                    <div style={{ width:44, height:44, borderRadius:12, background: p.color, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>{p.emoji}</div>
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontWeight:800, fontSize:15 }}>{p.nombre}</div>
-                      <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:4 }}>
-                        <span style={{ fontSize:11, padding:'2px 8px', borderRadius:20, background:'rgba(255,255,255,.06)', color:'var(--text-muted)' }}>{tipo?.label || p.tipo}</span>
-                        {p.valor > 0 && <span style={{ fontSize:11, padding:'2px 8px', borderRadius:20, background:'rgba(34,197,94,.1)', color:'#22c55e' }}>{p.tipo === 'saldo_usd' ? formatUSD(p.valor) : formatBs(p.valor)}</span>}
-                      </div>
-                      {p.descripcion && <div style={{ fontSize:12, color:'var(--text-muted)', marginTop:4, textOverflow:'ellipsis', overflow:'hidden', whiteSpace:'nowrap' }}>{p.descripcion}</div>}
-                    </div>
-                    <div style={{ display:'flex', gap:8, flexShrink:0 }}>
-                      <button className="btn" style={{ padding:'6px 12px', fontSize:12 }} onClick={() => toggleActivo(p)}>{p.activo ? '⏸ Pausar' : '▶ Activar'}</button>
-                      <button className="btn" style={{ padding:'6px 12px', fontSize:12 }} onClick={() => openEdit(p)}>✏️</button>
-                      <button className="btn" style={{ padding:'6px 12px', fontSize:12, color:'#ef4444', borderColor:'rgba(239,68,68,.3)' }} onClick={() => deletePremio(p.id)}>🗑</button>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          {/* Form modal */}
-          {showForm && (
-            <div style={{ position:'fixed', inset:0, zIndex:40000, background:'rgba(0,0,0,.85)', backdropFilter:'blur(8px)', display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
-              <div className="card" style={{ width:'100%', maxWidth:500, padding:28, maxHeight:'90vh', overflowY:'auto' }} onClick={e=>e.stopPropagation()}>
-                <h3 style={{ fontWeight:900, marginBottom:20 }}>{editing ? 'Editar Premio' : '+ Nuevo Premio'}</h3>
-
-                <div className="form-group" style={{ marginBottom:14 }}>
-                  <label className="form-label">Nombre del premio *</label>
-                  <input className="form-input" value={form.nombre} onChange={e=>setForm(p=>({...p,nombre:e.target.value}))} placeholder="Ej: $1 de saldo, Recarga especial…" />
+          <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+            {premios.map(p => (
+              <div key={p.id} className="card" style={{ padding:20, display:'flex', alignItems:'center', gap:20, borderLeft:`6px solid ${p.color}`, opacity: p.activo?1:0.5 }}>
+                <div style={{ fontSize:32 }}>{p.emoji}</div>
+                <div style={{ flex:1 }}>
+                  <h4 style={{ fontWeight:900 }}>{p.nombre}</h4>
+                  <div style={{ fontSize:12, color:'var(--text-muted)' }}>{TIPOS.find(t=>t.value===p.tipo)?.label} | {p.valor} | Prob: {p.probabilidad}%</div>
                 </div>
-
-                <div className="form-group" style={{ marginBottom:14 }}>
-                  <label className="form-label">Tipo *</label>
-                  <select className="form-input" value={form.tipo} onChange={e=>setForm(p=>({...p,tipo:e.target.value,valor:''}))}>
-                    {TIPOS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
-                </div>
-
-                {TIPOS.find(t=>t.value===form.tipo)?.hasValue && (
-                  <div className="form-group" style={{ marginBottom:14 }}>
-                    <label className="form-label">
-                      {form.tipo === 'descuento' ? 'Porcentaje de descuento (%)' : `Valor (${form.tipo === 'saldo_usd' ? 'USD' : 'Bs'})`} *
-                    </label>
-                    <input className="form-input" type="number" min="0" step={form.tipo === 'descuento' ? '1' : '0.01'} max={form.tipo === 'descuento' ? '100' : undefined} value={form.valor} onChange={e=>setForm(p=>({...p,valor:e.target.value}))} placeholder={form.tipo === 'descuento' ? '10 (= 10% de descuento)' : '0.00'} />
-                  </div>
-                )}
-
-                <div className="form-group" style={{ marginBottom:14 }}>
-                  <label className="form-label">Descripción (opcional)</label>
-                  <input className="form-input" value={form.descripcion} onChange={e=>setForm(p=>({...p,descripcion:e.target.value}))} placeholder="Texto adicional que verá el usuario al ganar…" />
-                </div>
-
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:14 }}>
-                  <div className="form-group">
-                    <label className="form-label">Peso / Probabilidad (1-100)</label>
-                    <input className="form-input" type="number" min="1" max="100" value={form.probabilidad} onChange={e=>setForm(p=>({...p,probabilidad:e.target.value}))} />
-                    <p style={{ fontSize:11, color:'var(--text-muted)', marginTop:4 }}>Mayor peso = más probable</p>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Emoji</label>
-                    <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginTop:4 }}>
-                      {EMOJIS.map(e => (
-                        <button key={e} onClick={()=>setForm(p=>({...p,emoji:e}))} style={{ fontSize:20, background:form.emoji===e?'rgba(99,102,241,.3)':'rgba(255,255,255,.05)', border:`2px solid ${form.emoji===e?'var(--accent-primary)':'transparent'}`, borderRadius:8, width:36, height:36, cursor:'pointer' }}>{e}</button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="form-group" style={{ marginBottom:20 }}>
-                  <label className="form-label">Color del segmento</label>
-                  <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:6 }}>
-                    {COLORS_PRESET.map(c => (
-                      <div key={c} onClick={()=>setForm(p=>({...p,color:c}))} style={{ width:32, height:32, borderRadius:8, background:c, cursor:'pointer', border:`3px solid ${form.color===c?'white':'transparent'}`, transition:'border .15s' }} />
-                    ))}
-                    <input type="color" value={form.color} onChange={e=>setForm(p=>({...p,color:e.target.value}))} style={{ width:32, height:32, padding:0, border:'none', borderRadius:8, cursor:'pointer' }} />
-                  </div>
-                </div>
-
-                <div style={{ display:'flex', gap:10 }}>
-                  <button className="btn btn-primary" style={{ flex:1 }} disabled={saving || !form.nombre} onClick={savePremio}>{saving ? 'Guardando…' : editing ? 'Guardar Cambios' : 'Crear Premio'}</button>
-                  <button className="btn" style={{ flex:1 }} onClick={()=>setShowForm(false)}>Cancelar</button>
+                <div style={{ display:'flex', gap:8 }}>
+                  <button onClick={() => toggleActivo(p)} className="btn btn-sm">{p.activo?'⏸':'▶️'}</button>
+                  <button onClick={() => { setForm(p); setEditing(p.id); setShowForm(true) }} className="btn btn-sm">✏️</button>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        </>
       )}
 
-      {/* ── TAB: USUARIOS & GIROS ── */}
       {tab === 'usuarios' && (
-        <div>
-          {/* Gift Spins Banner */}
-          <div className="card" style={{ padding:'20px 24px', marginBottom:20, background:'linear-gradient(135deg,rgba(168,85,247,.12),rgba(124,58,237,.08))', border:'1px solid rgba(168,85,247,.25)', display:'flex', alignItems:'center', justifyContent:'space-between', gap:16, flexWrap:'wrap' }}>
-            <div>
-              <div style={{ fontWeight:900, fontSize:16, marginBottom:4 }}>🎁 Regalar Giros a un Usuario</div>
-              <div style={{ color:'var(--text-muted)', fontSize:13 }}>Selecciona cualquier cliente o revendedor y asígnale giros de manera manual.</div>
-            </div>
-            <button className="btn btn-primary" style={{ background:'linear-gradient(135deg,#a855f7,#7c3aed)', boxShadow:'0 4px 14px rgba(168,85,247,.4)', whiteSpace:'nowrap' }} onClick={()=>setShowGift(true)}>🎁 Regalar Giros</button>
-          </div>
-
-          <p style={{ color:'var(--text-muted)', fontSize:13, marginBottom:16 }}>Usuarios con giros asignados (el trigger auto-asigna 1 por cada pedido completado).</p>
-          {loadingTab ? <div className="spinner" /> : usuarios.length === 0 ? (
-            <div className="card" style={{ textAlign:'center', padding:'40px' }}>
-              <div style={{ fontSize:48, marginBottom:12 }}>👥</div>
-              <p style={{ color:'var(--text-muted)' }}>Ningún usuario tiene giros registrados. Cuando se complete un pedido se asignará automáticamente.</p>
-            </div>
-          ) : (
-            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+        <div className="card" style={{ padding:0 }}>
+          <table style={{ width:'100%', borderCollapse:'collapse' }}>
+            <thead style={{ background:'rgba(255,255,255,.03)' }}>
+              <tr><th style={{ padding:16, textAlign:'left' }}>Usuario</th><th style={{ textAlign:'center' }}>Giros</th><th style={{ textAlign:'right' }}>Acción</th></tr>
+            </thead>
+            <tbody>
               {usuarios.map(u => (
-                <div key={u.cliente_id} className="card" style={{ padding:'14px 20px', display:'flex', alignItems:'center', gap:16, flexWrap:'wrap' }}>
-                  <div style={{ flex:1, minWidth:180 }}>
-                    <div style={{ fontWeight:700, fontSize:14 }}>{u.email}</div>
-                    <div style={{ fontSize:12, color:'var(--text-muted)', marginTop:2 }}>
-                      Total ganados: {u.total_ganados} · Último: {new Date(u.updated_at).toLocaleDateString('es-VE')}
-                    </div>
-                  </div>
-                  <div style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 14px', borderRadius:12, background: u.giros_disponibles > 0 ? 'rgba(255,215,0,.1)' : 'rgba(255,255,255,.04)', border:`1px solid ${u.giros_disponibles > 0 ? 'rgba(255,215,0,.3)' : 'rgba(255,255,255,.08)'}` }}>
-                    <span style={{ fontWeight:900, fontSize:18, color: u.giros_disponibles > 0 ? '#FFD700' : 'var(--text-muted)' }}>{u.giros_disponibles}</span>
-                    <span style={{ fontSize:12, color:'var(--text-muted)' }}>giros</span>
-                  </div>
-                  <div style={{ display:'flex', gap:6, alignItems:'center' }}>
-                    <input type="number" min="1" max="99" value={giroInput[u.cliente_id] || ''} onChange={e=>setGiroInput(prev=>({...prev,[u.cliente_id]:e.target.value}))} placeholder="N°" style={{ width:60, padding:'6px 8px', borderRadius:8, border:'1px solid rgba(255,255,255,.15)', background:'var(--bg-input,#1e2035)', color:'var(--text-primary)', fontSize:14, textAlign:'center' }} />
-                    <button className="btn btn-primary" style={{ padding:'6px 14px', fontSize:12 }} onClick={async()=>{ const ok=await asignarGirosToUser(u.cliente_id,Number(giroInput[u.cliente_id]||1)); if(ok){setGiroInput(prev=>({...prev,[u.cliente_id]:''}));fetchUsuarios()} }}>+ Asignar</button>
-                  </div>
-                </div>
+                <tr key={u.cliente_id} style={{ borderBottom:'1px solid rgba(255,255,255,.05)' }}>
+                  <td style={{ padding:16 }}>{u.email} <br/><small style={{ color:'var(--text-muted)' }}>{u.cliente_id.slice(0,8)}</small></td>
+                  <td style={{ textAlign:'center' }}>{u.giros_disponibles}</td>
+                  <td style={{ textAlign:'right', padding:16 }}>
+                    <input type="number" value={giroInput[u.cliente_id] || ''} onChange={e=>setGiroInput(p=>({...p, [u.cliente_id]: e.target.value}))} style={{ width:50, marginRight:8 }} />
+                    <button onClick={async () => { await asignarGirosToUser(u.cliente_id, parseInt(giroInput[u.cliente_id])); setGiroInput(p=>({...p, [u.cliente_id]:''})); fetchUsuarios() }} className="btn btn-sm">+ Add</button>
+                  </td>
+                </tr>
               ))}
-            </div>
-          )}
+            </tbody>
+          </table>
         </div>
       )}
 
-      {/* ── TAB: HISTORIAL ── */}
       {tab === 'historial' && (
-        <div>
-          {loadingTab ? <div className="spinner" /> : historial.length === 0 ? (
-            <div className="card" style={{ textAlign:'center', padding:'60px 40px' }}>
-              <div style={{ fontSize:48, marginBottom:12 }}>📜</div>
-              <p style={{ color:'var(--text-muted)' }}>No hay giros registrados aún</p>
-            </div>
-          ) : (
-            <div className="card" style={{ padding:0, overflow:'hidden' }}>
-              <div style={{ overflowX:'auto' }}>
-                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
-                  <thead>
-                    <tr style={{ borderBottom:'1px solid rgba(255,255,255,.08)' }}>
-                      {['Usuario','Premio','Tipo','Valor','Acreditado','Fecha'].map(h=>(
-                        <th key={h} style={{ padding:'12px 16px', textAlign:'left', color:'var(--text-muted)', fontWeight:700, whiteSpace:'nowrap' }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {historial.map((g,i) => (
-                      <tr key={g.id} style={{ borderBottom:'1px solid rgba(255,255,255,.04)', background: i%2===0?'transparent':'rgba(255,255,255,.015)' }}>
-                        <td style={{ padding:'10px 16px', color:'var(--text-muted)', fontFamily:'monospace', fontSize:11 }}>{g.cliente_id?.slice(0,12)}…</td>
-                        <td style={{ padding:'10px 16px', fontWeight:700 }}>{g.premio_nombre}</td>
-                        <td style={{ padding:'10px 16px' }}><span style={{ padding:'2px 8px', borderRadius:20, background:'rgba(255,255,255,.06)', fontSize:11 }}>{g.tipo}</span></td>
-                        <td style={{ padding:'10px 16px', fontWeight:700, color: g.tipo==='saldo_usd'?'#22c55e':g.tipo==='saldo_bs'?'#a855f7':'var(--text-muted)' }}>
-                          {g.valor > 0 ? (g.tipo==='saldo_usd'?formatUSD(g.valor):formatBs(g.valor)) : '—'}
-                        </td>
-                        <td style={{ padding:'10px 16px' }}>{g.acreditado ? <span style={{ color:'#22c55e' }}>✅</span> : <span style={{ color:'var(--text-muted)' }}>—</span>}</td>
-                        <td style={{ padding:'10px 16px', color:'var(--text-muted)', whiteSpace:'nowrap', fontSize:11 }}>{new Date(g.created_at).toLocaleString('es-VE')}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+        <div className="card" style={{ padding:0 }}>
+          <table style={{ width:'100%' }}>
+            <tbody>
+              {historial.map(h => (
+                <tr key={h.id} style={{ borderBottom:'1px solid rgba(255,255,255,.05)' }}>
+                  <td style={{ padding:12 }}>{new Date(h.created_at).toLocaleDateString()}</td>
+                  <td>{h.cliente_id.slice(0,8)}</td>
+                  <td>{h.premio_nombre}</td>
+                  <td style={{ textAlign:'right' }}>{h.acreditado ? '✅' : '❌'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
-      {/* ── TAB: CONFIG ── */}
       {tab === 'config' && (
         <div className="card" style={{ padding:28, maxWidth:500 }}>
-          <h3 style={{ fontWeight:900, marginBottom:20 }}>⚙️ Configuración de la Ruleta</h3>
-
+          <h3 style={{ marginBottom:20 }}>⚙️ Configuración</h3>
           <div className="form-group" style={{ marginBottom:16 }}>
             <label className="form-label">Estado</label>
             <div style={{ display:'flex', gap:10 }}>
-              {[['true','✅ Activa'],['false','⏸ Desactivada']].map(([v,l])=>(
-                <button key={v} onClick={()=>setConfig(p=>({...p,ruleta_activa:v}))} style={{ flex:1, padding:'10px', borderRadius:10, border:`2px solid ${config.ruleta_activa===v?'var(--accent-primary)':'rgba(255,255,255,.1)'}`, background:config.ruleta_activa===v?'rgba(0,210,255,.1)':'rgba(255,255,255,.03)', color:config.ruleta_activa===v?'var(--accent-primary)':'var(--text-muted)', fontWeight:700, cursor:'pointer' }}>{l}</button>
+              {[['true','Activa'],['false','Desact.']].map(([v,l])=>(
+                <button key={v} onClick={()=>setConfig(p=>({...p,ruleta_activa:v}))} style={{ flex:1, padding:10, borderRadius:10, border:`2px solid ${config.ruleta_activa===v?'var(--accent-primary)':'transparent'}`, background:'rgba(255,255,255,.05)', color:config.ruleta_activa===v?'var(--accent-primary)':'#fff', cursor:'pointer' }}>{l}</button>
               ))}
             </div>
           </div>
-
           <div className="form-group" style={{ marginBottom:16 }}>
-            <label className="form-label">Título de la ruleta</label>
+            <label className="form-label">Título</label>
             <input className="form-input" value={config.ruleta_titulo} onChange={e=>setConfig(p=>({...p,ruleta_titulo:e.target.value}))} />
           </div>
-
-          <div className="form-group" style={{ marginBottom:24 }}>
+          <div className="form-group" style={{ marginBottom:20 }}>
             <label className="form-label">Descripción</label>
-            <textarea className="form-input" rows={2} value={config.ruleta_descripcion} onChange={e=>setConfig(p=>({...p,ruleta_descripcion:e.target.value}))} style={{ resize:'vertical' }} />
+            <textarea className="form-input" value={config.ruleta_descripcion} onChange={e=>setConfig(p=>({...p,ruleta_descripcion:e.target.value}))} />
           </div>
-
-          <button className="btn btn-primary" style={{ width:'100%', height:48 }} disabled={saving} onClick={saveConfig}>{saving?'Guardando…':'💾 Guardar Configuración'}</button>
+          <button className="btn btn-primary" style={{ width:'100%' }} disabled={saving} onClick={saveConfig}>💾 Guardar</button>
         </div>
       )}
 
-      {/* ── MODAL: REGALAR GIROS ── */}
       {showGift && (
-        <div style={{ position:'fixed', inset:0, zIndex:50000, background:'rgba(0,0,0,.88)', backdropFilter:'blur(10px)', display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}
-          onClick={() => setShowGift(false)}>
-          <div className="card" style={{ width:'100%', maxWidth:520, padding:28, maxHeight:'85vh', overflowY:'auto' }}
-            onClick={e => e.stopPropagation()}>
-
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
-              <h3 style={{ fontWeight:900, margin:0 }}>🎁 Regalar Giros a Usuario</h3>
-              <button onClick={() => setShowGift(false)} style={{ background:'none', border:'none', fontSize:22, cursor:'pointer', color:'var(--text-muted)' }}>×</button>
+        <div style={{ position:'fixed', inset:0, zIndex:50000, background:'rgba(0,0,0,.8)', display:'flex', alignItems:'center', justifyContent:'center' }} onClick={() => setShowGift(false)}>
+          <div className="card" style={{ width:400, padding:24 }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ marginBottom:20 }}>🎁 Regalar</h3>
+            <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+              <button onClick={()=>setTabGift('individual')} style={{ flex:1, padding:8, background:tabGift==='individual'?'#a855f7':'none', color:'#fff', border:'1px solid #fff', borderRadius:8 }}>Individual</button>
+              <button onClick={()=>setTabGift('masivo')} style={{ flex:1, padding:8, background:tabGift==='masivo'?'#a855f7':'none', color:'#fff', border:'1px solid #fff', borderRadius:8 }}>Masivo</button>
             </div>
-
-            <div style={{ display:'flex', gap:10, marginBottom:24 }}>
-              <button 
-                onClick={() => setTabGift('individual')} 
-                style={{ ...tabStyle('individual'), flex:1, background: tabGift === 'individual' ? '#a855f7' : 'rgba(255,255,255,.05)', color: tabGift === 'individual' ? '#fff' : 'var(--text-muted)' }}>
-                👤 De 1 en 1
-              </button>
-              <button 
-                onClick={() => setTabGift('masivo')} 
-                style={{ ...tabStyle('masivo'), flex:1, background: tabGift === 'masivo' ? '#a855f7' : 'rgba(255,255,255,.05)', color: tabGift === 'masivo' ? '#fff' : 'var(--text-muted)' }}>
-                📢 Para TODOS
-              </button>
-            </div>
-
             {tabGift === 'individual' ? (
               <>
-                {/* Quantity */}
-                <div className="form-group" style={{ marginBottom:16 }}>
-                  <label className="form-label">Cantidad de giros a regalar</label>
-                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                    <button onClick={() => setGiftAmount(g => Math.max(1, g-1))} style={{ width:36, height:36, borderRadius:8, border:'1px solid rgba(255,255,255,.15)', background:'rgba(255,255,255,.05)', color:'var(--text-primary)', fontSize:18, cursor:'pointer' }}>−</button>
-                    <span style={{ fontSize:28, fontWeight:900, minWidth:40, textAlign:'center', color:'#FFD700' }}>{giftAmount}</span>
-                    <button onClick={() => setGiftAmount(g => Math.min(99, g+1))} style={{ width:36, height:36, borderRadius:8, border:'1px solid rgba(255,255,255,.15)', background:'rgba(255,255,255,.05)', color:'var(--text-primary)', fontSize:18, cursor:'pointer' }}>+</button>
-                  </div>
-                </div>
-
-                {/* User list */}
-                <div style={{ maxHeight:280, overflowY:'auto', display:'flex', flexDirection:'column', gap:6, marginBottom:16 }}>
-                  {allClients
-                    .filter(c => {
-                      const search = giftSearch.trim().toLowerCase()
-                      if (!search) return true 
-                      return (
-                        c.email?.toLowerCase().includes(search) || 
-                        c.nombre?.toLowerCase().includes(search) ||
-                        c.id?.toLowerCase().includes(search)
-                      )
-                    })
-                    .slice(0, 50) 
-                    .map(c => (
-                      <button key={c.id} onClick={() => setGiftTarget(c.id)}
-                        style={{ padding:'10px 14px', borderRadius:10, border:`2px solid ${giftTarget === c.id ? '#a855f7' : 'rgba(255,255,255,.08)'}`, background: giftTarget === c.id ? 'rgba(168,85,247,.12)' : 'rgba(255,255,255,.03)', color: giftTarget === c.id ? '#c084fc' : 'var(--text-primary)', textAlign:'left', cursor:'pointer', fontWeight: giftTarget === c.id ? 700 : 400, transition:'all .15s' }}>
-                        {giftTarget === c.id ? '✓ ' : ''}
-                        <span style={{ fontWeight: 700 }}>{c.nombre || c.email}</span>
-                        {c.nombre && c.email !== c.nombre && <span style={{ fontSize:12, color:'var(--text-muted)', marginLeft:6 }}>({c.email})</span>}
-                        {!c.nombre && !c.email && <span style={{ fontSize:10, color:'var(--text-muted)' }}>ID: {c.id.slice(0,8)}</span>}
-                      </button>
-                    ))}
-                  {allClients.length === 0 && (
-                    <div style={{ textAlign:'center', color:'var(--text-muted)', padding:20 }}>No se cargaron usuarios. Revisa la consola o los permisos.</div>
-                  )}
-                  {allClients.length > 0 && allClients.filter(c => {
-                    const s = giftSearch.toLowerCase();
-                    return c.email.toLowerCase().includes(s) || c.nombre.toLowerCase().includes(s);
-                  }).length === 0 && giftSearch !== '' && (
-                    <div style={{ textAlign:'center', color:'var(--text-muted)', padding:20 }}>No se encontraron coincidencias para "{giftSearch}"</div>
-                  )}
+                <input className="form-input" placeholder="Buscar..." value={giftSearch} onChange={e=>setGiftSearch(e.target.value)} style={{ marginBottom:10 }} />
+                <div style={{ maxHeight:200, overflowY:'auto' }}>
+                  {allClients.filter(c => c.email.toLowerCase().includes(giftSearch.toLowerCase())).map(c => (
+                    <button key={c.id} onClick={()=>setGiftTarget(c.id)} style={{ width:'100%', padding:10, textAlign:'left', background: giftTarget===c.id?'#a855f7':'none', border:'none', color:'#fff', borderRadius:6 }}>{c.nombre || c.email}</button>
+                  ))}
                 </div>
               </>
             ) : (
-              <div style={{ marginBottom:20 }}>
-                <p style={{ fontSize:13, color:'var(--text-muted)', marginBottom:16, background:'rgba(255,215,0,.05)', padding:12, borderRadius:8, border:'1px solid rgba(255,215,0,.2)' }}>
-                  ⚠️ Esta acción le regalará el premio seleccionado a <strong>TODOS</strong> los clientes y revendedores del sistema inmediatamente.
-                </p>
-                <div className="form-group" style={{ marginBottom:20 }}>
-                  <label className="form-label">Selecciona el premio que recibirán todos</label>
-                  <select 
-                    className="form-input" 
-                    value={giftPremioId} 
-                    onChange={e => setGiftPremioId(e.target.value)}
-                    style={{ background:'var(--bg-card)', border:'1px solid var(--accent-primary)' }}
-                  >
-                    <option value="">-- Elige un premio --</option>
-                    {premios.filter(p => p.activo && p.tipo !== 'sin_premio').map(p => (
-                      <option key={p.id} value={p.id}>
-                        {p.emoji} {p.nombre} ({p.tipo})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              <select className="form-input" value={giftPremioId} onChange={e=>setGiftPremioId(e.target.value)}>
+                <option value="">Premio masivo...</option>
+                {premios.filter(p=>p.activo).map(p=>(<option key={p.id} value={p.id}>{p.emoji} {p.nombre}</option>))}
+              </select>
             )}
-
-            {/* User list */}
-            <div style={{ maxHeight:280, overflowY:'auto', display:'flex', flexDirection:'column', gap:6, marginBottom:16 }}>
-              {allClients
-                .filter(c => {
-                  const search = giftSearch.trim().toLowerCase()
-                  if (!search) return true 
-                  return (
-                    c.email?.toLowerCase().includes(search) || 
-                    c.nombre?.toLowerCase().includes(search) ||
-                    c.id?.toLowerCase().includes(search)
-                  )
-                })
-                .slice(0, 50) // Aumentamos un poco el límite por si acaso
-                .map(c => (
-                  <button key={c.id} onClick={() => setGiftTarget(c.id)}
-                    style={{ padding:'10px 14px', borderRadius:10, border:`2px solid ${giftTarget === c.id ? '#a855f7' : 'rgba(255,255,255,.08)'}`, background: giftTarget === c.id ? 'rgba(168,85,247,.12)' : 'rgba(255,255,255,.03)', color: giftTarget === c.id ? '#c084fc' : 'var(--text-primary)', textAlign:'left', cursor:'pointer', fontWeight: giftTarget === c.id ? 700 : 400, transition:'all .15s' }}>
-                    {giftTarget === c.id ? '✓ ' : ''}
-                    <span style={{ fontWeight: 700 }}>{c.nombre || c.email}</span>
-                    {c.nombre && c.email !== c.nombre && <span style={{ fontSize:12, color:'var(--text-muted)', marginLeft:6 }}>({c.email})</span>}
-                    {!c.nombre && !c.email && <span style={{ fontSize:10, color:'var(--text-muted)' }}>ID: {c.id.slice(0,8)}</span>}
-                  </button>
-                ))}
-              {allClients.filter(c => giftSearch === '' || c.email?.toLowerCase().includes(giftSearch.toLowerCase())).length === 0 && (
-                <p style={{ color:'var(--text-muted)', textAlign:'center', padding:'20px 0' }}>No se encontraron usuarios</p>
-              )}
-            </div>
-
-              {tabGift === 'individual' ? (
-                <button className="btn btn-primary" style={{ width:'100%', height:50, fontSize:16, background:'linear-gradient(135deg,#a855f7,#7c3aed)', boxShadow:'0 6px 20px rgba(168,85,247,.4)' }}
-                  disabled={!giftTarget || saving}
-                  onClick={async () => {
-                    setSaving(true)
-                    const ok = await asignarGirosToUser(giftTarget, giftAmount)
-                    setSaving(false)
-                    if (ok) {
-                      const client = allClients.find(c => c.id === giftTarget)
-                      alert(`✅ ${giftAmount} giro${giftAmount > 1 ? 's' : ''} regalado${giftAmount > 1 ? 's' : ''} a ${client?.email}`)
-                      setShowGift(false)
-                      setGiftTarget('')
-                      setGiftAmount(1)
-                      setGiftSearch('')
-                      if (tab === 'usuarios') fetchUsuarios()
-                    }
-                  }}>
-                  {saving ? 'Asignando…' : `🎁 Regalar ${giftAmount} giro${giftAmount > 1 ? 's' : ''}`}
-                </button>
-              ) : (
-                <button className="btn btn-primary" style={{ width:'100%', height:50, fontSize:16, background:'linear-gradient(135deg,#22c55e,#16a34a)', boxShadow:'0 6px 20px rgba(34,197,94,.4)' }}
-                  disabled={!giftPremioId || saving}
-                  onClick={async () => {
-                    if (!confirm('¿ESTÁS SEGURO? Esto otorgará el premio a TODOS los usuarios del sistema.')) return;
-                    setSaving(true)
-                    const { data, error } = await supabase.rpc('regalar_premio_masivo', {
-                      p_premio_id: giftPremioId,
-                      p_admin_id: (adminPerfil?.id || (await supabase.auth.getUser()).data.user?.id)
-                    })
-                    setSaving(false)
-                    if (error) {
-                      alert('Error: ' + error.message)
-                    } else if (data?.error) {
-                      alert('Error: ' + data.error)
-                    } else {
-                      alert(`✅ ¡Éxito! Se ha regalado el premio "${data.premio}" a ${data.usuarios_afectados} usuarios.`)
-                      setShowGift(false)
-                      setGiftPremioId('')
-                      if (tab === 'historial') fetchHistorial()
-                    }
-                  }}>
-                  {saving ? 'Procesando regalo masivo…' : `📢 Regalar Premio a TODO el Sistema`}
-                </button>
-              )}
+            <button className="btn btn-primary" style={{ width:'100%', marginTop:20 }} disabled={saving} onClick={async ()=>{
+              setSaving(true)
+              if (tabGift==='masivo') {
+                const { error } = await supabase.rpc('regalar_premio_masivo', { p_premio_id: giftPremioId, p_admin_id: adminPerfil?.id })
+                if (error) alert(error.message.includes('404') ? 'Ejecuta el SQL 039' : error.message)
+                else alert('Enviado!')
+              } else {
+                await asignarGirosToUser(giftTarget, giftAmount)
+                alert('Regalado!')
+              }
+              setSaving(false); setShowGift(false)
+            }}>Enviar</button>
           </div>
+        </div>
+      )}
+
+      {showForm && (
+        <div style={{ position:'fixed', inset:0, zIndex:50000, background:'rgba(0,0,0,.8)', display:'flex', alignItems:'center', justifyContent:'center' }} onClick={() => setShowForm(false)}>
+           <div className="card" style={{ width:400, padding:24 }} onClick={e => e.stopPropagation()}>
+              <h3 style={{ marginBottom:20 }}>{editing?'Editar':'Nuevo'} Premio</h3>
+              <input className="form-input" placeholder="Nombre" value={form.nombre} onChange={e=>setForm({...form, nombre:e.target.value})} style={{ marginBottom:12 }} />
+              <select className="form-input" value={form.tipo} onChange={e=>setForm({...form, tipo:e.target.value})} style={{ marginBottom:12 }}>
+                {TIPOS.map(t=>(<option key={t.value} value={t.value}>{t.label}</option>))}
+              </select>
+              <input className="form-input" type="number" placeholder="Valor" value={form.valor} onChange={e=>setForm({...form, valor:e.target.value})} style={{ marginBottom:12 }} />
+              <button className="btn btn-primary" style={{ width:'100%' }} onClick={savePremio}>Guardar</button>
+           </div>
         </div>
       )}
     </div>
