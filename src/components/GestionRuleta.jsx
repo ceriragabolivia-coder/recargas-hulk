@@ -139,47 +139,71 @@ export default function GestionRuleta() {
   }
 
   const handleGrant = async () => {
+    if (saving) return
     setSaving(true)
     try {
       if (tabGift === 'masivo') {
-        if (!giftPremioId) return;
+        if (!giftPremioId) { alert("Selecciona un premio"); setSaving(false); return }
         const { data, error } = await supabase.rpc('regalar_premio_masivo', { p_premio_id: giftPremioId, p_admin_id: adminPerfil?.id })
-        if (error) alert(error.message.includes('404') ? '⚠️ Debes ejecutar el SQL 039 en Supabase' : error.message)
-        else alert(`✅ ¡Enviado masivamente a ${data.usuarios_afectados} usuarios!`)
+        if (error) {
+          if (error.message.includes('not found') || error.message.includes('404')) {
+             alert('⚠️ ERROR DE INSTALACIÓN: Debes ejecutar el archivo "039_ruleta_masivo.sql" en tu Editor SQL de Supabase.')
+          } else alert(error.message)
+          setSaving(false); return
+        }
+        alert(`✅ ¡Enviado masivamente a ${data.usuarios_afectados} usuarios!`)
       } else {
-        if (!giftTarget) return;
+        if (!giftTarget) { alert("Selecciona un usuario"); setSaving(false); return }
+        
         if (giftMode === 'giros') {
-          await supabase.rpc('asignar_giros_v2', { p_cliente_id: giftTarget, p_cantidad: giftAmount }) // or manual rpc if exists
-          // Fallback if rpc no existe:
-          const { data: existing } = await supabase.from('ruleta_giros_disponibles').select('giros_disponibles,total_ganados').eq('cliente_id', giftTarget).maybeSingle()
-          if (existing) {
-            await supabase.from('ruleta_giros_disponibles').update({
-              giros_disponibles: (existing.giros_disponibles || 0) + Number(giftAmount),
-              total_ganados: (existing.total_ganados || 0) + Number(giftAmount),
-              updated_at: new Date().toISOString()
-            }).eq('cliente_id', giftTarget)
-          } else {
-            await supabase.from('ruleta_giros_disponibles').insert({ cliente_id: giftTarget, giros_disponibles: giftAmount, total_ganados: giftAmount })
-          }
-          alert('✅ Giros asignados correctamente')
+          // Asignar giros
+          const { data: current } = await supabase.from('ruleta_giros_disponibles').select('giros_disponibles,total_ganados').eq('cliente_id', giftTarget).maybeSingle()
+          const newDisp = (current?.giros_disponibles || 0) + Number(giftAmount)
+          const newTotal = (current?.total_ganados || 0) + Number(giftAmount)
+          
+          const { error: updErr } = await supabase.from('ruleta_giros_disponibles').upsert({
+            cliente_id: giftTarget,
+            giros_disponibles: newDisp,
+            total_ganados: newTotal,
+            updated_at: new Date().toISOString()
+          })
+          if (updErr) throw updErr
+          alert(`✅ ${giftAmount} giros asignados correctamente.`)
         } else {
-          // Regalar PREMIO ESPECIFICO a 1 persona
-          const { data: p } = await supabase.from('ruleta_premios').select('*').eq('id', giftPremioId).single()
-          if (!p) return;
-          // Registrar giro directo
-          const { data: g } = await supabase.from('ruleta_giros').insert({
+          // Regalar PREMIO DIRECTO
+          if (!giftPremioId) { alert("Selecciona el premio"); setSaving(false); return }
+          const { data: p, error: pErr } = await supabase.from('ruleta_premios').select('*').eq('id', giftPremioId).single()
+          if (pErr || !p) throw new Error("No se encontró el premio")
+
+          // 1. Registrar el giro en el historial
+          const { data: g, error: gErr } = await supabase.from('ruleta_giros').insert({
             cliente_id: giftTarget, premio_id: p.id, premio_nombre: p.nombre, tipo: p.tipo, valor: p.valor, acreditado: true
           }).select().single()
+          if (gErr) throw gErr
           
-          if (p.tipo === 'saldo_usd') await supabase.rpc('incrementar_saldo', { p_user_id: giftTarget, p_monto: p.valor })
-          else if (p.tipo === 'saldo_bs') await supabase.rpc('incrementar_saldo_bs', { p_user_id: giftTarget, p_monto: p.valor })
-          else if (p.tipo === 'descuento') await supabase.from('ruleta_descuentos_pendientes').insert({ cliente_id: giftTarget, giro_id: g.id, porcentaje: p.valor, nombre: p.nombre })
-          
+          // 2. Acreditar el premio según el tipo
+          if (p.tipo === 'saldo_usd' || p.tipo === 'saldo_bs') {
+            const field = p.tipo === 'saldo_usd' ? 'saldo' : 'saldo_bs'
+            const { data: perf, error: fetchErr } = await supabase.from('perfiles').select(field).eq('id', giftTarget).single()
+            if (fetchErr) throw fetchErr
+            
+            const newBalance = (Number(perf[field]) || 0) + Number(p.valor)
+            const { error: balErr } = await supabase.from('perfiles').update({ [field]: newBalance }).eq('id', giftTarget)
+            if (balErr) throw balErr
+          } else if (p.tipo === 'descuento') {
+            const { error: descErr } = await supabase.from('ruleta_descuentos_pendientes').insert({
+              cliente_id: giftTarget, giro_id: g.id, porcentaje: p.valor, nombre: p.nombre
+            })
+            if (descErr) throw descErr
+          }
           alert(`✅ Premio "${p.nombre}" asignado directamente.`)
         }
       }
       setShowGift(false); fetchUsuarios(); setGiftTarget(''); setGiftSearch('')
-    } catch(e) { console.error(e); alert('Error al procesar regalo') }
+    } catch(e) { 
+      console.error(e)
+      alert('❌ Error al procesar regalo: ' + e.message) 
+    }
     setSaving(false)
   }
 
