@@ -32,21 +32,42 @@ export default function Checkout({ onFinish }) {
     const targetUserId = user?.id || perfil?.cliente_uuid || perfil?.id
     if (!targetUserId) return
 
-    console.log("🔍 Buscando descuentos de ruleta para:", targetUserId)
-    supabase
-      .from('ruleta_descuentos_pendientes')
-      .select('id,nombre,porcentaje')
-      .eq('cliente_id', targetUserId)
-      .eq('usado', false)
-      .order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("❌ Error cargando descuentos de ruleta:", error)
-        } else {
-          console.log("✅ Descuentos encontrados:", data?.length || 0, data)
-          setRuletaDescuentos(data || [])
-        }
+    const fetchDiscounts = async () => {
+      console.log("🔍 Buscando descuentos de ruleta para:", targetUserId)
+      const { data, error } = await supabase
+        .from('ruleta_descuentos_pendientes')
+        .select('id,nombre,porcentaje')
+        .eq('cliente_id', targetUserId)
+        .eq('usado', false)
+        .order('created_at', { ascending: false })
+      
+      if (error) {
+        console.error("❌ Error cargando descuentos de ruleta:", error)
+      } else {
+        console.log("✅ Descuentos encontrados:", data?.length || 0, data)
+        setRuletaDescuentos(data || [])
+      }
+    }
+
+    fetchDiscounts()
+
+    // Suscripción Realtime para detectar cuando el usuario gana un premio mientras tiene el checkout abierto
+    const channel = supabase
+      .channel(`ruleta_desc_${targetUserId}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'ruleta_descuentos_pendientes',
+        filter: `cliente_id=eq.${targetUserId}`
+      }, (payload) => {
+        console.log('🔔 Cambio detectado en descuentos de ruleta:', payload.eventType)
+        fetchDiscounts()
       })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [user?.id, perfil?.id, perfil?.cliente_uuid])
 
   const currentClienteId = user?.id || perfil?.id || null
@@ -128,7 +149,19 @@ export default function Checkout({ onFinish }) {
   }
 
   const handleToggleRuletaDesc = () => {
-    if (ruletaDescuentos.length === 0) return
+    if (ruletaDescuentos.length === 0) {
+      // Intentar refetch manual
+      const targetUserId = user?.id || perfil?.cliente_uuid || perfil?.id
+      if (targetUserId) {
+        supabase
+          .from('ruleta_descuentos_pendientes')
+          .select('id,nombre,porcentaje')
+          .eq('cliente_id', targetUserId)
+          .eq('usado', false)
+          .then(({ data }) => data && setRuletaDescuentos(data))
+      }
+      return
+    }
     const newVal = !useRuletaDesc
     setUseRuletaDesc(newVal)
     if (newVal && ruletaDescuentos.length > 0 && !selectedRuletaDesc) {
@@ -505,11 +538,19 @@ export default function Checkout({ onFinish }) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <span style={{ fontSize: '22px' }}>🎡</span>
                       <div>
-                        <div style={{ fontWeight: 800, fontSize: '18px' }}>Descuento de Ruleta</div>
+                        <div style={{ fontWeight: 800, fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          Descuento de Ruleta
+                          {ruletaDescuentos.length === 0 && (
+                            <span 
+                              style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '10px', backgroundColor: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', fontWeight: 400 }}
+                              onClick={(e) => { e.stopPropagation(); handleToggleRuletaDesc(); }}
+                            >🔄 Actualizar</span>
+                          )}
+                        </div>
                         <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
                           {ruletaDescuentos.length > 0 
                             ? `${ruletaDescuentos.length} disponible${ruletaDescuentos.length !== 1 ? 's' : ''}`
-                            : 'No tienes cupones pendientes'}
+                            : 'No tienes cupones pendientes (vuelve a la ruleta si ganaste)'}
                         </div>
                       </div>
                     </div>
