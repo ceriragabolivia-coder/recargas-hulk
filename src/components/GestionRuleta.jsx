@@ -44,29 +44,38 @@ export default function GestionRuleta() {
     setPremios(data || [])
   }
   const fetchAllClients = async () => {
-    // perfiles has id (auth uid), rol, cliente_uuid
-    // clientes has id (=cliente_uuid), correo, nombres
-    const { data: perfs } = await supabase
+    // Intentamos traer perfiles con roles variados (case-insensitive)
+    const { data: perfs, error: perfError } = await supabase
       .from('perfiles')
-      .select('id, cliente_uuid')
-      .in('rol', ['cliente', 'revendedor'])
+      .select('id, cliente_uuid, email, rol')
+      .or('rol.ilike.cliente,rol.ilike.revendedor') // Búsqueda insensible a mayúsculas
+      .limit(200)
 
+    if (perfError) console.error("❌ Error fetchAllClients (perfiles):", perfError)
     if (!perfs || perfs.length === 0) { setAllClients([]); return }
 
+    // Traer datos de la tabla clientes para nombres reales
     const clienteUuids = perfs.map(p => p.cliente_uuid).filter(Boolean)
-    const { data: clientes } = await supabase
-      .from('clientes')
-      .select('id, nombres, correo')
-      .in('id', clienteUuids)
+    let clientesMap = {}
+    if (clienteUuids.length > 0) {
+      const { data: clientes, error: cliError } = await supabase
+        .from('clientes')
+        .select('id, nombres, correo')
+        .in('id', clienteUuids)
+      if (cliError) console.error("❌ Error fetchAllClients (clientes):", cliError)
+      ;(clientes || []).forEach(c => { clientesMap[c.id] = c })
+    }
 
-    setAllClients(perfs.map(p => {
-      const cl = clientes?.find(c => c.id === p.cliente_uuid)
+    const formatted = perfs.map(p => {
+      const cl = clientesMap[p.cliente_uuid]
       return {
-        id: p.id,                                              // auth uid (para girar_ruleta)
-        email: cl?.correo || cl?.nombres || p.id.slice(0,8) + '…',
+        id: p.id, // auth uid (para rpc)
+        email: cl?.correo || p.email || p.id.slice(0,8) + '…',
         nombre: cl?.nombres || ''
       }
-    }).filter(u => u.email))
+    }).filter(u => u.email)
+
+    setAllClients(formatted)
   }
   const fetchConfig = async () => {
     const { data } = await supabase.from('configuracion').select('ruleta_activa,ruleta_titulo,ruleta_descripcion').single()
@@ -444,7 +453,15 @@ export default function GestionRuleta() {
             {/* User list */}
             <div style={{ maxHeight:280, overflowY:'auto', display:'flex', flexDirection:'column', gap:6, marginBottom:16 }}>
               {allClients
-                .filter(c => giftSearch === '' || c.email?.toLowerCase().includes(giftSearch.toLowerCase()))
+                .filter(c => {
+                  if (giftSearch === '') return true // Mostrar todos si no hay búsqueda
+                  const search = giftSearch.toLowerCase()
+                  return (
+                    c.email?.toLowerCase().includes(search) || 
+                    c.nombre?.toLowerCase().includes(search)
+                  )
+                })
+                .slice(0, 10) // Mostrar solo los 10 primeros resultados filtrados para no saturar
                 .map(c => (
                   <button key={c.id} onClick={() => setGiftTarget(c.id)}
                     style={{ padding:'10px 14px', borderRadius:10, border:`2px solid ${giftTarget === c.id ? '#a855f7' : 'rgba(255,255,255,.08)'}`, background: giftTarget === c.id ? 'rgba(168,85,247,.12)' : 'rgba(255,255,255,.03)', color: giftTarget === c.id ? '#c084fc' : 'var(--text-primary)', textAlign:'left', cursor:'pointer', fontWeight: giftTarget === c.id ? 700 : 400, transition:'all .15s' }}>
