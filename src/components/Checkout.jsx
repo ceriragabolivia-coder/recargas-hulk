@@ -27,23 +27,27 @@ export default function Checkout({ onFinish }) {
   const [selectedRuletaDesc, setSelectedRuletaDesc] = useState(null)
 
   useEffect(() => {
-    if (!user?.id) return
-    console.log("🔍 Buscando descuentos de ruleta para:", user.id)
+    // 1. Prioridad: user.id (UUID de auth)
+    // 2. Fallback: perfil.cliente_uuid (UUID de la tabla clientes)
+    const targetUserId = user?.id || perfil?.cliente_uuid || perfil?.id
+    if (!targetUserId) return
+
+    console.log("🔍 Buscando descuentos de ruleta para:", targetUserId)
     supabase
       .from('ruleta_descuentos_pendientes')
       .select('id,nombre,porcentaje')
-      .eq('cliente_id', user.id)
+      .eq('cliente_id', targetUserId)
       .eq('usado', false)
       .order('created_at', { ascending: false })
       .then(({ data, error }) => {
         if (error) {
           console.error("❌ Error cargando descuentos de ruleta:", error)
         } else {
-          console.log("✅ Descuentos encontrados:", data?.length || 0)
+          console.log("✅ Descuentos encontrados:", data?.length || 0, data)
           setRuletaDescuentos(data || [])
         }
       })
-  }, [user?.id])
+  }, [user?.id, perfil?.id, perfil?.cliente_uuid])
 
   const currentClienteId = user?.id || perfil?.id || null
   const walletSaldo = wallet?.saldo || 0
@@ -484,8 +488,8 @@ export default function Checkout({ onFinish }) {
                   </div>
                 )}
 
-                {/* Toggle de Descuento Ruleta */}
-                {ruletaDescuentos.length > 0 && !isGratis && (
+                {/* SECCIÓN DE DESCUENTOS DE RULETA */}
+                {!isGratis && (
                   <div 
                     onClick={handleToggleRuletaDesc}
                     style={{
@@ -493,32 +497,37 @@ export default function Checkout({ onFinish }) {
                       padding: '14px 18px', borderRadius: '16px', marginBottom: useRuletaDesc ? '10px' : '16px',
                       backgroundColor: useRuletaDesc ? 'rgba(255, 215, 0, 0.08)' : 'var(--bg-panel)',
                       border: `2px solid ${useRuletaDesc ? '#FFD700' : 'var(--border-color)'}`,
-                      cursor: 'pointer', transition: 'all 0.3s ease'
+                      cursor: ruletaDescuentos.length > 0 ? 'pointer' : 'default', 
+                      transition: 'all 0.3s ease',
+                      opacity: ruletaDescuentos.length === 0 ? 0.6 : 1
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <span style={{ fontSize: '22px' }}>🎡</span>
                       <div>
-                        <div style={{ fontWeight: 800, fontSize: '18px' }}>Usar descuento de Ruleta</div>
-                        <div style={{ fontSize: '15px', color: 'var(--text-muted)' }}>
-                          {ruletaDescuentos.length} disponible{ruletaDescuentos.length !== 1 ? 's' : ''}
+                        <div style={{ fontWeight: 800, fontSize: '18px' }}>Descuento de Ruleta</div>
+                        <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                          {ruletaDescuentos.length > 0 
+                            ? `${ruletaDescuentos.length} disponible${ruletaDescuentos.length !== 1 ? 's' : ''}`
+                            : 'No tienes cupones pendientes'}
                         </div>
                       </div>
                     </div>
-                    <div style={{
-                      width: '44px', height: '24px', borderRadius: '12px',
-                      backgroundColor: useRuletaDesc ? '#FFD700' : 'rgba(255,255,255,0.1)',
-                      position: 'relative', transition: 'all 0.3s ease', flexShrink: 0,
-                    }}>
+                    {ruletaDescuentos.length > 0 && (
                       <div style={{
-                        width: '20px', height: '20px', borderRadius: '50%',
-                        backgroundColor: 'white',
-                        position: 'absolute', top: '2px',
-                        left: useRuletaDesc ? '22px' : '2px',
-                        transition: 'all 0.3s ease',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                      }} />
-                    </div>
+                        width: '44px', height: '24px', borderRadius: '12px',
+                        backgroundColor: useRuletaDesc ? '#FFD700' : 'rgba(255,255,255,0.1)',
+                        position: 'relative', transition: 'all 0.3s ease', flexShrink: 0,
+                      }}>
+                        <div style={{
+                          width: '20px', height: '20px', borderRadius: '50%',
+                          backgroundColor: 'white',
+                          position: 'absolute', top: '2px',
+                          left: useRuletaDesc ? '22px' : '2px',
+                          transition: 'all 0.3s ease'
+                        }} />
+                      </div>
+                    )}
                   </div>
                 )}
 
