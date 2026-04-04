@@ -208,7 +208,7 @@ export default function App() {
   if (perfil?.estado === 'suspendido') return <SuspendedView onLogout={logout} onRefresh={refetch} type="suspendido" />
   if (perfil?.estado === 'baneado') return <SuspendedView onLogout={logout} onRefresh={refetch} type="baneado" />
 
-  const isAdmin = perfil?.rol === 'admin'
+  const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
 
   const renderPage = () => {
     // Seguridad: Si el usuario NO es admin, solo puede ver catálogo, pedidos, perfil y checkout

@@ -5,7 +5,7 @@ import { useAuth, useClientes } from '../hooks/useData'
 export default function Perfil() {
   const { user, perfil, updatePassword } = useAuth()
   const { updateProfile } = useClientes()
-  const isAdmin = perfil?.rol === 'admin'
+  const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
   
   const [whatsapp, setWhatsapp] = useState('')
   const [newPassword, setNewPassword] = useState('')

@@ -24,7 +24,7 @@ export default function SupportChat({ perfil, forceOpen, onClose }) {
   }, [forceOpen])  // Solo cargar el ID del perfil actual
   const currentUserId = perfil?.id
   const currentClienteId = perfil?.cliente_uuid || perfil?.id
-  const isAdmin = perfil?.rol === 'admin'
+  const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
 
   // Variables específicas para ADMIN (lista de chats)
   const [activeChats, setActiveChats] = useState([]) // Lista de clientes con chat

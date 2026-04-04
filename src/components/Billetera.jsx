@@ -8,7 +8,7 @@ export default function Billetera({ onNavigate }) {
   const { wallet, recargas, transacciones, loading, solicitarRecarga, refetch } = useWallet()
   const { perfil } = useAuth()
   const { metodos } = useMetodosPago()
-  const isAdmin = perfil?.rol === 'admin'
+  const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
 
   const [monto, setMonto] = useState('')
   const [monedaRecarga, setMonedaRecarga] = useState('usd')

@@ -10,7 +10,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
   const targetOrderId = normalizedParams.orderId;
   const { user, perfil } = useAuth()
   const { config } = useConfiguracion()
-  const isAdmin = perfil?.rol === 'admin'
+  const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
   const [pedidos, setPedidos] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedPedido, setSelectedPedido] = useState(null)

@@ -28,13 +28,21 @@ export default function Checkout({ onFinish }) {
 
   useEffect(() => {
     if (!user?.id) return
+    console.log("🔍 Buscando descuentos de ruleta para:", user.id)
     supabase
       .from('ruleta_descuentos_pendientes')
       .select('id,nombre,porcentaje')
       .eq('cliente_id', user.id)
       .eq('usado', false)
-      .order('created_at')
-      .then(({ data }) => setRuletaDescuentos(data || []))
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("❌ Error cargando descuentos de ruleta:", error)
+        } else {
+          console.log("✅ Descuentos encontrados:", data?.length || 0)
+          setRuletaDescuentos(data || [])
+        }
+      })
   }, [user?.id])
 
   const currentClienteId = user?.id || perfil?.id || null
