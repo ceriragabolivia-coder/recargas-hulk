@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../hooks/useData'
 import { supabase } from '../lib/supabase'
 import { formatUSD, formatBs } from '../utils/helpers'
@@ -34,8 +34,24 @@ export default function Ruleta() {
   const [showModal, setShowModal]         = useState(false)
   const [historial, setHistorial]         = useState([])
   const [loading, setLoading]             = useState(true)
+  
+  const audioSpin = useRef(null)
+  const audioWin = useRef(null)
+  const audioLose = useRef(null)
 
-  const CX = 150, CY = 150, R = 128, R_TEXT = 90, R_INNER = 32
+  const CX = 150, CY = 150, R = 128, R_INNER = 32
+
+  useEffect(() => {
+    audioSpin.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2007/2007-preview.mp3')
+    audioSpin.current.loop = true
+    audioSpin.current.volume = 0.4
+    audioWin.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3')
+    audioLose.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3')
+
+    return () => {
+      if (audioSpin.current) { audioSpin.current.pause(); audioSpin.current = null; }
+    }
+  }, [])
 
   useEffect(() => { if (user?.id) fetchAll() }, [user?.id])
 
@@ -87,9 +103,21 @@ export default function Ruleta() {
 
     setAnimate(true)
     setRotation(newRotation)
+    if (audioSpin.current) audioSpin.current.play().catch(() => {})
 
     setTimeout(() => {
       setAnimate(false)
+      if (audioSpin.current) {
+        audioSpin.current.pause()
+        audioSpin.current.currentTime = 0
+      }
+      
+      if (res.tipo === 'sin_premio') {
+        if (audioLose.current) audioLose.current.play().catch(() => {})
+      } else {
+        if (audioWin.current) audioWin.current.play().catch(() => {})
+      }
+
       setResultado(res)
       setGirosDisp(res.giros_restantes ?? Math.max(0, girosDisp - 1))
       setHistorial(prev => [{ premio_nombre: res.premio_nombre, tipo: res.tipo, valor: res.valor, created_at: new Date().toISOString() }, ...prev].slice(0, 10))
@@ -111,7 +139,7 @@ export default function Ruleta() {
     </div>
   )
 
-  const wheelSize = Math.min(320, typeof window !== 'undefined' ? window.innerWidth - 64 : 320)
+  const wheelSize = Math.min(440, typeof window !== 'undefined' ? window.innerWidth - 64 : 440)
 
   return (
     <div className="page-content" style={{ maxWidth: 700, margin: '0 auto', padding: '0 16px 40px' }}>
@@ -166,18 +194,17 @@ export default function Ruleta() {
             {segments.length === 0
               ? <circle cx={CX} cy={CY} r={R} fill="#1e2a4a" />
               : segments.map((seg, idx) => {
-                  const t = polar(CX, CY, R_TEXT, seg.midAngle)
-                  const rot = seg.midAngle > 180 ? seg.midAngle + 180 : seg.midAngle
-                  const shortName = seg.nombre.length > 9 ? seg.nombre.slice(0, 9) + '…' : seg.nombre
+                  const fontSize = segments.length > 12 ? 6.5 : segments.length > 8 ? 7.5 : 9
                   return (
                     <g key={seg.id}>
                       <path d={arc(CX, CY, R, seg.startAngle, seg.endAngle)} fill={seg.color || seg.colorFallback} stroke="rgba(255,255,255,.2)" strokeWidth="1.5" />
-                      <text x={t.x} y={t.y} textAnchor="middle" dominantBaseline="middle"
-                        fontSize={segments.length > 8 ? 7.5 : 9} fontWeight="800" fill="white"
-                        transform={`rotate(${rot},${t.x},${t.y})`}
-                        style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.8))' }}>
-                        {seg.emoji || '🎁'} {shortName}
-                      </text>
+                      <g transform={`rotate(${seg.midAngle - 90}, ${CX}, ${CY})`}>
+                        <text x={CX + 42} y={CY} textAnchor="start" dominantBaseline="middle"
+                          fontSize={fontSize} fontWeight="800" fill="white"
+                          style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.8))' }}>
+                          {seg.emoji || '🎁'} {seg.nombre}
+                        </text>
+                      </g>
                     </g>
                   )
                 })
