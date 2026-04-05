@@ -80,8 +80,10 @@ export default function Ruleta() {
 
     // Spin: 6-8 full turns + land on segment
     const extraTurns = 6 + Math.floor(Math.random() * 3)
-    const landAngle   = ((360 - (targetAngle % 360)) % 360)
-    const newRotation = rotation + extraTurns * 360 + landAngle
+    const currentModulo = rotation % 360
+    const finalModulo = (360 - (targetAngle % 360)) % 360
+    const neededDelta = (finalModulo - currentModulo + 360) % 360
+    const newRotation = rotation + (extraTurns * 360) + neededDelta
 
     setAnimate(true)
     setRotation(newRotation)
