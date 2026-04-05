@@ -49,8 +49,11 @@ const playNotificationSound = () => {
   }
 };
 
-function NotificationBar({ counts, onNavigate }) {
-  const activeItems = DEFAULT_TASKBAR_ITEMS.filter(item => counts[item.key] > 0)
+function NotificationBar({ counts, onNavigate, config }) {
+  const activeItems = DEFAULT_TASKBAR_ITEMS.filter(item => {
+    if (config[`tb_show_${item.key}`] === 'false') return false
+    return counts[item.key] > 0
+  })
   if (activeItems.length === 0) return null
   return (
     <div className="notification-bar" style={{ display: 'flex', gap: '8px' }}>
@@ -197,6 +200,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
   const { fetchNotificacionesActivas } = useNotificacionesPush()
   const [toasts, setToasts] = useState([])
   const [activeNotiDetail, setActiveNotiDetail] = useState(null)
+  const [onlineCount, setOnlineCount] = useState(0)
   const userIdRef = useRef(null)
 
   const adminIdsRef = useRef(new Set())
@@ -269,9 +273,45 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
       ordenes_pendientes: oCount,
       recargas_pendientes: rCount,
       soporte_pendientes: sCount,
-      usuarios_online: 0,
+      usuarios_online: onlineCount,
     })
   }
+
+  // Presence Tracking
+  useEffect(() => {
+    if (!user?.id) return
+
+    const channel = supabase.channel('online-users', {
+      config: {
+        presence: {
+          key: user.id,
+        },
+      },
+    })
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState()
+        const count = Object.keys(state).length
+        setOnlineCount(count)
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({
+            user_id: user.id,
+            online_at: new Date().toISOString(),
+          })
+        }
+      })
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user?.id])
+
+  useEffect(() => {
+    setCounts(prev => ({ ...prev, usuarios_online: onlineCount }))
+  }, [onlineCount])
 
   useEffect(() => {
     // Solo ejecutar fetchCounts cuando el perfil está completamente cargado
@@ -720,7 +760,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
             <div className="desktop-only"><LiveClock /></div>
-            {isAdmin && <NotificationBar key="notif-bar" counts={counts} onNavigate={handleMobileNavigate} />}
+            {isAdmin && <NotificationBar key="notif-bar" counts={counts} onNavigate={handleMobileNavigate} config={config} />}
           </div>
         </header>
         {children}

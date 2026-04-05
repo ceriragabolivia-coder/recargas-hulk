@@ -722,15 +722,30 @@ export default function Configuracion() {
                             <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{item.desc}</div>
                           </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <span style={{ fontSize: '12px', color: 'var(--accent-success)', fontWeight: 600 }}>Activo</span>
+                        
+                        {/* Toggle de Visibilidad */}
+                        <div 
+                          style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+                          onClick={() => updateConfig(`tb_show_${item.key}`, config[`tb_show_${item.key}`] === 'false' ? 'true' : 'false', true)}
+                        >
+                          <span style={{ 
+                            fontSize: '12px', 
+                            color: config[`tb_show_${item.key}`] !== 'false' ? 'var(--accent-success)' : 'var(--text-muted)', 
+                            fontWeight: 600,
+                            transition: 'all 0.3s ease'
+                          }}>
+                            {config[`tb_show_${item.key}`] !== 'false' ? 'Activo' : 'Inactivo'}
+                          </span>
                           <div style={{
-                            width: '40px', height: '22px', borderRadius: '11px', backgroundColor: 'var(--accent-success)',
-                            position: 'relative', cursor: 'pointer'
+                            width: '40px', height: '22px', borderRadius: '11px', 
+                            backgroundColor: config[`tb_show_${item.key}`] !== 'false' ? 'var(--accent-success)' : '#3f3f46',
+                            position: 'relative', cursor: 'pointer', transition: 'all 0.3s ease'
                           }}>
                             <div style={{
                               width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'white',
-                              position: 'absolute', top: '2px', right: '2px', transition: 'all 0.2s'
+                              position: 'absolute', top: '2px', 
+                              left: config[`tb_show_${item.key}`] !== 'false' ? '20px' : '2px', 
+                              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                             }} />
                           </div>
                         </div>
