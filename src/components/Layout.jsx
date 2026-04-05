@@ -49,18 +49,39 @@ const playNotificationSound = () => {
   }
 };
 
-function NotificationBar({ counts, onNavigate, config }) {
+function NotificationBar({ counts, onNavigate, config, onlineUsers }) {
+  const [showOnlineDropdown, setShowOnlineDropdown] = useState(false)
+  const dropdownRef = useRef(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowOnlineDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   const activeItems = DEFAULT_TASKBAR_ITEMS.filter(item => {
     if (config[`tb_show_${item.key}`] === 'false') return false
     return counts[item.key] > 0
   })
+
   if (activeItems.length === 0) return null
+
   return (
-    <div className="notification-bar" style={{ display: 'flex', gap: '8px' }}>
+    <div className="notification-bar" style={{ display: 'flex', gap: '8px', position: 'relative' }}>
       {activeItems.map(item => (
         <div 
           key={item.key}
-          onClick={() => onNavigate(item.key === 'soporte_pendientes' ? 'chats' : 'pedidos', item.key)}
+          onClick={(e) => {
+            if (item.key === 'usuarios_online') {
+              setShowOnlineDropdown(!showOnlineDropdown)
+            } else {
+              onNavigate(item.key === 'soporte_pendientes' ? 'chats' : 'pedidos', item.key)
+            }
+          }}
           className="notification-item"
           style={{
             display: 'flex', alignItems: 'center', gap: '8px',
@@ -69,11 +90,53 @@ function NotificationBar({ counts, onNavigate, config }) {
             border: `1px solid ${item.color}30`,
             cursor: 'pointer',
             transition: 'all 0.2s ease',
-            color: item.color
+            color: item.color,
+            position: 'relative'
           }}
         >
           <span>{item.icon}</span>
           <span style={{ fontSize: '12px', fontWeight: 700 }}>{counts[item.key]}</span>
+
+          {item.key === 'usuarios_online' && showOnlineDropdown && (
+            <div 
+              ref={dropdownRef}
+              className="glass-morphism"
+              style={{
+                position: 'absolute', top: 'calc(100% + 10px)', right: 0,
+                width: '280px', maxHeight: '400px', overflowY: 'auto',
+                backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                backdropFilter: 'blur(12px)',
+                borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.1)',
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4)',
+                zIndex: 1000, padding: '12px',
+                animation: 'slideDown 0.2s ease-out'
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <style>{`
+                @keyframes slideDown { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+                .online-user-item:hover { background: rgba(255, 255, 255, 0.05); }
+              `}</style>
+              <div style={{ padding: '4px 8px 12px', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '12px', fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Usuarios en Línea</span>
+                <span style={{ fontSize: '10px', background: 'var(--accent-success)', color: '#000', padding: '2px 8px', borderRadius: '10px', fontWeight: 900 }}>{onlineUsers.length}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {onlineUsers.map((u, i) => (
+                  <div key={i} className="online-user-item" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px', borderRadius: '10px', transition: 'all 0.2s' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {u.avatar_url ? <img src={u.avatar_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '12px', color: '#fff' }}>{u.nickname?.[0]?.toUpperCase() || u.email?.[0]?.toUpperCase() || '?'}</span>}
+                    </div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.nickname || u.email?.split('@')[0]}</div>
+                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.email}</div>
+                    </div>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--accent-success)', boxShadow: '0 0 8px var(--accent-success)' }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ))}
     </div>
@@ -200,7 +263,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
   const { fetchNotificacionesActivas } = useNotificacionesPush()
   const [toasts, setToasts] = useState([])
   const [activeNotiDetail, setActiveNotiDetail] = useState(null)
-  const [onlineCount, setOnlineCount] = useState(0)
+  const [onlineUsers, setOnlineUsers] = useState([])
   const userIdRef = useRef(null)
 
   const adminIdsRef = useRef(new Set())
@@ -273,13 +336,13 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
       ordenes_pendientes: oCount,
       recargas_pendientes: rCount,
       soporte_pendientes: sCount,
-      usuarios_online: onlineCount,
+      usuarios_online: onlineUsers.length,
     })
   }
 
   // Presence Tracking
   useEffect(() => {
-    if (!user?.id) return
+    if (!user?.id || !perfil) return
 
     const channel = supabase.channel('online-users', {
       config: {
@@ -292,13 +355,22 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
     channel
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState()
-        const count = Object.keys(state).length
-        setOnlineCount(count)
+        const users = []
+        Object.keys(state).forEach(key => {
+          // Cada key puede tener múltiples presencias (múltiples pestañas)
+          const presence = state[key][0]
+          if (presence) users.push(presence)
+        })
+        setOnlineUsers(users)
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           await channel.track({
             user_id: user.id,
+            email: user.email,
+            nickname: perfil.nickname || perfil.nombres || user.email.split('@')[0],
+            avatar_url: perfil.avatar_url,
+            role: perfil.rol,
             online_at: new Date().toISOString(),
           })
         }
@@ -307,11 +379,11 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user?.id])
+  }, [user?.id, perfil])
 
   useEffect(() => {
-    setCounts(prev => ({ ...prev, usuarios_online: onlineCount }))
-  }, [onlineCount])
+    setCounts(prev => ({ ...prev, usuarios_online: onlineUsers.length }))
+  }, [onlineUsers])
 
   useEffect(() => {
     // Solo ejecutar fetchCounts cuando el perfil está completamente cargado
@@ -760,7 +832,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
             <div className="desktop-only"><LiveClock /></div>
-            {isAdmin && <NotificationBar key="notif-bar" counts={counts} onNavigate={handleMobileNavigate} config={config} />}
+            {isAdmin && <NotificationBar key="notif-bar" counts={counts} onNavigate={handleMobileNavigate} config={config} onlineUsers={onlineUsers} />}
           </div>
         </header>
         {children}
