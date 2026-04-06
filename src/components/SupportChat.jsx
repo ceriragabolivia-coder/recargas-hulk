@@ -441,7 +441,7 @@ export default function SupportChat({ perfil, forceOpen, onClose }) {
   if (!perfil) return null
 
   return (
-    <div className="support-chat-container" style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '16px' }}>
+    <div className="support-chat-container" style={{ position: 'fixed', bottom: '32px', right: '20px', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px' }}>
       
       {/* Ventana de Chat */}
       {isOpen && (
@@ -745,10 +745,10 @@ export default function SupportChat({ perfil, forceOpen, onClose }) {
       <button 
         className="btn btn-primary"
         style={{ 
-          height: '60px', borderRadius: '30px', display: 'flex', justifyContent: 'center', alignItems: 'center',
-          boxShadow: '0 8px 24px rgba(0, 210, 255, 0.4)', padding: isOpen || isHovered ? '0 24px' : '0',
-          width: isOpen || isHovered ? 'auto' : '60px',
-          fontSize: '16px', gap: '10px',
+          height: '48px', borderRadius: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center',
+          boxShadow: '0 8px 24px rgba(0, 210, 255, 0.3)', padding: isOpen || isHovered ? '0 18px' : '0',
+          width: isOpen || isHovered ? 'auto' : '48px',
+          fontSize: '14px', gap: '8px',
           fontWeight: 'bold', border: 'none',
           transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
           overflow: 'hidden', whiteSpace: 'nowrap'
@@ -769,7 +769,7 @@ export default function SupportChat({ perfil, forceOpen, onClose }) {
         }}>
           <span>{isOpen ? 'Cerrar Chat' : 'Chat de Soporte'}</span>
         </div>
-        <span style={{ fontSize: '24px', flexShrink: 0 }}>{isOpen ? '✕' : '💬'}</span>
+        <span style={{ fontSize: '20px', flexShrink: 0 }}>{isOpen ? '✕' : '💬'}</span>
       </button>
 
       {/* Modal de Confirmación para la eliminación de mensajes */}
