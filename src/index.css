@@ -2235,3 +2235,108 @@ tr:last-child td { border-bottom: none; }
     gap: 16px !important;
   }
 }
+
+/* ============ INTERRUPTORES DE PAGO (TOGGLES) ============ */
+.checkout-toggle-card {
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between;
+  padding: 14px 18px; 
+  border-radius: 16px; 
+  margin-bottom: 8px;
+  cursor: pointer; 
+  transition: all 0.3s ease;
+}
+
+.checkout-toggle-card.ruleta-toggle {
+  margin-bottom: 12px;
+}
+
+@media (max-width: 600px) {
+  .checkout-toggle-card {
+    padding: 10px 14px !important;
+    margin-bottom: 6px !important;
+    border-radius: 12px !important;
+  }
+  
+  .checkout-toggle-card span[style*="fontSize: '22px'"] {
+    font-size: 18px !important;
+  }
+  
+  .checkout-toggle-card div[style*="fontSize: '18px'"] {
+    font-size: 14px !important;
+  }
+  
+  .checkout-toggle-card div[style*="fontSize: '15px'"],
+  .checkout-toggle-card div[style*="fontSize: '13px'"] {
+    font-size: 11px !important;
+  }
+
+  .checkout-toggle-card div[style*="width: '44px'"] {
+    width: 36px !important;
+    height: 20px !important;
+  }
+
+  .checkout-toggle-card div[style*="width: '20px'"] {
+    width: 16px !important;
+    height: 16px !important;
+    left: 2px !important;
+  }
+
+  .checkout-toggle-card div[style*="left: '22px'"] {
+    left: 18px !important;
+  }
+}
+
+/* ============ GRILLA DE MÉTODOS DE PAGO ============ */
+.payment-methods-grid {
+  display: grid; 
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
+  gap: 12px;
+}
+
+.payment-method-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background-color: var(--bg-panel);
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: inherit;
+}
+
+.payment-method-btn.active {
+  background-color: rgba(0, 210, 255, 0.1);
+  border-color: var(--accent-primary);
+}
+
+@media (max-width: 600px) {
+  .payment-methods-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  
+  .payment-method-btn {
+    padding: 12px 8px !important;
+    gap: 8px !important;
+    border-radius: 12px !important;
+  }
+  
+  .payment-method-btn div[style*="width: '84px'"] {
+    width: 64px !important;
+    height: 64px !important;
+    border-radius: 12px !important;
+  }
+  
+  .payment-method-btn span[style*="fontSize: '30px'"] {
+    font-size: 24px !important;
+  }
+  
+  .payment-method-btn span[style*="fontSize: '13px'"] {
+    font-size: 11px !important;
+  }
+}

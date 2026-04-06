@@ -452,12 +452,10 @@ export default function Checkout({ onFinish }) {
                 {hasAnySaldo && !isGratis && (
                   <div 
                     onClick={handleToggleWalletPartial}
+                    className="checkout-toggle-card"
                     style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '14px 18px', borderRadius: '16px', marginBottom: '8px',
                       backgroundColor: useWalletPartial ? 'rgba(34, 197, 94, 0.08)' : 'var(--bg-panel)',
                       border: `2px solid ${useWalletPartial ? 'var(--accent-success)' : 'var(--border-color)'}`,
-                      cursor: 'pointer', transition: 'all 0.3s ease',
                       opacity: useWalletBs ? 0.4 : 1, pointerEvents: useWalletBs ? 'none' : 'auto'
                     }}
                   >
@@ -496,12 +494,10 @@ export default function Checkout({ onFinish }) {
                 {hasAnySaldoBs && !isGratis && (
                   <div 
                     onClick={handleToggleWalletBs}
+                    className="checkout-toggle-card"
                     style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '14px 18px', borderRadius: '16px', marginBottom: '16px',
                       backgroundColor: useWalletBs ? 'rgba(139, 92, 246, 0.08)' : 'var(--bg-panel)',
                       border: `2px solid ${useWalletBs ? '#8b5cf6' : 'var(--border-color)'}`,
-                      cursor: 'pointer', transition: 'all 0.3s ease',
                       opacity: useWalletPartial ? 0.4 : 1, pointerEvents: useWalletPartial ? 'none' : 'auto'
                     }}
                   >
@@ -540,13 +536,11 @@ export default function Checkout({ onFinish }) {
                 {!isGratis && (
                   <div 
                     onClick={handleToggleRuletaDesc}
+                    className="checkout-toggle-card ruleta-toggle"
                     style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '14px 18px', borderRadius: '16px', marginBottom: useRuletaDesc ? '10px' : '16px',
                       backgroundColor: useRuletaDesc ? 'rgba(255, 215, 0, 0.08)' : 'var(--bg-panel)',
                       border: `2px solid ${useRuletaDesc ? '#FFD700' : 'var(--border-color)'}`,
                       cursor: ruletaDescuentos.length > 0 ? 'pointer' : 'default', 
-                      transition: 'all 0.3s ease',
                       opacity: ruletaDescuentos.length === 0 ? 0.6 : 1
                     }}
                   >
@@ -631,24 +625,12 @@ export default function Checkout({ onFinish }) {
                         ? `Método de pago para el restante (${formatBs(remainingBsFromWallet)})` 
                         : 'Seleccionar Método de Pago'}
                     </label>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '12px' }}>
+                    <div className="payment-methods-grid">
                       {metodos.filter(m => m.activo).map(m => (
                         <button
                           key={m.id}
                           onClick={() => handleSelectMetodo(m.id)}
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '12px',
-                            padding: '16px',
-                            borderRadius: '16px',
-                            backgroundColor: selectedMetodoId === m.id ? 'rgba(0, 210, 255, 0.1)' : 'var(--bg-panel)',
-                            border: `2px solid ${selectedMetodoId === m.id ? 'var(--accent-primary)' : 'var(--border-color)'}`,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            color: 'inherit'
-                          }}
+                          className={`payment-method-btn ${selectedMetodoId === m.id ? 'active' : ''}`}
                         >
                           <div style={{ 
                             width: '84px', height: '84px', borderRadius: '18px', 
