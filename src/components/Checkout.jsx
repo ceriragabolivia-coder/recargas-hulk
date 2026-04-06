@@ -413,6 +413,36 @@ export default function Checkout({ onFinish }) {
               <p style={{ color: 'var(--text-muted)', marginBottom: '32px' }}>Utiliza los siguientes datos para realizar tu transferencia:</p>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left' }}>
+                {selectedMetodo?.datos && (
+                  <button 
+                    className="btn btn-ghost btn-sm"
+                    style={{ 
+                      width: '100%', 
+                      marginBottom: '8px', 
+                      border: '1px dashed var(--accent-primary)',
+                      color: 'var(--accent-primary)',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      height: '40px'
+                    }}
+                    onClick={(e) => {
+                      navigator.clipboard.writeText(selectedMetodo.datos);
+                      const btn = e.currentTarget;
+                      const originalText = btn.innerText;
+                      btn.innerText = '✅ ¡Todos los datos copiados!';
+                      btn.style.borderColor = 'var(--accent-success)';
+                      btn.style.color = 'var(--accent-success)';
+                      setTimeout(() => {
+                        btn.innerText = originalText;
+                        btn.style.borderColor = 'var(--accent-primary)';
+                        btn.style.color = 'var(--accent-primary)';
+                      }, 2000);
+                    }}
+                  >
+                    📋 Copiar Todos Los Datos
+                  </button>
+                )}
+
                 {selectedMetodo?.datos.split('\n').filter(line => line.trim()).map((line, idx) => (
                   <div key={idx} className="payment-detail-row">
                     <div className="payment-detail-text">
