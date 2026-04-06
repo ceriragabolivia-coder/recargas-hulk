@@ -128,7 +128,10 @@ export function useVentas() {
   }
 
   async function fetchVentasHoy() {
-    if (!perfil?.cliente_uuid) return // No filtrar hasta tener el perfil cargado
+    if (!perfil?.cliente_uuid) {
+       setLoading(false)
+       return 
+    }
     const hoy = getLocalDateString(new Date())
     const { start, end } = getLocalBounds(hoy)
 
@@ -280,8 +283,9 @@ export function useVentas() {
   }
 
   useEffect(() => { 
-    if (perfil?.cliente_uuid) fetchVentasHoy() 
-  }, [perfil?.cliente_uuid])
+    if (perfil?.id) fetchVentasHoy() 
+    else setLoading(false) // No bloquear si no hay perfil
+  }, [perfil?.id, perfil?.cliente_uuid])
 
   return { 
     ventasHoy, 
@@ -339,18 +343,23 @@ export function useAuth() {
       return
     }
 
-    const finalPerfil = perfilData ? { ...perfilData } : { id: userId, rol: 'cliente', estado: 'pendiente' }
-    const finalCliente = clienteData ? { ...clienteData } : {}
-    
+    // Determinar ROL y ESTADO final con fallback a la tabla clientes
+    const finalRol = (perfilData?.rol || clienteData?.rol || 'cliente').toLowerCase()
+    const finalEstado = (perfilData?.estado || clienteData?.estado || 'pendiente').toLowerCase()
+
     setPerfil({ 
-      ...finalCliente, 
-      ...finalPerfil, 
+      ...clienteData, 
+      ...perfilData, 
       id: userId, 
-      cliente_uuid: finalCliente.id // Asegurar que use el ID de la tabla clientes
+      cliente_uuid: clienteData?.id || null,
+      rol: finalRol,
+      estado: finalEstado
     })
 
-    // Actualizar registro de último acceso de forma silenciosa
-    supabase.from('clientes').update({ ultima_conexion: new Date().toISOString() }).eq('auth_user_id', userId).then()
+    // Actualizar registro de último acceso de forma silenciosa si existe el cliente
+    if (clienteData?.id) {
+       supabase.from('clientes').update({ ultima_conexion: new Date().toISOString() }).eq('id', clienteData.id).then()
+    }
   }
 
   useEffect(() => {
