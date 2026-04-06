@@ -2134,3 +2134,69 @@ tr:last-child td { border-bottom: none; }
     margin-top: 4px !important;
   }
 }
+
+/* ============ OPTIMIZACIÓN CHECKOUT ============ */
+.checkout-item {
+  padding: 16px;
+}
+
+.checkout-item-name {
+  font-size: 20px;
+}
+
+.checkout-item-juego {
+  font-size: 16px;
+}
+
+.checkout-details-box {
+  margin-top: 10px; 
+  padding: 10px 14px; 
+  font-size: 16px;
+}
+
+.checkout-price-usd {
+  font-size: 16px;
+}
+
+.checkout-price-bs {
+  font-size: 18px;
+}
+
+@media (max-width: 600px) {
+  .checkout-item {
+    padding: 12px !important;
+    gap: 12px !important;
+  }
+  
+  .checkout-item img {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  
+  .checkout-item-name {
+    font-size: 16px !important;
+  }
+  
+  .checkout-item-juego {
+    font-size: 13px !important;
+  }
+  
+  .checkout-details-box {
+    margin-top: 6px !important; 
+    padding: 8px 10px !important; 
+    font-size: 13px !important;
+  }
+  
+  .checkout-price-usd {
+    font-size: 14px !important;
+  }
+  
+  .checkout-price-bs {
+    font-size: 16px !important;
+  }
+
+  .responsive-grid-2col {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+}

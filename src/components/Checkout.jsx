@@ -343,17 +343,17 @@ export default function Checkout({ onFinish }) {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', backgroundColor: 'var(--border-color)', borderRadius: '0 0 12px 12px', overflow: 'hidden' }}>
                 {cart.map(item => (
-                  <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', backgroundColor: 'var(--bg-card)' }}>
+                  <div key={item.id} className="checkout-item" style={{ display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: 'var(--bg-card)' }}>
                     <div style={{ width: 48, height: 48, borderRadius: 10, overflow: 'hidden', backgroundColor: 'var(--bg-panel)', flexShrink: 0 }}>
                       {item.icono_url ? <img src={item.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : '📦'}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 'bold', fontSize: '20px' }}>{item.nombre}</div>
-                      <div style={{ fontSize: '16px', color: 'var(--text-muted)' }}>{item.juego}</div>
+                      <div className="checkout-item-name" style={{ fontWeight: 'bold' }}>{item.nombre}</div>
+                      <div className="checkout-item-juego" style={{ color: 'var(--text-muted)' }}>{item.juego}</div>
                       <div style={{ fontSize: 13, color: 'var(--accent-primary)', textTransform: 'uppercase', marginTop: 4 }}>
                         Requisito: {item.metodo_recarga === 'cuenta_completa' ? '🔐 Cuenta' : item.metodo_recarga === 'usuario_clave' ? '👤 Usuario' : '🆔 ID'}
                       </div>
-                      <div style={{ marginTop: '10px', fontSize: '16px', padding: '10px 14px', backgroundColor: 'var(--bg-primary)', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div className="checkout-details-box" style={{ backgroundColor: 'var(--bg-primary)', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         {item.metodo_recarga === 'cuenta_completa' ? (
                           <>
                             <div style={{ color: 'var(--text-muted)' }}><span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Correo:</span> <span style={{ fontFamily: 'monospace' }}>{item.account_email || 'No proporcionado'}</span></div>
@@ -369,9 +369,9 @@ export default function Checkout({ onFinish }) {
                         )}
                       </div>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontWeight: 600, fontSize: '16px' }}>{item.quantity} x {formatUSD(item.venta_usd)}</div>
-                      <div style={{ fontSize: '18px', color: 'var(--accent-success)', fontWeight: 800 }}>{formatBs(item.venta_bs * item.quantity)}</div>
+                    <div className="checkout-item-price" style={{ textAlign: 'right' }}>
+                      <div className="checkout-price-usd" style={{ fontWeight: 600 }}>{item.quantity} x {formatUSD(item.venta_usd)}</div>
+                      <div className="checkout-price-bs" style={{ color: 'var(--accent-success)', fontWeight: 800 }}>{formatBs(item.venta_bs * item.quantity)}</div>
                     </div>
                   </div>
                 ))}
