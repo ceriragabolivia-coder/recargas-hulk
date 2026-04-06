@@ -110,9 +110,7 @@ export default function Checkout({ onFinish }) {
   const selectedMetodo = useMemo(() => {
     if (isWalletOnly) return { nombre: 'Billetera USD', icono: '💼', datos: 'Pago instantáneo con tu saldo USD disponible.' }
     if (isWalletBsOnly) return { nombre: 'Billetera Bs', icono: '🏦', datos: 'Pago instantáneo con tu saldo Bs disponible.' }
-    const m = metodos.find(m => m.id === selectedMetodoId)
-    console.log("🔍 Checkout - Método Seleccionado:", m?.nombre, "| QR URL:", m?.qr_url)
-    return m
+    return metodos.find(m => m.id === selectedMetodoId)
   }, [metodos, selectedMetodoId, isWalletOnly, isWalletBsOnly])
 
   const handleToggleWalletPartial = () => {
@@ -460,11 +458,6 @@ export default function Checkout({ onFinish }) {
               <div style={{ marginTop: '16px', padding: '16px', backgroundColor: 'rgba(255, 171, 0, 0.1)', borderRadius: '12px', color: '#ffab00', fontSize: '14px' }}>
                 ⚠️ Una vez realizado el pago, completa los datos de recarga y el número de referencia a la derecha.
               </div>
-
-              {/* DEBUG: Remove before production */}
-              <pre style={{ fontSize: '10px', color: 'gray', marginTop: '20px', overflow: 'auto', maxWidth: '100%' }}>
-                {JSON.stringify(selectedMetodo, null, 2)}
-              </pre>
             </div>
           )}
           
