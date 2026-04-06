@@ -178,10 +178,37 @@ export function useVentas() {
 
   async function deleteVenta(id) {
     const { error } = await supabase.from('ventas').delete().eq('id', id)
-    if (!error) {
-      await fetchVentasHoy()
+
+  async function limpiarComprobantes() {
+    try {
+      // 1. Obtener pedidos con comprobantes de más de 20 días
+      const twentyDaysAgo = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString()
+      const { data: pedidosExpirados } = await supabase
+        .from('pedidos')
+        .select('comprobante_url')
+        .not('comprobante_url', 'is', null)
+        .lt('created_at', twentyDaysAgo)
+
+      if (pedidosExpirados && pedidosExpirados.length > 0) {
+        // 2. Extraer rutas de archivos
+        const pathsToDelete = pedidosExpirados.map(p => {
+          const url = p.comprobante_url
+          // Asumiendo formato: .../storage/v1/object/public/logos/pedidos/filename.ext
+          const parts = url.split('/logos/')
+          return parts.length > 1 ? parts[1] : null
+        }).filter(Boolean)
+
+        // 3. Eliminar de Storage
+        if (pathsToDelete.length > 0) {
+          await supabase.storage.from('logos').remove(pathsToDelete)
+        }
+
+        // 4. Limpiar URLs en DB via RPC (ya creado en la migración 044)
+        await supabase.rpc('limpiar_comprobantes_antiguos')
+      }
+    } catch (err) {
+      console.error("Error en la limpieza de comprobantes:", err)
     }
-    return { error }
   }
 
   async function fetchHistorial(fechaDesde, fechaHasta) {
@@ -251,7 +278,18 @@ export function useVentas() {
     if (perfil?.cliente_uuid) fetchVentasHoy() 
   }, [perfil?.cliente_uuid])
 
-  return { ventasHoy, resumen, loading, registrarVenta, registrarVentaManual, deleteVenta, fetchHistorial, fetchResumenPeriodo, refetch: fetchVentasHoy }
+  return { 
+    ventasHoy, 
+    resumen, 
+    loading, 
+    registrarVenta, 
+    registrarVentaManual, 
+    deleteVenta, 
+    fetchHistorial, 
+    fetchResumenPeriodo, 
+    limpiarComprobantes,
+    refetch: fetchVentasHoy 
+  }
 }
 
 // ========================

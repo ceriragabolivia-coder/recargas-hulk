@@ -940,6 +940,28 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                 })()
               )}
 
+              {/* Comprobante de Pago */}
+              {selectedPedido.comprobante_url ? (
+                <div style={{ marginTop: '4px' }}>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>📎 Comprobante de Pago</div>
+                  <div style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-color)', cursor: 'pointer' }}
+                    onClick={() => window.open(selectedPedido.comprobante_url, '_blank')}
+                  >
+                    <img
+                      src={selectedPedido.comprobante_url}
+                      alt="Comprobante"
+                      style={{ width: '100%', maxHeight: '200px', objectFit: 'contain', backgroundColor: 'var(--bg-panel)', display: 'block' }}
+                    />
+                    <div style={{ padding: '6px', textAlign: 'center', fontSize: '11px', color: 'var(--accent-primary)', backgroundColor: 'rgba(0,210,255,0.05)', fontWeight: 600 }}>↗ Ver en tamaño completo</div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', backgroundColor: 'var(--bg-card)', borderRadius: '6px', marginTop: '4px' }}>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>📎 Comprobante</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>No adjuntado</span>
+                </div>
+              )}
+
               {/* Administrador que procesa */}
               {selectedPedido.atendido_por_id && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', backgroundColor: 'rgba(139, 92, 246, 0.08)', borderRadius: '8px', border: '1px solid rgba(139, 92, 246, 0.2)' }}>

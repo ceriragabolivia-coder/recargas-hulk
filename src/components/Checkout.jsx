@@ -1,8 +1,56 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useCallback } from 'react'
 import { useCart, useVentas, useMetodosPago, useAuth, useWallet } from '../hooks/useData'
 import { formatUSD, formatBs, playCashRegisterSound } from '../utils/helpers'
 import { supabase } from '../lib/supabase'
 import { useConfiguracion } from '../hooks/useData'
+
+// ============================================================
+// CountdownTimer - FUERA del componente Checkout
+// Si se define dentro, React lo recreará en cada render causando parpadeo
+// ============================================================
+function CountdownTimer({ expiryDate, onExpire }) {
+  const [timeLeft, setTimeLeft] = useState(() => {
+    const distance = new Date(expiryDate).getTime() - Date.now()
+    return distance > 0 ? Math.floor(distance / 1000) : 0
+  })
+
+  useEffect(() => {
+    if (timeLeft <= 0) return
+    const interval = setInterval(() => {
+      const distance = new Date(expiryDate).getTime() - Date.now()
+      if (distance <= 0) {
+        clearInterval(interval)
+        setTimeLeft(0)
+        onExpire()
+      } else {
+        setTimeLeft(Math.floor(distance / 1000))
+      }
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [expiryDate, onExpire])
+
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60)
+    const s = seconds % 60
+    return `${m}:${s < 10 ? '0' : ''}${s}`
+  }
+
+  if (timeLeft <= 0) return null
+
+  return (
+    <div style={{ 
+      padding: '12px', borderRadius: '12px',
+      backgroundColor: timeLeft < 60 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(0, 210, 255, 0.05)',
+      border: `1px solid ${timeLeft < 60 ? '#ef4444' : 'var(--accent-primary)'}`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '16px'
+    }}>
+      <span style={{ fontSize: '18px' }}>⏱️</span>
+      <span style={{ fontWeight: 800, fontSize: '14px', color: timeLeft < 60 ? '#ef4444' : 'var(--accent-primary)' }}>
+        Tiempo para reportar: <span style={{ fontSize: '20px', fontFamily: 'monospace' }}>{formatTime(timeLeft)}</span>
+      </span>
+    </div>
+  )
+}
 
 export default function Checkout({ onFinish }) {
   const { cart, removeFromCart, clearCart, checkout, totalUSD, totalBs } = useCart()
@@ -23,7 +71,9 @@ export default function Checkout({ onFinish }) {
   const [orderFinished, setOrderFinished] = useState(false)
   const [createdPedidoId, setCreatedPedidoId] = useState(null)
   const [expiresAt, setExpiresAt] = useState(null)
-  const orderPreparingRef = React.useRef(false) // Evita re-ejecuciones del useEffect de prepareOrder
+  const orderPreparingRef = React.useRef(false)
+  const [comprobanteUrl, setComprobanteUrl] = useState(null)
+  const [uploadingComprobante, setUploadingComprobante] = useState(false)
 
   // Descuentos ganados en la ruleta (pendientes de usar)
   const [ruletaDescuentos, setRuletaDescuentos] = useState([])
@@ -92,47 +142,6 @@ export default function Checkout({ onFinish }) {
   const discountedTotalBs  = Math.round(totalBs * ruletaFactor)
 
   const isGratis = discountedTotalUSD <= 0
-
-  // Componente de Cronómetro Regresivo
-  const CountdownTimer = ({ expiryDate, onExpire }) => {
-    const [timeLeft, setTimeLeft] = useState(0)
-
-    useEffect(() => {
-      const interval = setInterval(() => {
-        const now = new Date().getTime()
-        const distance = new Date(expiryDate).getTime() - now
-        if (distance <= 0) {
-          clearInterval(interval)
-          setTimeLeft(0)
-          onExpire()
-        } else {
-          setTimeLeft(Math.floor(distance / 1000))
-        }
-      }, 1000)
-      return () => clearInterval(interval)
-    }, [expiryDate, onExpire])
-
-    const formatTime = (seconds) => {
-      const m = Math.floor(seconds / 60)
-      const s = seconds % 60
-      return `${m}:${s < 10 ? '0' : ''}${s}`
-    }
-
-    if (timeLeft <= 0) return null
-
-    return (
-      <div style={{ 
-        padding: '12px', borderRadius: '12px', backgroundColor: timeLeft < 60 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(0, 210, 255, 0.05)',
-        border: `1px solid ${timeLeft < 60 ? '#ef4444' : 'var(--accent-primary)'}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '16px'
-      }}>
-        <span style={{ fontSize: '18px' }}>⏱️</span>
-        <span style={{ fontWeight: 800, fontSize: '14px', color: timeLeft < 60 ? '#ef4444' : 'var(--accent-primary)' }}>
-          Tiempo para reportar: <span style={{ fontSize: '20px', fontFamily: 'monospace' }}>{formatTime(timeLeft)}</span>
-        </span>
-      </div>
-    )
-  }
 
   const hasEnoughBalance = walletSaldo >= discountedTotalUSD
   const hasAnySaldo = walletSaldo > 0
@@ -281,7 +290,7 @@ export default function Checkout({ onFinish }) {
     }
   }, [currentStep, createdPedidoId])
 
-  const handleOrderExpired = async () => {
+  const handleOrderExpired = useCallback(async () => {
     try {
       // Limpiar pedidos expirados en la BD (incluye el actual)
       await cancelarPedidosExpirados()
@@ -291,8 +300,29 @@ export default function Checkout({ onFinish }) {
       setExpiresAt(null)
       setCurrentStep(1)
       setReferencia('')
+      orderPreparingRef.current = false
     } catch (err) {
       console.error("Error al manejar expiración:", err)
+    }
+  }, [cancelarPedidosExpirados])
+
+  const handleComprobanteUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploadingComprobante(true)
+    try {
+      const ext = file.name.split('.').pop()
+      const fileName = `pedidos/${Date.now()}_${createdPedidoId || 'tmp'}.${ext}`
+      const { error: uploadError } = await supabase.storage
+        .from('logos')
+        .upload(fileName, file, { upsert: true })
+      if (uploadError) throw uploadError
+      const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(fileName)
+      setComprobanteUrl(publicUrl)
+    } catch (err) {
+      alert('Error al subir el comprobante: ' + err.message)
+    } finally {
+      setUploadingComprobante(false)
     }
   }
 
@@ -381,6 +411,14 @@ export default function Checkout({ onFinish }) {
           .update({ usado: true, pedido_id: pedidoId })
           .eq('id', activeRuletaDesc.id)
           .eq('cliente_id', user.id)
+      }
+
+      // 4. Guardar URL del comprobante si fue subido
+      if (comprobanteUrl) {
+        await supabase
+          .from('pedidos')
+          .update({ comprobante_url: comprobanteUrl })
+          .eq('id', pedidoId)
       }
 
       playCashRegisterSound()
@@ -817,8 +855,46 @@ export default function Checkout({ onFinish }) {
                     onChange={(e) => setReferencia(e.target.value)}
                   />
                 </div>
+
+                {/* Comprobante de Pago - Opcional */}
+                <div className="form-group mb-24">
+                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    📎 Adjuntar Comprobante de Pago
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 400, padding: '2px 8px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.05)' }}>Opcional</span>
+                  </label>
+                  <div style={{
+                    border: `2px dashed ${comprobanteUrl ? 'var(--accent-success)' : 'var(--border-color)'}`,
+                    borderRadius: '14px', padding: '16px', textAlign: 'center', cursor: 'pointer',
+                    position: 'relative', transition: 'all 0.3s ease',
+                    backgroundColor: comprobanteUrl ? 'rgba(34, 197, 94, 0.05)' : 'transparent'
+                  }}>
+                    {uploadingComprobante ? (
+                      <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>⏳ Subiendo imagen...</div>
+                    ) : comprobanteUrl ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                        <img src={comprobanteUrl} alt="Comprobante" style={{ maxHeight: '120px', borderRadius: '8px', objectFit: 'contain' }} />
+                        <span style={{ fontSize: '12px', color: 'var(--accent-success)', fontWeight: 700 }}>✅ Comprobante adjuntado</span>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Toca para cambiar</span>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '28px' }}>📤</span>
+                        <span style={{ fontSize: '13px', fontWeight: 600 }}>Toca para subir tu captura de pago</span>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>JPG, PNG o GIF · La imagen se eliminará en 20 días</span>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleComprobanteUpload}
+                      disabled={uploadingComprobante}
+                      style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}
+                    />
+                  </div>
+                </div>
               </>
             )}
+
             {/* Resumen de Montos */}
             <div style={{ backgroundColor: 'var(--bg-panel)', padding: '20px', borderRadius: '16px', marginBottom: '24px', border: '1px solid var(--border-color)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>

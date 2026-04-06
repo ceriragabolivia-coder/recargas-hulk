@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts'
-import { useVentas, useConfiguracion, useTodosLosProductos, useJuegos, useProductos } from '../hooks/useData'
+import { useVentas, useConfiguracion, useTodosLosProductos, useJuegos, useProductos, useAuth } from '../hooks/useData'
 import { formatUSD, formatBs, calcularPrecioVenta, getLocalDateString, playCashRegisterSound } from '../utils/helpers'
 
 const COLORS = ['#00d2ff', '#7b2ff7', '#00f5d4', '#ffd166', '#ff6b6b']
@@ -423,8 +423,10 @@ function QuickManualSaleWidget({ onSaleComplete, config }) {
 }
 
 export default function Dashboard() {
-  const { resumen, loading: loadingVentas, fetchResumenPeriodo, fetchHistorial, refetch: refetchVentas } = useVentas()
+  const { resumen, loading: loadingVentas, fetchResumenPeriodo, fetchHistorial, limpiarComprobantes, refetch: refetchVentas } = useVentas()
   const { config, loading: loadingConfig, updateConfig } = useConfiguracion()
+  const { perfil } = useAuth()
+  const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
 
   const [isEditingTasa, setIsEditingTasa] = useState(false)
   const [nuevaTasa, setNuevaTasa] = useState('')
@@ -434,6 +436,13 @@ export default function Dashboard() {
   const [refreshKey, setRefreshKey] = useState(0) // Used to trigger refresh
   const [rangoFechas, setRangoFechas] = useState('7d')
   const [loadingCharts, setLoadingCharts] = useState(true)
+
+  // Limpieza automática de comprobantes antiguos (> 20 días)
+  React.useEffect(() => {
+    if (isAdmin && limpiarComprobantes) {
+      limpiarComprobantes()
+    }
+  }, [isAdmin, limpiarComprobantes])
 
   const handleSaveTasa = async () => {
     if (!nuevaTasa) return
