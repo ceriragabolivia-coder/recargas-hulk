@@ -263,8 +263,8 @@ export default function Checkout({ onFinish }) {
             setCreatedPedidoId(pedidoResult.data.id)
             // Calcular expiración
             const limitMinutes = Number(config.tiempo_limite_pago) || 15
-            const created = new Date(pedidoResult.data.created_at).getTime()
-            setExpiresAt(new Date(created + limitMinutes * 60 * 1000))
+            // Usamos Date.now() en lugar de la fecha del servidor para evitar desfases de zona horaria en el contador local
+            setExpiresAt(new Date(Date.now() + limitMinutes * 60 * 1000))
           }
         } catch (err) {
           console.error("Error al pre-crear pedido:", err)

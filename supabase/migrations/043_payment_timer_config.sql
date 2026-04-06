@@ -25,7 +25,7 @@ BEGIN
     DELETE FROM public.pedidos 
     WHERE estado = 'pendiente' 
       AND (referencia_pago IS NULL OR referencia_pago = '')
-      AND created_at < (NOW() AT TIME ZONE 'America/Caracas' - (v_limite_minutos || ' minutes')::INTERVAL);
+      AND created_at < (NOW() - (v_limite_minutos || ' minutes')::INTERVAL);
     
     GET DIAGNOSTICS v_eliminados = ROW_COUNT;
 
