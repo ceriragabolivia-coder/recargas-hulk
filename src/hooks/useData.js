@@ -339,11 +339,15 @@ export function useAuth() {
       return
     }
 
-    if (perfilData) {
-      setPerfil({ ...perfilData, ...clienteData, id: userId, cliente_uuid: clienteData?.id })
-    } else {
-      setPerfil({ ...clienteData, id: userId, cliente_uuid: clienteData?.id, rol: 'cliente', estado: 'pendiente' })
-    }
+    const finalPerfil = perfilData ? { ...perfilData } : { id: userId, rol: 'cliente', estado: 'pendiente' }
+    const finalCliente = clienteData ? { ...clienteData } : {}
+    
+    setPerfil({ 
+      ...finalCliente, 
+      ...finalPerfil, 
+      id: userId, 
+      cliente_uuid: finalCliente.id // Asegurar que use el ID de la tabla clientes
+    })
 
     // Actualizar registro de último acceso de forma silenciosa
     supabase.from('clientes').update({ ultima_conexion: new Date().toISOString() }).eq('auth_user_id', userId).then()

@@ -98,7 +98,8 @@ function QuickSaleWidget({ onSaleComplete, config }) {
                       filteredProducts.map(p => (
                         <div 
                           key={p.id}
-                          onClick={() => {
+                          onMouseDown={(e) => {
+                            e.preventDefault() // Importante: evitar pérdida de foco del input
                             setSelectedProdId(p.id)
                             setSearchTerm(`${p.juegos?.nombre || 'Otros'} - ${p.nombre}`)
                             setIsDropdownOpen(false)
@@ -149,7 +150,15 @@ function QuickSaleWidget({ onSaleComplete, config }) {
                   ✅ {successMsg}
                 </div>
               ) : (
-                <button type="submit" className="btn btn-primary w-full" disabled={!selectedProdId || isSubmitting}>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary w-full" 
+                  disabled={!selectedProdId || isSubmitting || !perfil?.cliente_uuid}
+                  title={
+                    !perfil?.cliente_uuid ? 'Error: Perfil de vendedor no cargado. Contacta soporte.' :
+                    !selectedProdId ? 'Selecciona un producto de la lista' : ''
+                  }
+                >
                   {isSubmitting ? 'Registrando...' : '⚡ Registrar Venta'}
                 </button>
               )}
@@ -257,7 +266,8 @@ function QuickProductWidget({ config }) {
                       filteredJuegos.map(j => (
                         <div 
                           key={j.id}
-                          onClick={() => {
+                          onMouseDown={(e) => {
+                            e.preventDefault()
                             setSelectedJuegoId(j.id)
                             setSearchTerm(j.nombre)
                             setIsDropdownOpen(false)
