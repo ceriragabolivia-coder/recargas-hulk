@@ -22,22 +22,22 @@ export default function Cart({ onGoToCheckout }) {
   if (totalItems === 0 && !isOpen) return null
 
   return (
-    <div style={{ position: 'fixed', bottom: '90px', right: '20px', zIndex: 9990, maxWidth: 'calc(100vw - 32px)' }}>
+    <div style={{ position: 'fixed', bottom: '86px', right: '20px', zIndex: 9990, maxWidth: 'calc(100vw - 32px)' }}>
       {/* Botón Flotante del Carrito */}
       {!isOpen && (
         <button 
           className="btn btn-primary"
           style={{ 
-            height: '46px', borderRadius: '23px', padding: '0 18px',
-            boxShadow: '0 8px 24px rgba(0, 210, 255, 0.3)',
-            display: 'flex', alignItems: 'center', gap: '10px',
-            fontSize: '14px', fontWeight: 'bold', animation: 'bounceIn 0.5s'
+            height: '38px', borderRadius: '19px', padding: '0 14px',
+            boxShadow: '0 6px 20px rgba(0, 210, 255, 0.25)',
+            display: 'flex', alignItems: 'center', gap: '8px',
+            fontSize: '13px', fontWeight: '800', animation: 'bounceIn 0.5s'
           }}
           onClick={() => setIsOpen(true)}
         >
-          <span style={{ fontSize: '18px' }}>🛒</span>
+          <span style={{ fontSize: '16px' }}>🛒</span>
           <span>Ver Pedido</span>
-          <span className="badge badge-error" style={{ marginLeft: 4, minWidth: 24, height: 24, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span className="badge badge-error" style={{ marginLeft: 2, minWidth: 20, height: 20, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px' }}>
             {totalItems}
           </span>
         </button>
