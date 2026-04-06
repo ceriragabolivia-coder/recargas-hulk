@@ -178,6 +178,11 @@ export function useVentas() {
 
   async function deleteVenta(id) {
     const { error } = await supabase.from('ventas').delete().eq('id', id)
+    if (!error) {
+      await fetchVentasHoy()
+    }
+    return { error }
+  }
 
   async function limpiarComprobantes() {
     try {
