@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useConfiguracion } from '../hooks/useData'
 
 export default function Checkout({ onFinish }) {
-  const { cart, clearCart, checkout, totalUSD, totalBs } = useCart()
+  const { cart, removeFromCart, clearCart, checkout, totalUSD, totalBs } = useCart()
   const { registrarVenta } = useVentas()
   const { metodos, loading: loadingMetodos } = useMetodosPago()
   const { perfil, user } = useAuth()
@@ -25,6 +25,13 @@ export default function Checkout({ onFinish }) {
   // Descuentos ganados en la ruleta (pendientes de usar)
   const [ruletaDescuentos, setRuletaDescuentos] = useState([])
   const [selectedRuletaDesc, setSelectedRuletaDesc] = useState(null)
+  
+  // Cerramos el checkout si el carrito se queda vacío tras una eliminación
+  useEffect(() => {
+    if (!orderFinished && cart.length === 0) {
+      onFinish();
+    }
+  }, [cart, orderFinished, onFinish]);
 
   useEffect(() => {
     // 1. Prioridad: user.id (UUID de auth)
@@ -344,7 +351,7 @@ export default function Checkout({ onFinish }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', backgroundColor: 'var(--border-color)', borderRadius: '0 0 12px 12px', overflow: 'hidden' }}>
                 {cart.map(item => (
                   <div key={item.id} className="checkout-item" style={{ display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: 'var(--bg-card)' }}>
-                    <div style={{ width: 48, height: 48, borderRadius: 10, overflow: 'hidden', backgroundColor: 'var(--bg-panel)', flexShrink: 0 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 8, overflow: 'hidden', backgroundColor: 'var(--bg-panel)', flexShrink: 0 }}>
                       {item.icono_url ? <img src={item.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : '📦'}
                     </div>
                     <div style={{ flex: 1 }}>
@@ -373,6 +380,14 @@ export default function Checkout({ onFinish }) {
                       <div className="checkout-price-usd" style={{ fontWeight: 600 }}>{item.quantity} x {formatUSD(item.venta_usd)}</div>
                       <div className="checkout-price-bs" style={{ color: 'var(--accent-success)', fontWeight: 800 }}>{formatBs(item.venta_bs * item.quantity)}</div>
                     </div>
+                    {/* Botón Eliminar Individual */}
+                    {!isProcessing && (
+                      <button 
+                        className="btn-remove-checkout-item" 
+                        onClick={() => removeFromCart(item.cart_id)}
+                        title="Eliminar del pedido"
+                      >✕</button>
+                    )}
                   </div>
                 ))}
               </div>

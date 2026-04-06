@@ -2138,6 +2138,7 @@ tr:last-child td { border-bottom: none; }
 /* ============ OPTIMIZACIÓN CHECKOUT ============ */
 .checkout-item {
   padding: 16px;
+  position: relative;
 }
 
 .checkout-item-name {
@@ -2162,37 +2163,71 @@ tr:last-child td { border-bottom: none; }
   font-size: 18px;
 }
 
+.btn-remove-checkout-item {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 5;
+}
+
+.btn-remove-checkout-item:hover {
+  background: rgba(255, 69, 58, 0.15);
+  color: #ff453a;
+  border-color: #ff453a;
+  transform: scale(1.1);
+}
+
 @media (max-width: 600px) {
   .checkout-item {
-    padding: 12px !important;
-    gap: 12px !important;
+    padding: 10px !important;
+    gap: 10px !important;
   }
   
   .checkout-item img {
-    width: 40px !important;
-    height: 40px !important;
+    width: 36px !important;
+    height: 36px !important;
   }
   
   .checkout-item-name {
-    font-size: 16px !important;
+    font-size: 15px !important;
   }
   
   .checkout-item-juego {
-    font-size: 13px !important;
+    font-size: 12px !important;
   }
   
   .checkout-details-box {
-    margin-top: 6px !important; 
-    padding: 8px 10px !important; 
-    font-size: 13px !important;
+    margin-top: 4px !important; 
+    padding: 6px 10px !important; 
+    font-size: 12px !important;
   }
   
   .checkout-price-usd {
-    font-size: 14px !important;
+    font-size: 13px !important;
   }
   
   .checkout-price-bs {
-    font-size: 16px !important;
+    font-size: 15px !important;
+  }
+
+  .btn-remove-checkout-item {
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
   }
 
   .responsive-grid-2col {
