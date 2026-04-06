@@ -1113,11 +1113,11 @@ tr:last-child td { border-bottom: none; }
   /* Responsive Tables as Cards */
   .table-cards-mobile { display: block; width: 100%; max-width: 100%; border: none; box-sizing: border-box; }
   .table-cards-mobile thead { display: none; }
-  .table-cards-mobile tbody { display: flex; flex-direction: column; gap: 12px; max-width: 100%; box-sizing: border-box; overflow: hidden; }
+  .table-cards-mobile tbody { display: flex; flex-direction: column; gap: 8px; max-width: 100%; box-sizing: border-box; overflow: hidden; }
   .table-cards-mobile tr {
-    display: flex; flex-direction: column; padding: 16px; max-width: 100%; box-sizing: border-box;
+    display: flex; flex-direction: column; padding: 12px; max-width: 100%; box-sizing: border-box;
     background: rgba(255,255,255,0.03); border: 1px solid var(--border-color);
-    border-radius: var(--radius-md); gap: 8px;
+    border-radius: var(--radius-md); gap: 4px;
   }
   .table-cards-mobile td {
     display: grid; 
@@ -1126,7 +1126,7 @@ tr:last-child td { border-bottom: none; }
     padding: 0 !important; 
     border: none !important; 
     width: 100%;
-    gap: 12px;
+    gap: 8px;
   }
   .table-cards-mobile td > * {
     min-width: 0;
@@ -2058,5 +2058,79 @@ tr:last-child td { border-bottom: none; }
   .catalogo-container {
     padding-left: 0 !important;
     padding-right: 0 !important;
+  }
+  
+  /* Ajustes para la vista de lista de precios (cuando se selecciona un juego) */
+  .catalogo-container .page-header.mb-24 {
+    margin-bottom: 12px !important;
+    padding-top: 10px !important;
+    gap: 10px !important;
+  }
+  
+  .catalogo-container .page-title {
+    font-size: 18px !important;
+    line-height: 1.2 !important;
+  }
+  
+  .catalogo-container .page-subtitle {
+    font-size: 12px !important;
+  }
+  
+  .catalogo-container .card.mb-24 {
+    margin-bottom: 16px !important;
+    padding: 16px !important;
+  }
+  
+  .catalogo-container img[alt]:not(.catalogo-grid img) {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 10px !important;
+  }
+  
+  .catalogo-container .btn-ghost {
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+  }
+}
+
+/* ============ OPTIMIZACIÓN ESPACIO RECARGA ============ */
+.card-recharge-info {
+  padding: 24px;
+}
+
+.recharge-input {
+  font-size: 16px;
+  padding: 14px;
+}
+
+.td-add-button {
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+@media (max-width: 600px) {
+  .card-recharge-info {
+    padding: 14px !important;
+    margin-bottom: 12px !important;
+  }
+  
+  .card-recharge-info .form-label {
+    font-size: 13px !important;
+    margin-bottom: 8px !important;
+  }
+  
+  .recharge-input {
+    padding: 10px 12px !important;
+    font-size: 15px !important;
+  }
+  
+  .td-add-button {
+    margin-top: 4px !important;
+    padding-top: 4px !important;
+  }
+  
+  .card-recharge-info p {
+    font-size: 12px !important;
+    margin-top: 4px !important;
   }
 }

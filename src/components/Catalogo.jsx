@@ -171,7 +171,7 @@ export default function Catalogo() {
           </div>
         </div>
 
-        <div className="card mb-24" style={{ padding: '24px', backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderLeft: '4px solid var(--accent-primary)' }}>
+        <div className="card mb-24 card-recharge-info" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderLeft: '4px solid var(--accent-primary)' }}>
           {selectedJuego.metodo_recarga === 'cuenta_completa' ? (
             <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
               <div style={{ flex: '1 1 200px' }}>
@@ -273,14 +273,14 @@ export default function Catalogo() {
               </label>
               <input 
                 type="text" 
-                className="form-input" 
+                className="form-input recharge-input" 
                 placeholder="ID del perfil al que se asignarán los paquetes..."
                 value={localRechargeData.player_id}
                 onChange={e => {
                   const numericValue = e.target.value.replace(/[^0-9]/g, '');
                   setLocalRechargeData({...localRechargeData, player_id: numericValue});
                 }}
-                style={{ fontSize: '16px', padding: '14px', backgroundColor: 'var(--bg-card)' }}
+                style={{ backgroundColor: 'var(--bg-card)' }}
               />
               <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 8 }}>
                 Los paquetes que añadas a continuación se asignarán a este ID en tu pedido.
@@ -324,7 +324,7 @@ export default function Catalogo() {
                         <td data-label="Precio (USD)" style={{ textAlign: 'right', color: 'var(--accent-success)', fontWeight: 600, fontSize: 16 }}>
                           {formatUSD(finalPrice.venta_usd)}
                         </td>
-                        <td data-label="" style={{ textAlign: 'right', marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
+                        <td data-label="" className="td-add-button" style={{ textAlign: 'right', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                           <button 
                             className="btn btn-primary"
                             style={{ 
