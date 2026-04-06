@@ -36,6 +36,7 @@ export default function Configuracion() {
   const [sidebarSubtitle, setSidebarSubtitle] = useState('')
   const [cashbackPorcentaje, setCashbackPorcentaje] = useState('')
   const [cashbackActivo, setCashbackActivo] = useState(false)
+  const [tiempoLimitePago, setTiempoLimitePago] = useState('15')
   
   // Ref para evitar que las actualizaciones de Realtime sobrescriban lo que el admin está escribiendo
   const initialized = useRef(false)
@@ -48,6 +49,7 @@ export default function Configuracion() {
       setSidebarSubtitle(config.sidebar_subtitle || 'Centro de Recargas')
       setCashbackPorcentaje(config.cashback_porcentaje || '0')
       setCashbackActivo(config.cashback_activo === 'true')
+      setTiempoLimitePago(config.tiempo_limite_pago || '15')
       initialized.current = true
     }
   }, [config, configLoading])
@@ -300,6 +302,40 @@ export default function Configuracion() {
                   </button>
                 )}
               </div>
+
+              {!showForm && (
+                <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'rgba(0, 210, 255, 0.05)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: '300px' }}>
+                      <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '4px' }}>⏱️ Tiempo Límite para Pagos</h3>
+                      <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                        Minutos que tiene el cliente para realizar y reportar su pago antes de que el pedido sea eliminado automáticamente.
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <input 
+                            type="number" 
+                            className="form-input" 
+                            style={{ width: '80px', textAlign: 'center', fontWeight: 'bold' }}
+                            value={tiempoLimitePago}
+                            onChange={(e) => setTiempoLimitePago(e.target.value)}
+                            onBlur={(e) => updateConfig('tiempo_limite_pago', e.target.value)}
+                          />
+                          <span style={{ fontWeight: 600, fontSize: '13px' }}>minutos</span>
+                        </div>
+                      </div>
+                      <button 
+                        className="btn btn-primary btn-sm" 
+                        onClick={() => updateConfig('tiempo_limite_pago', tiempoLimitePago).then(() => setAlertModal({ type: 'success', message: 'Tiempo límite actualizado' }))}
+                      >
+                        Guardar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div style={{ padding: '24px' }}>
                 {showForm ? (

@@ -7,7 +7,7 @@ import { useConfiguracion } from '../hooks/useData'
 export default function Checkout({ onFinish }) {
   const { cart, removeFromCart, clearCart, checkout, totalUSD, totalBs } = useCart()
   const { registrarVenta } = useVentas()
-  const { metodos, loading: loadingMetodos } = useMetodosPago()
+  const { metodos, cancelarPedidosExpirados, loading: loadingMetodos } = useMetodosPago()
   const { perfil, user } = useAuth()
   const { wallet } = useWallet()
   const { config } = useConfiguracion()
@@ -21,6 +21,8 @@ export default function Checkout({ onFinish }) {
   
   const [isProcessing, setIsProcessing] = useState(false)
   const [orderFinished, setOrderFinished] = useState(false)
+  const [createdPedidoId, setCreatedPedidoId] = useState(null)
+  const [expiresAt, setExpiresAt] = useState(null)
 
   // Descuentos ganados en la ruleta (pendientes de usar)
   const [ruletaDescuentos, setRuletaDescuentos] = useState([])
@@ -88,6 +90,47 @@ export default function Checkout({ onFinish }) {
   const discountedTotalBs  = Math.round(totalBs * ruletaFactor)
 
   const isGratis = discountedTotalUSD <= 0
+
+  // Componente de Cronómetro Regresivo
+  const CountdownTimer = ({ expiryDate, onExpire }) => {
+    const [timeLeft, setTimeLeft] = useState(0)
+
+    useEffect(() => {
+      const interval = setInterval(() => {
+        const now = new Date().getTime()
+        const distance = new Date(expiryDate).getTime() - now
+        if (distance <= 0) {
+          clearInterval(interval)
+          setTimeLeft(0)
+          onExpire()
+        } else {
+          setTimeLeft(Math.floor(distance / 1000))
+        }
+      }, 1000)
+      return () => clearInterval(interval)
+    }, [expiryDate, onExpire])
+
+    const formatTime = (seconds) => {
+      const m = Math.floor(seconds / 60)
+      const s = seconds % 60
+      return `${m}:${s < 10 ? '0' : ''}${s}`
+    }
+
+    if (timeLeft <= 0) return null
+
+    return (
+      <div style={{ 
+        padding: '12px', borderRadius: '12px', backgroundColor: timeLeft < 60 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(0, 210, 255, 0.05)',
+        border: `1px solid ${timeLeft < 60 ? '#ef4444' : 'var(--accent-primary)'}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '16px'
+      }}>
+        <span style={{ fontSize: '18px' }}>⏱️</span>
+        <span style={{ fontWeight: 800, fontSize: '14px', color: timeLeft < 60 ? '#ef4444' : 'var(--accent-primary)' }}>
+          Tiempo para reportar: <span style={{ fontSize: '20px', fontFamily: 'monospace' }}>{formatTime(timeLeft)}</span>
+        </span>
+      </div>
+    )
+  }
 
   const hasEnoughBalance = walletSaldo >= discountedTotalUSD
   const hasAnySaldo = walletSaldo > 0
@@ -207,6 +250,49 @@ export default function Checkout({ onFinish }) {
     setCurrentStep(2)
   }
 
+  // Nueva función para el paso intermedio: Crear el pedido en la BD
+  useEffect(() => {
+    if (currentStep === 2 && !createdPedidoId && !isProcessing) {
+      const prepareOrder = async () => {
+        setIsProcessing(true)
+        try {
+          // Pre-crear pedido sin referencia
+          const results = await checkout(registrarVenta, currentClienteId, selectedMetodoId, '', null, activeRuletaDesc)
+          const pedidoResult = results.find(r => r.id === 'pedido')
+          if (pedidoResult && pedidoResult.data) {
+            setCreatedPedidoId(pedidoResult.data.id)
+            // Calcular expiración
+            const limitMinutes = Number(config.tiempo_limite_pago) || 15
+            const created = new Date(pedidoResult.data.created_at).getTime()
+            setExpiresAt(new Date(created + limitMinutes * 60 * 1000))
+          }
+        } catch (err) {
+          console.error("Error al pre-crear pedido:", err)
+          alert("Hubo un error al iniciar el pedido. Intenta de nuevo.")
+          setCurrentStep(1)
+        } finally {
+          setIsProcessing(false)
+        }
+      }
+      prepareOrder()
+    }
+  }, [currentStep, createdPedidoId, isProcessing])
+
+  const handleOrderExpired = async () => {
+    try {
+      // Limpiar pedidos expirados en la BD (incluye el actual)
+      await cancelarPedidosExpirados()
+      alert("⏱️ El tiempo para reportar este pedido ha expirado. El pedido fue cancelado automáticamente.")
+      // Resetear estado
+      setCreatedPedidoId(null)
+      setExpiresAt(null)
+      setCurrentStep(1)
+      setReferencia('')
+    } catch (err) {
+      console.error("Error al manejar expiración:", err)
+    }
+  }
+
   const handleFinalizar = async () => {
     if (!isWalletOnly && !isWalletBsOnly && !referencia.trim() && !isGratis) {
       alert('Por favor ingresa el número de referencia de tu pago.')
@@ -239,8 +325,8 @@ export default function Checkout({ onFinish }) {
         }
       }
 
-      // 1. Registrar el pedido PRIMERO para obtener su ID
-      const results = await checkout(registrarVenta, currentClienteId, finalMetodoId, finalReferencia, null, activeRuletaDesc)
+      // 1. Registrar o ACTUALIZAR el pedido
+      const results = await checkout(registrarVenta, currentClienteId, finalMetodoId, finalReferencia, null, activeRuletaDesc, createdPedidoId)
       const pedidoResult = results.find(r => r.id === 'pedido')
       
       if (!pedidoResult || pedidoResult.error) {
@@ -409,6 +495,9 @@ export default function Checkout({ onFinish }) {
                     </span>
                   )}
                 </div>
+              
+              {expiresAt && <CountdownTimer expiryDate={expiresAt} onExpire={handleOrderExpired} />}
+
               <h2 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '8px' }}>Pagar con {selectedMetodo?.nombre}</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '32px' }}>Utiliza los siguientes datos para realizar tu transferencia:</p>
               

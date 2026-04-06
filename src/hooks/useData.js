@@ -640,9 +640,19 @@ export function useMetodosPago() {
     return { error }
   }
 
-  useEffect(() => { fetchMetodos() }, [])
+  async function cancelarPedidosExpirados() {
+    const { data, error } = await supabase.rpc('cancelar_pedidos_expirados')
+    if (error) console.error('Error al limpiar pedidos expirados:', error)
+    return { data, error }
+  }
 
-  return { metodos, loading, createMetodo, updateMetodo, deleteMetodo, refetch: fetchMetodos }
+  useEffect(() => { 
+    fetchMetodos()
+    // Limpiar pedidos expirados al cargar
+    cancelarPedidosExpirados()
+  }, [])
+
+  return { metodos, loading, createMetodo, updateMetodo, deleteMetodo, refetch: fetchMetodos, cancelarPedidosExpirados }
 }
 
 // ========================
@@ -815,7 +825,7 @@ export function CartProvider({ children }) {
 
   const clearCart = () => setCart([])
 
-  const checkout = async (registrarVenta, clienteId = null, metodoPagoId = null, referencia = '', activeCupon = null, ruletaDescuento = null) => {
+  const checkout = async (registrarVenta, clienteId = null, metodoPagoId = null, referencia = '', activeCupon = null, ruletaDescuento = null, pedidoIdExistente = null) => {
     let pedidoCreated = false
     let errorMessage = null
     let finalPedido = null
@@ -852,39 +862,64 @@ export function CartProvider({ children }) {
         cuponPreInserted = true
       }
 
-      // PASO 2: Crear el pedido con el precio ya descontado
-      const { data: pedido, error: pedidoError } = await supabase
-        .from('pedidos')
-        .insert({
-          cliente_id: clienteId || null,
-          metodo_pago_id: metodoPagoId || null,
-          referencia_pago: referencia,
-          estado: 'pendiente',
-          total_usd: pedidoTotalUSD,
-          total_bs: pedidoTotalBs,
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single()
+      // PASO 2: Crear o Actualizar el pedido
+      let pedido, pedidoError;
+
+      if (pedidoIdExistente) {
+        const { data: updPedido, error: updError } = await supabase
+          .from('pedidos')
+          .update({
+            metodo_pago_id: metodoPagoId || null,
+            referencia_pago: referencia,
+            total_usd: pedidoTotalUSD,
+            total_bs: pedidoTotalBs,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', pedidoIdExistente)
+          .select()
+          .single()
+        pedido = updPedido
+        pedidoError = updError
+      } else {
+        const { data: insPedido, error: insError } = await supabase
+          .from('pedidos')
+          .insert({
+            cliente_id: clienteId || null,
+            metodo_pago_id: metodoPagoId || null,
+            referencia_pago: referencia,
+            estado: 'pendiente',
+            total_usd: pedidoTotalUSD,
+            total_bs: pedidoTotalBs,
+            created_at: new Date().toISOString()
+          })
+          .select()
+          .single()
+        pedido = insPedido
+        pedidoError = insError
+      }
 
       if (!pedidoError && pedido) {
         finalPedido = pedido
-        const items = cart.map(item => ({
-          pedido_id: finalPedido.id,
-          producto_id: item.id,
-          juego_nombre: item.juego,
-          producto_nombre: item.nombre,
-          cantidad: item.quantity,
-          precio_usd: +(item.venta_usd * item.quantity).toFixed(2),
-          precio_bs: Math.round(item.venta_bs * item.quantity),
-          metodo_recarga: item.metodo_recarga || 'id_jugador',
-          player_id: item.player_id || '',
-          account_email: item.account_email || '',
-          account_user: item.account_user || '',
-          account_password: item.account_password || ''
-        }))
-        const { error: itemsError } = await supabase.from('pedido_items').insert(items)
-        if (itemsError) throw itemsError
+        
+        // Si el pedido es nuevo, insertar items. Si es existente, los items ya están allí (o podrían actualizarse, pero para este flujo asumiremos que se crean al inicio)
+        if (!pedidoIdExistente) {
+          const items = cart.map(item => ({
+            pedido_id: finalPedido.id,
+            producto_id: item.id,
+            juego_nombre: item.juego,
+            producto_nombre: item.nombre,
+            cantidad: item.quantity,
+            precio_usd: +(item.venta_usd * item.quantity).toFixed(2),
+            precio_bs: Math.round(item.venta_bs * item.quantity),
+            metodo_recarga: item.metodo_recarga || 'id_jugador',
+            player_id: item.player_id || '',
+            account_email: item.account_email || '',
+            account_user: item.account_user || '',
+            account_password: item.account_password || ''
+          }))
+          const { error: itemsError } = await supabase.from('pedido_items').insert(items)
+          if (itemsError) throw itemsError
+        }
 
         // PASO 3: Actualizar el registro de cupón con el pedido_id real
         if (activeCupon && clienteId && cuponPreInserted) {
