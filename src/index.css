@@ -2013,3 +2013,50 @@ tr:last-child td { border-bottom: none; }
     grid-template-columns: 1fr !important;
   }
 }
+
+/* ============ CATALOGO GRID ============ */
+.catalogo-container {
+  padding-left: 20px;
+}
+
+.catalogo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 600px) {
+  .catalogo-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+  
+  /* Ajuste de iconos en móvil para que quepan mejor en 2 columnas */
+  .catalogo-grid .card img {
+    width: 80px !important;
+    height: 80px !important;
+  }
+  
+  .catalogo-grid .card {
+    padding: 16px 8px !important;
+  }
+  
+  .catalogo-grid .card div {
+    font-size: 14px !important;
+  }
+}
+
+/* Ajuste general de contenido principal en móvil */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0 !important;
+  }
+  .page-header {
+    padding: 16px 20px 0 !important;
+  }
+  
+  .catalogo-container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}

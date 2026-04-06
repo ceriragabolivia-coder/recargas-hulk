@@ -58,7 +58,7 @@ export default function Catalogo() {
 
   if (selectedJuego) {
     return (
-    <div style={{ paddingLeft: '20px' }}>
+    <div className="catalogo-container">
       {/* MODAL DE CONFIRMACIÓN */}
       {pendingItem && (
         <div style={{
@@ -369,17 +369,13 @@ export default function Catalogo() {
   }
 
   return (
-    <div style={{ paddingLeft: '20px' }}>
+    <div className="catalogo-container">
       <div className="page-header mb-24">
         <h1 className="page-title">Catálogo de Juegos y Servicios</h1>
         <p className="page-subtitle">Selecciona uno para ver su lista de precios de venta</p>
       </div>
 
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', 
-        gap: '20px' 
-      }}>
+      <div className="catalogo-grid">
         {juegosData.map(juego => {
           const catIcon = juego.categorias?.icono || '🎮'
           return (
