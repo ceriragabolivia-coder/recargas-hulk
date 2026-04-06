@@ -268,7 +268,7 @@ export default function Checkout({ onFinish }) {
       const prepareOrder = async () => {
         setIsProcessing(true)
         try {
-          const results = await checkout(registrarVenta, currentClienteId, selectedMetodoId, '', null, activeRuletaDesc, null, false)
+          const results = await checkout(registrarVenta, currentClienteId, selectedMetodoId, '', null, activeRuletaDesc, null, comprobanteUrl, false)
           const pedidoResult = results.find(r => r.id === 'pedido')
           if (pedidoResult && pedidoResult.data) {
             setCreatedPedidoId(pedidoResult.data.id)
@@ -359,7 +359,7 @@ export default function Checkout({ onFinish }) {
       }
 
       // 1. Registrar o ACTUALIZAR el pedido
-      const results = await checkout(registrarVenta, currentClienteId, finalMetodoId, finalReferencia, null, activeRuletaDesc, createdPedidoId, true)
+      const results = await checkout(registrarVenta, currentClienteId, finalMetodoId, finalReferencia, null, activeRuletaDesc, createdPedidoId, comprobanteUrl, true)
       const pedidoResult = results.find(r => r.id === 'pedido')
       
       if (!pedidoResult || pedidoResult.error) {
@@ -413,13 +413,6 @@ export default function Checkout({ onFinish }) {
           .eq('cliente_id', user.id)
       }
 
-      // 4. Guardar URL del comprobante si fue subido
-      if (comprobanteUrl) {
-        await supabase
-          .from('pedidos')
-          .update({ comprobante_url: comprobanteUrl })
-          .eq('id', pedidoId)
-      }
 
       playCashRegisterSound()
       setOrderFinished(true)

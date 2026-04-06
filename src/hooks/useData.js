@@ -866,7 +866,7 @@ export function CartProvider({ children }) {
 
   const clearCart = () => setCart([])
 
-  const checkout = async (registrarVenta, clienteId = null, metodoPagoId = null, referencia = '', activeCupon = null, ruletaDescuento = null, pedidoIdExistente = null, shouldClear = true) => {
+  const checkout = async (registrarVenta, clienteId = null, metodoPagoId = null, referencia = '', activeCupon = null, ruletaDescuento = null, pedidoIdExistente = null, comprobanteUrl = null, shouldClear = true) => {
     let pedidoCreated = false
     let errorMessage = null
     let finalPedido = null
@@ -914,6 +914,7 @@ export function CartProvider({ children }) {
             referencia_pago: referencia,
             total_usd: pedidoTotalUSD,
             total_bs: pedidoTotalBs,
+            comprobante_url: comprobanteUrl || undefined,
             updated_at: new Date().toISOString()
           })
           .eq('id', pedidoIdExistente)
@@ -931,6 +932,7 @@ export function CartProvider({ children }) {
             estado: 'pendiente',
             total_usd: pedidoTotalUSD,
             total_bs: pedidoTotalBs,
+            comprobante_url: comprobanteUrl || null,
             created_at: new Date().toISOString()
           })
           .select()
