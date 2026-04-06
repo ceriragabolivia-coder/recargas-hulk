@@ -13,7 +13,7 @@ export default function Configuracion() {
   
   // Estado para el formulario de edición/creación
   const [isEditing, setIsEditing] = useState(false)
-  const [currentMetodo, setCurrentMetodo] = useState({ nombre: '', datos: '', activo: true })
+  const [currentMetodo, setCurrentMetodo] = useState({ nombre: '', datos: '', activo: true, icono_url: null, qr_url: null })
   const [showForm, setShowForm] = useState(false)
 
   // Estado para Mensajes Pop-up
@@ -59,7 +59,7 @@ export default function Configuracion() {
   }
 
   const handleAddNew = () => {
-    setCurrentMetodo({ nombre: '', datos: '', activo: true })
+    setCurrentMetodo({ nombre: '', datos: '', activo: true, icono_url: null, qr_url: null })
     setIsEditing(false)
     setShowForm(true)
   }
@@ -82,6 +82,24 @@ export default function Configuracion() {
     }
   }
 
+  const handleQRUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploadingImage(true)
+    try {
+      // Para el QR no removemos fondo blanco, lo subimos tal cual para asegurar legibilidad
+      const path = `qr-codes/${Date.now()}-${file.name}`
+      const { error: uploadError } = await supabase.storage.from('logos').upload(path, file)
+      if (uploadError) throw uploadError
+      const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(path)
+      setCurrentMetodo(prev => ({ ...prev, qr_url: publicUrl }))
+    } catch (err) {
+      setAlertModal({ type: 'error', message: 'Error al subir el QR: ' + err.message })
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (isEditing) {
@@ -89,10 +107,11 @@ export default function Configuracion() {
         nombre: currentMetodo.nombre, 
         datos: currentMetodo.datos,
         activo: currentMetodo.activo,
-        icono_url: currentMetodo.icono_url
+        icono_url: currentMetodo.icono_url,
+        qr_url: currentMetodo.qr_url
       })
     } else {
-      await createMetodo(currentMetodo.nombre, currentMetodo.datos, currentMetodo.icono_url)
+      await createMetodo(currentMetodo.nombre, currentMetodo.datos, currentMetodo.icono_url, currentMetodo.qr_url)
     }
     setShowForm(false)
   }
@@ -286,25 +305,50 @@ export default function Configuracion() {
                 {showForm ? (
                   <form onSubmit={handleSubmit} className="fade-in">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '600px' }}>
-                      <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                         <div style={{ 
-                           width: '80px', height: '80px', borderRadius: '16px', backgroundColor: 'var(--bg-card)', 
-                           border: '2px dashed var(--border-color)', display: 'flex', alignItems: 'center', 
-                           justifyContent: 'center', overflow: 'hidden'
-                         }}>
-                            {currentMetodo.icono_url ? (
-                              <img src={currentMetodo.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                            ) : (
-                              <span style={{ fontSize: '24px' }}>🖼️</span>
-                            )}
-                         </div>
-                         <div>
-                            <input type="file" accept="image/*" onChange={handleIconUpload} style={{ display: 'none' }} id="icon-upload" />
-                            <label htmlFor="icon-upload" className="btn btn-ghost btn-sm">
-                              {uploadingImage ? 'Subiendo...' : '📤 Subir Icono'}
-                            </label>
-                            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Imagen cuadrada recomendada</p>
-                         </div>
+                      <div className="payment-upload-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                        {/* Subir Icono */}
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', backgroundColor: 'var(--bg-panel)', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                           <div style={{ 
+                             width: '50px', height: '50px', borderRadius: '10px', backgroundColor: 'var(--bg-card)', 
+                             border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', 
+                             justifyContent: 'center', overflow: 'hidden', flexShrink: 0
+                           }}>
+                              {currentMetodo.icono_url ? (
+                                <img src={currentMetodo.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                              ) : (
+                                <span style={{ fontSize: '20px' }}>🖼️</span>
+                              )}
+                           </div>
+                           <div style={{ flex: 1 }}>
+                              <p style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>Icono del Método</p>
+                              <input type="file" accept="image/*" onChange={handleIconUpload} style={{ display: 'none' }} id="icon-upload" />
+                              <label htmlFor="icon-upload" className="btn btn-ghost btn-xs" style={{ padding: '4px 8px' }}>
+                                {uploadingImage ? '...' : 'Subir'}
+                              </label>
+                           </div>
+                        </div>
+
+                        {/* Subir QR */}
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', backgroundColor: 'var(--bg-panel)', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                           <div style={{ 
+                             width: '50px', height: '50px', borderRadius: '10px', backgroundColor: 'var(--bg-card)', 
+                             border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', 
+                             justifyContent: 'center', overflow: 'hidden', flexShrink: 0
+                           }}>
+                              {currentMetodo.qr_url ? (
+                                <img src={currentMetodo.qr_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                              ) : (
+                                <span style={{ fontSize: '20px' }}>🔳</span>
+                              )}
+                           </div>
+                           <div style={{ flex: 1 }}>
+                              <p style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>Código QR (Pago)</p>
+                              <input type="file" accept="image/*" onChange={handleQRUpload} style={{ display: 'none' }} id="qr-upload" />
+                              <label htmlFor="qr-upload" className="btn btn-ghost btn-xs" style={{ padding: '4px 8px' }}>
+                                {uploadingImage ? '...' : 'Subir'}
+                              </label>
+                           </div>
+                        </div>
                       </div>
                       <div className="form-group">
                         <label className="form-label">Nombre del Método</label>

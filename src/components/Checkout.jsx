@@ -412,13 +412,42 @@ export default function Checkout({ onFinish }) {
               <h2 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '8px' }}>Pagar con {selectedMetodo?.nombre}</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '32px' }}>Utiliza los siguientes datos para realizar tu transferencia:</p>
               
-              <div style={{ 
-                backgroundColor: 'var(--bg-panel)', padding: '24px', borderRadius: '20px', 
-                border: '1px solid var(--border-color)', whiteSpace: 'pre-line', fontSize: '18px',
-                lineHeight: '1.6', fontWeight: 500, color: 'var(--text-primary)', textAlign: 'left'
-              }}>
-                {selectedMetodo?.datos}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left' }}>
+                {selectedMetodo?.datos.split('\n').filter(line => line.trim()).map((line, idx) => (
+                  <div key={idx} className="payment-detail-row">
+                    <div className="payment-detail-text">
+                      {line.includes('Banco:') ? '🏦 ' : line.includes('Teléfono:') ? '📱 ' : line.includes('Cédula:') ? '🆔 ' : line.includes('Pago:') ? '📱 ' : ''}
+                      {line}
+                    </div>
+                    <button 
+                      className="copy-btn-new"
+                      onClick={(e) => {
+                        const textToCopy = line.split(':').slice(1).join(':').trim() || line.trim();
+                        navigator.clipboard.writeText(textToCopy);
+                        const btn = e.currentTarget;
+                        const originalText = btn.innerText;
+                        btn.innerText = '¡Copiado!';
+                        btn.style.backgroundColor = 'var(--accent-success)';
+                        setTimeout(() => {
+                          btn.innerText = originalText;
+                          btn.style.backgroundColor = 'var(--accent-primary)';
+                        }, 2000);
+                      }}
+                    >
+                      Copiar
+                    </button>
+                  </div>
+                ))}
               </div>
+
+              {selectedMetodo?.qr_url && (
+                <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                  <div className="qr-container-new">
+                    <img src={selectedMetodo.qr_url} alt="QR Pago" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  </div>
+                  <p style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 600 }}>Escanea este código QR para realizar el pago</p>
+                </div>
+              )}
 
               {useWalletPartial && walletAmountToUse > 0 && (
                 <div style={{ marginTop: '16px', padding: '12px 16px', backgroundColor: 'rgba(34, 197, 94, 0.1)', borderRadius: '12px', color: '#22c55e', fontSize: '13px', fontWeight: 600 }}>
