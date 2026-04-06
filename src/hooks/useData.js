@@ -648,8 +648,6 @@ export function useMetodosPago() {
 
   useEffect(() => { 
     fetchMetodos()
-    // Limpiar pedidos expirados al cargar
-    cancelarPedidosExpirados()
   }, [])
 
   return { metodos, loading, createMetodo, updateMetodo, deleteMetodo, refetch: fetchMetodos, cancelarPedidosExpirados }

@@ -23,17 +23,19 @@ export default function Checkout({ onFinish }) {
   const [orderFinished, setOrderFinished] = useState(false)
   const [createdPedidoId, setCreatedPedidoId] = useState(null)
   const [expiresAt, setExpiresAt] = useState(null)
+  const orderPreparingRef = React.useRef(false) // Evita re-ejecuciones del useEffect de prepareOrder
 
   // Descuentos ganados en la ruleta (pendientes de usar)
   const [ruletaDescuentos, setRuletaDescuentos] = useState([])
   const [selectedRuletaDesc, setSelectedRuletaDesc] = useState(null)
   
   // Cerramos el checkout si el carrito se queda vacío tras una eliminación
+  // PERO NO si estamos en el paso 2 (ya se creó el pedido y estamos esperando la referencia)
   useEffect(() => {
-    if (!orderFinished && cart.length === 0) {
+    if (!orderFinished && cart.length === 0 && currentStep === 1) {
       onFinish();
     }
-  }, [cart, orderFinished, onFinish]);
+  }, [cart, orderFinished, onFinish, currentStep]);
 
   useEffect(() => {
     // 1. Prioridad: user.id (UUID de auth)
@@ -250,25 +252,26 @@ export default function Checkout({ onFinish }) {
     setCurrentStep(2)
   }
 
-  // Nueva función para el paso intermedio: Crear el pedido en la BD
+  // Crear el pedido al entrar en el paso 2 - solo una vez por sesión
   useEffect(() => {
-    if (currentStep === 2 && !createdPedidoId && !isProcessing) {
+    if (currentStep === 2 && !createdPedidoId && !orderPreparingRef.current) {
+      orderPreparingRef.current = true // Marcar como en proceso para evitar re-ejecuciones
       const prepareOrder = async () => {
         setIsProcessing(true)
         try {
-          // Pre-crear pedido sin referencia
           const results = await checkout(registrarVenta, currentClienteId, selectedMetodoId, '', null, activeRuletaDesc)
           const pedidoResult = results.find(r => r.id === 'pedido')
           if (pedidoResult && pedidoResult.data) {
             setCreatedPedidoId(pedidoResult.data.id)
-            // Calcular expiración
             const limitMinutes = Number(config.tiempo_limite_pago) || 15
-            // Usamos Date.now() en lugar de la fecha del servidor para evitar desfases de zona horaria en el contador local
             setExpiresAt(new Date(Date.now() + limitMinutes * 60 * 1000))
+          } else if (pedidoResult?.error) {
+            throw new Error(pedidoResult.error)
           }
         } catch (err) {
           console.error("Error al pre-crear pedido:", err)
           alert("Hubo un error al iniciar el pedido. Intenta de nuevo.")
+          orderPreparingRef.current = false // Resetear para permitir reintentos
           setCurrentStep(1)
         } finally {
           setIsProcessing(false)
@@ -276,7 +279,7 @@ export default function Checkout({ onFinish }) {
       }
       prepareOrder()
     }
-  }, [currentStep, createdPedidoId, isProcessing])
+  }, [currentStep, createdPedidoId])
 
   const handleOrderExpired = async () => {
     try {
