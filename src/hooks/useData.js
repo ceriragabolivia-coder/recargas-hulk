@@ -913,8 +913,7 @@ export function CartProvider({ children }) {
             precio_bs: Math.round(item.venta_bs * item.quantity),
             metodo_recarga: item.metodo_recarga || 'id_jugador',
             player_id: item.player_id || '',
-            account_email: item.account_email || '',
-            account_user: item.account_user || '',
+            account_email: item.account_email || item.account_user || '',
             account_password: item.account_password || ''
           }))
           const { error: itemsError } = await supabase.from('pedido_items').insert(items)
