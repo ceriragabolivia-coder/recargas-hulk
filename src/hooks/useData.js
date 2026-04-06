@@ -866,7 +866,7 @@ export function CartProvider({ children }) {
 
   const clearCart = () => setCart([])
 
-  const checkout = async (registrarVenta, clienteId = null, metodoPagoId = null, referencia = '', activeCupon = null, ruletaDescuento = null, pedidoIdExistente = null) => {
+  const checkout = async (registrarVenta, clienteId = null, metodoPagoId = null, referencia = '', activeCupon = null, ruletaDescuento = null, pedidoIdExistente = null, shouldClear = true) => {
     let pedidoCreated = false
     let errorMessage = null
     let finalPedido = null
@@ -997,7 +997,7 @@ export function CartProvider({ children }) {
       }
     }
 
-    if (pedidoCreated) {
+    if (pedidoCreated && shouldClear) {
       clearCart()
     }
 

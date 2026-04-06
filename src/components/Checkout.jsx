@@ -268,7 +268,7 @@ export default function Checkout({ onFinish }) {
       const prepareOrder = async () => {
         setIsProcessing(true)
         try {
-          const results = await checkout(registrarVenta, currentClienteId, selectedMetodoId, '', null, activeRuletaDesc)
+          const results = await checkout(registrarVenta, currentClienteId, selectedMetodoId, '', null, activeRuletaDesc, null, false)
           const pedidoResult = results.find(r => r.id === 'pedido')
           if (pedidoResult && pedidoResult.data) {
             setCreatedPedidoId(pedidoResult.data.id)
@@ -359,7 +359,7 @@ export default function Checkout({ onFinish }) {
       }
 
       // 1. Registrar o ACTUALIZAR el pedido
-      const results = await checkout(registrarVenta, currentClienteId, finalMetodoId, finalReferencia, null, activeRuletaDesc, createdPedidoId)
+      const results = await checkout(registrarVenta, currentClienteId, finalMetodoId, finalReferencia, null, activeRuletaDesc, createdPedidoId, true)
       const pedidoResult = results.find(r => r.id === 'pedido')
       
       if (!pedidoResult || pedidoResult.error) {
