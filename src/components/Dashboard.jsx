@@ -5,10 +5,12 @@ import {
 import { useVentas, useConfiguracion, useTodosLosProductos, useJuegos, useProductos, useAuth } from '../hooks/useData'
 import { formatUSD, formatBs, calcularPrecioVenta, getLocalDateString, playCashRegisterSound } from '../utils/helpers'
 
+
 const COLORS = ['#00d2ff', '#7b2ff7', '#00f5d4', '#ffd166', '#ff6b6b']
 
 
 function QuickSaleWidget({ onSaleComplete, config }) {
+  const { perfil } = useAuth()
   const { productos, loading } = useTodosLosProductos()
   const { registrarVenta } = useVentas()
 
