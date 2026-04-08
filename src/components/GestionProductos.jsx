@@ -487,20 +487,20 @@ export default function GestionProductos() {
                   <div className="empty-state-sub">Haz clic en Añadir Paquete arriba para empezar.</div>
                 </div>
               ) : (
-                <div className="table-container" style={{ flex: 1 }}>
+                <div className="table-container compact-table" style={{ flex: 1, fontSize: '13px' }}>
                   <table>
                     <thead>
                       <tr>
-                        <th style={{ width: 60 }}>Orden</th>
-                        <th>Paquete</th>
-                        <th>Costo (USD)</th>
-                        <th>Margen (%)</th>
-                        <th>Precio Venta (USD)</th>
-                        <th>Precio (Bs)</th>
-                        <th>Ganancia Neta</th>
-                        <th>Desc. Revend.</th>
-                        <th style={{ width: 80 }}>Estado</th>
-                        <th style={{ width: 80 }}>Acciones</th>
+                        <th style={{ width: 50, padding: '10px 8px', textAlign: 'center' }}>Ord.</th>
+                        <th style={{ padding: '10px 8px' }}>Paquete</th>
+                        <th style={{ padding: '10px 8px' }}>Costo</th>
+                        <th style={{ padding: '10px 8px', textAlign: 'center' }}>% Margen</th>
+                        <th style={{ padding: '10px 8px' }}>Venta ($)</th>
+                        <th style={{ padding: '10px 8px' }}>Precio Bs</th>
+                        <th style={{ padding: '10px 8px' }}>Ganancia</th>
+                        <th style={{ padding: '10px 8px' }}>D. Rev</th>
+                        <th style={{ width: 70, padding: '10px 8px', textAlign: 'center' }}>Est.</th>
+                        <th style={{ width: 70, padding: '10px 8px', textAlign: 'center' }}>Acc.</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -527,16 +527,16 @@ export default function GestionProductos() {
                                filter: isDisabled ? 'grayscale(0.4)' : 'none'
                             }}
                           >
-                            <td>
+                            <td style={{ padding: '8px' }}>
                               <div className="flex gap-4" style={{ justifyContent: 'center', alignItems: 'center' }}>
-                                <div style={{ fontSize: 16, cursor: 'grab', marginRight: 4, color: 'var(--text-muted)' }} title="Arrastrar para reordenar">☰</div>
+                                <div style={{ fontSize: 14, cursor: 'grab', marginRight: 2, color: 'var(--text-muted)' }} title="Arrastrar para reordenar">☰</div>
                                 <div className="flex flex-column gap-2">
                                   <button
                                     className="btn btn-ghost btn-icon btn-sm"
                                     onClick={() => handleMoveProduct(idx, -1)}
                                     disabled={idx === 0}
                                     title="Subir"
-                                    style={{ opacity: idx === 0 ? 0.25 : 1, fontSize: 10, padding: '1px 3px', minWidth: 'auto', height: '18px' }}
+                                    style={{ opacity: idx === 0 ? 0.25 : 1, fontSize: 9, padding: '1px 2px', minWidth: 'auto', height: '16px' }}
                                   >
                                     ▲
                                   </button>
@@ -545,19 +545,19 @@ export default function GestionProductos() {
                                     onClick={() => handleMoveProduct(idx, 1)}
                                     disabled={idx === productos.length - 1}
                                     title="Bajar"
-                                    style={{ opacity: idx === productos.length - 1 ? 0.25 : 1, fontSize: 10, padding: '1px 3px', minWidth: 'auto', height: '18px' }}
+                                    style={{ opacity: idx === productos.length - 1 ? 0.25 : 1, fontSize: 9, padding: '1px 2px', minWidth: 'auto', height: '16px' }}
                                   >
                                     ▼
                                   </button>
                                 </div>
                               </div>
                             </td>
-                            <td>
-                              <div className="flex items-center gap-8">
+                            <td style={{ padding: '8px' }}>
+                              <div className="flex items-center gap-6">
                                 <div
                                   title="Cambiar ícono del paquete"
                                   style={{
-                                    width: 28, height: 28, borderRadius: 6, backgroundColor: 'var(--bg-panel)',
+                                    width: 24, height: 24, borderRadius: 6, backgroundColor: 'var(--bg-panel)',
                                     border: '1px dashed var(--border-active)', cursor: 'pointer',
                                     display: 'flex', justifyContent: 'center', alignItems: 'center',
                                     overflow: 'hidden', flexShrink: 0
@@ -567,7 +567,7 @@ export default function GestionProductos() {
                                   {prod.icono_url ? (
                                     <img src={prod.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                                   ) : (
-                                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>📦</span>
+                                    <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>📦</span>
                                   )}
                                 </div>
                                 <input
@@ -577,36 +577,36 @@ export default function GestionProductos() {
                                   style={{ display: 'none' }}
                                   onChange={(e) => handleUploadProductIcon(e, prod.id)}
                                 />
-                                <span className="font-bold" style={{ color: isDisabled ? 'var(--text-muted)' : 'var(--text-primary)' }}>{prod.nombre}</span>
+                                <span className="font-bold" style={{ color: isDisabled ? 'var(--text-muted)' : 'var(--text-primary)', fontSize: '13px' }}>{prod.nombre}</span>
                               </div>
                             </td>
-                            <td>{formatUSD(prod.costo_base)}</td>
-                            <td><span className="badge badge-info">{prod.margen_ganancia * 100}%</span></td>
-                            <td style={{ color: isDisabled ? 'var(--text-muted)' : 'var(--accent-primary)', fontWeight: 600 }}>{formatUSD(precio.venta_usd)}</td>
-                            <td style={{ color: isDisabled ? 'var(--text-muted)' : 'var(--accent-success)', fontWeight: 600 }}>{formatBs(precio.venta_bs)}</td>
-                            <td style={{ color: isDisabled ? 'var(--text-muted)' : 'var(--accent-warning)', fontWeight: 600 }}>{formatUSD(precio.ganancia_usd)}</td>
-                            <td>
+                            <td style={{ padding: '8px' }}>{formatUSD(prod.costo_base)}</td>
+                            <td style={{ padding: '8px', textAlign: 'center' }}><span className="badge badge-info" style={{ padding: '2px 6px', fontSize: '10px' }}>{prod.margen_ganancia * 100}%</span></td>
+                            <td style={{ padding: '8px', color: isDisabled ? 'var(--text-muted)' : 'var(--accent-primary)', fontWeight: 600 }}>{formatUSD(precio.venta_usd)}</td>
+                            <td style={{ padding: '8px', color: isDisabled ? 'var(--text-muted)' : 'var(--accent-success)', fontWeight: 600 }}>{formatBs(precio.venta_bs)}</td>
+                            <td style={{ padding: '8px', color: isDisabled ? 'var(--text-muted)' : 'var(--accent-warning)', fontWeight: 600 }}>{formatUSD(precio.ganancia_usd)}</td>
+                            <td style={{ padding: '8px' }}>
                               {prod.descuento_revendedor ? (
-                                <span className="badge badge-success" style={{ fontSize: '11px' }}>{prod.descuento_revendedor}%</span>
+                                <span className="badge badge-success" style={{ fontSize: '10px', padding: '2px 6px' }}>{prod.descuento_revendedor}%</span>
                               ) : (
-                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Global</span>
+                                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Global</span>
                               )}
                             </td>
                             {/* Botón Toggle Habilitar/Deshabilitar */}
-                            <td>
+                            <td style={{ padding: '8px', textAlign: 'center' }}>
                               <button
                                 onClick={() => toggleProducto(prod.id, prod.activo !== false)}
                                 title={isDisabled ? 'Habilitar paquete' : 'Deshabilitar paquete'}
                                 style={{
                                   display: 'inline-flex',
                                   alignItems: 'center',
-                                  gap: '5px',
-                                  padding: '4px 10px',
+                                  gap: '4px',
+                                  padding: '3px 8px',
                                   borderRadius: '20px',
                                   border: 'none',
                                   cursor: 'pointer',
                                   fontWeight: 700,
-                                  fontSize: '11px',
+                                  fontSize: '10px',
                                   letterSpacing: '0.3px',
                                   transition: 'all 0.2s ease',
                                   backgroundColor: isDisabled
@@ -634,16 +634,17 @@ export default function GestionProductos() {
                                   e.currentTarget.style.color = isDisabled ? 'var(--text-muted)' : '#22c55e'
                                 }}
                               >
-                                <span style={{ fontSize: '8px' }}>{isDisabled ? '⬜' : '🟢'}</span>
+                                <span style={{ fontSize: '7px' }}>{isDisabled ? '⬜' : '🟢'}</span>
                                 {isDisabled ? 'OFF' : 'ON'}
                               </button>
                             </td>
-                            <td>
-                              <div className="flex gap-8">
+                            <td style={{ padding: '8px' }}>
+                              <div className="flex gap-4" style={{ justifyContent: 'center' }}>
                                 <button 
                                   className="btn btn-ghost btn-icon btn-sm"
                                   onClick={() => handleEditProducto(prod)}
                                   title={`Editar ${prod.nombre}`}
+                                  style={{ width: '28px', height: '28px' }}
                                 >
                                   ✏️
                                 </button>
@@ -651,6 +652,7 @@ export default function GestionProductos() {
                                   className="btn btn-danger btn-icon btn-sm"
                                   onClick={() => handleDelete(prod.id, prod.nombre)}
                                   title={`Eliminar ${prod.nombre}`}
+                                  style={{ width: '28px', height: '28px' }}
                                 >
                                   🗑️
                                 </button>
