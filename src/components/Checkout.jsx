@@ -259,36 +259,10 @@ export default function Checkout({ onFinish }) {
     }
 
     setCurrentStep(2)
+    // Inicializar el temporizador de forma local sin forzar inserción en BD
+    const limitMinutes = Number(config.tiempo_limite_pago) || 15
+    setExpiresAt(new Date(Date.now() + limitMinutes * 60 * 1000))
   }
-
-  // Crear el pedido al entrar en el paso 2 - solo una vez por sesión
-  useEffect(() => {
-    if (currentStep === 2 && !createdPedidoId && !orderPreparingRef.current) {
-      orderPreparingRef.current = true // Marcar como en proceso para evitar re-ejecuciones
-      const prepareOrder = async () => {
-        setIsProcessing(true)
-        try {
-          const results = await checkout(registrarVenta, currentClienteId, selectedMetodoId, '', null, activeRuletaDesc, null, comprobanteUrl, false)
-          const pedidoResult = results.find(r => r.id === 'pedido')
-          if (pedidoResult && pedidoResult.data) {
-            setCreatedPedidoId(pedidoResult.data.id)
-            const limitMinutes = Number(config.tiempo_limite_pago) || 15
-            setExpiresAt(new Date(Date.now() + limitMinutes * 60 * 1000))
-          } else if (pedidoResult?.error) {
-            throw new Error(pedidoResult.error)
-          }
-        } catch (err) {
-          console.error("Error al pre-crear pedido:", err)
-          alert("Hubo un error al iniciar el pedido. Intenta de nuevo.")
-          orderPreparingRef.current = false // Resetear para permitir reintentos
-          setCurrentStep(1)
-        } finally {
-          setIsProcessing(false)
-        }
-      }
-      prepareOrder()
-    }
-  }, [currentStep, createdPedidoId])
 
   const handleOrderExpired = useCallback(async () => {
     try {
