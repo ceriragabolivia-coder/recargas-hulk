@@ -520,27 +520,29 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
       channelAdminPedidos = supabase
         .channel('pedidos_realtime_admin')
         .on('postgres_changes', {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'pedidos'
         }, payload => {
           console.log("Evento recibido en pedidos (Admin):", payload)
-          const newOrder = payload.new
-          if (newOrder) {
-            const numero = newOrder.numero_pedido || 'N/A'
-            const total = Number(newOrder.total_bs || 0).toLocaleString('es-VE')
-            const orderToast = {
-              id: Date.now() + Math.random(),
-              db_id: newOrder.id,
-              type: 'new_order',
-              titulo: `🚀 ¡NUEVO PEDIDO #${numero}!`,
-              mensaje: `Se ha recibido una nueva orden por un total de Bs ${total}. Haz clic para gestionarla.`,
-              order_id: newOrder.id
+          if (payload.eventType === 'INSERT') {
+            const newOrder = payload.new
+            if (newOrder) {
+              const numero = newOrder.numero_pedido || 'N/A'
+              const total = Number(newOrder.total_bs || 0).toLocaleString('es-VE')
+              const orderToast = {
+                id: Date.now() + Math.random(),
+                db_id: newOrder.id,
+                type: 'new_order',
+                titulo: `🚀 ¡NUEVO PEDIDO #${numero}!`,
+                mensaje: `Se ha recibido una nueva orden por un total de Bs ${total}. Haz clic para gestionarla.`,
+                order_id: newOrder.id
+              }
+              setToasts(prev => [orderToast, ...prev].slice(0, 3))
+              playBellSound()
             }
-            setToasts(prev => [orderToast, ...prev].slice(0, 3))
-            playBellSound()
-            fetchCounts()
           }
+          fetchCounts()
         })
         .subscribe()
 
@@ -549,29 +551,31 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
       channelAdminBilletera = supabase
         .channel('billetera_realtime_admin')
         .on('postgres_changes', {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'billetera_recargas'
         }, payload => {
           console.log("Evento recibido en billetera_recargas (Admin):", payload)
-          const newRequest = payload.new
-          if (newRequest) {
-            const montoStr = newRequest.moneda === 'bs' 
-              ? (newRequest.monto.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + 'Bs')
-              : `$${Number(newRequest.monto).toFixed(2)}`
-            
-            const rechargeToast = {
-              id: Date.now() + Math.random(),
-              db_id: newRequest.id,
-              type: 'new_recharge',
-              titulo: `⚡ ¡NUEVA SOLICITUD DE SALDO!`,
-              mensaje: `Un usuario solicita recargar ${montoStr} en su billetera. Haz clic para verificar.`,
-              target: 'billetera'
+          if (payload.eventType === 'INSERT') {
+            const newRequest = payload.new
+            if (newRequest) {
+              const montoStr = newRequest.moneda === 'bs' 
+                ? (newRequest.monto.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + 'Bs')
+                : `$${Number(newRequest.monto).toFixed(2)}`
+              
+              const rechargeToast = {
+                id: Date.now() + Math.random(),
+                db_id: newRequest.id,
+                type: 'new_recharge',
+                titulo: `⚡ ¡NUEVA SOLICITUD DE SALDO!`,
+                mensaje: `Un usuario solicita recargar ${montoStr} en su billetera. Haz clic para verificar.`,
+                target: 'billetera'
+              }
+              setToasts(prev => [rechargeToast, ...prev].slice(0, 3))
+              playBellSound()
             }
-            setToasts(prev => [rechargeToast, ...prev].slice(0, 3))
-            playBellSound()
-            fetchCounts()
           }
+          fetchCounts()
         })
       // 2c. Suscripción a CHATS de Soporte (Admin)
       const channelAdminChat = supabase
