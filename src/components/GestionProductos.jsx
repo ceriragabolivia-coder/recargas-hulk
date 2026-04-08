@@ -207,8 +207,12 @@ export default function GestionProductos() {
       title: 'Eliminar Paquete',
       message: `¿Estás seguro que quieres eliminar "${nombre}"?`,
       onConfirm: async () => {
-        await deleteProducto(id)
-        setAlertModal(null)
+        const { error } = await deleteProducto(id)
+        if (error) {
+          setAlertModal({ type: 'error', message: error.message })
+        } else {
+          setAlertModal(null)
+        }
       }
     })
   }

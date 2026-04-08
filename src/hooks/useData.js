@@ -92,9 +92,17 @@ export function useProductos(juegoId) {
   }
 
   async function deleteProducto(id) {
-    const { error } = await supabase.from('productos').update({ activo: false }).eq('id', id)
-    if (!error) setProductos(prev => prev.filter(p => p.id !== id))
-    return { error }
+    const { error } = await supabase.from('productos').delete().eq('id', id)
+    
+    if (error) {
+      if (error.code === '23503') {
+        return { error: new Error('Este paquete tiene historial de ventas o pedidos asociados y no puede borrarse definitivamente para proteger tus registros financieros. Por favor, utiliza el botón (OFF) para deshabilitarlo.') }
+      }
+      return { error }
+    }
+    
+    setProductos(prev => prev.filter(p => p.id !== id))
+    return { error: null }
   }
 
   async function reorderProductos(updates) {
