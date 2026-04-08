@@ -12,7 +12,7 @@ export default function Cart({ onGoToCheckout }) {
     totalUSD, 
     totalBs 
   } = useCart()
-  const { perfil } = useAuth()
+  const { perfil, isCliente } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
 
   const handleGoToCheckout = () => {

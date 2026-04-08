@@ -56,7 +56,7 @@ export default function Checkout({ onFinish }) {
   const { cart, removeFromCart, clearCart, checkout, totalUSD, totalBs } = useCart()
   const { registrarVenta } = useVentas()
   const { metodos, cancelarPedidosExpirados, loading: loadingMetodos } = useMetodosPago()
-  const { perfil, user } = useAuth()
+  const { perfil, user, isCliente } = useAuth()
   const { wallet } = useWallet()
   const { config } = useConfiguracion()
   
