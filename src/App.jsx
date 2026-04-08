@@ -196,6 +196,17 @@ export default function App() {
     )
   }
 
+  // Si hay sesión activa pero el perfil aún no ha cargado desde la BD,
+  // mostramos el spinner para evitar la pantalla en blanco.
+  if (user && !perfil) {
+    return (
+      <div className="loading-screen">
+        <div className="spinner"></div>
+        <p>Cargando perfil...</p>
+      </div>
+    )
+  }
+
   if (!user) {
     return isRegistering
       ? <Register onBackToLogin={() => setIsRegistering(false)} />
