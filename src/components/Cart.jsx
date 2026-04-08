@@ -108,7 +108,7 @@ export default function Cart({ onGoToCheckout }) {
 
           <div className="card-footer" style={{ borderTop: '1px solid var(--border-color)', padding: '20px', backgroundColor: 'var(--bg-panel)' }}>
             {/* Subtotal USD hidden for Cliente role */}
-            {!(perfil?.rol?.toLowerCase() === 'cliente') && (
+            {!isCliente && (
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Subtotal USD:</span>
                 <span style={{ fontWeight: 'bold' }}>{formatUSD(totalUSD)}</span>

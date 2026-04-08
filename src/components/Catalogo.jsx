@@ -6,8 +6,7 @@ export default function Catalogo() {
   const { productos, loading } = useTodosLosProductos()
   const { config, loading: loadingConfig } = useConfiguracion()
   const { addToCart } = useCart()
-  const { perfil } = useAuth()
-  const isCliente = perfil?.rol?.toLowerCase() === 'cliente'
+  const { perfil, isCliente } = useAuth()
   const [selectedJuego, setSelectedJuego] = useState(null)
   const [addedItem, setAddedItem] = useState(null) // Para animación simple
 

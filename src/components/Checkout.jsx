@@ -497,7 +497,7 @@ export default function Checkout({ onFinish }) {
                       </div>
                     </div>
                     <div className="checkout-item-price" style={{ textAlign: 'right' }}>
-                      {!(perfil?.rol?.toLowerCase() === 'cliente') && (
+                      {!isCliente && (
                         <div className="checkout-price-usd" style={{ fontWeight: 600 }}>{item.quantity} x {formatUSD(item.venta_usd)}</div>
                       )}
                       <div className="checkout-price-bs" style={{ color: 'var(--accent-success)', fontWeight: 800 }}>{formatBs(item.venta_bs * item.quantity)}</div>
@@ -633,7 +633,7 @@ export default function Checkout({ onFinish }) {
             {currentStep === 1 ? (
               <div className="form-group mb-24">
                 {/* Toggle de Billetera USD */}
-                {hasAnySaldo && !isGratis && !(perfil?.rol?.toLowerCase() === 'cliente') && (
+                {hasAnySaldo && !isGratis && !isCliente && (
                   <div 
                     onClick={handleToggleWalletPartial}
                     className="checkout-toggle-card"
@@ -892,7 +892,7 @@ export default function Checkout({ onFinish }) {
 
             {/* Resumen de Montos */}
             <div style={{ backgroundColor: 'var(--bg-panel)', padding: '20px', borderRadius: '16px', marginBottom: '24px', border: '1px solid var(--border-color)' }}>
-              {!(perfil?.rol?.toLowerCase() === 'cliente') && (
+              {!isCliente && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
                   <span style={{ color: 'var(--text-muted)' }}>Monto Total:</span>
                   <span style={{ fontWeight: 600, textDecoration: activeRuletaDesc ? 'line-through' : 'none', color: activeRuletaDesc ? 'var(--text-muted)' : 'inherit' }}>
@@ -905,7 +905,7 @@ export default function Checkout({ onFinish }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
                   <span style={{ color: '#FFD700' }}>🎡 Descuento Ruleta ({activeRuletaDesc.porcentaje}%):</span>
                   <span style={{ fontWeight: 700, color: '#FFD700' }}>
-                    {!(perfil?.rol?.toLowerCase() === 'cliente') 
+                    {!isCliente 
                       ? `-${formatUSD(totalUSD - discountedTotalUSD)}`
                       : `-${formatBs(totalBs - discountedTotalBs)}`}
                   </span>

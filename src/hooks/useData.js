@@ -473,7 +473,10 @@ export function useAuth() {
     return { data, error }
   }
 
-  return { user, perfil, loading, login, register, logout, updatePassword, refetch: () => user && fetchPerfil(user.id) }
+  const isAdminOrRevendedor = ['admin', 'revendedor'].includes(perfil?.rol?.toLowerCase())
+  const isCliente = !isAdminOrRevendedor
+
+  return { user, perfil, loading, isCliente, login, register, logout, updatePassword, refetch: () => user && fetchPerfil(user.id) }
 }
 
 // ========================

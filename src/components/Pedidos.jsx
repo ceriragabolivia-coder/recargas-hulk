@@ -8,10 +8,9 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
   const normalizedParams = typeof params === 'object' && params !== null ? params : { filterKey: params };
   const incomingFilterKey = normalizedParams.filterKey || filterKey;
   const targetOrderId = normalizedParams.orderId;
-  const { user, perfil } = useAuth()
+  const { user, perfil, isCliente } = useAuth()
   const { config } = useConfiguracion()
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
-  const isCliente = perfil?.rol?.toLowerCase() === 'cliente'
   const [pedidos, setPedidos] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedPedido, setSelectedPedido] = useState(null)

@@ -6,10 +6,9 @@ import AlertModal from './AlertModal'
 
 export default function Billetera({ onNavigate }) {
   const { wallet, recargas, transacciones, loading, solicitarRecarga, refetch } = useWallet()
-  const { perfil } = useAuth()
+  const { perfil, isCliente } = useAuth()
   const { metodos } = useMetodosPago()
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
-  const isCliente = perfil?.rol?.toLowerCase() === 'cliente'
 
   const [monto, setMonto] = useState('')
   const [monedaRecarga, setMonedaRecarga] = useState('bs') // Cambiado a 'bs' por defecto
