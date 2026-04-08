@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useCart } from '../hooks/useData'
+import { useCart, useAuth } from '../hooks/useData'
 import { formatUSD, formatBs } from '../utils/helpers'
 
 export default function Cart({ onGoToCheckout }) {
@@ -12,6 +12,7 @@ export default function Cart({ onGoToCheckout }) {
     totalUSD, 
     totalBs 
   } = useCart()
+  const { perfil } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
 
   const handleGoToCheckout = () => {
@@ -106,10 +107,13 @@ export default function Cart({ onGoToCheckout }) {
           </div>
 
           <div className="card-footer" style={{ borderTop: '1px solid var(--border-color)', padding: '20px', backgroundColor: 'var(--bg-panel)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Subtotal USD:</span>
-              <span style={{ fontWeight: 'bold' }}>{formatUSD(totalUSD)}</span>
-            </div>
+            {/* Subtotal USD hidden for Cliente role */}
+            {!(perfil?.rol?.toLowerCase() === 'cliente') && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Subtotal USD:</span>
+                <span style={{ fontWeight: 'bold' }}>{formatUSD(totalUSD)}</span>
+              </div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
               <span style={{ fontSize: '18px', fontWeight: 600 }}>Total Final:</span>
               <span style={{ fontSize: '20px', fontWeight: 800, color: 'var(--accent-success)' }}>{formatBs(totalBs)}</span>

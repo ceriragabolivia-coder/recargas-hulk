@@ -9,9 +9,10 @@ export default function Billetera({ onNavigate }) {
   const { perfil } = useAuth()
   const { metodos } = useMetodosPago()
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
+  const isCliente = perfil?.rol?.toLowerCase() === 'cliente'
 
   const [monto, setMonto] = useState('')
-  const [monedaRecarga, setMonedaRecarga] = useState('usd')
+  const [monedaRecarga, setMonedaRecarga] = useState('bs') // Cambiado a 'bs' por defecto
   const [metodoId, setMetodoId] = useState('')
   const [referencia, setReferencia] = useState('')
   const [comprobanteUrl, setComprobanteUrl] = useState(null)
@@ -97,6 +98,11 @@ export default function Billetera({ onNavigate }) {
   useEffect(() => {
     if (isAdmin) fetchPendingRecargas()
   }, [isAdmin])
+
+  useEffect(() => {
+    if (isCliente) setMonedaRecarga('bs')
+    else setMonedaRecarga('usd')
+  }, [isCliente])
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0]
@@ -212,19 +218,21 @@ export default function Billetera({ onNavigate }) {
           {/* Tarjetas de Saldo Dual */}
           <div className="kpi-grid" style={{ marginBottom: '8px' }}>
             {/* Saldo USD */}
-            <div className="card kpi-card" style={{ 
-              background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(0, 210, 255, 0.05) 100%)',
-              textAlign: 'center', border: '1px solid var(--accent-primary)',
-              position: 'relative', overflow: 'hidden'
-            }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(to right, #00d2ff, #3a7bd5)' }}></div>
-              <div className="kpi-label" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                💵 Saldo USD
+            {!isCliente && (
+              <div className="card kpi-card" style={{ 
+                background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(0, 210, 255, 0.05) 100%)',
+                textAlign: 'center', border: '1px solid var(--accent-primary)',
+                position: 'relative', overflow: 'hidden'
+              }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(to right, #00d2ff, #3a7bd5)' }}></div>
+                <div className="kpi-label" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                  💵 Saldo USD
+                </div>
+                <div className="kpi-value" style={{ fontWeight: 900, color: 'var(--accent-success)', textShadow: '0 0 20px rgba(34, 197, 94, 0.2)' }}>
+                  {formatUSD(wallet?.saldo || 0)}
+                </div>
               </div>
-              <div className="kpi-value" style={{ fontWeight: 900, color: 'var(--accent-success)', textShadow: '0 0 20px rgba(34, 197, 94, 0.2)' }}>
-                {formatUSD(wallet?.saldo || 0)}
-              </div>
-            </div>
+            )}
 
             {/* Saldo Bs */}
             <div className="card kpi-card" style={{ 
@@ -386,16 +394,20 @@ export default function Billetera({ onNavigate }) {
 
                 // Combinar transacciones aprobadas + recargas no aprobadas
                 const combined = [
-                  ...filteredTransacciones.map(t => ({
-                    id: t.id, fecha: t.created_at, desc: t.descripcion,
-                    monto: t.monto, tipo: t.tipo, estado: 'completado', moneda: t.moneda || 'usd',
-                    referencia_id: t.referencia_id
-                  })),
-                  ...recargas.filter(r => r.estado !== 'aprobado').map(r => ({
-                    id: r.id, fecha: r.created_at,
-                    desc: `Solicitud de Recarga ${r.moneda === 'bs' ? '(Bs)' : '(USD)'} (${r.metodos_pago?.nombre || 'Pago'}) - Ref: ${r.referencia}`,
-                    monto: r.monto, tipo: 'recarga', estado: r.estado, moneda: r.moneda || 'usd'
-                  }))
+                  ...filteredTransacciones
+                    .filter(t => !isCliente || t.moneda !== 'usd')
+                    .map(t => ({
+                      id: t.id, fecha: t.created_at, desc: t.descripcion,
+                      monto: t.monto, tipo: t.tipo, estado: 'completado', moneda: t.moneda || 'usd',
+                      referencia_id: t.referencia_id
+                    })),
+                  ...recargas
+                    .filter(r => r.estado !== 'aprobado' && (!isCliente || r.moneda !== 'usd'))
+                    .map(r => ({
+                      id: r.id, fecha: r.created_at,
+                      desc: `Solicitud de Recarga ${r.moneda === 'bs' ? '(Bs)' : '(USD)'} (${r.metodos_pago?.nombre || 'Pago'}) - Ref: ${r.referencia}`,
+                      monto: r.monto, tipo: 'recarga', estado: r.estado, moneda: r.moneda || 'usd'
+                    }))
                 ].sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
 
                 if (combined.length === 0) {
@@ -474,19 +486,21 @@ export default function Billetera({ onNavigate }) {
               <div className="form-group">
                 <label className="form-label">Moneda de Recarga</label>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={() => setMonedaRecarga('usd')}
-                    style={{
-                      flex: 1, minWidth: '130px', padding: '12px', borderRadius: '12px', border: 'none', cursor: 'pointer',
-                      backgroundColor: monedaRecarga === 'usd' ? 'rgba(0, 210, 255, 0.15)' : 'var(--bg-panel)',
-                      border: `2px solid ${monedaRecarga === 'usd' ? 'var(--accent-primary)' : 'var(--border-color)'}`,
-                      color: monedaRecarga === 'usd' ? 'var(--accent-primary)' : 'var(--text-muted)',
-                      fontWeight: 700, fontSize: '14px', transition: 'all 0.2s ease'
-                    }}
-                  >
-                    💵 Dólares (USD)
-                  </button>
+                  {!isCliente && (
+                    <button
+                      type="button"
+                      onClick={() => setMonedaRecarga('usd')}
+                      style={{
+                        flex: 1, minWidth: '130px', padding: '12px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+                        backgroundColor: monedaRecarga === 'usd' ? 'rgba(0, 210, 255, 0.15)' : 'var(--bg-panel)',
+                        border: `2px solid ${monedaRecarga === 'usd' ? 'var(--accent-primary)' : 'var(--border-color)'}`,
+                        color: monedaRecarga === 'usd' ? 'var(--accent-primary)' : 'var(--text-muted)',
+                        fontWeight: 700, fontSize: '14px', transition: 'all 0.2s ease'
+                      }}
+                    >
+                      💵 Dólares (USD)
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setMonedaRecarga('bs')}

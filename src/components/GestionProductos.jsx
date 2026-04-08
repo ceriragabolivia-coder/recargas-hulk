@@ -34,7 +34,7 @@ export default function GestionProductos() {
 
   React.useEffect(() => {
     if (categorias.length > 0 && !formGame.categoria_id) {
-      setFormGame(prev => ({...prev, categoria_id: categorias[0].id}))
+      setFormGame(prev => ({ ...prev, categoria_id: categorias[0].id }))
     }
   }, [categorias])
 
@@ -66,7 +66,7 @@ export default function GestionProductos() {
   const handleGameSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
-    
+
     let res;
     if (formGame.id) {
       res = await updateJuego(formGame.id, {
@@ -77,7 +77,7 @@ export default function GestionProductos() {
         guia_id_url: formGame.guia_id_url
       })
       if (!res.error) {
-        setSelectedJuego(prev => ({...prev, ...formGame}))
+        setSelectedJuego(prev => ({ ...prev, ...formGame }))
       }
     } else {
       const { id: _ignored, ...gamePayload } = formGame
@@ -116,19 +116,19 @@ export default function GestionProductos() {
   const [newIconFile, setNewIconFile] = useState(null)
   const [iconPreview, setIconPreview] = useState(null)
   const [draggedIndex, setDraggedIndex] = useState(null)
-  
+
   // Vista previa calculada
   const previewPrecio = () => {
     if (!selectedJuego || !config) return null
     if (!formData.costo_base || formData.costo_base === '') return null
-    
+
     // Convertir el margen que el usuario escribe (ej. 30%) a decimal (0.30)
     const margenDecimal = formData.margen_ganancia ? parseFloat(formData.margen_ganancia) / 100 : 0
-    
+
     return calcularPrecioVenta(
-      { 
-        costo_base: parseFloat(formData.costo_base), 
-        margen_ganancia: margenDecimal 
+      {
+        costo_base: parseFloat(formData.costo_base),
+        margen_ganancia: margenDecimal
       },
       selectedJuego,
       config
@@ -170,9 +170,9 @@ export default function GestionProductos() {
         const { error: uploadError } = await supabase.storage
           .from('logos')
           .upload(fileName, pngBlob, { contentType: 'image/png' })
-        
+
         if (uploadError) throw new Error('Error subiendo ícono: ' + uploadError.message)
-        
+
         const { data } = supabase.storage.from('logos').getPublicUrl(fileName)
         finalIconUrl = data.publicUrl
       }
@@ -218,12 +218,12 @@ export default function GestionProductos() {
     if (newIndex < 0 || newIndex >= productos.length) return
     const current = productos[index]
     const target = productos[newIndex]
-    
+
     // Optimistic local update for smoother feel
     const newProductos = [...productos]
     const [moved] = newProductos.splice(index, 1)
     newProductos.splice(newIndex, 0, moved)
-    
+
     // Update DB
     await reorderProductos([
       { id: current.id, orden: newIndex },
@@ -247,8 +247,8 @@ export default function GestionProductos() {
   const handleDrop = async (e, targetIndex) => {
     e.preventDefault()
     if (draggedIndex === null || draggedIndex === targetIndex) {
-       setDraggedIndex(null)
-       return
+      setDraggedIndex(null)
+      return
     }
 
     const current = productos[draggedIndex]
@@ -326,10 +326,10 @@ export default function GestionProductos() {
       }
 
       setSaving(true)
-      
+
       // Eliminar fondo blanco y convertir a PNG transparente
       const pngBlob = await removeWhiteBackground(file)
-      
+
       const fileName = `${selectedJuego.id}-${Date.now()}.png`
       const filePath = `${fileName}`
 
@@ -348,16 +348,16 @@ export default function GestionProductos() {
         .getPublicUrl(filePath)
 
       if (!data || !data.publicUrl) {
-         setAlertModal({ type: 'error', message: "La imagen subió pero falló al generar la URL." })
-         setSaving(false)
-         return
+        setAlertModal({ type: 'error', message: "La imagen subió pero falló al generar la URL." })
+        setSaving(false)
+        return
       }
 
       const { error: updateError } = await updateJuego(selectedJuego.id, { icono_url: data.publicUrl })
       if (updateError) {
-         setAlertModal({ type: 'error', message: 'Error al guardar en la base de datos: ' + updateError.message })
-         setSaving(false)
-         return
+        setAlertModal({ type: 'error', message: 'Error al guardar en la base de datos: ' + updateError.message })
+        setSaving(false)
+        return
       }
 
       setSelectedJuego(prev => ({ ...prev, icono_url: data.publicUrl }))
@@ -378,12 +378,7 @@ export default function GestionProductos() {
         <p className="page-subtitle">Añade o elimina los paquetes de cada juego y establece su rentabilidad.</p>
       </div>
 
-      <div className="page-content responsive-grid-2col" style={{ flex: 1, display: 'grid', gridTemplateColumns: 'minmax(250px, 1fr) 3fr', gap: '24px' }}>
-        
-        {/* LISTA DE JUEGOS */}
-        <div className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <div className="card-header" style={{ padding: '20px 20px 10px', margin: 0, borderBottom: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
               <h2 className="card-title" style={{ margin: 0 }}>Juegos</h2>
               <button className="btn btn-ghost btn-sm" onClick={handleOpenGameModal} title="Añadir Juego">+</button>
             </div>
@@ -397,556 +392,546 @@ export default function GestionProductos() {
                 onChange={(e) => setSearchJuego(e.target.value)}
               />
             </div>
+          </div >
+    <div style={{ flex: 1, overflowY: 'auto' }}>
+      {juegosFiltrados.length === 0 ? (
+        <div className="empty-state" style={{ padding: '40px 20px' }}>
+          <div className="empty-state-text">No se encontraron juegos</div>
+        </div>
+      ) : (
+        juegosFiltrados.map(juego => (
+          <div
+            key={juego.id}
+            className={`nav-item ${selectedJuego?.id === juego.id ? 'active' : ''}`}
+            style={{ padding: '14px 20px', margin: 0, borderRadius: 0, borderBottom: '1px solid var(--border-color)' }}
+            onClick={() => setSelectedJuego(juego)}
+          >
+            {juego.nombre}
           </div>
-          <div style={{ flex: 1, overflowY: 'auto' }}>
-            {juegosFiltrados.length === 0 ? (
-              <div className="empty-state" style={{ padding: '40px 20px' }}>
-                <div className="empty-state-text">No se encontraron juegos</div>
-              </div>
+        ))
+      )}
+    </div>
+        </div >
+
+    {/* LISTA DE PAQUETES/PRODUCTOS */ }
+    < div className = "card" style = {{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }
+}>
+  {!selectedJuego ? (
+    <div className="empty-state">
+      <div className="empty-state-icon">👈</div>
+      <div className="empty-state-text">Selecciona un juego a la izquierda</div>
+      <div className="empty-state-sub">Podrás ver sus paquetes y agregar nuevos.</div>
+    </div>
+  ) : (
+    <>
+      <div className="card-header" style={{ alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div
+            title="Cambiar logo del juego"
+            style={{
+              width: 60, height: 60, borderRadius: 12, backgroundColor: 'var(--bg-panel)',
+              border: '1px dashed var(--border-active)', cursor: 'pointer',
+              display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden',
+              position: 'relative'
+            }}
+            onClick={() => document.getElementById('game-logo-upload').click()}
+          >
+            {selectedJuego.icono_url ? (
+              <img src={selectedJuego.icono_url} alt={selectedJuego.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
-              juegosFiltrados.map(juego => (
-                <div
-                  key={juego.id}
-                  className={`nav-item ${selectedJuego?.id === juego.id ? 'active' : ''}`}
-                  style={{ padding: '14px 20px', margin: 0, borderRadius: 0, borderBottom: '1px solid var(--border-color)' }}
-                  onClick={() => setSelectedJuego(juego)}
-                >
-                  {juego.nombre}
-                </div>
-              ))
+              <span style={{ fontSize: 24, color: 'var(--text-muted)' }}>🎮</span>
             )}
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', color: 'white', fontSize: 10, textAlign: 'center', padding: '2px 0' }}>
+              Editar
+            </div>
+          </div>
+          <div>
+            <h2 className="card-title" style={{ fontSize: 18, color: 'var(--text-primary)' }}>
+              Paquetes de {selectedJuego.nombre}
+            </h2>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'none', marginTop: 4 }}>
+              Fórmula base: {selectedJuego.tipo_calculo}
+            </p>
           </div>
         </div>
-
-        {/* LISTA DE PAQUETES/PRODUCTOS */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {!selectedJuego ? (
-            <div className="empty-state">
-              <div className="empty-state-icon">👈</div>
-              <div className="empty-state-text">Selecciona un juego a la izquierda</div>
-              <div className="empty-state-sub">Podrás ver sus paquetes y agregar nuevos.</div>
-            </div>
-          ) : (
-            <>
-              <div className="card-header" style={{ alignItems: 'flex-start' }}>
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                  <div 
-                    title="Cambiar logo del juego"
-                    style={{ 
-                      width: 60, height: 60, borderRadius: 12, backgroundColor: 'var(--bg-panel)',
-                      border: '1px dashed var(--border-active)', cursor: 'pointer',
-                      display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden',
-                      position: 'relative'
-                    }}
-                    onClick={() => document.getElementById('game-logo-upload').click()}
-                  >
-                    {selectedJuego.icono_url ? (
-                      <img src={selectedJuego.icono_url} alt={selectedJuego.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <span style={{ fontSize: 24, color: 'var(--text-muted)' }}>🎮</span>
-                    )}
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', color: 'white', fontSize: 10, textAlign: 'center', padding: '2px 0' }}>
-                      Editar
-                    </div>
-                  </div>
-                  <div>
-                    <h2 className="card-title" style={{ fontSize: 18, color: 'var(--text-primary)' }}>
-                      Paquetes de {selectedJuego.nombre}
-                    </h2>
-                    <p style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'none', marginTop: 4 }}>
-                      Fórmula base: {selectedJuego.tipo_calculo}
-                    </p>
-                  </div>
-                </div>
-                <input 
-                  type="file" 
-                  id="game-logo-upload" 
-                  accept="image/png, image/jpeg, image/webp" 
-                  style={{ display: 'none' }} 
-                  onChange={handleUploadLogo} 
-                />
-                <div className="flex gap-8">
-                  <button className="btn btn-ghost btn-icon btn-sm" onClick={handleEditJuego} title="Editar Configuración del Juego">
-                    ✏️
-                  </button>
-                  <button className="btn btn-ghost btn-icon btn-sm" onClick={handleDeleteJuego} title="Eliminar Juego">
-                    🗑️
-                  </button>
-                  <button className="btn btn-primary" onClick={handleOpenModal}>
-                    + Añadir Paquete
-                  </button>
-                </div>
-              </div>
-
-              {loadingProductos ? (
-                <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}><div className="spinner"></div></div>
-              ) : productos.length === 0 ? (
-                <div className="empty-state">
-                  <div className="empty-state-icon">📦</div>
-                  <div className="empty-state-text">No hay paquetes para {selectedJuego.nombre}</div>
-                  <div className="empty-state-sub">Haz clic en Añadir Paquete arriba para empezar.</div>
-                </div>
-              ) : (
-                <div className="table-container compact-table" style={{ flex: 1, fontSize: '13px' }}>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th style={{ width: 50, padding: '10px 8px', textAlign: 'center' }}>Ord.</th>
-                        <th style={{ padding: '10px 8px' }}>Paquete</th>
-                        <th style={{ padding: '10px 8px' }}>Costo</th>
-                        <th style={{ padding: '10px 8px', textAlign: 'center' }}>% Margen</th>
-                        <th style={{ padding: '10px 8px' }}>Venta ($)</th>
-                        <th style={{ padding: '10px 8px' }}>Precio Bs</th>
-                        <th style={{ padding: '10px 8px' }}>Ganancia</th>
-                        <th style={{ padding: '10px 8px' }}>D. Rev</th>
-                        <th style={{ width: 70, padding: '10px 8px', textAlign: 'center' }}>Est.</th>
-                        <th style={{ width: 70, padding: '10px 8px', textAlign: 'center' }}>Acc.</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {productos.map((prod, idx) => {
-                        const precio = calcularPrecioVenta(prod, selectedJuego, config)
-                        const isDragging = draggedIndex === idx
-                        const isDisabled = prod.activo === false
-                        return (
-                          <tr 
-                            key={prod.id}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, idx)}
-                            onDragOver={(e) => handleDragOver(e, idx)}
-                            onDrop={(e) => handleDrop(e, idx)}
-                            onDragEnd={(e) => {
-                               e.currentTarget.style.opacity = '1'
-                               setDraggedIndex(null)
-                            }}
-                            style={{ 
-                               cursor: 'move',
-                               backgroundColor: isDragging ? 'rgba(0, 210, 255, 0.05)' : isDisabled ? 'rgba(255,255,255,0.01)' : 'transparent',
-                               opacity: isDisabled ? 0.45 : isDragging ? 0.5 : 1,
-                               transition: 'all 0.2s',
-                               filter: isDisabled ? 'grayscale(0.4)' : 'none'
-                            }}
-                          >
-                            <td style={{ padding: '8px' }}>
-                              <div className="flex gap-4" style={{ justifyContent: 'center', alignItems: 'center' }}>
-                                <div style={{ fontSize: 14, cursor: 'grab', marginRight: 2, color: 'var(--text-muted)' }} title="Arrastrar para reordenar">☰</div>
-                                <div className="flex flex-column gap-2">
-                                  <button
-                                    className="btn btn-ghost btn-icon btn-sm"
-                                    onClick={() => handleMoveProduct(idx, -1)}
-                                    disabled={idx === 0}
-                                    title="Subir"
-                                    style={{ opacity: idx === 0 ? 0.25 : 1, fontSize: 9, padding: '1px 2px', minWidth: 'auto', height: '16px' }}
-                                  >
-                                    ▲
-                                  </button>
-                                  <button
-                                    className="btn btn-ghost btn-icon btn-sm"
-                                    onClick={() => handleMoveProduct(idx, 1)}
-                                    disabled={idx === productos.length - 1}
-                                    title="Bajar"
-                                    style={{ opacity: idx === productos.length - 1 ? 0.25 : 1, fontSize: 9, padding: '1px 2px', minWidth: 'auto', height: '16px' }}
-                                  >
-                                    ▼
-                                  </button>
-                                </div>
-                              </div>
-                            </td>
-                            <td style={{ padding: '8px' }}>
-                              <div className="flex items-center gap-6">
-                                <div
-                                  title="Cambiar ícono del paquete"
-                                  style={{
-                                    width: 24, height: 24, borderRadius: 6, backgroundColor: 'var(--bg-panel)',
-                                    border: '1px dashed var(--border-active)', cursor: 'pointer',
-                                    display: 'flex', justifyContent: 'center', alignItems: 'center',
-                                    overflow: 'hidden', flexShrink: 0
-                                  }}
-                                  onClick={() => document.getElementById(`prod-icon-${prod.id}`).click()}
-                                >
-                                  {prod.icono_url ? (
-                                    <img src={prod.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                                  ) : (
-                                    <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>📦</span>
-                                  )}
-                                </div>
-                                <input
-                                  type="file"
-                                  id={`prod-icon-${prod.id}`}
-                                  accept="image/png, image/jpeg, image/webp"
-                                  style={{ display: 'none' }}
-                                  onChange={(e) => handleUploadProductIcon(e, prod.id)}
-                                />
-                                <span className="font-bold" style={{ color: isDisabled ? 'var(--text-muted)' : 'var(--text-primary)', fontSize: '13px' }}>{prod.nombre}</span>
-                              </div>
-                            </td>
-                            <td style={{ padding: '8px' }}>{formatUSD(prod.costo_base)}</td>
-                            <td style={{ padding: '8px', textAlign: 'center' }}><span className="badge badge-info" style={{ padding: '2px 6px', fontSize: '10px' }}>{prod.margen_ganancia * 100}%</span></td>
-                            <td style={{ padding: '8px', color: isDisabled ? 'var(--text-muted)' : 'var(--accent-primary)', fontWeight: 600 }}>{formatUSD(precio.venta_usd)}</td>
-                            <td style={{ padding: '8px', color: isDisabled ? 'var(--text-muted)' : 'var(--accent-success)', fontWeight: 600 }}>{formatBs(precio.venta_bs)}</td>
-                            <td style={{ padding: '8px', color: isDisabled ? 'var(--text-muted)' : 'var(--accent-warning)', fontWeight: 600 }}>{formatUSD(precio.ganancia_usd)}</td>
-                            <td style={{ padding: '8px' }}>
-                              {prod.descuento_revendedor ? (
-                                <span className="badge badge-success" style={{ fontSize: '10px', padding: '2px 6px' }}>{prod.descuento_revendedor}%</span>
-                              ) : (
-                                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Global</span>
-                              )}
-                            </td>
-                            {/* Botón Toggle Habilitar/Deshabilitar */}
-                            <td style={{ padding: '8px', textAlign: 'center' }}>
-                              <button
-                                onClick={() => toggleProducto(prod.id, prod.activo !== false)}
-                                title={isDisabled ? 'Habilitar paquete' : 'Deshabilitar paquete'}
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '4px',
-                                  padding: '3px 8px',
-                                  borderRadius: '20px',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  fontWeight: 700,
-                                  fontSize: '10px',
-                                  letterSpacing: '0.3px',
-                                  transition: 'all 0.2s ease',
-                                  backgroundColor: isDisabled
-                                    ? 'rgba(255,255,255,0.07)'
-                                    : 'rgba(34, 197, 94, 0.15)',
-                                  color: isDisabled
-                                    ? 'var(--text-muted)'
-                                    : '#22c55e',
-                                  boxShadow: isDisabled
-                                    ? 'none'
-                                    : '0 0 8px rgba(34, 197, 94, 0.25)'
-                                }}
-                                onMouseEnter={e => {
-                                  e.currentTarget.style.transform = 'scale(1.05)'
-                                  e.currentTarget.style.backgroundColor = isDisabled
-                                    ? 'rgba(34, 197, 94, 0.12)'
-                                    : 'rgba(239, 68, 68, 0.15)'
-                                  e.currentTarget.style.color = isDisabled ? '#22c55e' : '#ef4444'
-                                }}
-                                onMouseLeave={e => {
-                                  e.currentTarget.style.transform = 'scale(1)'
-                                  e.currentTarget.style.backgroundColor = isDisabled
-                                    ? 'rgba(255,255,255,0.07)'
-                                    : 'rgba(34, 197, 94, 0.15)'
-                                  e.currentTarget.style.color = isDisabled ? 'var(--text-muted)' : '#22c55e'
-                                }}
-                              >
-                                <span style={{ fontSize: '7px' }}>{isDisabled ? '⬜' : '🟢'}</span>
-                                {isDisabled ? 'OFF' : 'ON'}
-                              </button>
-                            </td>
-                            <td style={{ padding: '8px' }}>
-                              <div className="flex gap-4" style={{ justifyContent: 'center' }}>
-                                <button 
-                                  className="btn btn-ghost btn-icon btn-sm"
-                                  onClick={() => handleEditProducto(prod)}
-                                  title={`Editar ${prod.nombre}`}
-                                  style={{ width: '28px', height: '28px' }}
-                                >
-                                  ✏️
-                                </button>
-                                <button 
-                                  className="btn btn-danger btn-icon btn-sm"
-                                  onClick={() => handleDelete(prod.id, prod.nombre)}
-                                  title={`Eliminar ${prod.nombre}`}
-                                  style={{ width: '28px', height: '28px' }}
-                                >
-                                  🗑️
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </>
-          )}
+        <input
+          type="file"
+          id="game-logo-upload"
+          accept="image/png, image/jpeg, image/webp"
+          style={{ display: 'none' }}
+          onChange={handleUploadLogo}
+        />
+        <div className="flex gap-8">
+          <button className="btn btn-ghost btn-icon btn-sm" onClick={handleEditJuego} title="Editar Configuración del Juego">
+            ✏️
+          </button>
+          <button className="btn btn-ghost btn-icon btn-sm" onClick={handleDeleteJuego} title="Eliminar Juego">
+            🗑️
+          </button>
+          <button className="btn btn-primary" onClick={handleOpenModal}>
+            + Añadir Paquete
+          </button>
         </div>
-
       </div>
 
-      {/* MODAL CREAR PRODUCTO */}
-      {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h2 className="modal-title">{formData.id ? `Editar paquete en ${selectedJuego?.nombre}` : `Añadir a ${selectedJuego?.nombre}`}</h2>
-            <form onSubmit={handleSubmit}>
-              {/* SECTOR DE ÍCONO */}
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
-                <div 
-                  onClick={() => document.getElementById('modal-icon-upload').click()}
-                  style={{
-                    width: 80, height: 80, borderRadius: 16, backgroundColor: 'var(--bg-panel)',
-                    border: '2px dashed var(--accent-primary)', cursor: 'pointer',
-                    display: 'flex', justifyContent: 'center', alignItems: 'center',
-                    overflow: 'hidden', position: 'relative', transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
-                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                >
-                  {iconPreview ? (
-                    <img src={iconPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                  ) : (
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: 24 }}>📥</div>
-                      <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>Ícono</div>
-                    </div>
-                  )}
-                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', color: 'white', fontSize: 9, padding: '2px 0', textAlign: 'center' }}>
-                    Click para cambiar
-                  </div>
+      {loadingProductos ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}><div className="spinner"></div></div>
+      ) : productos.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-state-icon">📦</div>
+          <div className="empty-state-text">No hay paquetes para {selectedJuego.nombre}</div>
+          <div className="empty-state-sub">Haz clic en Añadir Paquete arriba para empezar.</div>
+        </div>
+      ) : (
+        <div className="table-container compact-table" style={{ flex: 1, fontSize: '12px' }}>
+          <table>
+            <thead>
+              <tr>
+                <th style={{ width: 40, padding: '8px 4px', textAlign: 'center' }}>Ord.</th>
+                <th style={{ padding: '8px 4px' }}>Paquete</th>
+                <th style={{ padding: '8px 4px' }}>Costo</th>
+                <th style={{ padding: '8px 4px', textAlign: 'center' }}>% Margen</th>
+                <th style={{ padding: '8px 4px' }}>Venta ($)</th>
+                <th style={{ padding: '8px 4px' }}>Precio Bs</th>
+                <th style={{ padding: '8px 4px' }}>Ganancia</th>
+                <th style={{ padding: '8px 4px' }}>D. Rev</th>
+                <th style={{ width: 60, padding: '8px 4px', textAlign: 'center' }}>Est.</th>
+                <th style={{ width: 60, padding: '8px 4px', textAlign: 'center' }}>Acc.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {productos.map((prod, idx) => {
+                const precio = calcularPrecioVenta(prod, selectedJuego, config)
+                const isDragging = draggedIndex === idx
+                const isDisabled = prod.activo === false
+                return (
+                  <tr
+                    key={prod.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, idx)}
+                    onDragOver={(e) => handleDragOver(e, idx)}
+                    onDrop={(e) => handleDrop(e, idx)}
+                    onDragEnd={(e) => {
+                      e.currentTarget.style.opacity = '1'
+                      setDraggedIndex(null)
+                    }}
+                    style={{
+                      cursor: 'move',
+                      backgroundColor: isDragging ? 'rgba(0, 210, 255, 0.05)' : isDisabled ? 'rgba(255,255,255,0.01)' : 'transparent',
+                      opacity: isDisabled ? 0.45 : isDragging ? 0.5 : 1,
+                      transition: 'all 0.2s',
+                      filter: isDisabled ? 'grayscale(0.4)' : 'none'
+                    }}
+                  >
+                    <td style={{ padding: '4px' }}>
+                      <div className="flex gap-2" style={{ justifyContent: 'center', alignItems: 'center' }}>
+                        <div style={{ fontSize: 12, cursor: 'grab', marginRight: 1, color: 'var(--text-muted)' }} title="Arrastrar para reordenar">☰</div>
+                        <div className="flex flex-column gap-1">
+                          <button
+                            className="btn btn-ghost btn-icon btn-sm"
+                            onClick={() => handleMoveProduct(idx, -1)}
+                            disabled={idx === 0}
+                            title="Subir"
+                            style={{ opacity: idx === 0 ? 0.25 : 1, fontSize: 8, padding: '0px 1px', minWidth: 'auto', height: '14px' }}
+                          >
+                            ▲
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-icon btn-sm"
+                            onClick={() => handleMoveProduct(idx, 1)}
+                            disabled={idx === productos.length - 1}
+                            title="Bajar"
+                            style={{ opacity: idx === productos.length - 1 ? 0.25 : 1, fontSize: 8, padding: '0px 1px', minWidth: 'auto', height: '14px' }}
+                          >
+                            ▼
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ padding: '4px' }}>
+                      <div className="flex items-center gap-4">
+                        <div
+                          title="Cambiar ícono del paquete"
+                          style={{
+                            width: 20, height: 20, borderRadius: 4, backgroundColor: 'var(--bg-panel)',
+                            border: '1px dashed var(--border-active)', cursor: 'pointer',
+                            display: 'flex', justifyContent: 'center', alignItems: 'center',
+                            overflow: 'hidden', flexShrink: 0
+                          }}
+                          onClick={() => document.getElementById(`prod-icon-${prod.id}`).click()}
+                        >
+                          {prod.icono_url ? (
+                            <img src={prod.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                          ) : (
+                            <span style={{ fontSize: 8, color: 'var(--text-muted)' }}>📦</span>
+                          )}
+                        </div>
+                        <input
+                          type="file"
+                          id={`prod-icon-${prod.id}`}
+                          accept="image/png, image/jpeg, image/webp"
+                          style={{ display: 'none' }}
+                          onChange={(e) => handleUploadProductIcon(e, prod.id)}
+                        />
+                        <span className="font-bold" style={{ color: isDisabled ? 'var(--text-muted)' : 'var(--text-primary)', fontSize: '12px' }}>{prod.nombre}</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '4px' }}>{formatUSD(prod.costo_base)}</td>
+                    <td style={{ padding: '4px', textAlign: 'center' }}><span className="badge badge-info" style={{ padding: '1px 4px', fontSize: '10px' }}>{prod.margen_ganancia * 100}%</span></td>
+                    <td style={{ padding: '4px', color: isDisabled ? 'var(--text-muted)' : 'var(--accent-primary)', fontWeight: 600 }}>{formatUSD(precio.venta_usd)}</td>
+                    <td style={{ padding: '4px', color: isDisabled ? 'var(--text-muted)' : 'var(--accent-success)', fontWeight: 600 }}>{formatBs(precio.venta_bs)}</td>
+                    <td style={{ padding: '4px', color: isDisabled ? 'var(--text-muted)' : 'var(--accent-warning)', fontWeight: 600 }}>{formatUSD(precio.ganancia_usd)}</td>
+                    <td style={{ padding: '4px' }}>
+                      {prod.descuento_revendedor ? (
+                        <span className="badge badge-success" style={{ fontSize: '9px', padding: '1px 4px' }}>{prod.descuento_revendedor}%</span>
+                      ) : (
+                        <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>Global</span>
+                      )}
+                    </td>
+                    {/* Botón Toggle Habilitar/Deshabilitar */}
+                    <td style={{ padding: '4px', textAlign: 'center' }}>
+                      <button
+                        onClick={() => toggleProducto(prod.id, prod.activo !== false)}
+                        title={isDisabled ? 'Habilitar paquete' : 'Deshabilitar paquete'}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '2px',
+                          padding: '2px 6px',
+                          borderRadius: '16px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontWeight: 700,
+                          fontSize: '9px',
+                          letterSpacing: '0.2px',
+                          transition: 'all 0.2s ease',
+                          backgroundColor: isDisabled
+                            ? 'rgba(255,255,255,0.07)'
+                            : 'rgba(34, 197, 94, 0.15)',
+                          color: isDisabled
+                            ? 'var(--text-muted)'
+                            : '#22c55e'
+                        }}
+                      >
+                        <span style={{ fontSize: '6px' }}>{isDisabled ? '⬜' : '🟢'}</span>
+                        {isDisabled ? 'OFF' : 'ON'}
+                      </button>
+                    </td>
+                    <td style={{ padding: '4px' }}>
+                      <div className="flex gap-2" style={{ justifyContent: 'center' }}>
+                        <button
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => handleEditProducto(prod)}
+                          title={`Editar ${prod.nombre}`}
+                          style={{ width: '24px', height: '24px' }}
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          className="btn btn-danger btn-icon btn-sm"
+                          onClick={() => handleDelete(prod.id, prod.nombre)}
+                          title={`Eliminar ${prod.nombre}`}
+                          style={{ width: '24px', height: '24px' }}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
+  )}
+        </div >
+
+      </div >
+
+  {/* MODAL CREAR PRODUCTO */ }
+{
+  isModalOpen && (
+    <div className="modal-overlay">
+      <div className="modal">
+        <h2 className="modal-title">{formData.id ? `Editar paquete en ${selectedJuego?.nombre}` : `Añadir a ${selectedJuego?.nombre}`}</h2>
+        <form onSubmit={handleSubmit}>
+          {/* SECTOR DE ÍCONO */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+            <div
+              onClick={() => document.getElementById('modal-icon-upload').click()}
+              style={{
+                width: 80, height: 80, borderRadius: 16, backgroundColor: 'var(--bg-panel)',
+                border: '2px dashed var(--accent-primary)', cursor: 'pointer',
+                display: 'flex', justifyContent: 'center', alignItems: 'center',
+                overflow: 'hidden', position: 'relative', transition: 'all 0.2s'
+              }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              {iconPreview ? (
+                <img src={iconPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              ) : (
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 24 }}>📥</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>Ícono</div>
                 </div>
-                <input 
-                  type="file" 
-                  id="modal-icon-upload" 
-                  accept="image/*" 
-                  style={{ display: 'none' }} 
-                  onChange={(e) => {
+              )}
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', color: 'white', fontSize: 9, padding: '2px 0', textAlign: 'center' }}>
+                Click para cambiar
+              </div>
+            </div>
+            <input
+              type="file"
+              id="modal-icon-upload"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const file = e.target.files[0]
+                if (file) {
+                  setNewIconFile(file)
+                  setIconPreview(URL.createObjectURL(file))
+                }
+              }}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Nombre del Paquete</label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Ej: 110 Diamantes"
+              value={formData.nombre}
+              onChange={e => setFormData({ ...formData, nombre: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="flex gap-16">
+            <div className="form-group" style={{ flex: 1 }}>
+              <label className="form-label">Costo tu proveedor ($)</label>
+              <input
+                type="number"
+                step="0.01"
+                className="form-input"
+                placeholder="0.00"
+                value={formData.costo_base}
+                onChange={e => setFormData({ ...formData, costo_base: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label className="form-label">Margen a ganar (%)</label>
+              <input
+                type="number"
+                className="form-input"
+                placeholder="30"
+                value={formData.margen_ganancia}
+                onChange={e => setFormData({ ...formData, margen_ganancia: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+
+          {/* DESCUENTO PARA REVENDEDORES */}
+          <div className="form-group">
+            <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+              Descuento Revendedor (%)
+              <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>(Opcional - Prevalece sobre el global)</span>
+            </label>
+            <input
+              type="number"
+              step="0.5"
+              min="0"
+              max="100"
+              className="form-input"
+              placeholder="Dejar vacío para usar el descuento global del juego"
+              value={formData.descuento_revendedor}
+              onChange={e => setFormData({ ...formData, descuento_revendedor: e.target.value })}
+            />
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+              Si se establece, este descuento será exclusivo para este paquete y NO se sumará al global del servicio.
+            </p>
+          </div>
+
+          {/* VISTA PREVIA DEL CÁLCULO EN TIEMPO REAL */}
+          <div style={{ background: 'var(--bg-primary)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--border-active)', marginBottom: 20 }}>
+            <h4 style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--accent-primary)', marginBottom: 12 }}>Proyección del precio final al cliente</h4>
+            {calculoRealTime ? (
+              <div className="flex justify-between items-center text-center">
+                <div>
+                  <div className="form-label" style={{ marginBottom: 4 }}>Precio Venta USD</div>
+                  <div className="font-bold" style={{ fontSize: 20, color: 'var(--text-primary)' }}>{formatUSD(calculoRealTime.venta_usd)}</div>
+                </div>
+                <div>
+                  <div className="form-label" style={{ marginBottom: 4 }}>Precio Final Bs</div>
+                  <div className="font-bold" style={{ fontSize: 20, color: 'var(--accent-success)' }}>{formatBs(calculoRealTime.venta_bs)}</div>
+                </div>
+                <div>
+                  <div className="form-label" style={{ marginBottom: 4 }}>Tu Ganancia Neta</div>
+                  <div className="font-bold" style={{ fontSize: 20, color: 'var(--accent-warning)' }}>{formatUSD(calculoRealTime.ganancia_usd)}</div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-muted text-sm text-center">Escribe un costo para ver el cálculo...</div>
+            )}
+          </div>
+
+          <div className="flex justify-between mt-24">
+            <button type="button" className="btn btn-ghost" onClick={() => setIsModalOpen(false)}>Cancelar</button>
+            <button type="submit" className="btn btn-primary" disabled={saving || !formData.nombre || !formData.costo_base}>
+              {saving ? 'Guardando...' : formData.id ? 'Actualizar Paquete' : 'Guardar Paquete'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+{/* MODAL CREAR JUEGO */ }
+{
+  isGameModalOpen && (
+    <div className="modal-overlay">
+      <div className="modal">
+        <h2 className="modal-title">Añadir Nuevo Servicio</h2>
+        <form onSubmit={handleGameSubmit}>
+          <div className="form-group">
+            <label className="form-label">Nombre (Ej: Free Fire, Netflix)</label>
+            <input
+              type="text"
+              className="form-input"
+              value={formGame.nombre}
+              onChange={e => setFormGame({ ...formGame, nombre: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Categoría</label>
+            <select
+              className="form-input"
+              value={formGame.categoria_id}
+              onChange={e => setFormGame({ ...formGame, categoria_id: e.target.value })}
+              required
+            >
+              {categorias.map(c => (
+                <option key={c.id} value={c.id}>{c.nombre}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Fórmula de rentabilidad base</label>
+            <select
+              className="form-input"
+              value={formGame.tipo_calculo}
+              onChange={e => setFormGame({ ...formGame, tipo_calculo: e.target.value })}
+            >
+              <option value="estandar">1) Estándar: Costo + [Porcentaje %]</option>
+              <option value="paypal">2) PayPal: Costo - [Retención PayPal]</option>
+              <option value="descuento_doble">3) Descuento Doble (SmileOne)</option>
+              <option value="ref_cruzada">4) Ref Cruzada: Calculadora Multiplicador</option>
+              <option value="venta_fija">5) Venta Fija (Sin margen automático)</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Método de Recarga</label>
+            <select
+              className="form-input"
+              value={formGame.metodo_recarga}
+              onChange={e => setFormGame({ ...formGame, metodo_recarga: e.target.value })}
+            >
+              <option value="id_jugador">🆔 ID del Jugador</option>
+              <option value="cuenta_completa">🔐 Correo y Clave</option>
+              <option value="usuario_clave">👤 Usuario y Clave</option>
+            </select>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+              {formGame.metodo_recarga === 'id_jugador'
+                ? 'Se le pedirá al cliente solo su ID identificador en el juego.'
+                : formGame.metodo_recarga === 'cuenta_completa'
+                  ? 'Se le pedirá al cliente su correo electrónico y contraseña del juego.'
+                  : 'Se le pedirá al cliente su nombre de usuario y contraseña del juego.'}
+            </p>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+              Captura de Guía ID/Cuenta
+              <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>(Opcional)</span>
+            </label>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: 8 }}>
+              <div style={{
+                width: 70, height: 70, borderRadius: 8, backgroundColor: 'var(--bg-panel)',
+                border: '1px solid var(--border-color)', overflow: 'hidden', display: 'flex',
+                alignItems: 'center', justifyContent: 'center'
+              }}>
+                {formGame.guia_id_url ? (
+                  <img src={formGame.guia_id_url} alt="Guia" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={{ fontSize: 24, opacity: 0.3 }}>🖼️</span>
+                )}
+              </div>
+              <div style={{ flex: 1 }}>
+                <input
+                  type="file"
+                  id="guia-upload"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={async (e) => {
                     const file = e.target.files[0]
-                    if (file) {
-                      setNewIconFile(file)
-                      setIconPreview(URL.createObjectURL(file))
+                    if (!file) return
+                    setSaving(true)
+                    try {
+                      const fileName = `guia-${Date.now()}.png`
+                      const { error: uploadError } = await supabase.storage.from('logos').upload(fileName, file)
+                      if (uploadError) throw uploadError
+                      const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(fileName)
+                      setFormGame(prev => ({ ...prev, guia_id_url: publicUrl }))
+                    } catch (err) {
+                      setAlertModal({ type: 'error', message: 'Error subiendo guía: ' + err.message })
+                    } finally {
+                      setSaving(false)
                     }
                   }}
                 />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Nombre del Paquete</label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  placeholder="Ej: 110 Diamantes"
-                  value={formData.nombre}
-                  onChange={e => setFormData({...formData, nombre: e.target.value})}
-                  required 
-                />
-              </div>
-              
-              <div className="flex gap-16">
-                <div className="form-group" style={{ flex: 1 }}>
-                  <label className="form-label">Costo tu proveedor ($)</label>
-                  <input 
-                    type="number" 
-                    step="0.01" 
-                    className="form-input" 
-                    placeholder="0.00"
-                    value={formData.costo_base}
-                    onChange={e => setFormData({...formData, costo_base: e.target.value})}
-                    required 
-                  />
-                </div>
-                <div className="form-group" style={{ flex: 1 }}>
-                  <label className="form-label">Margen a ganar (%)</label>
-                  <input 
-                    type="number" 
-                    className="form-input" 
-                    placeholder="30"
-                    value={formData.margen_ganancia}
-                    onChange={e => setFormData({...formData, margen_ganancia: e.target.value})}
-                    required 
-                  />
-                </div>
-              </div>
-
-              {/* DESCUENTO PARA REVENDEDORES */}
-              <div className="form-group">
-                <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  Descuento Revendedor (%)
-                  <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>(Opcional - Prevalece sobre el global)</span>
+                <label htmlFor="guia-upload" className="btn btn-ghost btn-sm">
+                  {saving ? 'Procesando...' : '📤 Subir Captura Guía'}
                 </label>
-                <input 
-                  type="number" 
-                  step="0.5"
-                  min="0"
-                  max="100"
-                  className="form-input" 
-                  placeholder="Dejar vacío para usar el descuento global del juego"
-                  value={formData.descuento_revendedor}
-                  onChange={e => setFormData({...formData, descuento_revendedor: e.target.value})}
-                />
                 <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-                  Si se establece, este descuento será exclusivo para este paquete y NO se sumará al global del servicio.
+                  Esta imagen se mostrará al cliente cuando presione el ícono de ayuda.
                 </p>
               </div>
-
-              {/* VISTA PREVIA DEL CÁLCULO EN TIEMPO REAL */}
-              <div style={{ background: 'var(--bg-primary)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--border-active)', marginBottom: 20 }}>
-                <h4 style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--accent-primary)', marginBottom: 12 }}>Proyección del precio final al cliente</h4>
-                {calculoRealTime ? (
-                  <div className="flex justify-between items-center text-center">
-                    <div>
-                      <div className="form-label" style={{ marginBottom: 4 }}>Precio Venta USD</div>
-                      <div className="font-bold" style={{ fontSize: 20, color: 'var(--text-primary)' }}>{formatUSD(calculoRealTime.venta_usd)}</div>
-                    </div>
-                    <div>
-                      <div className="form-label" style={{ marginBottom: 4 }}>Precio Final Bs</div>
-                      <div className="font-bold" style={{ fontSize: 20, color: 'var(--accent-success)' }}>{formatBs(calculoRealTime.venta_bs)}</div>
-                    </div>
-                    <div>
-                      <div className="form-label" style={{ marginBottom: 4 }}>Tu Ganancia Neta</div>
-                      <div className="font-bold" style={{ fontSize: 20, color: 'var(--accent-warning)' }}>{formatUSD(calculoRealTime.ganancia_usd)}</div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-muted text-sm text-center">Escribe un costo para ver el cálculo...</div>
-                )}
-              </div>
-
-              <div className="flex justify-between mt-24">
-                <button type="button" className="btn btn-ghost" onClick={() => setIsModalOpen(false)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary" disabled={saving || !formData.nombre || !formData.costo_base}>
-                  {saving ? 'Guardando...' : formData.id ? 'Actualizar Paquete' : 'Guardar Paquete'}
-                </button>
-              </div>
-            </form>
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* MODAL CREAR JUEGO */}
-      {isGameModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h2 className="modal-title">Añadir Nuevo Servicio</h2>
-            <form onSubmit={handleGameSubmit}>
-              <div className="form-group">
-                <label className="form-label">Nombre (Ej: Free Fire, Netflix)</label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  value={formGame.nombre}
-                  onChange={e => setFormGame({...formGame, nombre: e.target.value})}
-                  required 
-                />
-              </div>
-              
-              <div className="form-group">
-                <label className="form-label">Categoría</label>
-                <select 
-                  className="form-input" 
-                  value={formGame.categoria_id}
-                  onChange={e => setFormGame({...formGame, categoria_id: e.target.value})}
-                  required
-                >
-                  {categorias.map(c => (
-                    <option key={c.id} value={c.id}>{c.nombre}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Fórmula de rentabilidad base</label>
-                <select 
-                  className="form-input" 
-                  value={formGame.tipo_calculo}
-                  onChange={e => setFormGame({...formGame, tipo_calculo: e.target.value})}
-                >
-                  <option value="estandar">1) Estándar: Costo + [Porcentaje %]</option>
-                  <option value="paypal">2) PayPal: Costo - [Retención PayPal]</option>
-                  <option value="descuento_doble">3) Descuento Doble (SmileOne)</option>
-                  <option value="ref_cruzada">4) Ref Cruzada: Calculadora Multiplicador</option>
-                  <option value="venta_fija">5) Venta Fija (Sin margen automático)</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Método de Recarga</label>
-                <select 
-                  className="form-input" 
-                  value={formGame.metodo_recarga}
-                  onChange={e => setFormGame({...formGame, metodo_recarga: e.target.value})}
-                >
-                  <option value="id_jugador">🆔 ID del Jugador</option>
-                  <option value="cuenta_completa">🔐 Correo y Clave</option>
-                  <option value="usuario_clave">👤 Usuario y Clave</option>
-                </select>
-                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-                  {formGame.metodo_recarga === 'id_jugador' 
-                    ? 'Se le pedirá al cliente solo su ID identificador en el juego.' 
-                    : formGame.metodo_recarga === 'cuenta_completa'
-                    ? 'Se le pedirá al cliente su correo electrónico y contraseña del juego.'
-                    : 'Se le pedirá al cliente su nombre de usuario y contraseña del juego.'}
-                </p>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  Captura de Guía ID/Cuenta
-                  <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>(Opcional)</span>
-                </label>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: 8 }}>
-                  <div style={{ 
-                    width: 70, height: 70, borderRadius: 8, backgroundColor: 'var(--bg-panel)',
-                    border: '1px solid var(--border-color)', overflow: 'hidden', display: 'flex', 
-                    alignItems: 'center', justifyContent: 'center'
-                  }}>
-                    {formGame.guia_id_url ? (
-                      <img src={formGame.guia_id_url} alt="Guia" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <span style={{ fontSize: 24, opacity: 0.3 }}>🖼️</span>
-                    )}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <input 
-                      type="file" 
-                      id="guia-upload" 
-                      accept="image/*" 
-                      style={{ display: 'none' }} 
-                      onChange={async (e) => {
-                        const file = e.target.files[0]
-                        if (!file) return
-                        setSaving(true)
-                        try {
-                          const fileName = `guia-${Date.now()}.png`
-                          const { error: uploadError } = await supabase.storage.from('logos').upload(fileName, file)
-                          if (uploadError) throw uploadError
-                          const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(fileName)
-                          setFormGame(prev => ({ ...prev, guia_id_url: publicUrl }))
-                        } catch (err) {
-                          setAlertModal({ type: 'error', message: 'Error subiendo guía: ' + err.message })
-                        } finally {
-                          setSaving(false)
-                        }
-                      }}
-                    />
-                    <label htmlFor="guia-upload" className="btn btn-ghost btn-sm">
-                      {saving ? 'Procesando...' : '📤 Subir Captura Guía'}
-                    </label>
-                    <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-                      Esta imagen se mostrará al cliente cuando presione el ícono de ayuda.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-between mt-24">
-                <button type="button" className="btn btn-ghost" onClick={() => setIsGameModalOpen(false)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary" disabled={saving || !formGame.nombre}>
-                  {saving ? 'Guardando...' : formGame.id ? 'Actualizar Juego' : 'Crear Juego'}
-                </button>
-              </div>
-            </form>
+          <div className="flex justify-between mt-24">
+            <button type="button" className="btn btn-ghost" onClick={() => setIsGameModalOpen(false)}>Cancelar</button>
+            <button type="submit" className="btn btn-primary" disabled={saving || !formGame.nombre}>
+              {saving ? 'Guardando...' : formGame.id ? 'Actualizar Juego' : 'Crear Juego'}
+            </button>
           </div>
-        </div>
-      )}
-
-      {alertModal && (
-        <AlertModal
-          isOpen={!!alertModal}
-          type={alertModal.type}
-          title={alertModal.title}
-          message={alertModal.message}
-          onConfirm={alertModal.onConfirm}
-          onCancel={() => setAlertModal(null)}
-        />
-      )}
+        </form>
+      </div>
     </div>
+  )
+}
+
+{
+  alertModal && (
+    <AlertModal
+      isOpen={!!alertModal}
+      type={alertModal.type}
+      title={alertModal.title}
+      message={alertModal.message}
+      onConfirm={alertModal.onConfirm}
+      onCancel={() => setAlertModal(null)}
+    />
+  )
+}
+    </div >
   )
 }

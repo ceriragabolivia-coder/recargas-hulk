@@ -7,6 +7,7 @@ export default function Catalogo() {
   const { config, loading: loadingConfig } = useConfiguracion()
   const { addToCart } = useCart()
   const { perfil } = useAuth()
+  const isCliente = perfil?.rol?.toLowerCase() === 'cliente'
   const [selectedJuego, setSelectedJuego] = useState(null)
   const [addedItem, setAddedItem] = useState(null) // Para animación simple
 
@@ -89,7 +90,9 @@ export default function Catalogo() {
             }}>
               <div style={{ fontSize: '15px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
                 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Paquete:</span> 
-                <span style={{ color: 'var(--accent-success)', fontWeight: 700 }}>{pendingItem.p.nombre} ({formatBs(pendingItem.finalPrice.venta_bs)})</span>
+                <span style={{ color: 'var(--accent-success)', fontWeight: 700 }}>
+                  {pendingItem.p.nombre} ({formatBs(pendingItem.finalPrice.venta_bs)})
+                </span>
               </div>
               <div style={{ fontSize: '15px', display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Cuenta a Recargar:</span> 
@@ -296,7 +299,7 @@ export default function Catalogo() {
                 <tr>
                   <th>Producto / Paquete</th>
                   <th style={{ textAlign: 'right' }}>Precio (Bs)</th>
-                  <th style={{ textAlign: 'right' }}>Precio (USD)</th>
+                  {!isCliente && <th style={{ textAlign: 'right' }}>Precio (USD)</th>}
                   <th style={{ width: 100 }}></th>
                 </tr>
               </thead>
@@ -321,9 +324,11 @@ export default function Catalogo() {
                         <td data-label="Precio (Bs)" style={{ textAlign: 'right', fontWeight: 700, color: 'var(--text-primary)', fontSize: 16 }}>
                           {formatBs(finalPrice.venta_bs)}
                         </td>
-                        <td data-label="Precio (USD)" style={{ textAlign: 'right', color: 'var(--accent-success)', fontWeight: 600, fontSize: 16 }}>
-                          {formatUSD(finalPrice.venta_usd)}
-                        </td>
+                        {!isCliente && (
+                          <td data-label="Precio (USD)" style={{ textAlign: 'right', color: 'var(--accent-success)', fontWeight: 600, fontSize: 16 }}>
+                            {formatUSD(finalPrice.venta_usd)}
+                          </td>
+                        )}
                         <td data-label="" className="td-add-button" style={{ textAlign: 'right', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                           <button 
                             className="btn btn-primary"

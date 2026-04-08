@@ -10,7 +10,8 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
   const targetOrderId = normalizedParams.orderId;
   const { user, perfil } = useAuth()
   const { config } = useConfiguracion()
-  const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
+  const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
+  const isCliente = perfil?.rol?.toLowerCase() === 'cliente'
   const [pedidos, setPedidos] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedPedido, setSelectedPedido] = useState(null)
@@ -919,7 +920,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                 <span style={{ color: 'var(--text-muted)', fontSize: '18px' }}>Total</span>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontWeight: 800, fontSize: '20px', color: 'var(--accent-success)' }}>{formatBs(selectedPedido.total_bs)}</div>
-                  <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>{formatUSD(selectedPedido.total_usd)}</div>
+                  {!isCliente && <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>{formatUSD(selectedPedido.total_usd)}</div>}
                 </div>
               </div>
 
@@ -932,7 +933,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', backgroundColor: 'rgba(34, 197, 94, 0.08)', borderRadius: '6px', border: '1px solid rgba(34, 197, 94, 0.2)', marginTop: '4px' }}>
                       <span style={{ color: 'var(--text-muted)', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>💸 <span style={{color: '#22c55e', fontWeight: 600}}>Cash Back ({p}%)</span></span>
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontWeight: 800, color: 'var(--accent-success)', fontSize: '15px' }}>+{isBs ? formatBs(monto) : formatUSD(monto)}</div>
+                        <div style={{ fontWeight: 800, color: 'var(--accent-success)', fontSize: '15px' }}>+{isBs ? formatBs(monto) : (!isCliente ? formatUSD(monto) : '')}</div>
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Monto retornado a Billetera</div>
                       </div>
                     </div>
@@ -1280,7 +1281,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                                 const monto = pedido.cashback_monto || (isBs ? Number(pedido.total_bs) * (p/100) : Number(pedido.total_usd) * (p/100));
                                 return (
                                   <div style={{ marginTop: '6px', fontSize: '10px', color: '#10b981', fontWeight: 700 }}>
-                                    💸 +CashBack {p}% ({isBs ? formatBs(monto) : formatUSD(monto)})
+                                    💸 +CashBack {p}% ({isBs ? formatBs(monto) : (!isCliente ? formatUSD(monto) : '')})
                                   </div>
                                 );
                               })()

@@ -145,6 +145,7 @@ function NotificationBar({ counts, onNavigate, config, onlineUsers }) {
 
 function WalletWidget({ onNavigate }) {
   const { wallet, loading } = useWallet()
+  const { perfil } = useAuth()
   return (
     <div 
       onClick={() => onNavigate('billetera')}
@@ -161,12 +162,15 @@ function WalletWidget({ onNavigate }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <span style={{ fontSize: '18px' }} title="Billetera Digital">💼</span>
         <div style={{ display: 'flex', gap: '16px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>USD</span>
-            <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--accent-success)' }}>
-              {loading ? '...' : formatUSD(wallet?.saldo || 0)}
-            </span>
-          </div>
+          {/* USD balance hidden for Cliente role */}
+          {!(perfil?.rol?.toLowerCase() === 'cliente') && (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>USD</span>
+              <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--accent-success)' }}>
+                {loading ? '...' : formatUSD(wallet?.saldo || 0)}
+              </span>
+            </div>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '12px' }}>
             <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bs</span>
             <span style={{ fontSize: '13px', fontWeight: 800, color: '#a855f7' }}>

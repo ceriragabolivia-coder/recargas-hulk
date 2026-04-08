@@ -23,7 +23,8 @@ const COLORS = [
 
 // ── Main Component ─────────────────────────────────────────────
 export default function Ruleta() {
-  const { user } = useAuth()
+  const { user, perfil } = useAuth()
+  const isCliente = perfil?.rol?.toLowerCase() === 'cliente'
   const [premios, setPremios]             = useState([])
   const [config, setConfig]               = useState({ ruleta_activa: 'true', ruleta_titulo: '¡Gira y Gana!', ruleta_descripcion: '' })
   const [girosDisp, setGirosDisp]         = useState(0)
@@ -256,7 +257,7 @@ export default function Ruleta() {
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.06)' }}>
                 <span style={{ fontWeight: 600, fontSize: 14 }}>{h.premio_nombre}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {h.tipo === 'saldo_usd' && h.valor > 0 && <span style={{ color: '#22c55e', fontWeight: 700, fontSize: 13 }}>+{formatUSD(h.valor)}</span>}
+                  {!isCliente && h.tipo === 'saldo_usd' && h.valor > 0 && <span style={{ color: '#22c55e', fontWeight: 700, fontSize: 13 }}>+{formatUSD(h.valor)}</span>}
                   {h.tipo === 'saldo_bs'  && h.valor > 0 && <span style={{ color: '#a855f7', fontWeight: 700, fontSize: 13 }}>+{formatBs(h.valor)}</span>}
                   <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>{new Date(h.created_at).toLocaleDateString('es-VE')}</span>
                 </div>
@@ -284,7 +285,7 @@ export default function Ruleta() {
 
             <div style={{ padding: '16px 20px', borderRadius: 16, background: resultado.tipo === 'sin_premio' ? 'rgba(255,255,255,.03)' : 'rgba(255,215,0,.07)', border: `1px solid ${resultado.tipo === 'sin_premio' ? 'rgba(255,255,255,.08)' : 'rgba(255,215,0,.25)'}`, marginBottom: 20 }}>
               <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 4 }}>{resultado.premio_nombre}</div>
-              {resultado.valor > 0 && resultado.tipo === 'saldo_usd' && (
+              {!isCliente && resultado.valor > 0 && resultado.tipo === 'saldo_usd' && (
                 <div style={{ fontSize: 32, fontWeight: 900, color: '#22c55e' }}>+{formatUSD(resultado.valor)}</div>
               )}
               {resultado.valor > 0 && resultado.tipo === 'saldo_bs' && (
