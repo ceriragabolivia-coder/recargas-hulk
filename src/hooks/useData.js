@@ -66,10 +66,16 @@ export function useProductos(juegoId) {
       .from('productos')
       .select('*, descuento_revendedor')
       .eq('juego_id', juegoId)
-      .eq('activo', true)
       .order('orden')
     if (data) setProductos(data)
     setLoading(false)
+  }
+
+  async function toggleProducto(id, currentActivo) {
+    const nuevoEstado = !currentActivo
+    const { error } = await supabase.from('productos').update({ activo: nuevoEstado }).eq('id', id)
+    if (!error) setProductos(prev => prev.map(p => p.id === id ? { ...p, activo: nuevoEstado } : p))
+    return { error }
   }
 
   async function createProducto(data) {
@@ -108,7 +114,7 @@ export function useProductos(juegoId) {
 
   useEffect(() => { fetchProductos() }, [juegoId])
 
-  return { productos, loading, createProducto, updateProducto, deleteProducto, reorderProductos, refetch: fetchProductos }
+  return { productos, loading, createProducto, updateProducto, deleteProducto, toggleProducto, reorderProductos, refetch: fetchProductos }
 }
 
 // ========================

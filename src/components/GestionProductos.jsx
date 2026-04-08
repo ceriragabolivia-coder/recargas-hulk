@@ -10,7 +10,7 @@ export default function GestionProductos() {
   const { config, loading: loadingConfig } = useConfiguracion()
   const [selectedJuego, setSelectedJuego] = useState(null)
   const [searchJuego, setSearchJuego] = useState('')
-  const { productos, loading: loadingProductos, createProducto, updateProducto, deleteProducto, reorderProductos } = useProductos(selectedJuego?.id)
+  const { productos, loading: loadingProductos, createProducto, updateProducto, deleteProducto, toggleProducto, reorderProductos } = useProductos(selectedJuego?.id)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isGameModalOpen, setIsGameModalOpen] = useState(false)
@@ -499,6 +499,7 @@ export default function GestionProductos() {
                         <th>Precio (Bs)</th>
                         <th>Ganancia Neta</th>
                         <th>Desc. Revend.</th>
+                        <th style={{ width: 80 }}>Estado</th>
                         <th style={{ width: 80 }}>Acciones</th>
                       </tr>
                     </thead>
@@ -506,6 +507,7 @@ export default function GestionProductos() {
                       {productos.map((prod, idx) => {
                         const precio = calcularPrecioVenta(prod, selectedJuego, config)
                         const isDragging = draggedIndex === idx
+                        const isDisabled = prod.activo === false
                         return (
                           <tr 
                             key={prod.id}
@@ -519,9 +521,10 @@ export default function GestionProductos() {
                             }}
                             style={{ 
                                cursor: 'move',
-                               backgroundColor: isDragging ? 'rgba(0, 210, 255, 0.05)' : 'transparent',
-                               opacity: isDragging ? 0.5 : 1,
-                               transition: 'background-color 0.2s'
+                               backgroundColor: isDragging ? 'rgba(0, 210, 255, 0.05)' : isDisabled ? 'rgba(255,255,255,0.01)' : 'transparent',
+                               opacity: isDisabled ? 0.45 : isDragging ? 0.5 : 1,
+                               transition: 'all 0.2s',
+                               filter: isDisabled ? 'grayscale(0.4)' : 'none'
                             }}
                           >
                             <td>
@@ -574,20 +577,66 @@ export default function GestionProductos() {
                                   style={{ display: 'none' }}
                                   onChange={(e) => handleUploadProductIcon(e, prod.id)}
                                 />
-                                <span className="font-bold">{prod.nombre}</span>
+                                <span className="font-bold" style={{ color: isDisabled ? 'var(--text-muted)' : 'var(--text-primary)' }}>{prod.nombre}</span>
                               </div>
                             </td>
                             <td>{formatUSD(prod.costo_base)}</td>
                             <td><span className="badge badge-info">{prod.margen_ganancia * 100}%</span></td>
-                            <td style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>{formatUSD(precio.venta_usd)}</td>
-                            <td style={{ color: 'var(--accent-success)', fontWeight: 600 }}>{formatBs(precio.venta_bs)}</td>
-                            <td style={{ color: 'var(--accent-warning)', fontWeight: 600 }}>{formatUSD(precio.ganancia_usd)}</td>
+                            <td style={{ color: isDisabled ? 'var(--text-muted)' : 'var(--accent-primary)', fontWeight: 600 }}>{formatUSD(precio.venta_usd)}</td>
+                            <td style={{ color: isDisabled ? 'var(--text-muted)' : 'var(--accent-success)', fontWeight: 600 }}>{formatBs(precio.venta_bs)}</td>
+                            <td style={{ color: isDisabled ? 'var(--text-muted)' : 'var(--accent-warning)', fontWeight: 600 }}>{formatUSD(precio.ganancia_usd)}</td>
                             <td>
                               {prod.descuento_revendedor ? (
                                 <span className="badge badge-success" style={{ fontSize: '11px' }}>{prod.descuento_revendedor}%</span>
                               ) : (
                                 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Global</span>
                               )}
+                            </td>
+                            {/* Botón Toggle Habilitar/Deshabilitar */}
+                            <td>
+                              <button
+                                onClick={() => toggleProducto(prod.id, prod.activo !== false)}
+                                title={isDisabled ? 'Habilitar paquete' : 'Deshabilitar paquete'}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '5px',
+                                  padding: '4px 10px',
+                                  borderRadius: '20px',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  fontWeight: 700,
+                                  fontSize: '11px',
+                                  letterSpacing: '0.3px',
+                                  transition: 'all 0.2s ease',
+                                  backgroundColor: isDisabled
+                                    ? 'rgba(255,255,255,0.07)'
+                                    : 'rgba(34, 197, 94, 0.15)',
+                                  color: isDisabled
+                                    ? 'var(--text-muted)'
+                                    : '#22c55e',
+                                  boxShadow: isDisabled
+                                    ? 'none'
+                                    : '0 0 8px rgba(34, 197, 94, 0.25)'
+                                }}
+                                onMouseEnter={e => {
+                                  e.currentTarget.style.transform = 'scale(1.05)'
+                                  e.currentTarget.style.backgroundColor = isDisabled
+                                    ? 'rgba(34, 197, 94, 0.12)'
+                                    : 'rgba(239, 68, 68, 0.15)'
+                                  e.currentTarget.style.color = isDisabled ? '#22c55e' : '#ef4444'
+                                }}
+                                onMouseLeave={e => {
+                                  e.currentTarget.style.transform = 'scale(1)'
+                                  e.currentTarget.style.backgroundColor = isDisabled
+                                    ? 'rgba(255,255,255,0.07)'
+                                    : 'rgba(34, 197, 94, 0.15)'
+                                  e.currentTarget.style.color = isDisabled ? 'var(--text-muted)' : '#22c55e'
+                                }}
+                              >
+                                <span style={{ fontSize: '8px' }}>{isDisabled ? '⬜' : '🟢'}</span>
+                                {isDisabled ? 'OFF' : 'ON'}
+                              </button>
                             </td>
                             <td>
                               <div className="flex gap-8">
