@@ -433,14 +433,6 @@ function QuickManualSaleWidget({ onSaleComplete, config }) {
 }
 
 export default function Dashboard() {
-  console.log('Dashboard render', {
-    perfil,
-    isAdmin,
-    loadingVentas,
-    loadingConfig,
-    loadingCharts,
-    dataLineLength: dataLine.length
-  });
   const { resumen, loading: loadingVentas, fetchResumenPeriodo, fetchHistorial, limpiarComprobantes, refetch: refetchVentas } = useVentas()
   const { config, loading: loadingConfig, updateConfig } = useConfiguracion()
   const { perfil } = useAuth()
