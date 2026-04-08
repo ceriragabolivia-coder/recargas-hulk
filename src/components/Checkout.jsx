@@ -152,7 +152,9 @@ export default function Checkout({ onFinish }) {
   const walletAmountToUse = useWalletPartial ? Math.min(walletSaldo, discountedTotalUSD) : 0
   const remainingUSD = discountedTotalUSD - walletAmountToUse
   const tasaDolar = Number(config?.tasa_dolar) || 1
-  const remainingBs = Math.round(remainingUSD * tasaDolar)
+  const remainingBs = (useWalletPartial && walletAmountToUse > 0)
+    ? Math.max(0, discountedTotalBs - Math.round(walletAmountToUse * tasaDolar))
+    : discountedTotalBs
 
   // Calcular montos con pago Bs
   const walletBsAmountToUse = useWalletBs ? Math.min(walletSaldoBs, discountedTotalBs) : 0
