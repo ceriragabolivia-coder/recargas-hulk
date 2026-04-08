@@ -378,9 +378,9 @@ export default function GestionProductos() {
         <p className="page-subtitle">Añade o elimina los paquetes de cada juego y establece su rentabilidad.</p>
       </div>
 
-      <div className="content-grid" style={{ flex: 1, overflow: 'hidden' }}>
+      <div className="content-grid" style={{ flex: 1, display: 'flex', gap: '24px', overflow: 'hidden' }}>
         {/* COLUMNA DE JUEGOS */}
-        <div className="card juegos-column" style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className="card juegos-column" style={{ width: '280px', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
           <div className="section-header" style={{ marginBottom: '16px' }}>
             <h2 className="card-title" style={{ margin: 0 }}>Juegos</h2>
             <button className="btn btn-ghost btn-sm" onClick={handleOpenGameModal} title="Añadir Juego">+</button>
@@ -416,17 +416,16 @@ export default function GestionProductos() {
         </div>
 
         {/* LISTA DE PAQUETES/PRODUCTOS */}
-    < div className = "card" style = {{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }
-}>
-  {!selectedJuego ? (
-    <div className="empty-state">
-      <div className="empty-state-icon">👈</div>
-      <div className="empty-state-text">Selecciona un juego a la izquierda</div>
-      <div className="empty-state-sub">Podrás ver sus paquetes y agregar nuevos.</div>
-    </div>
-  ) : (
-    <>
-      <div className="card-header" style={{ alignItems: 'flex-start' }}>
+        <div className="card product-list-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1 }}>
+          {!selectedJuego ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">👈</div>
+              <div className="empty-state-text">Selecciona un juego a la izquierda</div>
+              <div className="empty-state-sub">Podrás ver sus paquetes y agregar nuevos.</div>
+            </div>
+          ) : (
+            <>
+              <div className="card-header" style={{ alignItems: 'flex-start' }}>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <div
             title="Cambiar logo del juego"
