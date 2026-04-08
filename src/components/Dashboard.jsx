@@ -433,6 +433,14 @@ function QuickManualSaleWidget({ onSaleComplete, config }) {
 }
 
 export default function Dashboard() {
+  console.log('Dashboard render', {
+    perfil,
+    isAdmin,
+    loadingVentas,
+    loadingConfig,
+    loadingCharts,
+    dataLineLength: dataLine.length
+  });
   const { resumen, loading: loadingVentas, fetchResumenPeriodo, fetchHistorial, limpiarComprobantes, refetch: refetchVentas } = useVentas()
   const { config, loading: loadingConfig, updateConfig } = useConfiguracion()
   const { perfil } = useAuth()
@@ -511,7 +519,8 @@ export default function Dashboard() {
   }, [rangoFechas, refreshKey])
 
   if (loadingVentas || loadingConfig || (loadingCharts && dataLine.length === 0)) {
-    return (
+    const showDebug = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug');
+  return (
       <div className="loading-page">
         <div className="spinner"></div><div>Cargando dashboard...</div>
       </div>
@@ -521,6 +530,18 @@ export default function Dashboard() {
   return (
     <div>
       <div className="page-header mb-24" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {showDebug && (
+          <pre style={{ background: '#111', color: '#0f0', padding: '10px', borderRadius: '8px', maxHeight: '200px', overflow: 'auto' }}>
+            {JSON.stringify({
+              perfil,
+              isAdmin,
+              loadingVentas,
+              loadingConfig,
+              loadingCharts,
+              dataLineLength: dataLine.length
+            }, null, 2)}
+          </pre>
+        )}
         <div>
           <h1 className="page-title">Dashboard</h1>
           <p className="page-subtitle">Resumen general de tu centro de recargas</p>
