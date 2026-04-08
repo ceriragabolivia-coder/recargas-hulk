@@ -518,15 +518,10 @@ export default function Dashboard() {
     loadCharts()
   }, [rangoFechas, refreshKey])
 
-  if (loadingVentas || loadingConfig || (loadingCharts && dataLine.length === 0)) {
+  
     const showDebug = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug');
-  return (
-      <div className="loading-page">
-        <div className="spinner"></div><div>Cargando dashboard...</div>
-      </div>
-    )
-  }
 
+  // Render main dashboard UI; show loading overlay while charts are loading
   return (
     <div>
       <div className="page-header mb-24" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
