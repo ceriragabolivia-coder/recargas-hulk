@@ -14,8 +14,7 @@ const Dashboard = lazy(() => import('./components/Dashboard'))
 const RegistroVentas = lazy(() => import('./components/RegistroVentas'))
 const GestionProductos = lazy(() => import('./components/GestionProductos'))
 const Reportes = lazy(() => import('./components/Reportes'))
-import Catalogo from './components/Catalogo'
-// const Catalogo = lazy(() => import('./components/Catalogo'))
+const Catalogo = lazy(() => import('./components/Catalogo'))
 const Perfil = lazy(() => import('./components/Perfil'))
 const Configuracion = lazy(() => import('./components/Configuracion'))
 const Checkout = lazy(() => import('./components/Checkout'))
@@ -234,7 +233,7 @@ export default function App() {
 
     // Seguridad: Si el usuario NO es admin, solo puede ver catálogo, pedidos, perfil y checkout
     if (user && !isAdmin && !['catalogo', 'perfil', 'pedidos', 'checkout', 'billetera', 'ruleta'].includes(currentPage)) {
-      return <Catalogo />;
+      return <Suspense fallback={fallback}><Catalogo /></Suspense>;
     }
 
     let Content;
@@ -259,7 +258,11 @@ export default function App() {
       default: Content = <Dashboard />; break;
     }
 
-    return Content;
+    return (
+      <Suspense fallback={fallback}>
+        {Content}
+      </Suspense>
+    );
   }
 
   return (
