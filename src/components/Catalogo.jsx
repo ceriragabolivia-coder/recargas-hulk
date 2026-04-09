@@ -32,7 +32,7 @@ export default function Catalogo() {
     const map = {}
     productos.forEach(p => {
       const j = p.juegos
-      if (!j) return
+      if (!j || j.activo === false) return
       if (!map[j.id]) {
         map[j.id] = { ...j, productos: [] }
       }

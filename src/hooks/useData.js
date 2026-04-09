@@ -497,8 +497,9 @@ export function useTodosLosProductos() {
   async function fetchProductos() {
     const { data } = await supabase
       .from('productos')
-      .select('*, juegos(*, categorias(icono))')
+      .select('*, juegos!inner(*, categorias(icono))')
       .eq('activo', true)
+      .eq('juegos.activo', true)
       .order('nombre')
     if (data) setProductos(data)
     setLoading(false)
