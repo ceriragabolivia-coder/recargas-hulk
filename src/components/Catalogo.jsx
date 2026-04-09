@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useConfiguracion, useTodosLosProductos, useCart, useAuth } from '../hooks/useData'
-import { calcularPrecioVenta, formatBs, formatUSD, playCashRegisterSound } from '../utils/helpers'
+import { calcularPrecioVenta, formatBs, formatUSD } from '../utils/helpers'
 
 export default function Catalogo() {
   const { productos, loading } = useTodosLosProductos()
@@ -8,12 +8,13 @@ export default function Catalogo() {
   const { addToCart } = useCart()
   const { perfil, isCliente } = useAuth()
   const [selectedJuego, setSelectedJuego] = useState(null)
-  const [addedItem, setAddedItem] = useState(null) // Para animación simple
+  const [addedItem, setAddedItem] = useState(null) 
 
   const [localRechargeData, setLocalRechargeData] = useState({
     player_id: '',
     account_email: '',
-    account_password: ''
+    account_password: '',
+    account_user: ''
   })
   
   const [showGuideModal, setShowGuideModal] = useState(false)
@@ -187,7 +188,7 @@ export default function Catalogo() {
           </div>
 
           <div className="card" style={{ padding: '20px' }}>
-            <h3 style={{ fontSize: '14px', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '16px', letterSpacing: '1px', fontWeight: 700 }}>Características</h3>
+            <h3 style={{ fontSize: '14px', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '16px', letterSpacing: '1px', fontWeight: 700 }}> Características</h3>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', borderBottom: '1px solid var(--border-color)' }}>
@@ -228,7 +229,7 @@ export default function Catalogo() {
               onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.15)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
               onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.1)'; e.currentTarget.style.transform = 'translateY(0)' }}
             >
-              <div style={{ fontSize: '24px', animation: 'wiggle 2s infinite' }}>🔔</div>
+              <div style={{ fontSize: '24px' }}>🔔</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.3 }}>{config.tutorial_banner_texto}</div>
                 <div style={{ fontSize: '11px', color: 'var(--accent-primary)', marginTop: '4px' }}>Ver Tutorial →</div>
@@ -461,8 +462,8 @@ export default function Catalogo() {
         </div>
       </div>
     </div>
-  )
-}
+    )
+  }
 
   return (
     <div className="catalogo-container">
@@ -473,7 +474,7 @@ export default function Catalogo() {
 
       <div className="catalogo-grid">
         {juegosData.map(juego => {
-          const catIcon = juego.categorias?.icono || '🎮'
+          const catIcon = (juego.categorias && juego.categorias.icono) ? juego.categorias.icono : '🎮'
           return (
             <div 
               key={juego.id} 

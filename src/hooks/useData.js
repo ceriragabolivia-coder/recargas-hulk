@@ -495,14 +495,24 @@ export function useTodosLosProductos() {
   const [loading, setLoading] = useState(true)
 
   async function fetchProductos() {
-    const { data } = await supabase
-      .from('productos')
-      .select('*, juegos!inner(*, categorias(icono))')
-      .eq('activo', true)
-      .eq('juegos.activo', true)
-      .order('nombre')
-    if (data) setProductos(data)
-    setLoading(false)
+    try {
+      const { data, error } = await supabase
+        .from('productos')
+        .select('*, juegos!inner(*, categorias(icono))')
+        .eq('activo', true)
+        .eq('juegos.activo', true)
+        .order('nombre')
+      
+      if (error) {
+        console.error('Error fetching products:', error)
+      } else if (data) {
+        setProductos(data)
+      }
+    } catch (err) {
+      console.error('Crash fetching products:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { fetchProductos() }, [])
