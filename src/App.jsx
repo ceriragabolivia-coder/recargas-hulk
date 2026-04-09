@@ -1,28 +1,30 @@
-import React, { useState } from 'react'
+import React, { useState, Suspense, lazy } from 'react'
 import Layout from './components/Layout'
 import Login from './components/Login'
 import Register from './components/Register'
 import { useAuth, useConfiguracion } from './hooks/useData'
 
-// Componentes temporales (los implementaremos en el próximo paso)
-import Dashboard from './components/Dashboard'
-import RegistroVentas from './components/RegistroVentas'
-import GestionProductos from './components/GestionProductos'
-import Reportes from './components/Reportes'
-import Catalogo from './components/Catalogo'
-import Perfil from './components/Perfil'
-import Configuracion from './components/Configuracion'
+// Componentes estáticos (carga inmediata)
 import SupportChat from './components/SupportChat'
 import Cart from './components/Cart'
-import Checkout from './components/Checkout'
-import Pedidos from './components/Pedidos'
-import Usuarios from './components/Usuarios'
-import SalaDeChat from './components/SalaDeChat'
-import Billetera from './components/Billetera'
-import Revendedores from './components/Revendedores'
-import Ruleta from './components/Ruleta'
-import GestionRuleta from './components/GestionRuleta'
 import { Analytics } from "@vercel/analytics/react"
+
+// Componentes cargados dinámicamente (Lazy Load) para optimizar la velocidad inicial
+const Dashboard = lazy(() => import('./components/Dashboard'))
+const RegistroVentas = lazy(() => import('./components/RegistroVentas'))
+const GestionProductos = lazy(() => import('./components/GestionProductos'))
+const Reportes = lazy(() => import('./components/Reportes'))
+const Catalogo = lazy(() => import('./components/Catalogo'))
+const Perfil = lazy(() => import('./components/Perfil'))
+const Configuracion = lazy(() => import('./components/Configuracion'))
+const Checkout = lazy(() => import('./components/Checkout'))
+const Pedidos = lazy(() => import('./components/Pedidos'))
+const Usuarios = lazy(() => import('./components/Usuarios'))
+const SalaDeChat = lazy(() => import('./components/SalaDeChat'))
+const Billetera = lazy(() => import('./components/Billetera'))
+const Revendedores = lazy(() => import('./components/Revendedores'))
+const Ruleta = lazy(() => import('./components/Ruleta'))
+const GestionRuleta = lazy(() => import('./components/GestionRuleta'))
 
 const Placeholder = ({ title }) => (
   <div className="page-content">
@@ -222,31 +224,45 @@ export default function App() {
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
 
   const renderPage = () => {
+    const fallback = (
+      <div className="loading-screen" style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+        <div className="spinner"></div>
+        <p style={{ marginTop: '16px', color: 'var(--text-muted)' }}>Cargando sección...</p>
+      </div>
+    );
+
     // Seguridad: Si el usuario NO es admin, solo puede ver catálogo, pedidos, perfil y checkout
     if (user && !isAdmin && !['catalogo', 'perfil', 'pedidos', 'checkout', 'billetera', 'ruleta'].includes(currentPage)) {
-      return <Catalogo />
+      return <Suspense fallback={fallback}><Catalogo /></Suspense>;
     }
 
+    let Content;
     switch (currentPage) {
-      case 'dashboard': return <Dashboard />
-      case 'catalogo': return <Catalogo />
-      case 'ventas': return <RegistroVentas />
-      case 'productos': return <GestionProductos />
-      case 'config': return <Configuracion />
-      case 'usuarios': return <Usuarios onNavigate={handleNavigate} />
+      case 'dashboard': Content = <Dashboard />; break;
+      case 'catalogo': Content = <Catalogo />; break;
+      case 'ventas': Content = <RegistroVentas />; break;
+      case 'productos': Content = <GestionProductos />; break;
+      case 'config': Content = <Configuracion />; break;
+      case 'usuarios': Content = <Usuarios onNavigate={handleNavigate} />; break;
       case 'chats':
-        const chatKey = currentParams?.targetClientId ? `${currentParams.targetClientId}_${currentParams.prefill}` : 'default'
-        return <SalaDeChat key={chatKey} perfil={perfil} params={currentParams} />
-      case 'pedidos': return <Pedidos params={currentParams} onNavigate={handleNavigate} />
-      case 'reportes': return <Reportes />
-      case 'revendedores': return <Revendedores onNavigate={handleNavigate} />
-      case 'gestion_ruleta': return <GestionRuleta />
-      case 'ruleta': return <Ruleta />
-      case 'perfil': return <Perfil />
-      case 'checkout': return <Checkout onFinish={() => setCurrentPage('registro')} />
-      case 'billetera': return <Billetera onNavigate={handleNavigate} />
-      default: return <Dashboard />
+        const chatKey = currentParams?.targetClientId ? `${currentParams.targetClientId}_${currentParams.prefill}` : 'default';
+        Content = <SalaDeChat key={chatKey} perfil={perfil} params={currentParams} />; break;
+      case 'pedidos': Content = <Pedidos params={currentParams} onNavigate={handleNavigate} />; break;
+      case 'reportes': Content = <Reportes />; break;
+      case 'revendedores': Content = <Revendedores onNavigate={handleNavigate} />; break;
+      case 'gestion_ruleta': Content = <GestionRuleta />; break;
+      case 'ruleta': Content = <Ruleta />; break;
+      case 'perfil': Content = <Perfil />; break;
+      case 'checkout': Content = <Checkout onFinish={() => setCurrentPage('registro')} />; break;
+      case 'billetera': Content = <Billetera onNavigate={handleNavigate} />; break;
+      default: Content = <Dashboard />; break;
     }
+
+    return (
+      <Suspense fallback={fallback}>
+        {Content}
+      </Suspense>
+    );
   }
 
   return (
