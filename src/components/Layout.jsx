@@ -16,7 +16,8 @@ const NAV_ITEMS = [
   { key: 'chats', icon: '💬', label: 'Sala de Chat', path: '/Soporte' },
   { key: 'config', icon: '⚙️', label: 'Configuración', path: '/Configuracion' },
   { key: 'reportes', icon: '📈', label: 'Reportes', path: '/Reportes' },
-  { key: 'gestion_ruleta', icon: '🎡', label: 'Ruleta de Premios', path: '/Gestion-Ruleta' },
+  { key: 'gestion_ruleta', icon: '🎡', label: 'Gestión de Ruleta', path: '/Gestion-Ruleta' },
+  { key: 'ruleta', icon: '🎡', label: 'Ruleta de Premios', path: '/Ruleta' },
   { key: 'perfil', icon: '👤', label: 'Mi Perfil', path: '/Mi-Perfil' },
 ]
 
@@ -810,7 +811,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
               <div className="nav-section-label">Catálogo</div>
               {NAV_ITEMS.filter(item => ['catalogo', 'pedidos'].includes(item.key)).map(renderNavItem)}
               <div className="nav-section-label">Extras</div>
-              {[{ key: 'ruleta', icon: '🎡', label: 'Ruleta de Premios' }].map(renderNavItem)}
+              {NAV_ITEMS.filter(item => ['ruleta'].includes(item.key)).map(renderNavItem)}
               <div className="nav-section-label">Cuenta</div>
               {NAV_ITEMS.filter(i => ['billetera', 'perfil'].includes(i.key)).map(renderNavItem)}
             </>
