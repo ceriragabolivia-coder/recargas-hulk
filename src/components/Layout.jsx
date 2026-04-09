@@ -1,22 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react' // Actualizado para limpiar caché
 import { useAuth, useConfiguracion, useWallet, useMensajesSistema, useNotificacionesPush } from '../hooks/useData'
+import { NavLink, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { formatUSD, formatBs } from '../utils/helpers'
 
 const NAV_ITEMS = [
-  { key: 'dashboard', icon: '📊', label: 'Dashboard' },
-  { key: 'billetera', icon: '💼', label: 'Billetera' },
-  { key: 'catalogo', icon: '💰', label: 'Lista de Precios' },
-  { key: 'ventas', icon: '🛒', label: 'Registro de Ventas' },
-  { key: 'productos', icon: '📦', label: 'Productos' },
-  { key: 'pedidos', icon: '📋', label: 'Pedidos' },
-  { key: 'usuarios', icon: '👥', label: 'Usuarios' },
-  { key: 'revendedores', icon: '⭐', label: 'Revendedores' },
-  { key: 'chats', icon: '💬', label: 'Sala de Chat' },
-  { key: 'config', icon: '⚙️', label: 'Configuración' },
-  { key: 'reportes', icon: '📈', label: 'Reportes' },
-  { key: 'gestion_ruleta', icon: '🎡', label: 'Ruleta de Premios' },
-  { key: 'perfil', icon: '👤', label: 'Mi Perfil' },
+  { key: 'dashboard', icon: '📊', label: 'Dashboard', path: '/Dashboard' },
+  { key: 'billetera', icon: '💼', label: 'Billetera', path: '/Billetera' },
+  { key: 'catalogo', icon: '💰', label: 'Lista de Precios', path: '/Lista-De-Precios' },
+  { key: 'ventas', icon: '🛒', label: 'Registro de Ventas', path: '/Registro-Ventas' },
+  { key: 'productos', icon: '📦', label: 'Productos', path: '/Gestion-Productos' },
+  { key: 'pedidos', icon: '📋', label: 'Pedidos', path: '/Gestion-Pedidos' }, // Se ajusta dinámicamente en render si es cliente
+  { key: 'usuarios', icon: '👥', label: 'Usuarios', path: '/Usuarios' },
+  { key: 'revendedores', icon: '⭐', label: 'Revendedores', path: '/Revendedores' },
+  { key: 'chats', icon: '💬', label: 'Sala de Chat', path: '/Soporte' },
+  { key: 'config', icon: '⚙️', label: 'Configuración', path: '/Configuracion' },
+  { key: 'reportes', icon: '📈', label: 'Reportes', path: '/Reportes' },
+  { key: 'gestion_ruleta', icon: '🎡', label: 'Ruleta de Premios', path: '/Gestion-Ruleta' },
+  { key: 'perfil', icon: '👤', label: 'Mi Perfil', path: '/Mi-Perfil' },
 ]
 
 const DEFAULT_TASKBAR_ITEMS = [
@@ -744,13 +744,22 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
 
   const renderNavItem = (item) => {
     let label = item.label;
-    if (!isAdmin && item.key === 'pedidos') label = 'Mis Pedidos';
-    const className = `nav-item ${currentPage === item.key ? 'active' : ''}`
+    let path = item.path;
+    if (!isAdmin && item.key === 'pedidos') {
+      label = 'Mis Pedidos';
+      path = '/Mis-Pedidos';
+    }
+    
     return (
-      <div key={item.key} className={className} onClick={() => handleMobileNavigate(item.key)}>
+      <NavLink 
+        key={item.key} 
+        to={path} 
+        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+        onClick={() => setSidebarOpen(false)}
+      >
         <span className="nav-item-icon">{item.icon}</span>
         <span>{label}</span>
-      </div>
+      </NavLink>
     )
   }
 

@@ -1,4 +1,5 @@
 import React, { useState, Suspense, lazy } from 'react'
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import Layout from './components/Layout'
 import Login from './components/Login'
 import Register from './components/Register'
@@ -137,17 +138,41 @@ const SuspendedView = ({ onLogout, onRefresh, type = 'suspendido' }) => (
 )
 
 export default function App() {
+  const navigate = useNavigate()
+  const location = useLocation()
   const { user, perfil, loading, logout, refetch } = useAuth()
   const { config } = useConfiguracion()
-  // Usamos localStorage para que no se pierda la sección al cambiar de pestaña
-  const [currentPage, setCurrentPage] = useState(localStorage.getItem('lastPage') || 'catalogo')
+  
   const [currentParams, setCurrentParams] = useState(null)
   const [isRegistering, setIsRegistering] = useState(false)
   const [isSupportChatOpen, setIsSupportChatOpen] = useState(false)
 
+  // Sincronizar currentPage con la URL (opcional, pero ayuda a la transición)
+  const currentPage = location.pathname.split('/')[1]?.toLowerCase() || 'catalogo'
+
   const handleNavigate = (page, params = null) => {
-    setCurrentPage(page)
+    // Si la página viene en formato de ruta interna o URL semántica
+    const pathMap = {
+      'dashboard': '/Dashboard',
+      'catalogo': '/Lista-De-Precios',
+      'ventas': '/Registro-Ventas',
+      'productos': '/Gestion-Productos',
+      'pedidos': perfil?.rol?.toLowerCase() === 'admin' ? '/Gestion-Pedidos' : '/Mis-Pedidos',
+      'usuarios': '/Usuarios',
+      'chats': '/Soporte',
+      'config': '/Configuracion',
+      'reportes': '/Reportes',
+      'revendedores': '/Revendedores',
+      'ruleta': '/Ruleta',
+      'gestion_ruleta': '/Gestion-Ruleta',
+      'perfil': '/Mi-Perfil',
+      'billetera': '/Billetera',
+      'checkout': '/Checkout'
+    }
+
+    const targetPath = pathMap[page] || `/${page}`
     setCurrentParams(params)
+    navigate(targetPath)
   }
 
   // Aplicar favicon
@@ -178,16 +203,15 @@ export default function App() {
   // Solo redirigimos automáticamente la PRIMERA vez que cargamos el perfil
   const hasRedirectedRef = React.useRef(false)
   React.useEffect(() => {
-    if (perfil && !hasRedirectedRef.current) {
-      if (perfil.rol === 'cliente') {
-        setCurrentPage('catalogo')
-      } else if (!localStorage.getItem('lastPage')) {
-        // Solo enviamos al dashboard al admin si no tiene una página guardada
-        setCurrentPage('dashboard')
+    if (perfil && !hasRedirectedRef.current && location.pathname === '/') {
+      if (perfil.rol === 'admin') {
+        navigate('/Dashboard', { replace: true })
+      } else {
+        navigate('/Lista-De-Precios', { replace: true })
       }
       hasRedirectedRef.current = true
     }
-  }, [perfil])
+  }, [perfil, location.pathname])
 
   if (loading) {
     return (
@@ -223,7 +247,12 @@ export default function App() {
 
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
 
-  const renderPage = () => {
+  const ProtectedRoute = ({ children }) => {
+    if (!isAdmin) return <Navigate to="/Lista-De-Precios" replace />
+    return children
+  }
+
+  const PageRoutes = () => {
     const fallback = (
       <div className="loading-screen">
         <div className="spinner"></div>
@@ -231,44 +260,47 @@ export default function App() {
       </div>
     );
 
-    // Seguridad: Si el usuario NO es admin, solo puede ver catálogo, pedidos, perfil y checkout
-    if (user && !isAdmin && !['catalogo', 'perfil', 'pedidos', 'checkout', 'billetera', 'ruleta'].includes(currentPage)) {
-      return <Suspense fallback={fallback}><Catalogo /></Suspense>;
-    }
-
-    let Content;
-    switch (currentPage) {
-      case 'dashboard': Content = <Dashboard />; break;
-      case 'catalogo': Content = <Catalogo />; break;
-      case 'ventas': Content = <RegistroVentas />; break;
-      case 'productos': Content = <GestionProductos />; break;
-      case 'config': Content = <Configuracion />; break;
-      case 'usuarios': Content = <Usuarios onNavigate={handleNavigate} />; break;
-      case 'chats':
-        const chatKey = currentParams?.targetClientId ? `${currentParams.targetClientId}_${currentParams.prefill}` : 'default';
-        Content = <SalaDeChat key={chatKey} perfil={perfil} params={currentParams} />; break;
-      case 'pedidos': Content = <Pedidos params={currentParams} onNavigate={handleNavigate} />; break;
-      case 'reportes': Content = <Reportes />; break;
-      case 'revendedores': Content = <Revendedores onNavigate={handleNavigate} />; break;
-      case 'gestion_ruleta': Content = <GestionRuleta />; break;
-      case 'ruleta': Content = <Ruleta />; break;
-      case 'perfil': Content = <Perfil />; break;
-      case 'checkout': Content = <Checkout onFinish={() => setCurrentPage('registro')} />; break;
-      case 'billetera': Content = <Billetera onNavigate={handleNavigate} />; break;
-      default: Content = <Dashboard />; break;
-    }
-
     return (
       <Suspense fallback={fallback}>
-        {Content}
+        <Routes>
+          {/* Rutas Universales */}
+          <Route path="/Lista-De-Precios" element={<Catalogo />} />
+          <Route path="/Mi-Perfil" element={<Perfil />} />
+          <Route path="/Billetera" element={<Billetera onNavigate={handleNavigate} />} />
+          <Route path="/Ruleta" element={<Ruleta />} />
+          <Route path="/Checkout" element={<Checkout onFinish={() => navigate('/Registro-Ventas')} />} />
+          <Route path="/Soporte" element={
+            <SalaDeChat 
+              key={currentParams?.targetClientId ? `${currentParams.targetClientId}_${currentParams.prefill}` : 'default'} 
+              perfil={perfil} 
+              params={currentParams} 
+            />
+          } />
+          <Route path="/Mis-Pedidos" element={<Pedidos params={currentParams} onNavigate={handleNavigate} />} />
+          <Route path="/Gestion-Pedidos" element={<Pedidos params={currentParams} onNavigate={handleNavigate} />} />
+
+          {/* Rutas Administrativas */}
+          <Route path="/Dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/Registro-Ventas" element={<ProtectedRoute><RegistroVentas /></ProtectedRoute>} />
+          <Route path="/Gestion-Productos" element={<ProtectedRoute><GestionProductos /></ProtectedRoute>} />
+          <Route path="/Configuracion" element={<ProtectedRoute><Configuracion /></ProtectedRoute>} />
+          <Route path="/Usuarios" element={<ProtectedRoute><Usuarios onNavigate={handleNavigate} /></ProtectedRoute>} />
+          <Route path="/Reportes" element={<ProtectedRoute><Reportes /></ProtectedRoute>} />
+          <Route path="/Revendedores" element={<ProtectedRoute><Revendedores onNavigate={handleNavigate} /></ProtectedRoute>} />
+          <Route path="/Gestion-Ruleta" element={<ProtectedRoute><GestionRuleta /></ProtectedRoute>} />
+
+          {/* Redirección por defecto */}
+          <Route path="/" element={<Navigate to={isAdmin ? "/Dashboard" : "/Lista-De-Precios"} replace />} />
+          <Route path="*" element={<Navigate to={isAdmin ? "/Dashboard" : "/Lista-De-Precios"} replace />} />
+        </Routes>
       </Suspense>
-    );
+    )
   }
 
   return (
     <Layout currentPage={currentPage} onNavigate={handleNavigate} onOpenChat={!isAdmin ? () => setIsSupportChatOpen(true) : undefined}>
-      {renderPage()}
-      <Cart onGoToCheckout={() => handleNavigate('checkout')} />
+      <PageRoutes />
+      <Cart onGoToCheckout={() => navigate('/Checkout')} />
       {!isAdmin && <SupportChat perfil={perfil} forceOpen={isSupportChatOpen} onClose={() => setIsSupportChatOpen(false)} />}
     </Layout>
   )
