@@ -225,9 +225,9 @@ export default function App() {
 
   const renderPage = () => {
     const fallback = (
-      <div className="loading-screen" style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+      <div className="loading-screen">
         <div className="spinner"></div>
-        <p style={{ marginTop: '16px', color: 'var(--text-muted)' }}>Cargando sección...</p>
+        <p>Cargando sección...</p>
       </div>
     );
 

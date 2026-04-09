@@ -31,27 +31,30 @@ export default function Catalogo() {
   const juegosData = useMemo(() => {
     const map = {}
     productos.forEach(p => {
-      const j = p.juegos
-      if (!j || j.activo === false) return
-      if (!map[j.id]) {
-        map[j.id] = { ...j, productos: [] }
+      // Robustez: Manejar si 'juegos' es un objeto o un array de un solo elemento
+      const jData = Array.isArray(p.juegos) ? p.juegos[0] : p.juegos
+      if (!jData || jData.activo === false) return
+
+      if (!map[jData.id]) {
+        map[jData.id] = { ...jData, productos: [] }
       }
-      map[j.id].productos.push(p)
+      map[jData.id].productos.push(p)
     })
     
     const arr = Object.values(map)
-    arr.sort((a, b) => a.nombre.localeCompare(b.nombre))
-    // sort products too by order, then by base cost
+    arr.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''))
+    
     arr.forEach(j => {
-      j.productos.sort((a, b) => a.orden - b.orden || a.costo_base - b.costo_base)
+      j.productos.sort((a, b) => (a.orden || 0) - (b.orden || 0) || (a.costo_base || 0) - (b.costo_base || 0))
     })
     return arr
   }, [productos])
 
   if (loading || loadingConfig) {
     return (
-      <div className="loading-page">
-        <div className="spinner"></div><div>Cargando Catálogo...</div>
+      <div className="loading-screen">
+        <div className="spinner"></div>
+        <p>Cargando Catálogo de Juegos...</p>
       </div>
     )
   }
@@ -98,6 +101,8 @@ export default function Catalogo() {
                 <span style={{ color: 'var(--text-muted)', textAlign: 'right' }}>
                   {pendingItem.selectedJuego.metodo_recarga === 'cuenta_completa' 
                     ? <>Correo: {pendingItem.localRechargeData.account_email}<br/>Clave: {pendingItem.localRechargeData.account_password}</>
+                    : pendingItem.selectedJuego.metodo_recarga === 'usuario_clave'
+                    ? <>Usuario: {pendingItem.localRechargeData.account_user}<br/>Clave: {pendingItem.localRechargeData.account_password}</>
                     : `ID/UID: ${pendingItem.localRechargeData.player_id}`}
                 </span>
               </div>
