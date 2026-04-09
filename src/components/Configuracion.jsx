@@ -32,11 +32,14 @@ export default function Configuracion() {
   const fileInputRef = useRef(null)
   const logoFileInputRef = useRef(null)
 
-  const [sidebarTitle, setSidebarTitle] = useState('')
-  const [sidebarSubtitle, setSidebarSubtitle] = useState('')
-  const [cashbackPorcentaje, setCashbackPorcentaje] = useState('')
-  const [cashbackActivo, setCashbackActivo] = useState(false)
   const [tiempoLimitePago, setTiempoLimitePago] = useState('15')
+  
+  // Estados para Banners dinámicos
+  const [promoBannerTexto, setPromoBannerTexto] = useState('')
+  const [promoBannerLink, setPromoBannerLink] = useState('')
+  const [promoBannerIconoUrl, setPromoBannerIconoUrl] = useState('')
+  const [tutorialBannerTexto, setTutorialBannerTexto] = useState('')
+  const [tutorialBannerLink, setTutorialBannerLink] = useState('')
   
   // Ref para evitar que las actualizaciones de Realtime sobrescriban lo que el admin está escribiendo
   const initialized = useRef(false)
@@ -50,6 +53,14 @@ export default function Configuracion() {
       setCashbackPorcentaje(config.cashback_porcentaje || '0')
       setCashbackActivo(config.cashback_activo === 'true')
       setTiempoLimitePago(config.tiempo_limite_pago || '15')
+      
+      // Banners
+      setPromoBannerTexto(config.promo_banner_texto || '')
+      setPromoBannerLink(config.promo_banner_link || '')
+      setPromoBannerIconoUrl(config.promo_banner_icono_url || '')
+      setTutorialBannerTexto(config.tutorial_banner_texto || '')
+      setTutorialBannerLink(config.tutorial_banner_link || '')
+
       initialized.current = true
     }
   }, [config, configLoading])
@@ -231,6 +242,21 @@ export default function Configuracion() {
       setAlertModal({ type: 'success', message: 'Textos del panel actualizados correctamente' })
     } catch (err) {
       setAlertModal({ type: 'error', message: 'Error al actualizar los textos' })
+    }
+  }
+
+  const handleSaveBanners = async () => {
+    try {
+      await updateConfig('promo_banner_texto', promoBannerTexto, true)
+      await updateConfig('promo_banner_link', promoBannerLink, true)
+      await updateConfig('promo_banner_icono_url', promoBannerIconoUrl, true)
+      await updateConfig('tutorial_banner_texto', tutorialBannerTexto, true)
+      await updateConfig('tutorial_banner_link', tutorialBannerLink, true)
+      refetchConfig()
+      setAlertModal({ type: 'success', message: 'Banners del catálogo actualizados correctamente' })
+    } catch (err) {
+      console.error('Error guardando banners:', err)
+      setAlertModal({ type: 'error', message: 'Error al guardar los campos de banners.' })
     }
   }
 
@@ -754,22 +780,22 @@ export default function Configuracion() {
                             type="text" 
                             className="form-input" 
                             placeholder="Texto. Ej: Gira y gana en nuestra ruleta..."
-                            defaultValue={config?.promo_banner_texto || ''}
-                            onBlur={(e) => updateConfig('promo_banner_texto', e.target.value, true)}
+                            value={promoBannerTexto}
+                            onChange={(e) => setPromoBannerTexto(e.target.value)}
                           />
                           <input 
                             type="text" 
                             className="form-input" 
                             placeholder="URL Link de destino. Ej: /ruleta"
-                            defaultValue={config?.promo_banner_link || ''}
-                            onBlur={(e) => updateConfig('promo_banner_link', e.target.value, true)}
+                            value={promoBannerLink}
+                            onChange={(e) => setPromoBannerLink(e.target.value)}
                           />
                           <input 
                             type="text" 
                             className="form-input" 
                             placeholder="URL de Ícono/Imagen promocional. Ej: https://..."
-                            defaultValue={config?.promo_banner_icono_url || ''}
-                            onBlur={(e) => updateConfig('promo_banner_icono_url', e.target.value, true)}
+                            value={promoBannerIconoUrl}
+                            onChange={(e) => setPromoBannerIconoUrl(e.target.value)}
                           />
                         </div>
                       </div>
@@ -781,18 +807,26 @@ export default function Configuracion() {
                             type="text" 
                             className="form-input" 
                             placeholder="Texto. Ej: ¿Aún no sabes recargar vía Pago Móvil?"
-                            defaultValue={config?.tutorial_banner_texto || ''}
-                            onBlur={(e) => updateConfig('tutorial_banner_texto', e.target.value, true)}
+                            value={tutorialBannerTexto}
+                            onChange={(e) => setTutorialBannerTexto(e.target.value)}
                           />
                           <input 
                             type="text" 
                             className="form-input" 
                             placeholder="URL del tutorial / Link de destino. Ej: https://youtube.com/..."
-                            defaultValue={config?.tutorial_banner_link || ''}
-                            onBlur={(e) => updateConfig('tutorial_banner_link', e.target.value, true)}
+                            value={tutorialBannerLink}
+                            onChange={(e) => setTutorialBannerLink(e.target.value)}
                           />
                         </div>
                       </div>
+
+                      <button 
+                        className="btn btn-primary" 
+                        onClick={handleSaveBanners}
+                        style={{ marginTop: '8px' }}
+                      >
+                        ✓ Guardar Cambios en Banners
+                      </button>
                     </div>
                   </div>
 
