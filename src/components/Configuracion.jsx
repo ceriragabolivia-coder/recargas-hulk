@@ -41,6 +41,12 @@ export default function Configuracion() {
   const [tutorialBannerTexto, setTutorialBannerTexto] = useState('')
   const [tutorialBannerLink, setTutorialBannerLink] = useState('')
   
+  // Estados faltantes definidos para evitar crash
+  const [sidebarTitle, setSidebarTitle] = useState('')
+  const [sidebarSubtitle, setSidebarSubtitle] = useState('')
+  const [cashbackPorcentaje, setCashbackPorcentaje] = useState('0')
+  const [cashbackActivo, setCashbackActivo] = useState(false)
+  
   // Ref para evitar que las actualizaciones de Realtime sobrescriban lo que el admin está escribiendo
   const initialized = useRef(false)
 
