@@ -24,7 +24,11 @@ export default function GestionProductos() {
     categoria_id: '',
     tipo_calculo: 'estandar',
     metodo_recarga: 'id_jugador',
-    guia_id_url: null
+    guia_id_url: null,
+    caracteristicas_tipo: 'Recarga (Automática)',
+    caracteristicas_region: 'Global',
+    caracteristicas_entrega: 'Inmediata',
+    caracteristicas_nota: ''
   })
 
   const juegosFiltrados = useMemo(() => {
@@ -45,7 +49,11 @@ export default function GestionProductos() {
       categoria_id: categorias[0]?.id || '',
       tipo_calculo: 'estandar',
       metodo_recarga: 'id_jugador',
-      guia_id_url: null
+      guia_id_url: null,
+      caracteristicas_tipo: 'Recarga (Automática)',
+      caracteristicas_region: 'Global',
+      caracteristicas_entrega: 'Inmediata',
+      caracteristicas_nota: ''
     })
     setIsGameModalOpen(true)
   }
@@ -58,7 +66,11 @@ export default function GestionProductos() {
       categoria_id: selectedJuego.categoria_id,
       tipo_calculo: selectedJuego.tipo_calculo,
       metodo_recarga: selectedJuego.metodo_recarga || 'id_jugador',
-      guia_id_url: selectedJuego.guia_id_url || null
+      guia_id_url: selectedJuego.guia_id_url || null,
+      caracteristicas_tipo: selectedJuego.caracteristicas_tipo || 'Recarga (Automática)',
+      caracteristicas_region: selectedJuego.caracteristicas_region || 'Global',
+      caracteristicas_entrega: selectedJuego.caracteristicas_entrega || 'Inmediata',
+      caracteristicas_nota: selectedJuego.caracteristicas_nota || ''
     })
     setIsGameModalOpen(true)
   }
@@ -74,7 +86,11 @@ export default function GestionProductos() {
         categoria_id: formGame.categoria_id,
         tipo_calculo: formGame.tipo_calculo,
         metodo_recarga: formGame.metodo_recarga,
-        guia_id_url: formGame.guia_id_url
+        guia_id_url: formGame.guia_id_url,
+        caracteristicas_tipo: formGame.caracteristicas_tipo,
+        caracteristicas_region: formGame.caracteristicas_region,
+        caracteristicas_entrega: formGame.caracteristicas_entrega,
+        caracteristicas_nota: formGame.caracteristicas_nota
       })
       if (!res.error) {
         setSelectedJuego(prev => ({ ...prev, ...formGame }))
@@ -910,6 +926,51 @@ export default function GestionProductos() {
                   Esta imagen se mostrará al cliente cuando presione el ícono de ayuda.
                 </p>
               </div>
+            </div>
+          </div>
+          <hr style={{ margin: '24px 0', borderColor: 'var(--border-color)' }} />
+          <h3 style={{ fontSize: 13, textTransform: 'uppercase', color: 'var(--accent-primary)', marginBottom: 12 }}>Características Visuales del Catálogo</h3>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div className="form-group">
+              <label className="form-label">Tipo</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Ej: Recarga (Automática)"
+                value={formGame.caracteristicas_tipo}
+                onChange={e => setFormGame({ ...formGame, caracteristicas_tipo: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Región</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Ej: Global, LATAM"
+                value={formGame.caracteristicas_region}
+                onChange={e => setFormGame({ ...formGame, caracteristicas_region: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Entrega</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Ej: Inmediata"
+                value={formGame.caracteristicas_entrega}
+                onChange={e => setFormGame({ ...formGame, caracteristicas_entrega: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label className="form-label">Nota o Advertencia</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Ej: Válido solo para cuentas LATAM."
+                value={formGame.caracteristicas_nota}
+                onChange={e => setFormGame({ ...formGame, caracteristicas_nota: e.target.value })}
+              />
             </div>
           </div>
 

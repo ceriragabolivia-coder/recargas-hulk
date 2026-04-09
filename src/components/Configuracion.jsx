@@ -740,6 +740,61 @@ export default function Configuracion() {
                       </div>
                     </div>
                   </div>
+                  <div style={{ padding: '24px', backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)', marginTop: '24px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>Banners del Catálogo</h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px' }}>
+                      Configura el anuncio especial (con ícono) y el banner de tutorial en la pantalla del catálogo de los paquetes.
+                    </p>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label" style={{ color: 'var(--accent-primary)' }}>🎁 Banner Promocional Principal</label>
+                        <div style={{ display: 'grid', gap: '12px' }}>
+                          <input 
+                            type="text" 
+                            className="form-input" 
+                            placeholder="Texto. Ej: Gira y gana en nuestra ruleta..."
+                            defaultValue={config?.promo_banner_texto || ''}
+                            onBlur={(e) => updateConfig('promo_banner_texto', e.target.value, true)}
+                          />
+                          <input 
+                            type="text" 
+                            className="form-input" 
+                            placeholder="URL Link de destino. Ej: /ruleta"
+                            defaultValue={config?.promo_banner_link || ''}
+                            onBlur={(e) => updateConfig('promo_banner_link', e.target.value, true)}
+                          />
+                          <input 
+                            type="text" 
+                            className="form-input" 
+                            placeholder="URL de Ícono/Imagen promocional. Ej: https://..."
+                            defaultValue={config?.promo_banner_icono_url || ''}
+                            onBlur={(e) => updateConfig('promo_banner_icono_url', e.target.value, true)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="form-group" style={{ marginBottom: 0, paddingBottom: 0 }}>
+                        <label className="form-label" style={{ color: 'var(--accent-warning)' }}>🔔 Banner del Tutorial (Campanita)</label>
+                        <div style={{ display: 'grid', gap: '12px' }}>
+                          <input 
+                            type="text" 
+                            className="form-input" 
+                            placeholder="Texto. Ej: ¿Aún no sabes recargar vía Pago Móvil?"
+                            defaultValue={config?.tutorial_banner_texto || ''}
+                            onBlur={(e) => updateConfig('tutorial_banner_texto', e.target.value, true)}
+                          />
+                          <input 
+                            type="text" 
+                            className="form-input" 
+                            placeholder="URL del tutorial / Link de destino. Ej: https://youtube.com/..."
+                            defaultValue={config?.tutorial_banner_link || ''}
+                            onBlur={(e) => updateConfig('tutorial_banner_link', e.target.value, true)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
                 </div>
               </div>
