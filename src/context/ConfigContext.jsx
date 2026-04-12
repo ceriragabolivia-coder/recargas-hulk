@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 const ConfigContext = createContext()
 
 export function ConfigProvider({ children }) {
+  console.log('⚙️ ConfigContext: Inicializando ConfigProvider...');
   const [config, setConfig] = useState({})
   const [loading, setLoading] = useState(true)
 

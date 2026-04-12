@@ -138,6 +138,7 @@ const SuspendedView = ({ onLogout, onRefresh, type = 'suspendido' }) => (
 )
 
 export default function App() {
+  console.log('📦 Renderizando App...');
   const navigate = useNavigate()
   const location = useLocation()
   const { user, perfil, loading, logout, refetch } = useAuth()
