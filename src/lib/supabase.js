@@ -1,20 +1,21 @@
 import { createClient } from '@supabase/supabase-js'
 
-console.log('📡 Supabase: Inicializando cliente...');
-
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('❌ Supabase: Faltan variables de entorno (VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY)');
+  console.error('❌ CRÍTICO: Variables de entorno de Supabase no encontradas.')
 }
 
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {
+// Configuración normalizada para evitar bloqueos de pestañas (Supabase Lock)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    detectSessionInUrl: false,
     persistSession: true,
     autoRefreshToken: true,
-    storageKey: 'ceriraga-app-v3-prod',
-    flowType: 'pkce'
+    detectSessionInUrl: true,
+    // Eliminamos storageKey personalizada para evitar conflictos de Lock entre pestañas
+    // Supabase usará el valor por defecto 'supabase.auth.token'
   }
 })
+
+console.log('✅ Supabase: Cliente inicializado (Modo Normalizado)')

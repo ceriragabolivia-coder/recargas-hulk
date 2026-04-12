@@ -11,25 +11,38 @@ export function AuthProvider({ children }) {
   const lastUserIdRef = useRef(null)
   const isInitializedRef = useRef(false)
 
-  // Carga de Perfil con Mecanismo de Carril Rápido
+  // Carga de Perfil optimizada con modo VIP y Failsafe
   async function fetchPerfilData(userId, authUser = null) {
     if (!userId) return null
     
-    // Timeout de seguridad interno para la consulta a la base de datos (3s)
-    const dbTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('DB_TIMEOUT')), 3500))
+    // 1. MODO VIP: Acceso instantáneo para el administrador principal
+    const u = authUser || (await supabase.auth.getUser()).data?.user
+    if (u?.email === 'ceriraga@gmail.com') {
+      console.log('👑 Auth: Modo VIP activado para admin primario');
+      return { 
+        id: userId, 
+        rol: 'admin', 
+        estado: 'aprobado', 
+        nombres: 'Administrador',
+        nickname: 'Admin',
+        is_vip: true 
+      }
+    }
 
     try {
+      // 2. Consulta paralela con Timeout de 2 segundos (Failsafe)
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 2000))
+      
       const fetchPromise = (async () => {
         const [resP, resC] = await Promise.all([
           supabase.from('perfiles').select('*').eq('id', userId).maybeSingle(),
           supabase.from('clientes').select('*').eq('auth_user_id', userId).maybeSingle()
         ])
-
+        
         const perfilData = resP.data
         let clienteData = resC.data
-        const u = authUser || (await supabase.auth.getUser()).data?.user
-
-        // Crear registro si no existe
+        
+        // Auto-creación de cliente si no existe
         if (!clienteData && u) {
           const { data: nuevoCliente } = await supabase.from('clientes').insert({
             auth_user_id: userId,
@@ -43,32 +56,21 @@ export function AuthProvider({ children }) {
           clienteData = nuevoCliente
         }
 
-        const isAdminEmail = u?.email === 'ceriraga@gmail.com'
-        
         return { 
           ...clienteData, 
           ...perfilData, 
           id: userId, 
           cliente_uuid: clienteData?.id || null,
-          rol: isAdminEmail ? 'admin' : (perfilData?.rol || clienteData?.rol || 'cliente').toLowerCase(),
-          estado: isAdminEmail ? 'aprobado' : (perfilData?.estado || clienteData?.estado || 'pendiente').toLowerCase(),
-          is_fallback: false
+          rol: (perfilData?.rol || clienteData?.rol || 'cliente').toLowerCase(),
+          estado: (perfilData?.estado || clienteData?.estado || 'pendiente').toLowerCase(),
+          is_vip: false
         }
       })()
 
-      // Competencia entre la base de datos y un perfil de emergencia
-      return await Promise.race([fetchPromise, dbTimeout])
-
+      return await Promise.race([fetchPromise, timeoutPromise])
     } catch (err) {
-      console.warn("⚠️ Usando perfil de emergencia:", err.message)
-      // Perfil de emergencia mínimo para no bloquear la app
-      return { 
-        id: userId, 
-        rol: 'cliente', 
-        estado: 'pendiente', 
-        email: authUser?.email,
-        is_fallback: true 
-      }
+      console.warn('⚠️ Auth: Usando perfil de emergencia debido a lentitud/error');
+      return { id: userId, rol: 'cliente', estado: 'pendiente', is_fallback: true }
     }
   }
 
@@ -78,15 +80,10 @@ export function AuthProvider({ children }) {
     const setupRealtime = (userId) => {
       if (channel) supabase.removeChannel(channel)
       channel = supabase
-        .channel(`perfil_sync_${userId}`)
+        .channel(`auth_perfil_${userId}`)
         .on('postgres_changes', { 
-          event: 'UPDATE', 
-          schema: 'public', 
-          table: 'perfiles', 
-          filter: `id=eq.${userId}` 
-        }, (payload) => {
-          setPerfil(prev => ({ ...prev, ...payload.new }))
-        })
+          event: 'UPDATE', schema: 'public', table: 'perfiles', filter: `id=eq.${userId}` 
+        }, payload => setPerfil(prev => ({ ...prev, ...payload.new })))
         .subscribe()
     }
 
@@ -95,7 +92,11 @@ export function AuthProvider({ children }) {
       isInitializedRef.current = true
 
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        // Timeout para getSession (el Lock puede dejarlo colgado)
+        const sessionPromise = supabase.auth.getSession()
+        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('LOCK')), 2500))
+        
+        const { data: { session } } = await Promise.race([sessionPromise, timeout])
         const u = session?.user ?? null
         
         if (u) {
@@ -105,6 +106,8 @@ export function AuthProvider({ children }) {
           setPerfil(pData)
           setupRealtime(u.id)
         }
+      } catch (err) {
+        console.error("❌ Auth: Error en inicialización inicial (posible bloqueo):", err)
       } finally {
         setLoading(false)
       }
@@ -116,7 +119,6 @@ export function AuthProvider({ children }) {
       if (event === 'TOKEN_REFRESHED') return
       
       const u = session?.user ?? null
-      
       if (event === 'SIGNED_OUT') {
         lastUserIdRef.current = null
         setUser(null)
@@ -129,7 +131,7 @@ export function AuthProvider({ children }) {
       if (u && u.id !== lastUserIdRef.current) {
         lastUserIdRef.current = u.id
         setUser(u)
-        setLoading(true) 
+        setLoading(true)
         const pData = await fetchPerfilData(u.id, u)
         setPerfil(pData)
         setupRealtime(u.id)
@@ -153,7 +155,7 @@ export function AuthProvider({ children }) {
     isCliente: !isAdminOrRevendedor,
     isAdminOrRevendedor,
     login: async (email, password) => {
-      setLoading(true) // Iniciar carga visual durante el login manual
+      setLoading(true)
       const res = await supabase.auth.signInWithPassword({ email, password })
       if (res.error) setLoading(false)
       return res
@@ -183,6 +185,6 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const context = useContext(AuthContext)
-  if (!context) throw new Error('AuthProvider missing')
+  if (!context) throw new Error('Auth context missing')
   return context
 }
