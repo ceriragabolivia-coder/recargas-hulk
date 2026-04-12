@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 
 const ConfigContext = createContext()
@@ -37,7 +37,10 @@ export function ConfigProvider({ children }) {
   }
 
   useEffect(() => {
-    fetchConfig()
+    // Retrasar la carga de config para evitar conflictos con el bloqueo de sesión de Auth
+    const timer = setTimeout(() => {
+      fetchConfig()
+    }, 200)
 
     const channel = supabase
       .channel('global-config-realtime')
@@ -56,6 +59,7 @@ export function ConfigProvider({ children }) {
       })
 
     return () => {
+      clearTimeout(timer)
       supabase.removeChannel(channel)
     }
   }, [fetchConfig])

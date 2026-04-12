@@ -1,17 +1,14 @@
-import React, { useState, useEffect, createContext, useContext, useMemo, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { getLocalDateString } from '../utils/helpers'
 import { useConfigContext } from '../context/ConfigContext'
+import { useAuth } from '../context/AuthContext'
+import { useCart } from '../context/CartContext'
 
-const CartContext = createContext()
-const AuthContext = createContext()
-
-// ========================
-// HOOK: Configuración Global (Ahora usa el Contexto Global)
-// ========================
-export function useConfiguracion() {
-  return useConfigContext()
-}
+// Re-exportar hooks de contexto para retrocompatibilidad
+export { useAuth } from '../context/AuthContext'
+export { useCart } from '../context/CartContext'
+export { useConfigContext as useConfiguracion } from '../context/ConfigContext'
 
 // ========================
 // HOOK: Juegos
@@ -107,7 +104,6 @@ export function useProductos(juegoId) {
   }
 
   async function reorderProductos(updates) {
-    // updates = [{id, orden}, {id, orden}]
     const promises = updates.map(u =>
       supabase.from('productos').update({ orden: u.orden }).eq('id', u.id)
     )
@@ -136,7 +132,6 @@ export function useVentas() {
   const [loading, setLoading] = useState(true)
 
   function getLocalBounds(dateStr) {
-    // dateStr in YYYY-MM-DD format
     const startObj = new Date(dateStr + 'T00:00:00-04:00');
     const endObj = new Date(dateStr + 'T23:59:59-04:00');
     return { start: startObj.toISOString(), end: endObj.toISOString() }
@@ -153,7 +148,7 @@ export function useVentas() {
     const { data: ventas } = await supabase
       .from('ventas')
       .select('*, juegos(nombre), productos(nombre)')
-      .eq('vendedor_id', perfil.cliente_uuid) // AISLAMIENTO: solo ventas del admin actual
+      .eq('vendedor_id', perfil.cliente_uuid)
       .gte('created_at', start)
       .lte('created_at', end)
       .order('created_at', { ascending: false })
@@ -186,7 +181,7 @@ export function useVentas() {
       p_player_id: player_id,
       p_account_email: account_email,
       p_account_password: account_password,
-      p_vendedor_id: perfil?.cliente_uuid // ID de cliente del admin actual
+      p_vendedor_id: perfil?.cliente_uuid
     })
     if (!error) {
       await fetchVentasHoy()
@@ -204,7 +199,6 @@ export function useVentas() {
 
   async function limpiarComprobantes() {
     try {
-      // 1. Obtener pedidos con comprobantes de más de 20 días
       const twentyDaysAgo = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString()
       const { data: pedidosExpirados } = await supabase
         .from('pedidos')
@@ -213,20 +207,15 @@ export function useVentas() {
         .lt('created_at', twentyDaysAgo)
 
       if (pedidosExpirados && pedidosExpirados.length > 0) {
-        // 2. Extraer rutas de archivos
         const pathsToDelete = pedidosExpirados.map(p => {
           const url = p.comprobante_url
-          // Asumiendo formato: .../storage/v1/object/public/logos/pedidos/filename.ext
           const parts = url.split('/logos/')
           return parts.length > 1 ? parts[1] : null
         }).filter(Boolean)
 
-        // 3. Eliminar de Storage
         if (pathsToDelete.length > 0) {
           await supabase.storage.from('logos').remove(pathsToDelete)
         }
-
-        // 4. Limpiar URLs en DB via RPC (ya creado en la migración 044)
         await supabase.rpc('limpiar_comprobantes_antiguos')
       }
     } catch (err) {
@@ -242,7 +231,7 @@ export function useVentas() {
     const { data } = await supabase
       .from('ventas')
       .select('*, juegos(nombre), productos(nombre)')
-      .eq('vendedor_id', perfil.cliente_uuid) // AISLAMIENTO: solo ventas del admin actual
+      .eq('vendedor_id', perfil.cliente_uuid)
       .gte('created_at', startISO)
       .lte('created_at', endISO)
       .order('created_at', { ascending: false })
@@ -251,12 +240,10 @@ export function useVentas() {
 
   async function fetchResumenPeriodo(fechaDesde, fechaHasta) {
     const ventas = await fetchHistorial(fechaDesde, fechaHasta)
-    
-    // Agrupar manualmente por Local Date (Omitiendo la vista de DB que agrupa por la 'fecha' errónea en UTC)
     const resMap = {}
     ventas.forEach(v => {
       const d = new Date(v.created_at)
-      const tzOffset = 4 * 60 * 60000; // Venezuela GMT-4
+      const tzOffset = 4 * 60 * 60000;
       const localDate = new Date(d.getTime() - tzOffset).toISOString().split('T')[0]
       
       if (!resMap[localDate]) {
@@ -267,8 +254,6 @@ export function useVentas() {
       resMap[localDate].ventas_totales_bs += Number(v.precio_venta_bs || 0)
       resMap[localDate].recargas_totales += 1
     })
-    
-    // Retornar ordenado del más reciente al más antiguo
     return Object.values(resMap).sort((a,b) => a.fecha > b.fecha ? -1 : 1)
   }
 
@@ -299,7 +284,7 @@ export function useVentas() {
 
   useEffect(() => { 
     if (perfil?.id) fetchVentasHoy() 
-    else setLoading(false) // No bloquear si no hay perfil
+    else setLoading(false)
   }, [perfil?.id, perfil?.cliente_uuid])
 
   return { 
@@ -314,207 +299,6 @@ export function useVentas() {
     limpiarComprobantes,
     refetch: fetchVentasHoy 
   }
-}
-
-// ========================
-// HOOK: Auth
-// ========================
-// ========================
-// CONTEXTO: Auth (Centralizado)
-// ========================
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [perfil, setPerfil] = useState(null)
-  const [loading, setLoading] = useState(true)
-  
-  // Ref para evitar ciclos y re-fetch innecesarios al cambiar de pestaña
-  const lastUserIdRef = useRef(null)
-
-  async function fetchPerfilData(userId) {
-    if (!userId) return null
-    try {
-      const { data: authUser } = await supabase.auth.getUser()
-      const { data: perfilData } = await supabase.from('perfiles').select('*').eq('id', userId).maybeSingle()
-      let { data: clienteData } = await supabase.from('clientes').select('*').eq('auth_user_id', userId).maybeSingle()
-      
-      if (!clienteData && authUser?.user) {
-        const u = authUser.user
-        const { data: nuevoCliente } = await supabase.from('clientes').insert({
-          auth_user_id: userId,
-          nombres: u.user_metadata?.nombres || u.email?.split('@')[0] || 'Admin',
-          apellidos: u.user_metadata?.apellidos || '',
-          usuario: u.email || userId,
-          nickname: u.user_metadata?.nickname || 'Admin',
-          whatsapp: u.user_metadata?.whatsapp || '',
-          estado: 'aprobado'
-        }).select().maybeSingle()
-        clienteData = nuevoCliente
-      }
-      
-      if (authUser?.user?.id === userId && authUser?.user?.email === 'ceriraga@gmail.com') {
-        const adminPerfil = { 
-          ...clienteData,
-          id: userId,
-          cliente_uuid: clienteData?.id,
-          rol: 'admin', 
-          role: 'admin', 
-          estado: 'aprobado'
-        }
-        if (clienteData?.id) {
-           supabase.from('clientes').update({ ultima_conexion: new Date().toISOString() }).eq('id', clienteData.id).then()
-        }
-        return adminPerfil
-      }
-
-      const finalRol = (perfilData?.rol || clienteData?.rol || 'cliente').toLowerCase()
-      const finalEstado = (perfilData?.estado || clienteData?.estado || 'pendiente').toLowerCase()
-
-      const fullPerfil = { 
-        ...clienteData, 
-        ...perfilData, 
-        id: userId, 
-        cliente_uuid: clienteData?.id || null,
-        rol: finalRol,
-        estado: finalEstado
-      }
-
-      if (clienteData?.id) {
-         supabase.from('clientes').update({ ultima_conexion: new Date().toISOString() }).eq('id', clienteData.id).then()
-      }
-      return fullPerfil
-    } catch (err) {
-      console.error("Error en fetchPerfilData:", err)
-      return null
-    }
-  }
-
-  const fetchPerfil = async (userId) => {
-    const data = await fetchPerfilData(userId)
-    if (data) setPerfil(data)
-  }
-
-  useEffect(() => {
-    let channel;
-
-    const setupRealtime = (userId) => {
-      if (channel) supabase.removeChannel(channel)
-      channel = supabase
-        .channel(`perfil_realtime_${userId}`)
-        .on('postgres_changes', { 
-          event: 'UPDATE', 
-          schema: 'public', 
-          table: 'perfiles', 
-          filter: `id=eq.${userId}` 
-        }, (payload) => {
-          setPerfil(prev => ({ ...prev, ...payload.new }))
-        })
-        .subscribe()
-    }
-
-    // Carga inicial de sesión
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      const u = session?.user ?? null
-      if (u) {
-        lastUserIdRef.current = u.id
-        const pData = await fetchPerfilData(u.id)
-        // Seteamos ambos estados de forma sincronizada
-        setPerfil(pData)
-        setUser(u)
-        setupRealtime(u.id)
-      }
-      setLoading(false)
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'TOKEN_REFRESHED') return
-      
-      const u = session?.user ?? null
-      
-      if (event === 'SIGNED_OUT') {
-        lastUserIdRef.current = null
-        setUser(null)
-        setPerfil(null)
-        if (channel) supabase.removeChannel(channel)
-        return
-      }
-
-      // Evitar parpadeos: Solo cargar si el usuario cambió
-      if (u && u.id !== lastUserIdRef.current) {
-        lastUserIdRef.current = u.id
-        const pData = await fetchPerfilData(u.id)
-        setPerfil(pData)
-        setUser(u)
-        setupRealtime(u.id)
-      }
-    })
-
-    return () => {
-      subscription.unsubscribe()
-      if (channel) supabase.removeChannel(channel)
-    }
-  }, [])
-
-  const isAdminOrRevendedor = useMemo(() => 
-    ['admin', 'revendedor'].includes(perfil?.rol?.toLowerCase()), 
-    [perfil?.rol]
-  )
-  
-  const isCliente = useMemo(() => !isAdminOrRevendedor, [isAdminOrRevendedor])
-
-  const value = useMemo(() => ({
-    user,
-    perfil,
-    loading,
-    isCliente,
-    isAdminOrRevendedor,
-    login: async (email, password) => await supabase.auth.signInWithPassword({ email, password }),
-    register: async (email, password, clientDetails) => {
-      const { data, error } = await supabase.auth.signUp({ 
-        email, 
-        password,
-        options: { data: clientDetails }
-      })
-      if (data?.user) {
-        const checkProfile = await supabase.from('perfiles').select('id').eq('id', data.user.id).maybeSingle()
-        if (!checkProfile.data) {
-          await supabase.from('perfiles').insert({ id: data.user.id, rol: 'cliente', estado: 'pendiente' })
-          await supabase.from('clientes').insert({
-            auth_user_id: data.user.id,
-            nombres: clientDetails.nombres,
-            apellidos: clientDetails.apellidos,
-            nickname: clientDetails.nickname,
-            usuario: email,
-            whatsapp: clientDetails.whatsapp,
-            pais: clientDetails.pais,
-            estado: 'pendiente'
-          })
-        }
-      }
-      return { data, error }
-    },
-    logout: async () => {
-      await supabase.auth.signOut()
-      setPerfil(null)
-      setUser(null)
-      lastUserIdRef.current = null
-    },
-    updatePassword: async (newPassword) => await supabase.auth.updateUser({ password: newPassword }),
-    refetch: () => user && fetchPerfil(user.id)
-  }), [user, perfil, loading, isCliente, isAdminOrRevendedor])
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  )
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth debe usarse dentro de un AuthProvider')
-  }
-  return context
 }
 
 // ========================
@@ -559,7 +343,6 @@ export function useClientes() {
 
   async function fetchClientes() {
     setLoading(true)
-    // Traemos datos de clientes y su perfil (rol/estado)
     const [clientesRes, billeterasRes] = await Promise.all([
       supabase
         .from('clientes')
@@ -572,7 +355,6 @@ export function useClientes() {
     
     if (clientesRes.data) {
       const billeterasMap = new Map((billeterasRes.data || []).map(b => [b.auth_user_id, { saldo: b.saldo, saldo_bs: b.saldo_bs }]))
-      // Formateamos para que sea fácil de leer en el componente
       const formatted = clientesRes.data.map(c => ({
         ...c,
         rol: c.perfiles?.rol || 'cliente',
@@ -587,22 +369,18 @@ export function useClientes() {
   }
 
   async function updateProfile(authUserId, updates) {
-    // Actualizamos en la tabla clientes
     const { error } = await supabase
       .from('clientes')
       .update(updates)
       .eq('auth_user_id', authUserId)
-    
     return { error }
   }
 
   async function updateProfileRoleAndDiscount(authUserId, updates) {
-    // 1. Upsert en perfiles
     const { error: errorProfile } = await supabase
       .from('perfiles')
       .upsert({ id: authUserId, ...updates })
     
-    // 2. Si se incluye 'estado', sincronizar también en la tabla clientes
     if (!errorProfile && updates.estado) {
       await supabase
         .from('clientes')
@@ -620,8 +398,6 @@ export function useClientes() {
 
   async function updateProfileStatus(cliente, newStatus) {
     let finalError = null;
-
-    // 1. Sincronizar en perfiles (si tiene auth_user_id)
     if (cliente.auth_user_id) {
       const { error } = await supabase
         .from('perfiles')
@@ -629,18 +405,13 @@ export function useClientes() {
       if (error) finalError = error;
     }
 
-    // 2. Sincronizar SIEMPRE en la tabla clientes (esencial para el fallback de fetchPerfil)
     const { error: errorCli } = await supabase
       .from('clientes')
       .update({ estado: newStatus })
       .eq('id', cliente.id)
     
     if (errorCli) finalError = errorCli;
-
-    if (finalError) {
-      alert("Error al actualizar estado: " + finalError.message)
-      return { error: finalError }
-    }
+    if (finalError) return { error: finalError }
 
     setClientes(prev => prev.map(c => 
       c.id === cliente.id ? { ...c, estado: newStatus } : c
@@ -710,6 +481,7 @@ export function useClientes() {
     refetch: fetchClientes 
   }
 }
+
 // ========================
 // HOOK: Métodos de Pago
 // ========================
@@ -756,7 +528,6 @@ export function useMetodosPago() {
 
   async function cancelarPedidosExpirados() {
     const { data, error } = await supabase.rpc('cancelar_pedidos_expirados')
-    if (error) console.error('Error al limpiar pedidos expirados:', error)
     return { data, error }
   }
 
@@ -780,34 +551,26 @@ export function useWallet() {
 
   async function fetchWallet() {
     if (!user) return
-    // Solo mostrar loading en la carga inicial
     if (!initialLoadDone.current) setLoading(true)
-    
-    // 1. Obtener saldo
     const { data: walletData } = await supabase
       .from('billeteras')
       .select('*')
       .eq('auth_user_id', user.id)
       .maybeSingle()
-    
     setWallet(walletData || { saldo: 0, saldo_bs: 0 })
 
-    // 2. Obtener recargas propias
     const { data: recargasData } = await supabase
       .from('billetera_recargas')
       .select('*, metodos_pago(nombre)')
       .eq('auth_user_id', user.id)
       .order('created_at', { ascending: false })
-    
     setRecargas(recargasData || [])
 
-    // 3. Obtener transacciones
     const { data: transData } = await supabase
       .from('billetera_transacciones')
       .select('*')
       .eq('auth_user_id', user.id)
       .order('created_at', { ascending: false })
-    
     setTransacciones(transData || [])
     setLoading(false)
     initialLoadDone.current = true
@@ -818,293 +581,22 @@ export function useWallet() {
       auth_user_id: user.id,
       monto,
       metodo_pago_id: metodoId,
-      referencia,
+      referencia_pago: referencia,
       comprobante_url: comprobanteUrl,
-      estado: 'pendiente',
       moneda
-    }).select().single()
-
-    if (!error) {
-      await fetchWallet() // Refetch completo para actualizar historial con joins
-    }
+    }).select()
     return { data, error }
   }
 
-  // Hook para suscripciones Realtime + polling de la billetera
   useEffect(() => {
-    if (!user) return
-
     fetchWallet()
-
-    // 1. Suscripción Realtime para actualizaciones instantáneas
-    const channel = supabase
-      .channel(`wallet_changes_${user.id}`)
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'billeteras', 
-        filter: `auth_user_id=eq.${user.id}` 
-      }, () => {
-        fetchWallet()
-      })
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'billetera_recargas', 
-        filter: `auth_user_id=eq.${user.id}` 
-      }, () => {
-        fetchWallet()
-      })
-      .subscribe()
-
-    // 2. Polling cada 5s como respaldo si Realtime no dispara
-    const interval = setInterval(fetchWallet, 5000)
-
-    return () => {
-      supabase.removeChannel(channel)
-      clearInterval(interval)
-    }
-  }, [user?.id])
-
+  }, [user])
 
   return { wallet, recargas, transacciones, loading, solicitarRecarga, refetch: fetchWallet }
 }
 
 // ========================
-// CONTEXTO: Carrito de Compras
-// ========================
-export function CartProvider({ children }) {
-  const [cart, setCart] = useState(() => {
-    try {
-      const saved = localStorage.getItem('shopping_cart')
-      const parsed = saved ? JSON.parse(saved) : []
-      return Array.isArray(parsed) ? parsed : []
-    } catch (e) {
-      return []
-    }
-  })
-
-  useEffect(() => {
-    localStorage.setItem('shopping_cart', JSON.stringify(cart))
-  }, [cart])
-
-  const addToCart = (product, game, precioCalc, rechargeData = null) => {
-    setCart(prev => {
-      // Find item with same product ID AND same recharge data
-      const existingIndex = prev.findIndex(item => 
-        item.id === product.id &&
-        item.player_id === (rechargeData?.player_id || '') &&
-        item.account_email === (rechargeData?.account_email || '') &&
-        item.account_user === (rechargeData?.account_user || '')
-      )
-      
-      if (existingIndex >= 0) {
-        return prev.map((item, index) => 
-          index === existingIndex
-            ? { ...item, quantity: item.quantity + 1 } 
-            : item
-        )
-      }
-      return [...prev, { 
-        cart_id: Date.now().toString() + Math.random().toString(),
-        id: product.id, 
-        nombre: product.nombre, 
-        juego: game.nombre,
-        metodo_recarga: game.metodo_recarga,
-        player_id: rechargeData?.player_id || '',
-        account_email: rechargeData?.account_email || '',
-        account_user: rechargeData?.account_user || '',
-        account_password: rechargeData?.account_password || '',
-        icono_url: product.icono_url || game.icono_url,
-        venta_usd: precioCalc.venta_usd,
-        venta_bs: precioCalc.venta_bs,
-        ganancia_usd: precioCalc.ganancia_usd,
-        quantity: 1
-      }]
-    })
-  }
-
-  const removeFromCart = (cartId) => {
-    setCart(prev => prev.filter(item => item.cart_id !== cartId))
-  }
-
-  const updateQuantity = (cartId, qty) => {
-    if (qty < 1) return
-    setCart(prev => prev.map(item => 
-      item.cart_id === cartId ? { ...item, quantity: qty } : item
-    ))
-  }
-
-  const clearCart = () => setCart([])
-
-  const checkout = async (registrarVenta, clienteId = null, metodoPagoId = null, referencia = '', activeCupon = null, ruletaDescuento = null, pedidoIdExistente = null, comprobanteUrl = null, shouldClear = true) => {
-    let pedidoCreated = false
-    let errorMessage = null
-    let finalPedido = null
-    let cuponPreInserted = false
-
-    try {
-      let pedidoTotalUSD = cart.reduce((acc, item) => acc + (item.venta_usd * item.quantity), 0)
-      let pedidoTotalBs = cart.reduce((acc, item) => acc + (item.venta_bs * item.quantity), 0)
-
-      let discountFactor = 1;
-      if (activeCupon) {
-        discountFactor *= (1 - activeCupon.porcentaje / 100)
-      }
-      if (ruletaDescuento) {
-        discountFactor *= (1 - ruletaDescuento.porcentaje / 100)
-      }
-
-      pedidoTotalUSD = pedidoTotalUSD * discountFactor
-      pedidoTotalBs = Math.round(pedidoTotalBs * discountFactor)
-
-      // PASO 1: PRE-INSERTAR uso de cupón ANTES de crear el pedido.
-      // Esto activa el trigger con advisory lock en la BD, que bloquea
-      // cualquier uso duplicado ANTES de que el pedido (con descuento) exista.
-      if (activeCupon && clienteId) {
-        const { error: cuponError } = await supabase.from('cupones_usados').insert({
-          cupon_id: activeCupon.id,
-          cliente_id: clienteId,
-          pedido_id: null // Se actualiza después de crear el pedido
-        })
-        if (cuponError) {
-          // El trigger bloqueó el uso – el cupón ya fue utilizado
-          throw new Error('CUPON_YA_USADO: Este cupón ya fue utilizado o superaste el límite de usos permitidos.')
-        }
-        cuponPreInserted = true
-      }
-
-      // PASO 2: Crear o Actualizar el pedido
-      let pedido, pedidoError;
-
-      if (pedidoIdExistente) {
-        const { data: updPedido, error: updError } = await supabase
-          .from('pedidos')
-          .update({
-            metodo_pago_id: metodoPagoId || null,
-            referencia_pago: referencia,
-            total_usd: pedidoTotalUSD,
-            total_bs: pedidoTotalBs,
-            comprobante_url: comprobanteUrl || undefined,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', pedidoIdExistente)
-          .select()
-          .single()
-        pedido = updPedido
-        pedidoError = updError
-      } else {
-        const { data: insPedido, error: insError } = await supabase
-          .from('pedidos')
-          .insert({
-            cliente_id: clienteId || null,
-            metodo_pago_id: metodoPagoId || null,
-            referencia_pago: referencia,
-            estado: 'pendiente',
-            total_usd: pedidoTotalUSD,
-            total_bs: pedidoTotalBs,
-            comprobante_url: comprobanteUrl || null,
-            created_at: new Date().toISOString()
-          })
-          .select()
-          .single()
-        pedido = insPedido
-        pedidoError = insError
-      }
-
-      if (!pedidoError && pedido) {
-        finalPedido = pedido
-        
-        // Si el pedido es nuevo, insertar items. Si es existente, los items ya están allí (o podrían actualizarse, pero para este flujo asumiremos que se crean al inicio)
-        if (!pedidoIdExistente) {
-          const items = cart.map(item => ({
-            pedido_id: finalPedido.id,
-            producto_id: item.id,
-            juego_nombre: item.juego,
-            producto_nombre: item.nombre,
-            cantidad: item.quantity,
-            precio_usd: +(item.venta_usd * item.quantity).toFixed(2),
-            precio_bs: Math.round(item.venta_bs * item.quantity),
-            metodo_recarga: item.metodo_recarga || 'id_jugador',
-            player_id: item.player_id || '',
-            account_email: item.account_email || item.account_user || '',
-            account_password: item.account_password || ''
-          }))
-          const { error: itemsError } = await supabase.from('pedido_items').insert(items)
-          if (itemsError) throw itemsError
-        }
-
-        // PASO 3: Actualizar el registro de cupón con el pedido_id real
-        if (activeCupon && clienteId && cuponPreInserted) {
-          await supabase.from('cupones_usados')
-            .update({ pedido_id: finalPedido.id })
-            .eq('cupon_id', activeCupon.id)
-            .eq('cliente_id', clienteId)
-            .is('pedido_id', null)
-        }
-        
-        pedidoCreated = true
-      } else {
-        errorMessage = pedidoError?.message || 'Error al guardar el pedido'
-        console.error('Error creando pedido:', pedidoError)
-        // CLEANUP: Si el pedido falló pero el cupón fue pre-insertado, eliminarlo
-        if (cuponPreInserted && activeCupon && clienteId) {
-          await supabase.from('cupones_usados')
-            .delete()
-            .eq('cupon_id', activeCupon.id)
-            .eq('cliente_id', clienteId)
-            .is('pedido_id', null)
-        }
-      }
-    } catch (e) {
-      errorMessage = e.message || 'Error inesperado al procesar el pedido'
-      console.error('Error creando pedido:', e)
-      // CLEANUP: Si hubo excepción y el cupón fue pre-insertado, eliminarlo
-      if (cuponPreInserted && activeCupon && clienteId) {
-        await supabase.from('cupones_usados')
-          .delete()
-          .eq('cupon_id', activeCupon.id)
-          .eq('cliente_id', clienteId)
-          .is('pedido_id', null)
-        cuponPreInserted = false
-      }
-    }
-
-    if (pedidoCreated && shouldClear) {
-      clearCart()
-    }
-
-    return pedidoCreated
-      ? [{ id: 'pedido', error: null, data: finalPedido }]
-      : [{ id: 'pedido', error: errorMessage || 'No se pudo crear el pedido' }]
-  }
-
-  const totalItems = useMemo(() => cart.reduce((acc, item) => acc + item.quantity, 0), [cart])
-  const totalUSD = useMemo(() => cart.reduce((acc, item) => acc + (item.venta_usd * item.quantity), 0), [cart])
-  const totalBs = useMemo(() => Math.round(cart.reduce((acc, item) => acc + (item.venta_bs * item.quantity), 0)), [cart])
-
-  const value = useMemo(() => ({ 
-    cart, addToCart, removeFromCart, updateQuantity, clearCart, checkout, 
-    totalItems, totalUSD, totalBs 
-  }), [cart, totalItems, totalUSD, totalBs])
-
-  return (
-    <CartContext.Provider value={value}>
-      {children}
-    </CartContext.Provider>
-  )
-}
-
-export function useCart() {
-  const context = useContext(CartContext)
-  if (!context) {
-    throw new Error('useCart debe usarse dentro de un CartProvider')
-  }
-  return context
-}
-
-// ========================
-// HOOK: Mensajes del Sistema (Pop-ups)
+// HOOK: Mensajes del Sistema
 // ========================
 export function useMensajesSistema() {
   const [mensajes, setMensajes] = useState([])
@@ -1115,7 +607,6 @@ export function useMensajesSistema() {
       .from('mensajes_sistema')
       .select('*')
       .order('creado_at', { ascending: false })
-    
     if (!error && data) setMensajes(data)
     setLoading(false)
   }
@@ -1126,7 +617,6 @@ export function useMensajesSistema() {
       .insert([mensaje])
       .select()
       .single()
-    
     if (!error && data) setMensajes(prev => [data, ...prev])
     return { data, error }
   }
@@ -1138,7 +628,6 @@ export function useMensajesSistema() {
       .eq('id', id)
       .select()
       .single()
-    
     if (!error && data) setMensajes(prev => prev.map(m => m.id === id ? data : m))
     return { data, error }
   }
@@ -1148,7 +637,6 @@ export function useMensajesSistema() {
       .from('mensajes_sistema')
       .delete()
       .eq('id', id)
-    
     if (!error) setMensajes(prev => prev.filter(m => m.id !== id))
     return { error }
   }
@@ -1161,7 +649,7 @@ export function useMensajesSistema() {
 }
 
 // ========================
-// HOOK: Notificaciones en Vivo (Push)
+// HOOK: Notificaciones Push
 // ========================
 export function useNotificacionesPush() {
   async function enviarNotificacion(notificacion, duracionHoras = 1) {
