@@ -342,7 +342,6 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
       } catch (err) {
         console.error("Error general fetchCounts Soporte:", err)
       }
-    }
 
     setCounts(prev => ({
       ...prev,
