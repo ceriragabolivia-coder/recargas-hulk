@@ -60,8 +60,10 @@ export function ConfigProvider({ children }) {
     }
   }, [fetchConfig])
 
+  const value = useMemo(() => ({ config, loading, updateConfig, refetch: fetchConfig }), [config, loading, fetchConfig])
+
   return (
-    <ConfigContext.Provider value={{ config, loading, updateConfig, refetch: fetchConfig }}>
+    <ConfigContext.Provider value={value}>
       {children}
     </ConfigContext.Provider>
   )

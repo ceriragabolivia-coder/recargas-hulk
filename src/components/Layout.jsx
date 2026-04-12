@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useAuth, useConfiguracion, useWallet, useMensajesSistema, useNotificacionesPush } from '../hooks/useData'
 import { NavLink, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -274,7 +274,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
 
   const adminIdsRef = useRef(new Set())
 
-  const fetchCounts = async () => {
+  const fetchCounts = useCallback(async () => {
     // 1. Obtener IDs de administradores (solo una vez o según sea necesario)
     if (adminIdsRef.current.size === 0) {
       const { data: adminsData } = await supabase.from('perfiles').select('id').ilike('rol', 'admin')
@@ -287,7 +287,6 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
     let pCount = 0, oCount = 0, rCount = 0, sCount = 0
 
     if (isAdmin) {
-      // Usar queries individuales con manejo de errores
       try {
         const { count: p, error: ep } = await supabase.from('pedidos').select('*', { count: 'exact', head: true }).is('pago_verificado', null).neq('estado', 'cancelado').neq('estado', 'reembolsado')
         const { count: o, error: eo } = await supabase.from('pedidos').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente')
@@ -297,18 +296,16 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
         if (eo) console.error("Error oCount:", eo)
         if (er) console.error("Error rCount:", er)
 
-        // Recargas de Billetera Pendientes
         const { count: br, error: ebr } = await supabase.from('billetera_recargas').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente')
         if (ebr) console.error("Error brCount:", ebr)
 
         pCount = p || 0
         oCount = o || 0
-        rCount = (r || 0) + (br || 0) // Combinamos pedidos pagados + solicitudes de billetera
+        rCount = (r || 0) + (br || 0)
       } catch (err) {
         console.error("Error general fetchCounts Pedidos:", err)
       }
 
-      // Chats
       try {
         const { data: messages, error: es } = await supabase.from('soporte_mensajes').select('cliente_id, remitente_id').order('created_at', { ascending: false }).limit(200)
         if (es) console.error("Error soporte:", es)
@@ -325,7 +322,6 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
               const clientsStatusMap = new Map(clientsData.map(c => [c.id, c.soporte_status]))
               sCount = potentialClients.filter(id => {
                 const status = clientsStatusMap.get(id)
-                // Filter out if it has 'resuelto' or has no tags (null/empty)
                 if (!status || status === 'resuelto') return false
                 return true
               }).length
@@ -337,14 +333,15 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
       }
     }
 
-    setCounts({
+    setCounts(prev => ({
+      ...prev,
       pagos_pendientes: pCount,
       ordenes_pendientes: oCount,
       recargas_pendientes: rCount,
       soporte_pendientes: sCount,
       usuarios_online: onlineUsers.length,
-    })
-  }
+    }))
+  }, [isAdmin, onlineUsers.length, perfil?.id])
 
   // Presence Tracking
   useEffect(() => {

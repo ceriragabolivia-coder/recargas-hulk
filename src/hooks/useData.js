@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext } from 'react'
+import React, { useState, useEffect, createContext, useContext, useMemo, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { getLocalDateString } from '../utils/helpers'
 import { useConfigContext } from '../context/ConfigContext'
@@ -326,53 +326,60 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [perfil, setPerfil] = useState(null)
   const [loading, setLoading] = useState(true)
+  
+  // Ref para evitar ciclos y re-fetch innecesarios al cambiar de pestaña
+  const lastUserIdRef = useRef(null)
 
   async function fetchPerfil(userId) {
     if (!userId) return
-    const { data: authUser } = await supabase.auth.getUser()
-    const { data: perfilData } = await supabase.from('perfiles').select('*').eq('id', userId).maybeSingle()
-    let { data: clienteData } = await supabase.from('clientes').select('*').eq('auth_user_id', userId).maybeSingle()
-    
-    if (!clienteData && authUser?.user) {
-      const u = authUser.user
-      const { data: nuevoCliente } = await supabase.from('clientes').insert({
-        auth_user_id: userId,
-        nombres: u.user_metadata?.nombres || u.email?.split('@')[0] || 'Admin',
-        apellidos: u.user_metadata?.apellidos || '',
-        usuario: u.email || userId,
-        nickname: u.user_metadata?.nickname || 'Admin',
-        whatsapp: u.user_metadata?.whatsapp || '',
-        estado: 'aprobado'
-      }).select().maybeSingle()
-      clienteData = nuevoCliente
-    }
-    
-    if (authUser?.user?.id === userId && authUser?.user?.email === 'ceriraga@gmail.com') {
+    try {
+      const { data: authUser } = await supabase.auth.getUser()
+      const { data: perfilData } = await supabase.from('perfiles').select('*').eq('id', userId).maybeSingle()
+      let { data: clienteData } = await supabase.from('clientes').select('*').eq('auth_user_id', userId).maybeSingle()
+      
+      if (!clienteData && authUser?.user) {
+        const u = authUser.user
+        const { data: nuevoCliente } = await supabase.from('clientes').insert({
+          auth_user_id: userId,
+          nombres: u.user_metadata?.nombres || u.email?.split('@')[0] || 'Admin',
+          apellidos: u.user_metadata?.apellidos || '',
+          usuario: u.email || userId,
+          nickname: u.user_metadata?.nickname || 'Admin',
+          whatsapp: u.user_metadata?.whatsapp || '',
+          estado: 'aprobado'
+        }).select().maybeSingle()
+        clienteData = nuevoCliente
+      }
+      
+      if (authUser?.user?.id === userId && authUser?.user?.email === 'ceriraga@gmail.com') {
+        setPerfil({ 
+          ...clienteData,
+          id: userId,
+          cliente_uuid: clienteData?.id,
+          rol: 'admin', 
+          role: 'admin', 
+          estado: 'aprobado'
+        })
+        return
+      }
+
+      const finalRol = (perfilData?.rol || clienteData?.rol || 'cliente').toLowerCase()
+      const finalEstado = (perfilData?.estado || clienteData?.estado || 'pendiente').toLowerCase()
+
       setPerfil({ 
-        ...clienteData,
-        id: userId,
-        cliente_uuid: clienteData?.id,
-        rol: 'admin', 
-        role: 'admin', 
-        estado: 'aprobado'
+        ...clienteData, 
+        ...perfilData, 
+        id: userId, 
+        cliente_uuid: clienteData?.id || null,
+        rol: finalRol,
+        estado: finalEstado
       })
-      return
-    }
 
-    const finalRol = (perfilData?.rol || clienteData?.rol || 'cliente').toLowerCase()
-    const finalEstado = (perfilData?.estado || clienteData?.estado || 'pendiente').toLowerCase()
-
-    setPerfil({ 
-      ...clienteData, 
-      ...perfilData, 
-      id: userId, 
-      cliente_uuid: clienteData?.id || null,
-      rol: finalRol,
-      estado: finalEstado
-    })
-
-    if (clienteData?.id) {
-       supabase.from('clientes').update({ ultima_conexion: new Date().toISOString() }).eq('id', clienteData.id).then()
+      if (clienteData?.id) {
+         supabase.from('clientes').update({ ultima_conexion: new Date().toISOString() }).eq('id', clienteData.id).then()
+      }
+    } catch (err) {
+      console.error("Error en fetchPerfil:", err)
     }
   }
 
@@ -397,30 +404,35 @@ export function AuthProvider({ children }) {
     // Carga inicial de sesión
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       const u = session?.user ?? null
-      setUser(u)
       if (u) {
+        lastUserIdRef.current = u.id
+        setUser(u)
         await fetchPerfil(u.id)
         setupRealtime(u.id)
       }
       setLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Ignorar TOKEN_REFRESHED para evitar re-renders innecesarios
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'TOKEN_REFRESHED') return
       
       const u = session?.user ?? null
       
-      // Solo actualizar y re-fetch si el usuario realmente cambió o es un evento importante (SIGNED_IN, SIGNED_OUT)
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || (u?.id !== user?.id)) {
+      // Bloque de estabilidad: Solo actuar si el ID de usuario realmente cambió
+      // o si es un evento de salida explícita.
+      if (event === 'SIGNED_OUT') {
+        lastUserIdRef.current = null
+        setUser(null)
+        setPerfil(null)
+        if (channel) supabase.removeChannel(channel)
+        return
+      }
+
+      if (u && u.id !== lastUserIdRef.current) {
+        lastUserIdRef.current = u.id
         setUser(u)
-        if (u) {
-          fetchPerfil(u.id)
-          setupRealtime(u.id)
-        } else {
-          setPerfil(null)
-          if (channel) supabase.removeChannel(channel)
-        }
+        await fetchPerfil(u.id)
+        setupRealtime(u.id)
       }
     })
 
@@ -428,63 +440,55 @@ export function AuthProvider({ children }) {
       subscription.unsubscribe()
       if (channel) supabase.removeChannel(channel)
     }
-  }, []) // Corregido: user.id ya no es dependencia directa aquí para evitar loops, el listener maneja el cambio
+  }, [])
 
-  async function login(email, password) {
-    return await supabase.auth.signInWithPassword({ email, password })
-  }
+  const isAdminOrRevendedor = useMemo(() => 
+    ['admin', 'revendedor'].includes(perfil?.rol?.toLowerCase()), 
+    [perfil?.rol]
+  )
+  
+  const isCliente = useMemo(() => !isAdminOrRevendedor, [isAdminOrRevendedor])
 
-  async function register(email, password, clientDetails) {
-    const { data, error } = await supabase.auth.signUp({ 
-      email, 
-      password,
-      options: { data: clientDetails }
-    })
-    
-    if (data?.user) {
-      const checkProfile = await supabase.from('perfiles').select('id').eq('id', data.user.id).maybeSingle()
-      if (!checkProfile.data) {
-        await supabase.from('perfiles').insert({ id: data.user.id, rol: 'cliente', estado: 'pendiente' })
-        await supabase.from('clientes').insert({
-          auth_user_id: data.user.id,
-          nombres: clientDetails.nombres,
-          apellidos: clientDetails.apellidos,
-          nickname: clientDetails.nickname,
-          usuario: email,
-          whatsapp: clientDetails.whatsapp,
-          pais: clientDetails.pais,
-          estado: 'pendiente'
-        })
-      }
-    }
-    return { data, error }
-  }
-
-  async function logout() {
-    await supabase.auth.signOut()
-    setPerfil(null)
-    setUser(null)
-  }
-
-  async function updatePassword(newPassword) {
-    return await supabase.auth.updateUser({ password: newPassword })
-  }
-
-  const isAdminOrRevendedor = ['admin', 'revendedor'].includes(perfil?.rol?.toLowerCase())
-  const isCliente = !isAdminOrRevendedor
-
-  const value = {
+  const value = useMemo(() => ({
     user,
     perfil,
     loading,
     isCliente,
     isAdminOrRevendedor,
-    login,
-    register,
-    logout,
-    updatePassword,
+    login: async (email, password) => await supabase.auth.signInWithPassword({ email, password }),
+    register: async (email, password, clientDetails) => {
+      const { data, error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: { data: clientDetails }
+      })
+      if (data?.user) {
+        const checkProfile = await supabase.from('perfiles').select('id').eq('id', data.user.id).maybeSingle()
+        if (!checkProfile.data) {
+          await supabase.from('perfiles').insert({ id: data.user.id, rol: 'cliente', estado: 'pendiente' })
+          await supabase.from('clientes').insert({
+            auth_user_id: data.user.id,
+            nombres: clientDetails.nombres,
+            apellidos: clientDetails.apellidos,
+            nickname: clientDetails.nickname,
+            usuario: email,
+            whatsapp: clientDetails.whatsapp,
+            pais: clientDetails.pais,
+            estado: 'pendiente'
+          })
+        }
+      }
+      return { data, error }
+    },
+    logout: async () => {
+      await supabase.auth.signOut()
+      setPerfil(null)
+      setUser(null)
+      lastUserIdRef.current = null
+    },
+    updatePassword: async (newPassword) => await supabase.auth.updateUser({ password: newPassword }),
     refetch: () => user && fetchPerfil(user.id)
-  }
+  }), [user, perfil, loading, isCliente, isAdminOrRevendedor])
 
   return (
     <AuthContext.Provider value={value}>
@@ -1063,16 +1067,20 @@ export function CartProvider({ children }) {
       : [{ id: 'pedido', error: errorMessage || 'No se pudo crear el pedido' }]
   }
 
-  const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0)
-  const totalUSD = cart.reduce((acc, item) => acc + (item.venta_usd * item.quantity), 0)
-  const totalBs = Math.round(cart.reduce((acc, item) => acc + (item.venta_bs * item.quantity), 0))
+  const totalItems = useMemo(() => cart.reduce((acc, item) => acc + item.quantity, 0), [cart])
+  const totalUSD = useMemo(() => cart.reduce((acc, item) => acc + (item.venta_usd * item.quantity), 0), [cart])
+  const totalBs = useMemo(() => Math.round(cart.reduce((acc, item) => acc + (item.venta_bs * item.quantity), 0)), [cart])
 
-  return React.createElement(CartContext.Provider, {
-    value: { 
-      cart, addToCart, removeFromCart, updateQuantity, clearCart, checkout, 
-      totalItems, totalUSD, totalBs 
-    }
-  }, children)
+  const value = useMemo(() => ({ 
+    cart, addToCart, removeFromCart, updateQuantity, clearCart, checkout, 
+    totalItems, totalUSD, totalBs 
+  }), [cart, totalItems, totalUSD, totalBs])
+
+  return (
+    <CartContext.Provider value={value}>
+      {children}
+    </CartContext.Provider>
+  )
 }
 
 export function useCart() {
