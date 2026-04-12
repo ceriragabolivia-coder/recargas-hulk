@@ -213,11 +213,24 @@ export default function App() {
     }
   }, [perfil, location.pathname])
 
-  if (loading || (user && !perfil)) {
+  // Timeout de seguridad para evitar spinner infinito en producción
+  const [forceLoad, setForceLoad] = useState(false)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        console.warn("⚠️ Sistema tardando demasiado en cargar. Forzando visibilidad...")
+        setForceLoad(true)
+      }
+    }, 8000)
+    return () => clearTimeout(timer)
+  }, [loading])
+
+  if ((loading || (user && !perfil)) && !forceLoad) {
     return (
       <div className="loading-screen">
         <div className="spinner"></div>
         <p>Iniciando sistema...</p>
+        <p style={{ fontSize: '0.8rem', marginTop: '10px', opacity: 0.6 }}>Esto puede tardar unos segundos</p>
       </div>
     )
   }

@@ -9,11 +9,12 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   
   const lastUserIdRef = useRef(null)
+  const isInitializedRef = useRef(false)
 
   async function fetchPerfilData(userId, existingUser = null) {
     if (!userId) return null
     try {
-      const authUser = existingUser
+      const authUser = existingUser || (await supabase.auth.getUser()).data?.user
       const { data: perfilData, error: errorP } = await supabase.from('perfiles').select('*').eq('id', userId).maybeSingle()
       let { data: clienteData, error: errorC } = await supabase.from('clientes').select('*').eq('auth_user_id', userId).maybeSingle()
       
@@ -95,14 +96,14 @@ export function AuthProvider({ children }) {
         .subscribe()
     }
 
-    const initializedRef = { current: false }
-
     const initializeAuth = async () => {
-      if (initializedRef.current) return
-      initializedRef.current = true
+      if (isInitializedRef.current) return
+      isInitializedRef.current = true
 
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        const { data: { session }, error } = await supabase.auth.getSession()
+        if (error) throw error
+        
         const u = session?.user ?? null
         if (u) {
           lastUserIdRef.current = u.id
@@ -112,7 +113,7 @@ export function AuthProvider({ children }) {
           setupRealtime(u.id)
         }
       } catch (err) {
-        console.error("Error initializing auth:", err)
+        console.error("Error crítico inicializando auth:", err)
       } finally {
         setLoading(false)
       }
