@@ -4,6 +4,7 @@ import { getLocalDateString } from '../utils/helpers'
 import { useConfigContext } from '../context/ConfigContext'
 
 const CartContext = createContext()
+const AuthContext = createContext()
 
 // ========================
 // HOOK: Configuración Global (Ahora usa el Contexto Global)
@@ -318,18 +319,20 @@ export function useVentas() {
 // ========================
 // HOOK: Auth
 // ========================
-export function useAuth() {
+// ========================
+// CONTEXTO: Auth (Centralizado)
+// ========================
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [perfil, setPerfil] = useState(null)
   const [loading, setLoading] = useState(true)
 
   async function fetchPerfil(userId) {
+    if (!userId) return
     const { data: authUser } = await supabase.auth.getUser()
     const { data: perfilData } = await supabase.from('perfiles').select('*').eq('id', userId).maybeSingle()
     let { data: clienteData } = await supabase.from('clientes').select('*').eq('auth_user_id', userId).maybeSingle()
     
-    // Si el usuario no tiene registro en 'clientes', crearlo automáticamente.
-    // Esto puede pasar con admins creados manualmente directamente en Supabase Auth.
     if (!clienteData && authUser?.user) {
       const u = authUser.user
       const { data: nuevoCliente } = await supabase.from('clientes').insert({
@@ -344,7 +347,6 @@ export function useAuth() {
       clienteData = nuevoCliente
     }
     
-    // Parche temporal: Forzamos admin para ceriraga@gmail.com
     if (authUser?.user?.id === userId && authUser?.user?.email === 'ceriraga@gmail.com') {
       setPerfil({ 
         ...clienteData,
@@ -357,7 +359,6 @@ export function useAuth() {
       return
     }
 
-    // Determinar ROL y ESTADO final con fallback a la tabla clientes
     const finalRol = (perfilData?.rol || clienteData?.rol || 'cliente').toLowerCase()
     const finalEstado = (perfilData?.estado || clienteData?.estado || 'pendiente').toLowerCase()
 
@@ -370,7 +371,6 @@ export function useAuth() {
       estado: finalEstado
     })
 
-    // Actualizar registro de último acceso de forma silenciosa si existe el cliente
     if (clienteData?.id) {
        supabase.from('clientes').update({ ultima_conexion: new Date().toISOString() }).eq('id', clienteData.id).then()
     }
@@ -394,28 +394,33 @@ export function useAuth() {
         .subscribe()
     }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Carga inicial de sesión
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       const u = session?.user ?? null
       setUser(u)
       if (u) {
-        fetchPerfil(u.id)
+        await fetchPerfil(u.id)
         setupRealtime(u.id)
       }
       setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Ignorar TOKEN_REFRESHED para evitar re-renders al cambiar de pestaña
+      // Ignorar TOKEN_REFRESHED para evitar re-renders innecesarios
       if (event === 'TOKEN_REFRESHED') return
-
+      
       const u = session?.user ?? null
-      setUser(u)
-      if (u) {
-        fetchPerfil(u.id)
-        setupRealtime(u.id)
-      } else {
-        setPerfil(null)
-        if (channel) supabase.removeChannel(channel)
+      
+      // Solo actualizar y re-fetch si el usuario realmente cambió o es un evento importante (SIGNED_IN, SIGNED_OUT)
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || (u?.id !== user?.id)) {
+        setUser(u)
+        if (u) {
+          fetchPerfil(u.id)
+          setupRealtime(u.id)
+        } else {
+          setPerfil(null)
+          if (channel) supabase.removeChannel(channel)
+        }
       }
     })
 
@@ -423,36 +428,23 @@ export function useAuth() {
       subscription.unsubscribe()
       if (channel) supabase.removeChannel(channel)
     }
-  }, [])
+  }, []) // Corregido: user.id ya no es dependencia directa aquí para evitar loops, el listener maneja el cambio
 
   async function login(email, password) {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    return { data, error }
+    return await supabase.auth.signInWithPassword({ email, password })
   }
 
   async function register(email, password, clientDetails) {
     const { data, error } = await supabase.auth.signUp({ 
       email, 
       password,
-      options: {
-        data: clientDetails
-      }
+      options: { data: clientDetails }
     })
     
-    // Si la autenticación en Supabase fue exitosa
     if (data?.user) {
-      // Intentamos sincronizar manualmente si el trigger de la BD no se disparó
       const checkProfile = await supabase.from('perfiles').select('id').eq('id', data.user.id).maybeSingle()
-      
       if (!checkProfile.data) {
-        // Creamos el perfil
-        await supabase.from('perfiles').insert({
-          id: data.user.id,
-          rol: 'cliente',
-          estado: 'pendiente'
-        })
-        
-        // Creamos el cliente
+        await supabase.from('perfiles').insert({ id: data.user.id, rol: 'cliente', estado: 'pendiente' })
         await supabase.from('clientes').insert({
           auth_user_id: data.user.id,
           nombres: clientDetails.nombres,
@@ -465,26 +457,48 @@ export function useAuth() {
         })
       }
     }
-    
     return { data, error }
   }
 
   async function logout() {
     await supabase.auth.signOut()
     setPerfil(null)
+    setUser(null)
   }
 
   async function updatePassword(newPassword) {
-    const { data, error } = await supabase.auth.updateUser({
-      password: newPassword
-    })
-    return { data, error }
+    return await supabase.auth.updateUser({ password: newPassword })
   }
 
   const isAdminOrRevendedor = ['admin', 'revendedor'].includes(perfil?.rol?.toLowerCase())
   const isCliente = !isAdminOrRevendedor
 
-  return { user, perfil, loading, isCliente, login, register, logout, updatePassword, refetch: () => user && fetchPerfil(user.id) }
+  const value = {
+    user,
+    perfil,
+    loading,
+    isCliente,
+    isAdminOrRevendedor,
+    login,
+    register,
+    logout,
+    updatePassword,
+    refetch: () => user && fetchPerfil(user.id)
+  }
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  )
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error('useAuth debe usarse dentro de un AuthProvider')
+  }
+  return context
 }
 
 // ========================

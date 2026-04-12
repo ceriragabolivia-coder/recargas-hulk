@@ -213,22 +213,11 @@ export default function App() {
     }
   }, [perfil, location.pathname])
 
-  if (loading) {
+  if (loading || (user && !perfil)) {
     return (
       <div className="loading-screen">
         <div className="spinner"></div>
         <p>Iniciando sistema...</p>
-      </div>
-    )
-  }
-
-  // Si hay sesión activa pero el perfil aún no ha cargado desde la BD,
-  // mostramos el spinner para evitar la pantalla en blanco.
-  if (user && !perfil) {
-    return (
-      <div className="loading-screen">
-        <div className="spinner"></div>
-        <p>Cargando perfil...</p>
       </div>
     )
   }
