@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { getLocalDateString } from '../utils/helpers'
 import { useConfigContext } from '../context/ConfigContext'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 
-// Re-exportar hooks de contexto para retrocompatibilidad
-export { useAuth } from '../context/AuthContext'
-export { useCart } from '../context/CartContext'
+// Re-exportar todo para mantener compatibilidad con el resto de la app
+export { useAuth, AuthProvider } from '../context/AuthContext'
+export { useCart, CartProvider } from '../context/CartContext'
 export { useConfigContext as useConfiguracion } from '../context/ConfigContext'
 
 // ========================
@@ -547,7 +547,7 @@ export function useWallet() {
   const [recargas, setRecargas] = useState([])
   const [transacciones, setTransacciones] = useState([])
   const [loading, setLoading] = useState(true)
-  const initialLoadDone = React.useRef(false)
+  const initialLoadDone = useRef(false)
 
   async function fetchWallet() {
     if (!user) return
