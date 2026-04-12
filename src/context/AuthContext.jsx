@@ -11,68 +11,64 @@ export function AuthProvider({ children }) {
   const lastUserIdRef = useRef(null)
   const isInitializedRef = useRef(false)
 
-  // Carga paralela de datos de perfil y cliente
+  // Carga de Perfil con Mecanismo de Carril Rápido
   async function fetchPerfilData(userId, authUser = null) {
     if (!userId) return null
+    
+    // Timeout de seguridad interno para la consulta a la base de datos (3s)
+    const dbTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('DB_TIMEOUT')), 3500))
+
     try {
-      // Paralelismo total: No esperar una para lanzar la otra
-      const queries = [
-        supabase.from('perfiles').select('*').eq('id', userId).maybeSingle(),
-        supabase.from('clientes').select('*').eq('auth_user_id', userId).maybeSingle()
-      ]
-      
-      const [resP, resC] = await Promise.all(queries)
-      const perfilData = resP.data
-      let clienteData = resC.data
-      
-      // Obtener el usuario de auth solo si no lo tenemos
-      const u = authUser || (await supabase.auth.getUser()).data?.user
+      const fetchPromise = (async () => {
+        const [resP, resC] = await Promise.all([
+          supabase.from('perfiles').select('*').eq('id', userId).maybeSingle(),
+          supabase.from('clientes').select('*').eq('auth_user_id', userId).maybeSingle()
+        ])
 
-      // Auto-registro para nuevos clientes que entran por primera vez
-      if (!clienteData && u) {
-        const { data: nuevoCliente } = await supabase.from('clientes').insert({
-          auth_user_id: userId,
-          nombres: u.user_metadata?.nombres || u.email?.split('@')[0] || 'Usuario',
-          apellidos: u.user_metadata?.apellidos || '',
-          usuario: u.email || userId,
-          nickname: u.user_metadata?.nickname || 'Usuario',
-          whatsapp: u.user_metadata?.whatsapp || '',
-          estado: 'aprobado'
-        }).select().maybeSingle()
-        clienteData = nuevoCliente
-      }
-      
-      // Lógica de Admin Prioritario
-      if (u?.email === 'ceriraga@gmail.com') {
-        const adminData = { 
-          ...clienteData,
-          id: userId,
-          cliente_uuid: clienteData?.id,
-          rol: 'admin', 
-          estado: 'aprobado'
+        const perfilData = resP.data
+        let clienteData = resC.data
+        const u = authUser || (await supabase.auth.getUser()).data?.user
+
+        // Crear registro si no existe
+        if (!clienteData && u) {
+          const { data: nuevoCliente } = await supabase.from('clientes').insert({
+            auth_user_id: userId,
+            nombres: u.user_metadata?.nombres || u.email?.split('@')[0] || 'Usuario',
+            apellidos: u.user_metadata?.apellidos || '',
+            usuario: u.email || userId,
+            nickname: u.user_metadata?.nickname || 'Usuario',
+            whatsapp: u.user_metadata?.whatsapp || '',
+            estado: 'aprobado'
+          }).select().maybeSingle()
+          clienteData = nuevoCliente
         }
-        if (clienteData?.id) supabase.from('clientes').update({ ultima_conexion: new Date().toISOString() }).eq('id', clienteData.id).then()
-        return adminData
-      }
 
-      // Perfil final consolidado
-      const fullPerfil = { 
-        ...clienteData, 
-        ...perfilData, 
-        id: userId, 
-        cliente_uuid: clienteData?.id || null,
-        rol: (perfilData?.rol || clienteData?.rol || 'cliente').toLowerCase(),
-        estado: (perfilData?.estado || clienteData?.estado || 'pendiente').toLowerCase()
-      }
+        const isAdminEmail = u?.email === 'ceriraga@gmail.com'
+        
+        return { 
+          ...clienteData, 
+          ...perfilData, 
+          id: userId, 
+          cliente_uuid: clienteData?.id || null,
+          rol: isAdminEmail ? 'admin' : (perfilData?.rol || clienteData?.rol || 'cliente').toLowerCase(),
+          estado: isAdminEmail ? 'aprobado' : (perfilData?.estado || clienteData?.estado || 'pendiente').toLowerCase(),
+          is_fallback: false
+        }
+      })()
 
-      if (clienteData?.id) {
-         supabase.from('clientes').update({ ultima_conexion: new Date().toISOString() }).eq('id', clienteData.id).then()
-      }
-      
-      return fullPerfil
+      // Competencia entre la base de datos y un perfil de emergencia
+      return await Promise.race([fetchPromise, dbTimeout])
+
     } catch (err) {
-      console.error("Error al cargar perfil:", err)
-      return { id: userId, rol: 'cliente', estado: 'error' }
+      console.warn("⚠️ Usando perfil de emergencia:", err.message)
+      // Perfil de emergencia mínimo para no bloquear la app
+      return { 
+        id: userId, 
+        rol: 'cliente', 
+        estado: 'pendiente', 
+        email: authUser?.email,
+        is_fallback: true 
+      }
     }
   }
 
@@ -99,21 +95,16 @@ export function AuthProvider({ children }) {
       isInitializedRef.current = true
 
       try {
-        // Carga rápida: getSession suele ser local si hay token
         const { data: { session } } = await supabase.auth.getSession()
         const u = session?.user ?? null
         
         if (u) {
           lastUserIdRef.current = u.id
           setUser(u)
-          // Un "fake loading" rápido para no bloquear: El App.jsx se encargará de mostrar algo
-          // Pero lanzamos la carga de perfil YA
           const pData = await fetchPerfilData(u.id, u)
           setPerfil(pData)
           setupRealtime(u.id)
         }
-      } catch (err) {
-        console.error("Fallo arranque auth:", err)
       } finally {
         setLoading(false)
       }
@@ -138,7 +129,7 @@ export function AuthProvider({ children }) {
       if (u && u.id !== lastUserIdRef.current) {
         lastUserIdRef.current = u.id
         setUser(u)
-        // No ponemos loading=true aquí para evitar parpadeos si no es estrictamente necesario
+        setLoading(true) 
         const pData = await fetchPerfilData(u.id, u)
         setPerfil(pData)
         setupRealtime(u.id)
@@ -156,16 +147,24 @@ export function AuthProvider({ children }) {
     ['admin', 'revendedor'].includes(perfil?.rol?.toLowerCase()), 
     [perfil?.rol]
   )
-  const isCliente = useMemo(() => !isAdminOrRevendedor, [isAdminOrRevendedor])
 
   const value = useMemo(() => ({
-    user, perfil, loading, isCliente, isAdminOrRevendedor,
-    login: async (email, password) => await supabase.auth.signInWithPassword({ email, password }),
+    user, perfil, loading, 
+    isCliente: !isAdminOrRevendedor,
+    isAdminOrRevendedor,
+    login: async (email, password) => {
+      setLoading(true) // Iniciar carga visual durante el login manual
+      const res = await supabase.auth.signInWithPassword({ email, password })
+      if (res.error) setLoading(false)
+      return res
+    },
     logout: async () => {
+      setLoading(true)
       await supabase.auth.signOut()
       setPerfil(null)
       setUser(null)
       lastUserIdRef.current = null
+      setLoading(false)
     },
     refetch: async () => {
        if (user) {
@@ -173,7 +172,7 @@ export function AuthProvider({ children }) {
          setPerfil(pData)
        }
     }
-  }), [user, perfil, loading, isCliente, isAdminOrRevendedor])
+  }), [user, perfil, loading, isAdminOrRevendedor])
 
   return (
     <AuthContext.Provider value={value}>
@@ -184,6 +183,6 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const context = useContext(AuthContext)
-  if (!context) throw new Error('useAuth falló: Contexto no encontrado')
+  if (!context) throw new Error('AuthProvider missing')
   return context
 }

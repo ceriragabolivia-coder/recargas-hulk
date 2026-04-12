@@ -226,6 +226,17 @@ export default function App() {
     return () => clearTimeout(timer)
   }, [loading])
 
+  // Watchdog: Si tenemos user pero no perfil después de 2s, intentar refetch manual
+  useEffect(() => {
+    if (user && !perfil && !loading) {
+      const t = setTimeout(() => {
+        console.log("🛠️ Watchdog: Intentando recuperación de perfil...");
+        refetch();
+      }, 2000);
+      return () => clearTimeout(t);
+    }
+  }, [user, perfil, loading, refetch])
+
   if ((loading || (user && !perfil)) && !forceLoad) {
     return (
       <div className="loading-screen">
