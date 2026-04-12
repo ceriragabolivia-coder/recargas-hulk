@@ -222,7 +222,7 @@ export default function App() {
         console.warn("⚠️ Sistema tardando demasiado en cargar. Forzando visibilidad...")
         setForceLoad(true)
       }
-    }, 8000)
+    }, 4000)
     return () => clearTimeout(timer)
   }, [loading])
 

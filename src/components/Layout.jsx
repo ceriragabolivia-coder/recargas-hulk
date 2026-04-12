@@ -286,8 +286,19 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
 
     let pCount = 0, oCount = 0, rCount = 0, sCount = 0
 
-    if (isAdmin) {
-      try {
+    if (!isAdmin) {
+      setCounts(prev => ({
+        ...prev,
+        pagos_pendientes: 0,
+        ordenes_pendientes: 0,
+        recargas_pendientes: 0,
+        soporte_pendientes: 0,
+        usuarios_online: onlineUsers.length,
+      }))
+      return
+    }
+
+    try {
         const { count: p, error: ep } = await supabase.from('pedidos').select('*', { count: 'exact', head: true }).is('pago_verificado', null).neq('estado', 'cancelado').neq('estado', 'reembolsado')
         const { count: o, error: eo } = await supabase.from('pedidos').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente')
         const { count: r, error: er } = await supabase.from('pedidos').select('*', { count: 'exact', head: true }).eq('pago_verificado', true).neq('estado', 'completado').neq('estado', 'cancelado').neq('estado', 'reembolsado')
