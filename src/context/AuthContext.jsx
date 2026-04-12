@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
   const lastUserIdRef = useRef(null)
   const isInitializedRef = useRef(false)
 
-  // Carga de Perfil optimizada con modo VIP y Failsafe
+  // Carga de Perfil optimizada con modo VIP y Failsafe (Incluye Billetera)
   async function fetchPerfilData(userId, authUser = null) {
     if (!userId) return null
     
@@ -19,6 +19,11 @@ export function AuthProvider({ children }) {
     const u = authUser || (await supabase.auth.getUser()).data?.user
     if (u?.email === 'ceriraga@gmail.com') {
       console.log('👑 Auth: Modo VIP activado para admin primario');
+      // Intentamos cargar billetera igual pero no bloqueamos
+      supabase.from('billeteras').select('*').eq('auth_user_id', userId).maybeSingle().then(({data}) => {
+        if (data) setPerfil(prev => ({ ...prev, ...data }));
+      });
+
       return { 
         id: userId, 
         rol: 'admin', 
@@ -30,17 +35,19 @@ export function AuthProvider({ children }) {
     }
 
     try {
-      // 2. Consulta paralela con Timeout de 2 segundos (Failsafe)
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 2000))
+      // 2. Consulta paralela con Timeout de 2.5 segundos (Failsafe)
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 2500))
       
       const fetchPromise = (async () => {
-        const [resP, resC] = await Promise.all([
+        const [resP, resC, resB] = await Promise.all([
           supabase.from('perfiles').select('*').eq('id', userId).maybeSingle(),
-          supabase.from('clientes').select('*').eq('auth_user_id', userId).maybeSingle()
+          supabase.from('clientes').select('*').eq('auth_user_id', userId).maybeSingle(),
+          supabase.from('billeteras').select('*').eq('auth_user_id', userId).maybeSingle()
         ])
         
         const perfilData = resP.data
         let clienteData = resC.data
+        const walletData = resB.data
         
         // Auto-creación de cliente si no existe
         if (!clienteData && u) {
@@ -59,6 +66,7 @@ export function AuthProvider({ children }) {
         return { 
           ...clienteData, 
           ...perfilData, 
+          ...walletData, // Restauramos saldo, saldo_bs, etc.
           id: userId, 
           cliente_uuid: clienteData?.id || null,
           rol: (perfilData?.rol || clienteData?.rol || 'cliente').toLowerCase(),
@@ -92,9 +100,8 @@ export function AuthProvider({ children }) {
       isInitializedRef.current = true
 
       try {
-        // Timeout para getSession (el Lock puede dejarlo colgado)
         const sessionPromise = supabase.auth.getSession()
-        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('LOCK')), 2500))
+        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('LOCK')), 3000))
         
         const { data: { session } } = await Promise.race([sessionPromise, timeout])
         const u = session?.user ?? null
@@ -107,7 +114,7 @@ export function AuthProvider({ children }) {
           setupRealtime(u.id)
         }
       } catch (err) {
-        console.error("❌ Auth: Error en inicialización inicial (posible bloqueo):", err)
+        console.error("❌ Auth: Error en inicialización inicial:", err)
       } finally {
         setLoading(false)
       }
