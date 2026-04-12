@@ -330,8 +330,8 @@ export function AuthProvider({ children }) {
   // Ref para evitar ciclos y re-fetch innecesarios al cambiar de pestaña
   const lastUserIdRef = useRef(null)
 
-  async function fetchPerfil(userId) {
-    if (!userId) return
+  async function fetchPerfilData(userId) {
+    if (!userId) return null
     try {
       const { data: authUser } = await supabase.auth.getUser()
       const { data: perfilData } = await supabase.from('perfiles').select('*').eq('id', userId).maybeSingle()
@@ -352,35 +352,45 @@ export function AuthProvider({ children }) {
       }
       
       if (authUser?.user?.id === userId && authUser?.user?.email === 'ceriraga@gmail.com') {
-        setPerfil({ 
+        const adminPerfil = { 
           ...clienteData,
           id: userId,
           cliente_uuid: clienteData?.id,
           rol: 'admin', 
           role: 'admin', 
           estado: 'aprobado'
-        })
-        return
+        }
+        if (clienteData?.id) {
+           supabase.from('clientes').update({ ultima_conexion: new Date().toISOString() }).eq('id', clienteData.id).then()
+        }
+        return adminPerfil
       }
 
       const finalRol = (perfilData?.rol || clienteData?.rol || 'cliente').toLowerCase()
       const finalEstado = (perfilData?.estado || clienteData?.estado || 'pendiente').toLowerCase()
 
-      setPerfil({ 
+      const fullPerfil = { 
         ...clienteData, 
         ...perfilData, 
         id: userId, 
         cliente_uuid: clienteData?.id || null,
         rol: finalRol,
         estado: finalEstado
-      })
+      }
 
       if (clienteData?.id) {
          supabase.from('clientes').update({ ultima_conexion: new Date().toISOString() }).eq('id', clienteData.id).then()
       }
+      return fullPerfil
     } catch (err) {
-      console.error("Error en fetchPerfil:", err)
+      console.error("Error en fetchPerfilData:", err)
+      return null
     }
+  }
+
+  const fetchPerfil = async (userId) => {
+    const data = await fetchPerfilData(userId)
+    if (data) setPerfil(data)
   }
 
   useEffect(() => {
@@ -406,8 +416,10 @@ export function AuthProvider({ children }) {
       const u = session?.user ?? null
       if (u) {
         lastUserIdRef.current = u.id
+        const pData = await fetchPerfilData(u.id)
+        // Seteamos ambos estados de forma sincronizada
+        setPerfil(pData)
         setUser(u)
-        await fetchPerfil(u.id)
         setupRealtime(u.id)
       }
       setLoading(false)
@@ -418,8 +430,6 @@ export function AuthProvider({ children }) {
       
       const u = session?.user ?? null
       
-      // Bloque de estabilidad: Solo actuar si el ID de usuario realmente cambió
-      // o si es un evento de salida explícita.
       if (event === 'SIGNED_OUT') {
         lastUserIdRef.current = null
         setUser(null)
@@ -428,10 +438,12 @@ export function AuthProvider({ children }) {
         return
       }
 
+      // Evitar parpadeos: Solo cargar si el usuario cambió
       if (u && u.id !== lastUserIdRef.current) {
         lastUserIdRef.current = u.id
+        const pData = await fetchPerfilData(u.id)
+        setPerfil(pData)
         setUser(u)
-        await fetchPerfil(u.id)
         setupRealtime(u.id)
       }
     })
