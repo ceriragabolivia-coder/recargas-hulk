@@ -1142,7 +1142,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
 
           {/* Items del pedido */}
           <div className="card" style={{ padding: '12px' }}>
-            <h3 style={{ marginBottom: '8px', color: 'var(--text-primary)', fontWeight: 800, fontSize: '18px', textTransform: 'uppercase' }}>Paquetes</h3>
+            <h3 style={{ marginBottom: '8px', color: 'var(--text-primary)', fontWeight: 800, fontSize: '18px', textTransform: 'uppercase' }}>Paquetes (Actualizado)</h3>
             <div style={{ display: 'grid', gap: '8px' }}>
               {(selectedPedido.pedido_items || []).map((item, idx) => (
                 <div key={idx} style={{
