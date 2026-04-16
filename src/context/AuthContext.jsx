@@ -19,13 +19,20 @@ export function AuthProvider({ children }) {
     const u = authUser || (await supabase.auth.getUser()).data?.user
     if (u?.email === 'ceriraga@gmail.com') {
       console.log('👑 Auth: Modo VIP activado para admin primario');
-      // Intentamos cargar billetera y cliente_uuid igual pero no bloqueamos
-      supabase.from('billeteras').select('*').eq('auth_user_id', userId).maybeSingle().then(({data}) => {
-        if (data) setPerfil(prev => ({ ...prev, ...data }));
-      });
-      supabase.from('clientes').select('id').eq('auth_user_id', userId).maybeSingle().then(({data}) => {
-        if (data) setPerfil(prev => ({ ...prev, cliente_uuid: data.id }));
-      });
+      
+      // Fetch safe essentials with a small timeout so we still keep it fast
+      let cliente_uuid = null;
+      let billetera = {};
+      try {
+        const [resC, resB] = await Promise.all([
+          supabase.from('clientes').select('id').eq('auth_user_id', userId).maybeSingle(),
+          supabase.from('billeteras').select('*').eq('auth_user_id', userId).maybeSingle()
+        ]);
+        cliente_uuid = resC.data?.id;
+        billetera = resB.data || {};
+      } catch (err) {
+        console.warn('⚠️ Error leve en Modo VIP:', err);
+      }
 
       return { 
         id: userId, 
@@ -33,7 +40,9 @@ export function AuthProvider({ children }) {
         estado: 'aprobado', 
         nombres: 'Administrador',
         nickname: 'Admin',
-        is_vip: true 
+        is_vip: true,
+        cliente_uuid,
+        ...billetera
       }
     }
 
