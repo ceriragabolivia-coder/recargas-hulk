@@ -690,6 +690,28 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
        return p
     }))
   }
+
+  const updateItemReference = async (itemId, referencia) => {
+    const { error } = await supabase.from('pedido_items').update({ referencia_admin: referencia }).eq('id', itemId)
+    if (error) {
+       showAlert("Error al actualizar referencia: " + error.message, 'error')
+       return
+    }
+    
+    setSelectedPedido(prev => {
+       if(!prev || !prev.pedido_items) return prev
+       const newItems = prev.pedido_items.map(i => i.id === itemId ? { ...i, referencia_admin: referencia } : i)
+       return { ...prev, pedido_items: newItems }
+    })
+    
+    setPedidos(prev => prev.map(p => {
+       if(p.id === selectedPedido?.id) {
+          const newItems = p.pedido_items?.map(i => i.id === itemId ? { ...i, referencia_admin: referencia } : i)
+          return { ...p, pedido_items: newItems }
+       }
+       return p
+    }))
+  }
   
   const handleConfirmRechazo = () => {
      if(!motivoRechazo.trim()) {
@@ -1182,6 +1204,27 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                   <div style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>
                     🎮 {item.juego_nombre} · Cantidad: {item.cantidad}
                   </div>
+
+                  {/* CAJA DE REFERENCIA (ADMIN -> CLIENTE) */}
+                  {isAdmin && selectedPedido.atendido_por_id === user.id && selectedPedido.estado === 'procesando' ? (
+                     <div style={{ marginBottom: '8px' }}>
+                        <input 
+                           type="text" 
+                           placeholder="Escribir Ref. de Recarga (Ej: Transacción #83274)" 
+                           defaultValue={item.referencia_admin || ''}
+                           onBlur={(e) => {
+                             if (e.target.value !== (item.referencia_admin || '')) {
+                               updateItemReference(item.id, e.target.value)
+                             }
+                           }}
+                           style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(0, 210, 255, 0.3)', backgroundColor: 'rgba(0, 210, 255, 0.05)', color: 'var(--accent-primary)', fontSize: '13px', outline: 'none', fontWeight: 600 }}
+                        />
+                     </div>
+                  ) : item.referencia_admin && (
+                     <div style={{ marginBottom: '8px', fontSize: '13px', padding: '6px 10px', backgroundColor: 'rgba(0, 210, 255, 0.08)', borderRadius: '6px', border: '1px dashed rgba(0, 210, 255, 0.3)', color: 'var(--accent-primary)', fontWeight: 700, display: 'inline-block' }}>
+                        📌 Ref. Recarga: {item.referencia_admin}
+                     </div>
+                  )}
 
                   {/* Datos de recarga */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
