@@ -102,20 +102,26 @@ export function CartProvider({ children }) {
         await supabase.from('pedido_items').delete().eq('pedido_id', existingPedidoId)
       }
 
-      const items = cart.map(item => ({
-        pedido_id: pedido.id,
-        producto_id: item.id,
-        juego_nombre: item.juego,
-        producto_nombre: item.nombre,
-        cantidad: item.quantity,
-        precio_usd: item.venta_usd,
-        precio_bs: item.venta_bs,
-        metodo_recarga: item.metodo_recarga,
-        player_id: item.player_id || null,
-        account_email: item.account_email || null,
-        account_password: item.account_password || null,
-        account_user: item.account_user || null
-      }))
+      const items = cart.flatMap(item => {
+        const rows = []
+        for (let i = 0; i < item.quantity; i++) {
+          rows.push({
+            pedido_id: pedido.id,
+            producto_id: item.id,
+            juego_nombre: item.juego,
+            producto_nombre: item.nombre,
+            cantidad: 1, // Dividimos en registros individuales para checks separados
+            precio_usd: item.venta_usd,
+            precio_bs: item.venta_bs,
+            metodo_recarga: item.metodo_recarga,
+            player_id: item.player_id || null,
+            account_email: item.account_email || null,
+            account_password: item.account_password || null,
+            account_user: item.account_user || null
+          })
+        }
+        return rows
+      })
 
       const { error: itemsError } = await supabase.from('pedido_items').insert(items)
       if (itemsError) throw itemsError
