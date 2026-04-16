@@ -19,9 +19,12 @@ export function AuthProvider({ children }) {
     const u = authUser || (await supabase.auth.getUser()).data?.user
     if (u?.email === 'ceriraga@gmail.com') {
       console.log('👑 Auth: Modo VIP activado para admin primario');
-      // Intentamos cargar billetera igual pero no bloqueamos
+      // Intentamos cargar billetera y cliente_uuid igual pero no bloqueamos
       supabase.from('billeteras').select('*').eq('auth_user_id', userId).maybeSingle().then(({data}) => {
         if (data) setPerfil(prev => ({ ...prev, ...data }));
+      });
+      supabase.from('clientes').select('id').eq('auth_user_id', userId).maybeSingle().then(({data}) => {
+        if (data) setPerfil(prev => ({ ...prev, cliente_uuid: data.id }));
       });
 
       return { 
