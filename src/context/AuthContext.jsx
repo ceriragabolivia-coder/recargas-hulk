@@ -182,6 +182,16 @@ export function AuthProvider({ children }) {
       if (res.error) setLoading(false)
       return res
     },
+    register: async (email, password, metadata) => {
+      setLoading(true)
+      const res = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: metadata }
+      })
+      if (res.error) setLoading(false)
+      return res
+    },
     logout: async () => {
       setLoading(true)
       await supabase.auth.signOut()
