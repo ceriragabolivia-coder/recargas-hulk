@@ -19,6 +19,9 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
   const [showClientModal, setShowClientModal] = useState(false)
   const [modalClient, setModalClient] = useState(null)
   const [alertModal, setAlertModal] = useState(null) // { title, message, type, onConfirm }
+  
+  const [rechazandoItem, setRechazandoItem] = useState(null) // ID del item si se está rechazando
+  const [motivoRechazo, setMotivoRechazo] = useState('')
 
   // Paginación
   const [currentPage, setCurrentPage] = useState(1)
@@ -663,6 +666,41 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
     setSelectedPedido(prev => ({ ...prev, [field]: value }))
   }
 
+  const updateItemEstado = async (itemId, nuevoEstado, adminMsg = null) => {
+    const updateData = { estado: nuevoEstado }
+    if (adminMsg !== null) updateData.notas_admin = adminMsg
+
+    const { error } = await supabase.from('pedido_items').update(updateData).eq('id', itemId)
+    if (error) {
+       showAlert("Error al actualizar estado del paquete: " + error.message, 'error')
+       return
+    }
+    
+    setSelectedPedido(prev => {
+       if(!prev || !prev.pedido_items) return prev
+       const newItems = prev.pedido_items.map(i => i.id === itemId ? { ...i, ...updateData } : i)
+       return { ...prev, pedido_items: newItems }
+    })
+    
+    setPedidos(prev => prev.map(p => {
+       if(p.id === selectedPedido?.id) {
+          const newItems = p.pedido_items?.map(i => i.id === itemId ? { ...i, ...updateData } : i)
+          return { ...p, pedido_items: newItems }
+       }
+       return p
+    }))
+  }
+  
+  const handleConfirmRechazo = () => {
+     if(!motivoRechazo.trim()) {
+        showAlert("Debes escribir un motivo por el cual no se pudo recargar este paquete.", "error")
+        return
+     }
+     updateItemEstado(rechazandoItem, 'fallido', motivoRechazo)
+     setRechazandoItem(null)
+     setMotivoRechazo('')
+  }
+
   const showAlert = (message, type = 'info', onConfirm = null) => {
     setAlertModal({ message, type, onConfirm });
   }
@@ -1108,32 +1146,85 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
             <div style={{ display: 'grid', gap: '8px' }}>
               {(selectedPedido.pedido_items || []).map((item, idx) => (
                 <div key={idx} style={{
-                  padding: '10px', backgroundColor: 'var(--bg-card)', borderRadius: '8px',
-                  border: '1px solid var(--border-color)'
+                  padding: '12px', backgroundColor: 'var(--bg-card)', borderRadius: '12px',
+                  border: `2px solid ${item.estado === 'completado' ? 'rgba(34, 197, 94, 0.4)' : item.estado === 'fallido' ? 'rgba(239, 68, 68, 0.4)' : 'var(--border-color)'}`,
+                  transition: 'all 0.3s ease'
                 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '20px' }}>{item.producto_nombre}</span>
-                    <span style={{ color: 'var(--accent-success)', fontWeight: 700, fontSize: '18px' }}>{formatBs(item.precio_bs)}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'flex-start' }}>
+                    <div>
+                      <span style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '20px' }}>{item.producto_nombre}</span>
+                      
+                      {/* ESTADO LABEL CLIENTE/GENERAL */}
+                      {item.estado === 'completado' && <span style={{ marginLeft: '10px', backgroundColor: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, verticalAlign: 'middle', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{fontSize: '14px'}}>✅</span> Recargado</span>}
+                      {item.estado === 'fallido' && <span style={{ marginLeft: '10px', backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, verticalAlign: 'middle', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{fontSize: '14px'}}>❌</span> Error</span>}
+                    </div>
+                    
+                    <div style={{ textAlign: 'right' }}>
+                       <span style={{ color: 'var(--accent-success)', fontWeight: 700, fontSize: '18px', display: 'block' }}>{formatBs(item.precio_bs)}</span>
+
+                       {/* BOTONES ADMIN */}
+                       {isAdmin && selectedPedido.atendido_por_id === user.id && selectedPedido.estado === 'procesando' && (
+                         <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', marginTop: '6px' }}>
+                            <button
+                               onClick={() => updateItemEstado(item.id, item.estado === 'completado' ? 'pendiente' : 'completado', null)}
+                               style={{ width: '32px', height: '32px', border: '2px solid #22c55e', backgroundColor: item.estado === 'completado' ? '#22c55e' : 'rgba(34, 197, 94, 0.1)', color: item.estado === 'completado' ? '#fff' : '#22c55e', borderRadius: '8px', cursor: 'pointer', fontSize: '16px', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                               title={item.estado === 'completado' ? "Desmarcar completo" : "Marcar como recargado/completado"}
+                            >✓</button>
+                            <button
+                               onClick={() => { setRechazandoItem(item.id === rechazandoItem ? null : item.id); setMotivoRechazo(item.notas_admin || ''); }}
+                               style={{ width: '32px', height: '32px', border: '2px solid #ef4444', backgroundColor: item.estado === 'fallido' ? '#ef4444' : 'rgba(239, 68, 68, 0.1)', color: item.estado === 'fallido' ? '#fff' : '#ef4444', borderRadius: '8px', cursor: 'pointer', fontSize: '16px', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                               title="Marcar como fallido y agregar motivo"
+                            >✕</button>
+                         </div>
+                       )}
+                    </div>
                   </div>
-                  <div style={{ fontSize: '18px', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                  <div style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>
                     🎮 {item.juego_nombre} · Cantidad: {item.cantidad}
                   </div>
 
                   {/* Datos de recarga */}
-                  {item.metodo_recarga === 'cuenta_completa' ? (
-                    <div style={{ fontSize: '18px', padding: '8px 12px', backgroundColor: 'rgba(0, 210, 255, 0.08)', borderRadius: '8px', marginTop: '8px' }}>
-                      <div style={{ color: 'var(--accent-primary)' }}>📧 {item.account_email}</div>
-                      <div style={{ color: 'var(--accent-primary)', marginTop: '4px' }}>🔑 {item.account_password}</div>
-                    </div>
-                  ) : item.metodo_recarga === 'usuario_clave' ? (
-                    <div style={{ fontSize: '18px', padding: '8px 12px', backgroundColor: 'rgba(0, 210, 255, 0.08)', borderRadius: '8px', marginTop: '8px' }}>
-                      <div style={{ color: 'var(--accent-primary)' }}>👤 {item.account_user}</div>
-                      <div style={{ color: 'var(--accent-primary)', marginTop: '4px' }}>🔑 {item.account_password}</div>
-                    </div>
-                  ) : item.player_id && (
-                    <div style={{ fontSize: '18px', padding: '8px 12px', backgroundColor: 'rgba(0, 210, 255, 0.08)', borderRadius: '8px', marginTop: '8px', color: 'var(--accent-primary)' }}>
-                      🆔 ID del Jugador: {item.player_id}
-                    </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {item.metodo_recarga === 'cuenta_completa' ? (
+                      <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
+                        <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>📧 {item.account_email}</div>
+                        <div style={{ color: 'var(--accent-primary)', marginTop: '4px', fontFamily: 'monospace' }}>🔑 {item.account_password}</div>
+                      </div>
+                    ) : item.metodo_recarga === 'usuario_clave' ? (
+                      <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
+                        <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>👤 {item.account_user}</div>
+                        <div style={{ color: 'var(--accent-primary)', marginTop: '4px', fontFamily: 'monospace' }}>🔑 {item.account_password}</div>
+                      </div>
+                    ) : item.player_id && (
+                      <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)', color: 'var(--accent-primary)', fontWeight: 'bold' }}>
+                        🆔 ID del Jugador: {item.player_id}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* CAJA DE SELECCIÓN DE RECHAZO (ADMIN) */}
+                  {rechazandoItem === item.id && isAdmin && (
+                     <div style={{ marginTop: '12px', padding: '16px', backgroundColor: 'rgba(239, 68, 68, 0.08)', borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.3)', animation: 'fadeIn 0.2s' }}>
+                       <label style={{ display: 'block', fontSize: '12px', color: '#ef4444', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px' }}>Motivo del Fallo de Recarga:</label>
+                       <textarea 
+                          placeholder="Ej: El ID proporcionado no corresponde a ninguna cuenta en la región especificada..." 
+                          value={motivoRechazo} 
+                          onChange={(e) => setMotivoRechazo(e.target.value)}
+                          style={{ width: '100%', height: '60px', borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(239, 68, 68, 0.4)', color: 'white', padding: '10px', fontSize: '14px', outline: 'none' }}
+                       />
+                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
+                          <button onClick={() => setRechazandoItem(null)} style={{ padding: '6px 16px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontWeight: 600 }}>Cancelar</button>
+                          <button onClick={handleConfirmRechazo} style={{ padding: '6px 16px', borderRadius: '8px', border: 'none', backgroundColor: '#ef4444', color: 'white', cursor: 'pointer', fontWeight: 700 }}>Marcar como Fallido</button>
+                       </div>
+                     </div>
+                  )}
+
+                  {/* NOTA DE MOTIVO DE FALLO (VISIBLE SIEMPRE SI EXISTE) */}
+                  {item.estado === 'fallido' && item.notas_admin && (
+                     <div style={{ marginTop: '12px', padding: '12px 16px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', borderLeft: '4px solid #ef4444' }}>
+                       <div style={{ fontSize: '11px', color: '#ef4444', fontWeight: 800, textTransform: 'uppercase', marginBottom: '4px' }}>Detalles del Error</div>
+                       <div style={{ fontSize: '14px', color: '#ffb3b3', whiteSpace: 'pre-line' }}>{item.notas_admin}</div>
+                     </div>
                   )}
                 </div>
               ))}
