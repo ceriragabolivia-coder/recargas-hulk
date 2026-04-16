@@ -69,7 +69,6 @@ export function CartProvider({ children }) {
         referencia_pago: referencia || 'N/A',
         total_usd: finalUSD,
         total_bs: finalBs,
-        whatsapp_cliente: whatsapp || null,
         estado: 'pendiente',
         comprobante_url: comprobanteUrl || null
       }
