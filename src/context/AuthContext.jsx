@@ -20,19 +20,24 @@ export function AuthProvider({ children }) {
     if (u?.email === 'ceriraga@gmail.com') {
       console.log('👑 Auth: Modo VIP activado para admin primario');
       
-      // Fetch safe essentials with a small timeout so we still keep it fast
-      let cliente_uuid = null;
-      let billetera = {};
-      try {
-        const [resC, resB] = await Promise.all([
-          supabase.from('clientes').select('id').eq('auth_user_id', userId).maybeSingle(),
-          supabase.from('billeteras').select('*').eq('auth_user_id', userId).maybeSingle()
-        ]);
-        cliente_uuid = resC.data?.id;
-        billetera = resB.data || {};
-      } catch (err) {
-        console.warn('⚠️ Error leve en Modo VIP:', err);
-      }
+      // Async lookup without blocking return
+      Promise.all([
+        supabase.from('clientes').select('id').eq('auth_user_id', userId).maybeSingle(),
+        supabase.from('billeteras').select('*').eq('auth_user_id', userId).maybeSingle()
+      ]).then(([resC, resB]) => {
+        setTimeout(() => {
+          setPerfil(prev => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              ...(resB.data || {}),
+              cliente_uuid: resC.data?.id || prev.cliente_uuid
+            }
+          });
+        }, 500); // Dar tiempo a que el setPerfil síncrono ocurra
+      }).catch(err => {
+        console.warn('⚠️ Error leve en Modo VIP asíncrono:', err);
+      });
 
       return { 
         id: userId, 
@@ -40,9 +45,7 @@ export function AuthProvider({ children }) {
         estado: 'aprobado', 
         nombres: 'Administrador',
         nickname: 'Admin',
-        is_vip: true,
-        cliente_uuid,
-        ...billetera
+        is_vip: true 
       }
     }
 
