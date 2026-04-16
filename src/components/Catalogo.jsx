@@ -88,30 +88,34 @@ export default function Catalogo() {
             </h2>
             
             <div style={{ 
-              backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '12px', 
-              marginBottom: '24px', border: '1px solid var(--border-color)', textAlign: 'left'
+              backgroundColor: 'rgba(0,0,0,0.3)', padding: '24px', borderRadius: '12px', 
+              marginBottom: '24px', border: '1px solid rgba(255,255,255,0.08)', textAlign: 'left',
+              boxShadow: 'inset 0 4px 24px rgba(0,0,0,0.6)'
             }}>
-              <div style={{ fontSize: '15px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Paquete:</span> 
-                <span style={{ color: 'var(--accent-success)', fontWeight: 700 }}>
-                  {pendingItem.p.nombre} ({formatBs(pendingItem.finalPrice.venta_bs)})
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '16px', marginBottom: '16px' }}>
+                <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-muted)' }}>Paquete:</span> 
+                <span style={{ textAlign: 'right' }}>
+                  <div style={{ color: 'var(--accent-success)', fontWeight: 800, fontSize: '16px' }}>{pendingItem.p.nombre}</div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>{formatBs(pendingItem.finalPrice.venta_bs)}</div>
                 </span>
               </div>
-              <div style={{ fontSize: '15px', display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Cuenta a Recargar:</span> 
-                <span style={{ color: 'var(--text-muted)', textAlign: 'right' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-muted)' }}>Cuenta a Recargar:</span> 
+                <span style={{ color: '#ffffff', textAlign: 'right', fontWeight: 800, fontSize: '18px', letterSpacing: '1px', textShadow: '0 2px 10px rgba(0,210,255,0.4)' }}>
                   {pendingItem.selectedJuego.metodo_recarga === 'cuenta_completa' 
-                    ? <>Correo: {pendingItem.localRechargeData.account_email}<br/>Clave: {pendingItem.localRechargeData.account_password}</>
+                    ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Correo:</span><br/>{pendingItem.localRechargeData.account_email}<br/><div style={{height:8}}></div><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Clave:</span><br/>{pendingItem.localRechargeData.account_password}</>
                     : pendingItem.selectedJuego.metodo_recarga === 'usuario_clave'
-                    ? <>Usuario: {pendingItem.localRechargeData.account_user}<br/>Clave: {pendingItem.localRechargeData.account_password}</>
-                    : `ID/UID: ${pendingItem.localRechargeData.player_id}`}
+                    ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Usuario:</span><br/>{pendingItem.localRechargeData.account_user}<br/><div style={{height:8}}></div><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Clave:</span><br/>{pendingItem.localRechargeData.account_password}</>
+                    : <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>ID/UID:</span><br/>{pendingItem.localRechargeData.player_id}</>}
                 </span>
               </div>
             </div>
 
-            <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '32px', lineHeight: '1.5', fontStyle: 'italic' }}>
-              Al presionar el botón de "Si" usted confirma que verificó la información proporcionada por usted mismo.
-            </p>
+            <div style={{ backgroundColor: 'rgba(255, 171, 0, 0.1)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(255, 171, 0, 0.2)', marginBottom: '32px' }}>
+              <p style={{ fontSize: '14px', color: '#ffab00', lineHeight: '1.5', fontWeight: 600, margin: 0 }}>
+                ⚠️ Al presionar "¡Sí, Confirmar!" certificas que tu información es correcta.
+              </p>
+            </div>
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
               <button 
