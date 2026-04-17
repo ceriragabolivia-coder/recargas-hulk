@@ -152,28 +152,28 @@ function WalletWidget({ onNavigate }) {
     <div 
       onClick={() => onNavigate('billetera')}
       style={{
-        display: 'flex', alignItems: 'center', gap: '12px',
-        padding: '6px 16px', borderRadius: '14px',
+        display: 'flex', alignItems: 'center', gap: '8px',
+        padding: '6px 12px', borderRadius: '14px',
         backgroundColor: 'rgba(255, 255, 255, 0.03)',
         border: '1px solid var(--border-color)',
         cursor: 'pointer', transition: 'all 0.2s ease',
-        marginLeft: '8px'
+        marginLeft: '4px'
       }}
       className="wallet-widget-hover"
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <span style={{ fontSize: '18px' }} title="Billetera Digital">💼</span>
-        <div style={{ display: 'flex', gap: '16px' }}>
-          {/* USD balance hidden for Cliente role */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span className="desktop-only" style={{ fontSize: '18px' }} title="Billetera Digital">💼</span>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          {/* USD balance hidden for Cliente role and hidden on mobile to save space */}
           {!isCliente && (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="desktop-only" style={{ display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>USD</span>
               <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--accent-success)' }}>
                 {loading ? '...' : formatUSD(wallet?.saldo || 0)}
               </span>
             </div>
           )}
-          <div style={{ display: 'flex', flexDirection: 'column', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', borderLeft: !isCliente ? '1px solid rgba(255,255,255,0.1)' : 'none', paddingLeft: !isCliente ? '12px' : '0' }} className={!isCliente ? "mobile-no-border-left" : ""}>
             <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bs</span>
             <span style={{ fontSize: '13px', fontWeight: 800, color: '#a855f7' }}>
               {loading ? '...' : formatBs(wallet?.saldo_bs || 0)}
@@ -183,6 +183,7 @@ function WalletWidget({ onNavigate }) {
       </div>
       <button 
         onClick={(e) => { e.stopPropagation(); onNavigate('billetera'); }}
+        className="desktop-only"
         style={{
           width: '24px', height: '24px', borderRadius: '50%',
           backgroundColor: 'var(--accent-primary)', color: 'black',
@@ -786,6 +787,12 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
           background: rgba(0, 210, 255, 0.05) !important;
         }
         .nav-item-promo .nav-item-icon { filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5)); }
+        
+        @media (max-width: 768px) {
+          .desktop-only { display: none !important; }
+          .mobile-no-border-left { border-left: none !important; padding-left: 0 !important; }
+          .wallet-widget-hover { padding: 4px 10px !important; gap: 6px !important; }
+        }
       `}</style>
       {/* Mobile Sidebar Backdrop */}
       <div className={`sidebar-backdrop ${sidebarOpen ? 'active' : ''}`} onClick={() => setSidebarOpen(false)} />
