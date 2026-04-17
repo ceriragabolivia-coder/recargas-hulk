@@ -170,10 +170,10 @@ export default function Catalogo() {
         </div>
       )}
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px', alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-start' }}>
         
         {/* COLUMNA IZQUIERDA (Info y Características) */}
-        <div style={{ flex: '1 1 280px', maxWidth: '350px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ flex: '1 1 280px', maxWidth: '350px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           
           <button className="btn btn-ghost" onClick={() => setSelectedJuego(null)} style={{ alignSelf: 'flex-start', padding: '8px 16px', backgroundColor: 'var(--bg-panel)' }}>
             ← Volver al Catálogo
@@ -191,8 +191,8 @@ export default function Catalogo() {
             </div>
           </div>
 
-          <div className="card" style={{ padding: '20px' }}>
-            <h3 style={{ fontSize: '14px', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '16px', letterSpacing: '1px', fontWeight: 700 }}> Características</h3>
+          <div className="card" style={{ padding: '16px' }}>
+            <h3 style={{ fontSize: '14px', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '12px', letterSpacing: '1px', fontWeight: 700 }}> Características</h3>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', borderBottom: '1px solid var(--border-color)' }}>
@@ -225,7 +225,7 @@ export default function Catalogo() {
               target="_blank" 
               rel="noreferrer"
               style={{
-                display: 'flex', alignItems: 'center', gap: '12px', padding: '16px',
+                display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
                 backgroundColor: 'rgba(0, 210, 255, 0.1)', borderRadius: '12px',
                 border: '1px solid rgba(0, 210, 255, 0.2)', textDecoration: 'none',
                 transition: 'all 0.2s ease', cursor: 'pointer'
@@ -244,7 +244,7 @@ export default function Catalogo() {
         </div>
         
         {/* COLUMNA DERECHA (Formulario de Recarga y Productos) */}
-        <div style={{ flex: '2 1 500px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ flex: '2 1 500px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
           {config?.promo_banner_texto && (
             <a 
@@ -252,7 +252,7 @@ export default function Catalogo() {
               target={config.promo_banner_link ? "_blank" : "_self"}
               rel="noreferrer"
               style={{
-                display: 'flex', alignItems: 'center', gap: '16px', padding: '20px',
+                display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 20px',
                 background: 'linear-gradient(135deg, rgba(255, 171, 0, 0.15) 0%, rgba(255, 86, 48, 0.15) 100%)', 
                 borderRadius: '16px', border: '1px solid rgba(255, 171, 0, 0.3)', textDecoration: 'none',
               }}
@@ -269,7 +269,7 @@ export default function Catalogo() {
             </a>
           )}
 
-          <div className="card card-recharge-info" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderLeft: '4px solid var(--accent-primary)', padding: '24px' }}>
+          <div className="card card-recharge-info" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderLeft: '4px solid var(--accent-primary)', padding: '16px' }}>
             {selectedJuego.metodo_recarga === 'cuenta_completa' ? (
               <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
                 <div style={{ flex: '1 1 200px' }}>
