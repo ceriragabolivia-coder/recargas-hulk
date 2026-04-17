@@ -13,7 +13,14 @@ console.log('🚀 Iniciando sistema principal...');
 // Error Boundary simple para producción
 class RootErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { hasError: false, error: null }; }
-  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  static getDerivedStateFromError(error) { 
+    // Auto-recargar silenciosamente si el error es de un archivo JS desactualizado por un nuevo despliegue
+    if (error && error.message && error.message.includes("Failed to fetch dynamically imported module")) {
+      window.location.reload();
+      return { hasError: false, error: null };
+    }
+    return { hasError: true, error }; 
+  }
   componentDidCatch(error, info) { console.error("❌ Error Fatal en React:", error, info); }
   render() {
     if (this.state.hasError) {
