@@ -590,6 +590,28 @@ export function useWallet() {
 
   useEffect(() => {
     fetchWallet()
+
+    if (!user) return;
+
+    // Suscripción Realtime para actualizar el saldo en toda la app sin recargar
+    const channel = supabase
+      .channel(`wallet_updates_${user.id}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'billeteras',
+        filter: `auth_user_id=eq.${user.id}`
+      }, (payload) => {
+        console.log("Cambio en billetera detectado:", payload);
+        if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+           setWallet(payload.new);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    }
   }, [user])
 
   return { wallet, recargas, transacciones, loading, solicitarRecarga, refetch: fetchWallet }
