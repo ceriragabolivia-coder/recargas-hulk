@@ -25,6 +25,7 @@ export default function Billetera({ onNavigate }) {
   // Estado para solicitudes pendientes (Solo Admin)
   const [pendingRecargas, setPendingRecargas] = useState([])
   const [approvedRecargas, setApprovedRecargas] = useState([])
+  const [adminSalesBalance, setAdminSalesBalance] = useState({ usd: 0, bs: 0 })
   const [loadingAdmin, setLoadingAdmin] = useState(false)
 
   const fetchPendingRecargas = async () => {
@@ -74,6 +75,19 @@ export default function Billetera({ onNavigate }) {
     setLoadingAdmin(false)
   }
 
+  const fetchAdminSalesBalance = async () => {
+    if (!isAdmin || !perfil?.id) return
+    const { data } = await supabase
+      .from('admin_saldos')
+      .select('saldo_usd, saldo_bs')
+      .eq('auth_user_id', perfil.id)
+      .maybeSingle()
+    
+    if (data) {
+      setAdminSalesBalance({ usd: data.saldo_usd, bs: data.saldo_bs })
+    }
+  }
+
   const handleViewOrder = async (orderId) => {
     if (!orderId) return
     setLoadingOrder(true)
@@ -95,8 +109,11 @@ export default function Billetera({ onNavigate }) {
   }
 
   useEffect(() => {
-    if (isAdmin) fetchPendingRecargas()
-  }, [isAdmin])
+    if (isAdmin) {
+      fetchPendingRecargas()
+      fetchAdminSalesBalance()
+    }
+  }, [isAdmin, perfil?.id])
 
   useEffect(() => {
     if (isCliente) setMonedaRecarga('bs')
@@ -248,6 +265,40 @@ export default function Billetera({ onNavigate }) {
               </div>
             </div>
           </div>
+
+          {/* Saldo de Ventas (Solo para Administradores) */}
+          {isAdmin && (
+            <div className="card" style={{ 
+              background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(0, 210, 255, 0.05) 100%)',
+              border: '1px solid rgba(0, 210, 255, 0.2)',
+              padding: '20px', marginBottom: '8px'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>💰 Mi Saldo de Ventas (Acumulado)</h3>
+                  <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-muted)' }}>Monto bruto total de pedidos procesados por ti.</p>
+                </div>
+                <button className="btn btn-ghost btn-sm" onClick={fetchAdminSalesBalance}>🔄</button>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div style={{ padding: '12px', background: 'var(--bg-panel)', borderRadius: '12px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Pendiente USD</div>
+                  <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent-success)' }}>{formatUSD(adminSalesBalance.usd)}</div>
+                </div>
+                <div style={{ padding: '12px', background: 'var(--bg-panel)', borderRadius: '12px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Pendiente Bs</div>
+                  <div style={{ fontSize: '18px', fontWeight: 800, color: '#a855f7' }}>{formatBs(adminSalesBalance.bs)}</div>
+                </div>
+              </div>
+              <button 
+                className="btn btn-primary btn-sm" 
+                style={{ width: '100%', marginTop: '16px', height: '36px', fontSize: '12px' }}
+                onClick={() => onNavigate('pagos_admins')}
+              >
+                Ver Detalle en Pagos Admins
+              </button>
+            </div>
+          )}
 
           {/* Gestión Admin de Recargas */}
           {isAdmin && (
