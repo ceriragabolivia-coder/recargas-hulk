@@ -31,7 +31,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
     setLoading(true)
     let query = supabase
       .from('pedidos')
-      .select('*, pedido_items(*)')
+      .select('*, pedido_items(*, productos(icono_url))')
       .order('created_at', { ascending: false })
 
     if (user && !isAdmin) {
@@ -347,7 +347,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
     if (selectedPedido?.id === pedidoId) {
       const { data: updatedPedido } = await supabase
         .from('pedidos')
-        .select('*, pedido_items(*)')
+        .select('*, pedido_items(*, productos(icono_url))')
         .eq('id', pedidoId)
         .single()
       if (updatedPedido) {
@@ -528,7 +528,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
         .from('pedidos')
         .update({ pago_verificado: true, updated_at: new Date().toISOString() })
         .eq('id', pedido.id)
-        .select('*, pedido_items(*)')
+        .select('*, pedido_items(*, productos(icono_url))')
         .single();
 
       if (error) {
@@ -603,7 +603,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
         updated_at: new Date().toISOString()
       })
       .eq('id', pedido.id)
-      .select('*, pedido_items(*)')
+      .select('*, pedido_items(*, productos(icono_url))')
       .single();
 
     if (error) {
@@ -1224,8 +1224,16 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                   transition: 'all 0.3s ease'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'flex-start' }}>
-                    <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      {item.productos?.icono_url && (
+                        <img 
+                          src={item.productos.icono_url} 
+                          alt="Icono" 
+                          style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--border-color)' }}
+                        />
+                      )}
                       <span style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '20px' }}>{item.producto_nombre}</span>
+                    </div>
                       
                       {/* ESTADO LABEL CLIENTE/GENERAL */}
                       {item.estado === 'completado' && <span style={{ marginLeft: '10px', backgroundColor: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, verticalAlign: 'middle', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{fontSize: '14px'}}>✅</span> Recargado</span>}
