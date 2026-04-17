@@ -378,20 +378,47 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
 
   const [showReembolsoModal, setShowReembolsoModal] = useState(false);
   const [reembolsoPedido, setReembolsoPedido] = useState(null);
+  const [reembolsoMonto, setReembolsoMonto] = useState('');
+  const [reembolsoMoneda, setReembolsoMoneda] = useState('bs');
+  const [reembolsoCambiarEstado, setReembolsoCambiarEstado] = useState(true);
 
   const handleReembolsoSelect = (pedido) => {
     setReembolsoPedido(pedido);
+    // Pre-llenar con el total y verificar si se usó billetera por referencia
+    const isBsUsed = pedido.referencia_pago?.toLowerCase().includes('billetera bs');
+    const isUsUsed = pedido.referencia_pago?.toLowerCase().includes('billetera usd');
+    
+    setReembolsoMoneda(isUsUsed ? 'usd' : 'bs');
+    
+    // Intentar extraer el monto parcial si existe en la referencia
+    let prefillMonto = null;
+    if (isBsUsed || isUsUsed) {
+      const match = pedido.referencia_pago.match(/billetera\s+(bs|usd):\s*([0-9.,]+)/i);
+      if (match && match[2]) {
+        prefillMonto = match[2].replace(/\./g, '').replace(/,/g, '.'); // Convertir "1.500" o "15,50" a numero
+      }
+    }
+    
+    setReembolsoMonto(prefillMonto || (isUsUsed ? pedido.total_usd : pedido.total_bs));
+    setReembolsoCambiarEstado(true);
     setShowReembolsoModal(true);
   }
 
-  const ejecutarReembolso = async (pedido, moneda) => {
+  const ejecutarReembolso = async (pedido, moneda, monto, cambiarEstado) => {
+    if (!monto || isNaN(monto) || Number(monto) <= 0) {
+      showAlert("Por favor ingresa un monto válido a reembolsar.", "error");
+      return;
+    }
+    
     setShowReembolsoModal(false);
     setLoading(true);
     const { data, error } = await supabase.rpc('reembolsar_pedido_rpc', {
       p_pedido_id: pedido.id,
       p_admin_id: user.id,
-      p_notas: `Reembolso administrativo por pedido #${pedido.numero_pedido} (${moneda === 'bs' ? 'Bolívares' : 'USD'})`,
-      p_moneda: moneda
+      p_notas: `Reembolso administrativo ${cambiarEstado ? 'y cancelación' : 'parcial'} por pedido #${pedido.numero_pedido} (${moneda === 'bs' ? 'Bolívares' : 'USD'})`,
+      p_moneda: moneda,
+      p_monto: Number(monto),
+      p_cambiar_estado: cambiarEstado
     });
 
     if (error) {
@@ -401,11 +428,14 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
       showAlert(data.error, 'error');
     } else {
       playCashRegisterSound();
-      const monedaLabel = moneda === 'bs' ? formatBs(pedido.total_bs) : `$${Number(pedido.total_usd).toFixed(2)}`;
-      showAlert(`✅ Pedido reembolsado con éxito. ${monedaLabel} acreditados a la billetera ${moneda === 'bs' ? 'Bolívares' : 'USD'} del cliente.`, 'success');
-      const updateData = { estado: 'reembolsado', updated_at: new Date().toISOString() };
-      setPedidos(prev => prev.map(p => p.id === pedido.id ? { ...p, ...updateData } : p));
-      setSelectedPedido(prev => ({ ...prev, ...updateData }));
+      const monedaLabel = moneda === 'bs' ? formatBs(monto) : `$${Number(monto).toFixed(2)}`;
+      showAlert(`✅ Reembolso exitoso. ${monedaLabel} acreditados a la billetera ${moneda === 'bs' ? 'Bolívares' : 'USD'} del cliente.`, 'success');
+      
+      if (cambiarEstado) {
+        const updateData = { estado: 'reembolsado', updated_at: new Date().toISOString() };
+        setPedidos(prev => prev.map(p => p.id === pedido.id ? { ...p, ...updateData } : p));
+        setSelectedPedido(prev => ({ ...prev, ...updateData }));
+      }
     }
     setLoading(false);
   }
@@ -420,70 +450,72 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
       }} onClick={() => setShowReembolsoModal(false)}>
         <div style={{
           backgroundColor: '#1a1d21', width: '100%', maxWidth: '420px', borderRadius: '24px',
-          padding: '32px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.05)',
+          padding: '24px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.05)',
           position: 'relative', overflow: 'hidden'
         }} onClick={e => e.stopPropagation()}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(to right, #e040fb, #8b5cf6)' }}></div>
 
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <div style={{ fontSize: '40px', marginBottom: '12px' }}>💸</div>
-            <h2 style={{ fontSize: '20px', color: '#fff', marginBottom: '4px' }}>Reembolsar Pedido #{reembolsoPedido.numero_pedido}</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Selecciona la billetera de destino</p>
+          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+            <div style={{ fontSize: '32px', marginBottom: '8px' }}>💸</div>
+            <h2 style={{ fontSize: '20px', color: '#fff', marginBottom: '4px' }}>Reembolso de Billetera</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Pedido #{reembolsoPedido.numero_pedido} | Ref: {reembolsoPedido.referencia_pago}</p>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <button
-              onClick={() => ejecutarReembolso(reembolsoPedido, 'usd')}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '16px 20px', borderRadius: '16px', border: '2px solid rgba(0, 210, 255, 0.3)',
-                backgroundColor: 'rgba(0, 210, 255, 0.05)', cursor: 'pointer', transition: 'all 0.2s ease',
-                color: '#fff'
-              }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent-primary)'; e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.1)'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(0, 210, 255, 0.3)'; e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.05)'; }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '24px' }}>💵</span>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontWeight: 700, fontSize: '15px' }}>Billetera USD</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Dólares Americanos</div>
-                </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Moneda a reembolsar:</label>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={() => setReembolsoMoneda('usd')}
+                  style={{
+                    flex: 1, padding: '10px', borderRadius: '12px', border: `2px solid ${reembolsoMoneda === 'usd' ? 'rgba(0, 210, 255, 0.8)' : 'rgba(255,255,255,0.1)'}`,
+                    backgroundColor: reembolsoMoneda === 'usd' ? 'rgba(0, 210, 255, 0.1)' : 'transparent', color: '#fff', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s'
+                  }}
+                >💵 USD</button>
+                <button
+                  onClick={() => setReembolsoMoneda('bs')}
+                  style={{
+                    flex: 1, padding: '10px', borderRadius: '12px', border: `2px solid ${reembolsoMoneda === 'bs' ? '#8b5cf6' : 'rgba(255,255,255,0.1)'}`,
+                    backgroundColor: reembolsoMoneda === 'bs' ? 'rgba(139, 92, 246, 0.1)' : 'transparent', color: '#fff', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s'
+                  }}
+                >🏦 Bs</button>
               </div>
-              <span style={{ fontWeight: 800, color: 'var(--accent-success)', fontSize: '18px' }}>
-                ${Number(reembolsoPedido.total_usd).toFixed(2)}
-              </span>
-            </button>
+            </div>
 
-            <button
-              onClick={() => ejecutarReembolso(reembolsoPedido, 'bs')}
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Monto a acreditar ({reembolsoMoneda.toUpperCase()}):</label>
+              <input 
+                type="number" 
+                step="0.01"
+                value={reembolsoMonto}
+                onChange={e => setReembolsoMonto(e.target.value)}
+                style={{ width: '100%', padding: '12px', borderRadius: '12px', backgroundColor: 'rgba(0,0,0,0.4)', border: '1px solid var(--border-color)', color: '#fff', fontSize: '16px', outline: 'none' }}
+                placeholder="Ej. 1500"
+              />
+            </div>
+            
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '12px', cursor: 'pointer' }}>
+              <input 
+                type="checkbox" 
+                checked={reembolsoCambiarEstado}
+                onChange={e => setReembolsoCambiarEstado(e.target.checked)}
+                style={{ width: '18px', height: '18px' }}
+              />
+              <span style={{ fontSize: '13px', color: '#fff' }}>Marcar el pedido como <span style={{ color: '#e040fb', fontWeight: 700 }}>REEMBOLSADO</span> al cliente. <br/><span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(Desmárcalo si solo quieres devolver saldo pero mantener el pedido como Fallido)</span></span>
+            </label>
+
+            <button 
+              onClick={() => ejecutarReembolso(reembolsoPedido, reembolsoMoneda, reembolsoMonto, reembolsoCambiarEstado)}
               style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '16px 20px', borderRadius: '16px', border: '2px solid rgba(139, 92, 246, 0.3)',
-                backgroundColor: 'rgba(139, 92, 246, 0.05)', cursor: 'pointer', transition: 'all 0.2s ease',
-                color: '#fff'
+                width: '100%', padding: '14px', borderRadius: '12px', border: 'none', backgroundColor: '#e040fb', color: '#fff', fontWeight: 700, fontSize: '15px', cursor: 'pointer', marginTop: '8px'
               }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = '#8b5cf6'; e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.1)'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)'; e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.05)'; }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '24px' }}>🏦</span>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontWeight: 700, fontSize: '15px' }}>Billetera Bolívares</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Bolívares Venezolanos</div>
-                </div>
-              </div>
-              <span style={{ fontWeight: 800, color: '#a855f7', fontSize: '18px' }}>
-                {formatBs(reembolsoPedido.total_bs)}
-              </span>
+              Confirmar Reembolso
             </button>
+            <button onClick={() => setShowReembolsoModal(false)} style={{
+              width: '100%', padding: '12px', borderRadius: '12px', backgroundColor: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border-color)', fontWeight: 600, cursor: 'pointer'
+            }}>Cancelar</button>
           </div>
-
-          <button onClick={() => setShowReembolsoModal(false)} style={{
-            width: '100%', marginTop: '20px', padding: '12px', borderRadius: '12px',
-            backgroundColor: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', border: '1px solid var(--border-color)',
-            fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s'
-          }}>Cancelar</button>
         </div>
       </div>
     );
@@ -879,13 +911,14 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                       ❌ Cancelar
                     </button>
                   )}
-                  {selectedPedido.pago_verificado === true && !['completado', 'cancelado', 'reembolsado'].includes(selectedPedido.estado) && (
+                  {/* Botón de reembolso - Mostrar en pedidos no completados ni previamente reembolsados */}
+                  {!['completado', 'reembolsado'].includes(selectedPedido.estado) && (
                     <button
                       className="btn btn-sm"
                       style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: 'rgba(224, 64, 251, 0.1)', color: '#e040fb', border: '1px solid #e040fb' }}
                       onClick={() => handleReembolsoSelect(selectedPedido)}
                     >
-                      💸 Reembolsar
+                      💸 Devolver Fondo
                     </button>
                   )}
                 </>
