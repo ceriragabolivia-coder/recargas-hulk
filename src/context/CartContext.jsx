@@ -117,7 +117,8 @@ export function CartProvider({ children }) {
             player_id: item.player_id || null,
             account_email: item.account_email || null,
             account_password: item.account_password || null,
-            account_user: item.account_user || null
+            account_user: item.account_user || null,
+            producto_icono: item.icono_url || null
           })
         }
         return rows

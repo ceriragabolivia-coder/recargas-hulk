@@ -1225,9 +1225,9 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'flex-start' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      {item.productos?.icono_url && (
+                      {(item.producto_icono || item.productos?.icono_url) && (
                         <img 
-                          src={item.productos.icono_url} 
+                          src={item.producto_icono || item.productos?.icono_url} 
                           alt="Icono" 
                           style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--border-color)' }}
                         />
