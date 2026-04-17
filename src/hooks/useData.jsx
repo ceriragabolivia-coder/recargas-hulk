@@ -4,10 +4,12 @@ import { getLocalDateString } from '../utils/helpers'
 import { useConfigContext } from '../context/ConfigContext'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
+import { useWallet } from '../context/WalletContext'
 
 // Re-exportar todo para mantener compatibilidad con el resto de la app
 export { useAuth, AuthProvider } from '../context/AuthContext'
 export { useCart, CartProvider } from '../context/CartContext'
+export { useWallet, WalletProvider } from '../context/WalletContext'
 export { useConfigContext as useConfiguracion } from '../context/ConfigContext'
 
 // ========================
@@ -538,128 +540,8 @@ export function useMetodosPago() {
   return { metodos, loading, createMetodo, updateMetodo, deleteMetodo, refetch: fetchMetodos, cancelarPedidosExpirados }
 }
 
+// HOOK: Billetera (ELIMINADO - Ahora en WalletContext.jsx)
 // ========================
-// HOOK: Billetera
-// ========================
-export function useWallet() {
-  const { user, perfil } = useAuth()
-  const [wallet, setWallet] = useState(null)
-  const [adminSalesBalance, setAdminSalesBalance] = useState({ saldo_usd: 0, saldo_bs: 0 })
-  const [recargas, setRecargas] = useState([])
-  const [transacciones, setTransacciones] = useState([])
-  const [loading, setLoading] = useState(true)
-  const initialLoadDone = useRef(false)
-
-  async function fetchWallet() {
-    if (!user) return
-    if (!initialLoadDone.current) setLoading(true)
-    const { data: walletData } = await supabase
-      .from('billeteras')
-      .select('*')
-      .eq('auth_user_id', user.id)
-      .maybeSingle()
-    setWallet(walletData || { saldo: 0, saldo_bs: 0 })
-
-    // Si es administrador, buscar saldo de ventas
-    if (perfil?.rol?.toLowerCase() === 'admin') {
-      const { data: salesData } = await supabase
-        .from('admin_saldos')
-        .select('*')
-        .eq('auth_user_id', user.id)
-        .maybeSingle()
-      if (salesData) setAdminSalesBalance(salesData)
-    }
-
-    const { data: recargasData } = await supabase
-      .from('billetera_recargas')
-      .select('*, metodos_pago(nombre)')
-      .eq('auth_user_id', user.id)
-      .order('created_at', { ascending: false })
-    setRecargas(recargasData || [])
-
-    const { data: transData } = await supabase
-      .from('billetera_transacciones')
-      .select('*')
-      .eq('auth_user_id', user.id)
-      .order('created_at', { ascending: false })
-    setTransacciones(transData || [])
-    setLoading(false)
-    initialLoadDone.current = true
-  }
-
-  async function solicitarRecarga(monto, metodoId, referencia, comprobanteUrl = null, moneda = 'usd') {
-    const { data, error } = await supabase.from('billetera_recargas').insert({
-      auth_user_id: user.id,
-      monto,
-      metodo_pago_id: metodoId,
-      referencia_pago: referencia,
-      comprobante_url: comprobanteUrl,
-      moneda
-    }).select()
-    return { data, error }
-  }
-
-  useEffect(() => {
-    fetchWallet()
-
-    if (!user) return;
-
-    // Suscripción Realtime para actualizar el saldo en toda la app sin recargar
-    const channelId = `wallet_updates_${user.id}_${Math.random().toString(36).substring(2, 9)}`;
-    const channel = supabase
-      .channel(channelId)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'billeteras',
-        filter: `auth_user_id=eq.${user.id}`
-      }, (payload) => {
-        console.log("Cambio en billetera detectado:", payload);
-        if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
-           setWallet(payload.new);
-        }
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    }
-  }, [user])
-
-  // Efecto separado para suscripción a saldo admin
-  useEffect(() => {
-    if (!user || perfil?.rol?.toLowerCase() !== 'admin') return;
-
-    const channelId = `admin_sales_updates_${user.id}_${Math.random().toString(36).substring(2, 9)}`;
-    const channel = supabase
-      .channel(channelId)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'admin_saldos',
-        filter: `auth_user_id=eq.${user.id}`
-      }, (payload) => {
-        if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
-           setAdminSalesBalance(payload.new);
-        }
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    }
-  }, [user, perfil?.rol])
-
-  return { 
-    wallet, 
-    adminSalesBalance,
-    recargas, 
-    transacciones, 
-    loading, 
-    solicitarRecarga, 
-    refetch: fetchWallet 
-  }
-}
 
 // ========================
 // HOOK: Mensajes del Sistema

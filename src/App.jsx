@@ -4,6 +4,7 @@ import Layout from './components/Layout'
 import Login from './components/Login'
 import Register from './components/Register'
 import { useAuth, useConfiguracion } from './hooks/useData'
+import { WalletProvider } from './context/WalletContext'
 
 // Componentes estáticos (carga inmediata)
 import SupportChat from './components/SupportChat'
@@ -315,10 +316,12 @@ export default function App() {
   }
 
   return (
-    <Layout currentPage={currentPage} onNavigate={handleNavigate} onOpenChat={!isAdmin ? () => setIsSupportChatOpen(true) : undefined}>
-      <PageRoutes />
-      <Cart onGoToCheckout={() => navigate('/Checkout')} />
-      {!isAdmin && <SupportChat perfil={perfil} forceOpen={isSupportChatOpen} onClose={() => setIsSupportChatOpen(false)} />}
-    </Layout>
+    <WalletProvider>
+      <Layout currentPage={currentPage} onNavigate={handleNavigate} onOpenChat={!isAdmin ? () => setIsSupportChatOpen(true) : undefined}>
+        <PageRoutes />
+        <Cart onGoToCheckout={() => navigate('/Checkout')} />
+        {!isAdmin && <SupportChat perfil={perfil} forceOpen={isSupportChatOpen} onClose={() => setIsSupportChatOpen(false)} />}
+      </Layout>
+    </WalletProvider>
   )
 }
