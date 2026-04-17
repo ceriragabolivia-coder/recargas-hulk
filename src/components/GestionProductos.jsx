@@ -413,6 +413,9 @@ export default function GestionProductos() {
     }
   }
 
+  const iconosExistentes = Array.from(new Set(productos.filter(p => p?.icono_url).map(p => p.icono_url)));
+  const infoImagesExistentes = Array.from(new Set(productos.filter(p => p?.info_adicional_imagen_url).map(p => p.info_adicional_imagen_url)));
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div className="page-header">
@@ -701,7 +704,7 @@ export default function GestionProductos() {
         <h2 className="modal-title">{formData.id ? `Editar paquete en ${selectedJuego?.nombre}` : `Añadir a ${selectedJuego?.nombre}`}</h2>
         <form onSubmit={handleSubmit}>
           {/* SECTOR DE ÍCONO */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24 }}>
             <div
               onClick={() => document.getElementById('modal-icon-upload').click()}
               style={{
@@ -738,6 +741,36 @@ export default function GestionProductos() {
                 }
               }}
             />
+            {iconosExistentes.length > 0 && (
+              <div style={{ width: '100%', maxWidth: '300px', marginTop: 12, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <span style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 6 }}>O selecciona un ícono existente (ahorra espacio):</span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+                  {iconosExistentes.map((url, idx) => (
+                    <img
+                      key={`ico-${idx}`}
+                      src={url}
+                      alt="Usar existente"
+                      title="Haz clic para usar este ícono"
+                      onClick={() => {
+                        setNewIconFile(null)
+                        setIconPreview(url)
+                        setFormData(prev => ({ ...prev, icono_url: url }))
+                      }}
+                      style={{
+                        width: 32, height: 32, borderRadius: 6, cursor: 'pointer',
+                        border: (!newIconFile && formData.icono_url === url) ? '2px solid var(--accent-primary)' : '1px solid var(--border-active)',
+                        objectFit: 'contain', backgroundColor: 'var(--bg-panel)', padding: 2,
+                        transition: 'all 0.2s',
+                        transform: (!newIconFile && formData.icono_url === url) ? 'scale(1.1)' : 'scale(1)',
+                        opacity: (!newIconFile && formData.icono_url === url) ? 1 : 0.6
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                      onMouseLeave={e => { if (newIconFile || formData.icono_url !== url) e.currentTarget.style.opacity = 0.6 }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="form-group">
@@ -816,34 +849,66 @@ export default function GestionProductos() {
 
           <div className="form-group" style={{ marginBottom: '24px' }}>
             <label className="form-label">Imagen Adjunta (Opcional)</label>
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <div style={{ width: 60, height: 60, borderRadius: 8, backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                {newInfoFile ? (
-                  <img src={URL.createObjectURL(newInfoFile)} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : formData.info_adicional_imagen_url ? (
-                  <img src={formData.info_adicional_imagen_url} alt="info" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  <span style={{ fontSize: 24, opacity: 0.3 }}>🖼️</span>
-                )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <div style={{ width: 60, height: 60, borderRadius: 8, backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                  {newInfoFile ? (
+                    <img src={URL.createObjectURL(newInfoFile)} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : formData.info_adicional_imagen_url ? (
+                    <img src={formData.info_adicional_imagen_url} alt="info" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <span style={{ fontSize: 24, opacity: 0.3 }}>🖼️</span>
+                  )}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <input
+                    type="file"
+                    id="info-file-upload"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files[0]
+                      if (file) setNewInfoFile(file)
+                    }}
+                  />
+                  <label htmlFor="info-file-upload" className="btn btn-ghost btn-sm">
+                    📤 Subir Imagen
+                  </label>
+                  {(newInfoFile || formData.info_adicional_imagen_url) && (
+                    <button type="button" className="btn btn-ghost btn-sm text-danger" style={{ marginLeft: '8px', color: '#ff5252' }} onClick={() => { setNewInfoFile(null); setFormData(prev => ({...prev, info_adicional_imagen_url: null})) }}>🗑️ Quitar</button>
+                  )}
+                </div>
               </div>
-              <div style={{ flex: 1 }}>
-                <input
-                  type="file"
-                  id="info-file-upload"
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={(e) => {
-                    const file = e.target.files[0]
-                    if (file) setNewInfoFile(file)
-                  }}
-                />
-                <label htmlFor="info-file-upload" className="btn btn-ghost btn-sm">
-                  📤 Subir Imagen
-                </label>
-                {(newInfoFile || formData.info_adicional_imagen_url) && (
-                  <button type="button" className="btn btn-ghost btn-sm text-danger" style={{ marginLeft: '8px', color: '#ff5252' }} onClick={() => { setNewInfoFile(null); setFormData(prev => ({...prev, info_adicional_imagen_url: null})) }}>🗑️ Quitar</button>
-                )}
-              </div>
+
+              {infoImagesExistentes.length > 0 && (
+                <div style={{ marginTop: 4 }}>
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>O reutiliza una imagen descriptiva existente:</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {infoImagesExistentes.map((url, idx) => (
+                      <img
+                        key={`info-${idx}`}
+                        src={url}
+                        alt="Usar existente"
+                        title="Haz clic para usar esta imagen"
+                        onClick={() => {
+                          setNewInfoFile(null)
+                          setFormData(prev => ({ ...prev, info_adicional_imagen_url: url }))
+                        }}
+                        style={{
+                          width: 44, height: 32, borderRadius: 4, cursor: 'pointer',
+                          border: (!newInfoFile && formData.info_adicional_imagen_url === url) ? '2px solid var(--accent-primary)' : '1px solid var(--border-active)',
+                          objectFit: 'cover', backgroundColor: 'var(--bg-panel)',
+                          transition: 'all 0.2s',
+                          transform: (!newInfoFile && formData.info_adicional_imagen_url === url) ? 'scale(1.1)' : 'scale(1)',
+                          opacity: (!newInfoFile && formData.info_adicional_imagen_url === url) ? 1 : 0.6
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                        onMouseLeave={e => { if (newInfoFile || formData.info_adicional_imagen_url !== url) e.currentTarget.style.opacity = 0.6 }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
