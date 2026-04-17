@@ -542,8 +542,9 @@ export function useMetodosPago() {
 // HOOK: Billetera
 // ========================
 export function useWallet() {
-  const { user } = useAuth()
+  const { user, perfil } = useAuth()
   const [wallet, setWallet] = useState(null)
+  const [adminSalesBalance, setAdminSalesBalance] = useState({ saldo_usd: 0, saldo_bs: 0 })
   const [recargas, setRecargas] = useState([])
   const [transacciones, setTransacciones] = useState([])
   const [loading, setLoading] = useState(true)
@@ -558,6 +559,16 @@ export function useWallet() {
       .eq('auth_user_id', user.id)
       .maybeSingle()
     setWallet(walletData || { saldo: 0, saldo_bs: 0 })
+
+    // Si es administrador, buscar saldo de ventas
+    if (perfil?.rol?.toLowerCase() === 'admin') {
+      const { data: salesData } = await supabase
+        .from('admin_saldos')
+        .select('*')
+        .eq('auth_user_id', user.id)
+        .maybeSingle()
+      if (salesData) setAdminSalesBalance(salesData)
+    }
 
     const { data: recargasData } = await supabase
       .from('billetera_recargas')
@@ -615,7 +626,39 @@ export function useWallet() {
     }
   }, [user])
 
-  return { wallet, recargas, transacciones, loading, solicitarRecarga, refetch: fetchWallet }
+  // Efecto separado para suscripción a saldo admin
+  useEffect(() => {
+    if (!user || perfil?.rol?.toLowerCase() !== 'admin') return;
+
+    const channelId = `admin_sales_updates_${user.id}_${Math.random().toString(36).substring(2, 9)}`;
+    const channel = supabase
+      .channel(channelId)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'admin_saldos',
+        filter: `auth_user_id=eq.${user.id}`
+      }, (payload) => {
+        if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+           setAdminSalesBalance(payload.new);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    }
+  }, [user, perfil?.rol])
+
+  return { 
+    wallet, 
+    adminSalesBalance,
+    recargas, 
+    transacciones, 
+    loading, 
+    solicitarRecarga, 
+    refetch: fetchWallet 
+  }
 }
 
 // ========================

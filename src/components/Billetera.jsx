@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import AlertModal from './AlertModal'
 
 export default function Billetera({ onNavigate }) {
-  const { wallet, recargas, transacciones, loading, solicitarRecarga, refetch } = useWallet()
+  const { wallet, adminSalesBalance, recargas, transacciones, loading, solicitarRecarga, refetch } = useWallet()
   const { perfil, isCliente } = useAuth()
   const { metodos } = useMetodosPago()
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
@@ -25,7 +25,6 @@ export default function Billetera({ onNavigate }) {
   // Estado para solicitudes pendientes (Solo Admin)
   const [pendingRecargas, setPendingRecargas] = useState([])
   const [approvedRecargas, setApprovedRecargas] = useState([])
-  const [adminSalesBalance, setAdminSalesBalance] = useState({ usd: 0, bs: 0 })
   const [loadingAdmin, setLoadingAdmin] = useState(false)
 
   const fetchPendingRecargas = async () => {
@@ -111,7 +110,6 @@ export default function Billetera({ onNavigate }) {
   useEffect(() => {
     if (isAdmin) {
       fetchPendingRecargas()
-      fetchAdminSalesBalance()
     }
   }, [isAdmin, perfil?.id])
 
@@ -278,16 +276,16 @@ export default function Billetera({ onNavigate }) {
                   <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>💰 Mi Saldo de Ventas (Acumulado)</h3>
                   <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-muted)' }}>Monto bruto total de pedidos procesados por ti.</p>
                 </div>
-                <button className="btn btn-ghost btn-sm" onClick={fetchAdminSalesBalance}>🔄</button>
+                <button className="btn btn-ghost btn-sm" onClick={refetch}>🔄</button>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div style={{ padding: '12px', background: 'var(--bg-panel)', borderRadius: '12px', textAlign: 'center' }}>
                   <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Pendiente USD</div>
-                  <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent-success)' }}>{formatUSD(adminSalesBalance.usd)}</div>
+                  <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent-success)' }}>{formatUSD(adminSalesBalance.saldo_usd || 0)}</div>
                 </div>
                 <div style={{ padding: '12px', background: 'var(--bg-panel)', borderRadius: '12px', textAlign: 'center' }}>
                   <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Pendiente Bs</div>
-                  <div style={{ fontSize: '18px', fontWeight: 800, color: '#a855f7' }}>{formatBs(adminSalesBalance.bs)}</div>
+                  <div style={{ fontSize: '18px', fontWeight: 800, color: '#a855f7' }}>{formatBs(adminSalesBalance.saldo_bs || 0)}</div>
                 </div>
               </div>
               <button 

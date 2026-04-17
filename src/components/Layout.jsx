@@ -147,8 +147,9 @@ function NotificationBar({ counts, onNavigate, config, onlineUsers }) {
 }
 
 function WalletWidget({ onNavigate }) {
-  const { wallet, loading } = useWallet()
+  const { wallet, adminSalesBalance, loading } = useWallet()
   const { perfil, isCliente } = useAuth()
+  const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
   return (
     <div 
       onClick={() => onNavigate('billetera')}
@@ -168,7 +169,7 @@ function WalletWidget({ onNavigate }) {
           {/* USD balance hidden for Cliente role and hidden on mobile to save space */}
           {!isCliente && (
             <div className="desktop-only" style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>USD</span>
+              <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{isAdmin ? 'Saldo' : 'USD'}</span>
               <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--accent-success)' }}>
                 {loading ? '...' : formatUSD(wallet?.saldo || 0)}
               </span>
@@ -182,6 +183,29 @@ function WalletWidget({ onNavigate }) {
           </div>
         </div>
       </div>
+
+      {/* Saldo Adicional para Administradores (Recaudación de Ventas) */}
+      {isAdmin && (
+        <div 
+          onClick={(e) => { e.stopPropagation(); onNavigate('pagos_admins'); }}
+          style={{ 
+            display: 'flex', alignItems: 'center', gap: '12px', 
+            paddingLeft: '12px', marginLeft: '4px',
+            borderLeft: '1px solid rgba(255,255,255,0.1)' 
+          }}
+          title="Ver saldo operativo (recaudación de ventas)"
+        >
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontSize: '8px', color: 'var(--accent-primary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px' }}>OPERATIVO</span>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+               <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--accent-success)' }}>{formatUSD(adminSalesBalance.saldo_usd || 0)}</span>
+               <span style={{ fontSize: '12px', fontWeight: 700, color: '#a855f7' }}>{formatBs(adminSalesBalance.saldo_bs || 0)}</span>
+            </div>
+          </div>
+          <span style={{ fontSize: '16px' }}>💸</span>
+        </div>
+      )}
+
       <button 
         onClick={(e) => { e.stopPropagation(); onNavigate('billetera'); }}
         className="desktop-only"
@@ -190,7 +214,8 @@ function WalletWidget({ onNavigate }) {
           backgroundColor: 'var(--accent-primary)', color: 'black',
           border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: '16px', fontWeight: 'bold', cursor: 'pointer',
-          boxShadow: '0 0 10px rgba(0, 210, 255, 0.3)'
+          boxShadow: '0 0 10px rgba(0, 210, 255, 0.3)',
+          marginLeft: '4px'
         }}
       >
         +
