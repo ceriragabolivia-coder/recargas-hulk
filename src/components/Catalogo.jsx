@@ -179,15 +179,15 @@ export default function Catalogo() {
             ← Volver al Catálogo
           </button>
           
-          <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '20px 16px', gap: '12px' }}>
+          <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '12px 16px', gap: '4px' }}>
             {selectedJuego.icono_url ? (
               <img src={selectedJuego.icono_url} alt={selectedJuego.nombre} style={{ width: 160, height: 160, minWidth: 160, minHeight: 160, flexShrink: 0, objectFit: 'cover', borderRadius: '24px', filter: 'drop-shadow(0 12px 24px rgba(0,0,0,0.4))', backgroundColor: 'rgba(255,255,255,0.02)' }} />
             ) : (
               <div style={{ fontSize: '120px' }}>🎮</div>
             )}
-            <div>
-              <h1 style={{ fontSize: '24px', fontWeight: 800, margin: '8px 0 4px 0', color: 'var(--text-primary)' }}>{selectedJuego.nombre}</h1>
-              <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Lista de Precios Oficial</p>
+            <div style={{ marginTop: '0px' }}>
+              <h1 style={{ fontSize: '24px', fontWeight: 800, margin: '4px 0 2px 0', color: 'var(--text-primary)' }}>{selectedJuego.nombre}</h1>
+              <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '4px' }}>Lista de Precios Oficial</p>
             </div>
           </div>
 
