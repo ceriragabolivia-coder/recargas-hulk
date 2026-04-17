@@ -586,6 +586,15 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
       return;
     }
 
+    // RESTRICCIÓN: No permitir tomar pedido si el pago no está verificado
+    if (pedido.pago_verificado !== true) {
+      showAlert(
+        "No puedes tomar este pedido porque el pago aún no ha sido verificado por administración.",
+        'warning'
+      );
+      return;
+    }
+
     const { data, error } = await supabase
       .from('pedidos')
       .update({
@@ -880,8 +889,16 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
               {!selectedPedido.atendido_por_id ? (
                 <button
                   className="btn btn-primary btn-sm"
-                  style={{ padding: '4px 12px', fontSize: '12px', backgroundColor: '#8b5cf6', borderColor: '#8b5cf6' }}
+                  style={{ 
+                    padding: '4px 12px', 
+                    fontSize: '12px', 
+                    backgroundColor: selectedPedido.pago_verificado === true ? '#8b5cf6' : 'var(--text-muted)', 
+                    borderColor: selectedPedido.pago_verificado === true ? '#8b5cf6' : 'var(--text-muted)',
+                    opacity: selectedPedido.pago_verificado === true ? 1 : 0.5,
+                    cursor: selectedPedido.pago_verificado === true ? 'pointer' : 'not-allowed'
+                  }}
                   onClick={() => handleTomarPedido(selectedPedido)}
+                  title={selectedPedido.pago_verificado === true ? 'Tomar pedido para procesar' : 'Verifica el pago primero'}
                 >
                   📥 Tomar pedido
                 </button>
