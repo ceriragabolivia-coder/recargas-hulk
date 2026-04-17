@@ -517,14 +517,16 @@ export default function Catalogo() {
               {infoProductModal.info_adicional_imagen_url && (
                 <div style={{ 
                   width: '100%', 
+                  height: '40vh',
+                  minHeight: '250px',
                   borderBottom: '1px solid rgba(255,255,255,0.05)', 
                   backgroundColor: '#000',
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
-                  padding: '10px 0'
+                  padding: '16px'
                 }}>
-                  <img src={infoProductModal.info_adicional_imagen_url} alt="Extra info" style={{ maxWidth: '100%', maxHeight: '35vh', objectFit: 'contain' }} />
+                  <img src={infoProductModal.info_adicional_imagen_url} alt="Extra info" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 </div>
               )}
               {infoProductModal.info_adicional_texto && (
