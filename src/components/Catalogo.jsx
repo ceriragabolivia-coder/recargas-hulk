@@ -441,12 +441,12 @@ export default function Catalogo() {
                       }}
                     >
                       {p.icono_url ? (
-                        <img src={p.icono_url} alt="" style={{ width: 56, height: 56, objectFit: 'contain', marginBottom: '12px', dropShadow: '0 4px 8px rgba(0,0,0,0.2)' }} />
+                        <img src={p.icono_url} alt="" style={{ width: 96, height: 96, objectFit: 'contain', marginBottom: '16px', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }} />
                       ) : (
-                        <div style={{ fontSize: '40px', marginBottom: '12px' }}>💎</div>
+                        <div style={{ fontSize: '56px', marginBottom: '12px' }}>💎</div>
                       )}
                       
-                      <strong style={{ fontSize: '14px', lineHeight: 1.2, marginBottom: '8px', minHeight: '34px', display: 'flex', alignItems: 'center' }}>
+                      <strong style={{ fontSize: '15px', lineHeight: 1.2, marginBottom: '8px', minHeight: '34px', display: 'flex', alignItems: 'center' }}>
                         {p.nombre}
                       </strong>
                       
