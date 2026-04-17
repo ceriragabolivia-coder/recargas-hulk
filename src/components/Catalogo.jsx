@@ -416,7 +416,8 @@ export default function Catalogo() {
                         boxShadow: '0 8px 24px rgba(0, 255, 0, 0.25)',
                         transition: 'transform 0.2s',
                         color: '#000000',
-                        border: '2px solid transparent'
+                        border: '2px solid transparent',
+                        position: 'relative'
                       }}
                       onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
                       onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
@@ -447,22 +448,8 @@ export default function Catalogo() {
                         <div style={{ fontSize: '56px', marginBottom: '12px' }}>💎</div>
                       )}
                       
-                      <strong style={{ fontSize: '15px', lineHeight: 1.2, marginBottom: '8px', minHeight: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                      <strong style={{ fontSize: '15px', lineHeight: 1.2, marginBottom: '8px', minHeight: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {p.nombre}
-                        {(p.info_adicional_texto || p.info_adicional_imagen_url) && (
-                          <span 
-                            onClick={(e) => { e.stopPropagation(); setInfoProductModal(p); }} 
-                            style={{ 
-                              color: 'var(--accent-primary)', fontSize: '12px', cursor: 'pointer', 
-                              backgroundColor: 'rgba(0,210,255,0.1)', borderRadius: '50%', width: '18px', height: '18px', 
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(0,210,255,0.3)',
-                              opacity: 0.9, flexShrink: 0
-                            }}
-                            title="Ver descripción"
-                          >
-                            ⓘ
-                          </span>
-                        )}
                       </strong>
                       
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -471,6 +458,26 @@ export default function Catalogo() {
                           <span style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px', fontWeight: 600 }}>{formatUSD(finalPrice.venta_usd)}</span>
                         )}
                       </div>
+
+                      {(p.info_adicional_texto || p.info_adicional_imagen_url) && (
+                        <div 
+                          onClick={(e) => { e.stopPropagation(); setInfoProductModal(p); }} 
+                          style={{ 
+                            position: 'absolute', top: '8px', right: '8px',
+                            backgroundColor: '#ff2a2a', color: '#ffffff', 
+                            fontSize: '16px', fontWeight: '900', cursor: 'pointer', 
+                            borderRadius: '50%', width: '28px', height: '28px', 
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            boxShadow: '0 4px 12px rgba(255, 42, 42, 0.6)', border: '2px solid #ffffff',
+                            transition: 'all 0.2s', zIndex: 2
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.15)'}
+                          onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                          title="Información importante"
+                        >
+                          i
+                        </div>
+                      )}
                     </div>
                   )
                 })}
