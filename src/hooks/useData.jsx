@@ -594,8 +594,9 @@ export function useWallet() {
     if (!user) return;
 
     // Suscripción Realtime para actualizar el saldo en toda la app sin recargar
+    const channelId = `wallet_updates_${user.id}_${Math.random().toString(36).substring(2, 9)}`;
     const channel = supabase
-      .channel(`wallet_updates_${user.id}`)
+      .channel(channelId)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
