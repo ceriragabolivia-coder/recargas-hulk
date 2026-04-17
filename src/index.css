@@ -581,13 +581,14 @@ tr:last-child td { border-bottom: none; }
 
 /* ============ LOGIN ============ */
 .login-container {
-  height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--bg-primary);
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
+  padding: 40px 20px;
 }
 
 .login-container::before {
@@ -616,9 +617,11 @@ tr:last-child td { border-bottom: none; }
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
   padding: 40px;
-  width: 400px;
+  width: 100%;
+  max-width: 500px;
   position: relative;
   z-index: 1;
+  margin: auto;
 }
 
 .login-logo {

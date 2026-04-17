@@ -14,6 +14,7 @@ export default function PagosAdmins() {
   
   const [montoLiquidar, setMontoLiquidar] = useState('')
   const [monedaLiquidar, setMonedaLiquidar] = useState('usd')
+  const [referenciaLiquidar, setReferenciaLiquidar] = useState('')
   const [adminSelected, setAdminSelected] = useState(null)
   const [showLiquidarModal, setShowLiquidarModal] = useState(false)
 
@@ -105,6 +106,7 @@ export default function PagosAdmins() {
     setAdminSelected(admin)
     setMonedaLiquidar(moneda)
     setMontoLiquidar(moneda === 'usd' ? admin.saldo_usd : admin.saldo_bs)
+    setReferenciaLiquidar('')
     setShowLiquidarModal(true)
   }
 
@@ -121,6 +123,7 @@ export default function PagosAdmins() {
         p_liquidador_id: user.id,
         p_moneda: monedaLiquidar,
         p_monto: Number(montoLiquidar),
+        p_referencia: referenciaLiquidar,
         p_notas: `Liquidación manual de saldo en ${monedaLiquidar.toUpperCase()} por administración.`
       })
 
@@ -245,13 +248,14 @@ export default function PagosAdmins() {
                 <th>Operario</th>
                 <th>Tipo</th>
                 <th>Monto</th>
+                <th>Referencia</th>
                 <th>Detalles</th>
                 <th>Responsable Pago</th>
               </tr>
             </thead>
             <tbody>
               {historial.length === 0 ? (
-                <tr><td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No hay movimientos registrados.</td></tr>
+                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No hay movimientos registrados.</td></tr>
               ) : (
                 historial.map(h => {
                   const info = getTipoLabel(h.tipo_movimiento)
@@ -275,6 +279,9 @@ export default function PagosAdmins() {
                       }}>
                         {h.tipo_movimiento === 'liquidacion' || h.tipo_movimiento === 'reverso_venta' ? '-' : '+'}
                         {h.moneda === 'usd' ? formatUSD(h.monto) : formatBs(h.monto)}
+                      </td>
+                      <td style={{ fontSize: '12px', fontWeight: 600, color: 'var(--accent-primary)' }}>
+                        {h.referencia || '-'}
                       </td>
                       <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{h.notas}</td>
                       <td>
@@ -316,6 +323,21 @@ export default function PagosAdmins() {
               />
               <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px' }}>
                 El saldo actual del administrador quedará en <strong>{monedaLiquidar === 'usd' ? formatUSD(adminSelected.saldo_usd - montoLiquidar) : formatBs(adminSelected.saldo_bs - montoLiquidar)}</strong>.
+              </p>
+            </div>
+
+            <div className="form-group mb-24">
+              <label className="form-label">Número de Referencia de Pago</label>
+              <input 
+                type="text" 
+                className="form-input" 
+                placeholder="Ej: Pago móvil 1234..."
+                value={referenciaLiquidar} 
+                onChange={e => setReferenciaLiquidar(e.target.value)}
+                required
+              />
+              <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px' }}>
+                Ingresa el comprobante o referencia del pago real que le hiciste al operario.
               </p>
             </div>
 
