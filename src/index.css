@@ -587,6 +587,7 @@ tr:last-child td { border-bottom: none; }
   justify-content: center;
   background: var(--bg-primary);
   position: relative;
+  overflow-x: hidden;
   overflow-y: auto;
   padding: 40px 20px;
 }
@@ -617,7 +618,7 @@ tr:last-child td { border-bottom: none; }
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
   padding: 40px;
-  width: 100%;
+  width: calc(100% - 10px);
   max-width: 500px;
   position: relative;
   z-index: 1;
