@@ -179,9 +179,9 @@ export default function Catalogo() {
             ← Volver al Catálogo
           </button>
           
-          <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '32px 20px', gap: '16px' }}>
+          <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '20px 16px', gap: '12px' }}>
             {selectedJuego.icono_url ? (
-              <img src={selectedJuego.icono_url} alt={selectedJuego.nombre} style={{ width: 220, height: 220, minWidth: 220, minHeight: 220, flexShrink: 0, objectFit: 'cover', borderRadius: '32px', filter: 'drop-shadow(0 16px 32px rgba(0,0,0,0.5))', backgroundColor: 'rgba(255,255,255,0.02)' }} />
+              <img src={selectedJuego.icono_url} alt={selectedJuego.nombre} style={{ width: 160, height: 160, minWidth: 160, minHeight: 160, flexShrink: 0, objectFit: 'cover', borderRadius: '24px', filter: 'drop-shadow(0 12px 24px rgba(0,0,0,0.4))', backgroundColor: 'rgba(255,255,255,0.02)' }} />
             ) : (
               <div style={{ fontSize: '120px' }}>🎮</div>
             )}
@@ -485,9 +485,9 @@ export default function Catalogo() {
               className="card"
               style={{ 
                 display: 'flex', flexDirection: 'column', alignItems: 'center', 
-                justifyContent: 'center', padding: '24px 12px', cursor: 'pointer',
+                justifyContent: 'center', padding: '16px 12px', cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                textAlign: 'center', gap: '12px',
+                textAlign: 'center', gap: '8px',
                 border: '1px solid transparent',
                 backgroundColor: 'var(--bg-card)'
               }}
@@ -506,7 +506,7 @@ export default function Catalogo() {
               }}
             >
               {juego.icono_url ? (
-                <img src={juego.icono_url} alt={juego.nombre} style={{ width: 110, height: 110, objectFit: 'cover', borderRadius: '24px', boxShadow: '0 6px 16px rgba(0,0,0,0.25)' }} />
+                <img src={juego.icono_url} alt={juego.nombre} style={{ width: 84, height: 84, objectFit: 'cover', borderRadius: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }} />
               ) : (
                 <div style={{ fontSize: '72px' }}>{catIcon}</div>
               )}
