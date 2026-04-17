@@ -127,10 +127,13 @@ export default function GestionProductos() {
     costo_base: '',
     margen_ganancia: '',
     icono_url: null,
-    descuento_revendedor: ''
+    descuento_revendedor: '',
+    info_adicional_texto: '',
+    info_adicional_imagen_url: ''
   })
   const [newIconFile, setNewIconFile] = useState(null)
   const [iconPreview, setIconPreview] = useState(null)
+  const [newInfoFile, setNewInfoFile] = useState(null)
   const [draggedIndex, setDraggedIndex] = useState(null)
 
   // Vista previa calculada
@@ -152,9 +155,10 @@ export default function GestionProductos() {
   }
 
   const handleOpenModal = () => {
-    setFormData({ id: null, nombre: '', costo_base: '', margen_ganancia: '30', icono_url: null, descuento_revendedor: '' })
+    setFormData({ id: null, nombre: '', costo_base: '', margen_ganancia: '30', icono_url: null, descuento_revendedor: '', info_adicional_texto: '', info_adicional_imagen_url: null })
     setNewIconFile(null)
     setIconPreview(null)
+    setNewInfoFile(null)
     setIsModalOpen(true)
   }
 
@@ -165,10 +169,13 @@ export default function GestionProductos() {
       costo_base: prod.costo_base,
       margen_ganancia: prod.margen_ganancia * 100,
       icono_url: prod.icono_url,
-      descuento_revendedor: prod.descuento_revendedor || ''
+      descuento_revendedor: prod.descuento_revendedor || '',
+      info_adicional_texto: prod.info_adicional_texto || '',
+      info_adicional_imagen_url: prod.info_adicional_imagen_url || null
     })
     setNewIconFile(null)
     setIconPreview(prod.icono_url)
+    setNewInfoFile(null)
     setIsModalOpen(true)
   }
 
@@ -178,6 +185,7 @@ export default function GestionProductos() {
 
     try {
       let finalIconUrl = formData.icono_url
+      let finalInfoUrl = formData.info_adicional_imagen_url
 
       // Si hay un nuevo archivo seleccionado, procesarlo y subirlo
       if (newIconFile) {
@@ -193,6 +201,18 @@ export default function GestionProductos() {
         finalIconUrl = data.publicUrl
       }
 
+      if (newInfoFile) {
+        const fileName = `prod-extra-${Date.now()}-${newInfoFile.name.replace(/\.[^/.]+$/, "")}.png`
+        const { error: uploadErrorInfo } = await supabase.storage
+          .from('logos')
+          .upload(fileName, newInfoFile)
+        
+        if (uploadErrorInfo) throw new Error('Error subiendo imagen extra: ' + uploadErrorInfo.message)
+
+        const { data: infoData } = supabase.storage.from('logos').getPublicUrl(fileName)
+        finalInfoUrl = infoData.publicUrl
+      }
+
       const margenDecimal = parseFloat(formData.margen_ganancia) / 100
       const descRevendedor = formData.descuento_revendedor !== '' ? parseFloat(formData.descuento_revendedor) : null
       const payload = {
@@ -200,7 +220,9 @@ export default function GestionProductos() {
         costo_base: parseFloat(formData.costo_base),
         margen_ganancia: margenDecimal,
         icono_url: finalIconUrl,
-        descuento_revendedor: descRevendedor
+        descuento_revendedor: descRevendedor,
+        info_adicional_texto: formData.info_adicional_texto || null,
+        info_adicional_imagen_url: finalInfoUrl
       }
 
       if (formData.id) {
@@ -775,6 +797,54 @@ export default function GestionProductos() {
             <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
               Si se establece, este descuento será exclusivo para este paquete y NO se sumará al global del servicio.
             </p>
+          </div>
+
+          <hr style={{ borderColor: 'var(--border-color)', margin: '20px 0' }} />
+          <h4 style={{ fontSize: '13px', color: 'var(--accent-primary)', marginBottom: '12px' }}>Información Adicional (Modal ⓘ)</h4>
+          
+          <div className="form-group">
+            <label className="form-label">Texto Informativo (Opcional)</label>
+            <textarea
+              className="form-input"
+              placeholder="Detalla qué incluye el paquete..."
+              rows="3"
+              style={{ resize: 'vertical' }}
+              value={formData.info_adicional_texto}
+              onChange={e => setFormData({ ...formData, info_adicional_texto: e.target.value })}
+            />
+          </div>
+
+          <div className="form-group" style={{ marginBottom: '24px' }}>
+            <label className="form-label">Imagen Adjunta (Opcional)</label>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <div style={{ width: 60, height: 60, borderRadius: 8, backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                {newInfoFile ? (
+                  <img src={URL.createObjectURL(newInfoFile)} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : formData.info_adicional_imagen_url ? (
+                  <img src={formData.info_adicional_imagen_url} alt="info" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={{ fontSize: 24, opacity: 0.3 }}>🖼️</span>
+                )}
+              </div>
+              <div style={{ flex: 1 }}>
+                <input
+                  type="file"
+                  id="info-file-upload"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const file = e.target.files[0]
+                    if (file) setNewInfoFile(file)
+                  }}
+                />
+                <label htmlFor="info-file-upload" className="btn btn-ghost btn-sm">
+                  📤 Subir Imagen
+                </label>
+                {(newInfoFile || formData.info_adicional_imagen_url) && (
+                  <button type="button" className="btn btn-ghost btn-sm text-danger" style={{ marginLeft: '8px', color: '#ff5252' }} onClick={() => { setNewInfoFile(null); setFormData(prev => ({...prev, info_adicional_imagen_url: null})) }}>🗑️ Quitar</button>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* VISTA PREVIA DEL CÁLCULO EN TIEMPO REAL */}

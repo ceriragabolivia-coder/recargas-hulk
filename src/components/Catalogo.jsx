@@ -19,6 +19,7 @@ export default function Catalogo() {
   
   const [showGuideModal, setShowGuideModal] = useState(false)
   const [pendingItem, setPendingItem] = useState(null)
+  const [infoProductModal, setInfoProductModal] = useState(null)
 
   const confirmAddToCart = () => {
     if (!pendingItem) return
@@ -446,8 +447,22 @@ export default function Catalogo() {
                         <div style={{ fontSize: '56px', marginBottom: '12px' }}>💎</div>
                       )}
                       
-                      <strong style={{ fontSize: '15px', lineHeight: 1.2, marginBottom: '8px', minHeight: '34px', display: 'flex', alignItems: 'center' }}>
+                      <strong style={{ fontSize: '15px', lineHeight: 1.2, marginBottom: '8px', minHeight: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                         {p.nombre}
+                        {(p.info_adicional_texto || p.info_adicional_imagen_url) && (
+                          <span 
+                            onClick={(e) => { e.stopPropagation(); setInfoProductModal(p); }} 
+                            style={{ 
+                              color: 'var(--accent-primary)', fontSize: '12px', cursor: 'pointer', 
+                              backgroundColor: 'rgba(0,210,255,0.1)', borderRadius: '50%', width: '18px', height: '18px', 
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(0,210,255,0.3)',
+                              opacity: 0.9, flexShrink: 0
+                            }}
+                            title="Ver descripción"
+                          >
+                            ⓘ
+                          </span>
+                        )}
                       </strong>
                       
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -465,6 +480,54 @@ export default function Catalogo() {
           
         </div>
       </div>
+
+      {/* MODAL DE INFO ADICIONAL (ⓘ) */}
+      {infoProductModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 10000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          animation: 'fadeIn 0.2s', padding: '16px', backdropFilter: 'blur(5px)'
+        }} onClick={() => setInfoProductModal(null)}>
+          <div style={{
+            backgroundColor: 'var(--bg-panel)', width: '100%', maxWidth: '420px',
+            borderRadius: '24px', position: 'relative',
+            boxShadow: '0 24px 48px rgba(0,0,0,0.8)', overflow: 'hidden',
+            border: '1px solid rgba(255,255,255,0.1)', animation: 'scaleUp 0.3s'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.1)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '20px' }}>📦</span>
+                <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent-primary)' }}>{infoProductModal.nombre}</span>
+              </div>
+              <button 
+                onClick={() => setInfoProductModal(null)}
+                style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', fontSize: '16px', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >✕</button>
+            </div>
+            
+            <div style={{ padding: '0', maxHeight: '70vh', overflowY: 'auto' }}>
+              {infoProductModal.info_adicional_imagen_url && (
+                <div style={{ width: '100%', borderBottom: '1px solid rgba(255,255,255,0.05)', backgroundColor: '#000' }}>
+                  <img src={infoProductModal.info_adicional_imagen_url} alt="Extra info" style={{ width: '100%', height: 'auto', maxHeight: '350px', objectFit: 'contain', display: 'block' }} />
+                </div>
+              )}
+              {infoProductModal.info_adicional_texto && (
+                <div style={{ padding: '24px' }}>
+                  <p style={{ margin: 0, whiteSpace: 'pre-line', fontSize: '15px', color: 'var(--text-primary)', lineHeight: 1.6 }}>
+                    {infoProductModal.info_adicional_texto}
+                  </p>
+                </div>
+              )}
+            </div>
+            
+            <div style={{ padding: '20px', backgroundColor: 'var(--bg-card)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <button onClick={() => setInfoProductModal(null)} className="btn btn-primary" style={{ width: '100%', padding: '12px', fontSize: '16px' }}>Entendido</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
     )
   }
