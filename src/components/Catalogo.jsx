@@ -181,7 +181,7 @@ export default function Catalogo() {
           
           <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '32px 20px', gap: '16px' }}>
             {selectedJuego.icono_url ? (
-              <img src={selectedJuego.icono_url} alt={selectedJuego.nombre} style={{ width: 220, height: 220, objectFit: 'cover', borderRadius: '32px', filter: 'drop-shadow(0 16px 32px rgba(0,0,0,0.5))' }} />
+              <img src={selectedJuego.icono_url} alt={selectedJuego.nombre} style={{ width: 220, height: 220, minWidth: 220, minHeight: 220, flexShrink: 0, objectFit: 'cover', borderRadius: '32px', filter: 'drop-shadow(0 16px 32px rgba(0,0,0,0.5))', backgroundColor: 'rgba(255,255,255,0.02)' }} />
             ) : (
               <div style={{ fontSize: '120px' }}>🎮</div>
             )}
