@@ -431,11 +431,12 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
       const monedaLabel = moneda === 'bs' ? formatBs(monto) : `$${Number(monto).toFixed(2)}`;
       showAlert(`✅ Reembolso exitoso. ${monedaLabel} acreditados a la billetera ${moneda === 'bs' ? 'Bolívares' : 'USD'} del cliente.`, 'success');
       
-      if (cambiarEstado) {
-        const updateData = { estado: 'reembolsado', updated_at: new Date().toISOString() };
-        setPedidos(prev => prev.map(p => p.id === pedido.id ? { ...p, ...updateData } : p));
-        setSelectedPedido(prev => ({ ...prev, ...updateData }));
-      }
+      const updateData = cambiarEstado 
+        ? { estado: 'reembolsado', reembolso_billetera: true, updated_at: new Date().toISOString() }
+        : { reembolso_billetera: true, updated_at: new Date().toISOString() };
+      
+      setPedidos(prev => prev.map(p => p.id === pedido.id ? { ...p, ...updateData } : p));
+      setSelectedPedido(prev => ({ ...prev, ...updateData }));
     }
     setLoading(false);
   }
@@ -911,8 +912,8 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                       ❌ Cancelar
                     </button>
                   )}
-                  {/* Botón de reembolso - Mostrar en pedidos no completados ni previamente reembolsados */}
-                  {!['completado', 'reembolsado'].includes(selectedPedido.estado) && (
+                  {/* Botón de reembolso - Mostrar en pedidos no completados ni previamente reembolsados y que no tengan el flag de reembolso_billetera */}
+                  {!['completado', 'reembolsado'].includes(selectedPedido.estado) && selectedPedido.reembolso_billetera !== true && (
                     <button
                       className="btn btn-sm"
                       style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: 'rgba(224, 64, 251, 0.1)', color: '#e040fb', border: '1px solid #e040fb' }}
