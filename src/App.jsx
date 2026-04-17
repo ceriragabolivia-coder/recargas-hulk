@@ -26,6 +26,7 @@ const Billetera = lazy(() => import('./components/Billetera'))
 const Revendedores = lazy(() => import('./components/Revendedores'))
 const Ruleta = lazy(() => import('./components/Ruleta'))
 const GestionRuleta = lazy(() => import('./components/GestionRuleta'))
+const PagosAdmins = lazy(() => import('./components/PagosAdmins'))
 
 const Placeholder = ({ title }) => (
   <div className="page-content">
@@ -164,6 +165,7 @@ export default function App() {
       'config': '/Configuracion',
       'reportes': '/Reportes',
       'revendedores': '/Revendedores',
+      'pagos_admins': '/Pagos-Admins',
       'ruleta': '/Ruleta',
       'gestion_ruleta': '/Gestion-Ruleta',
       'perfil': '/Mi-Perfil',
@@ -300,6 +302,7 @@ export default function App() {
           <Route path="/Configuracion" element={<ProtectedRoute><Configuracion /></ProtectedRoute>} />
           <Route path="/Usuarios" element={<ProtectedRoute><Usuarios onNavigate={handleNavigate} /></ProtectedRoute>} />
           <Route path="/Reportes" element={<ProtectedRoute><Reportes /></ProtectedRoute>} />
+          <Route path="/Pagos-Admins" element={<ProtectedRoute><PagosAdmins /></ProtectedRoute>} />
           <Route path="/Revendedores" element={<ProtectedRoute><Revendedores onNavigate={handleNavigate} /></ProtectedRoute>} />
           <Route path="/Gestion-Ruleta" element={<ProtectedRoute><GestionRuleta /></ProtectedRoute>} />
 
