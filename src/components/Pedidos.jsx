@@ -31,7 +31,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
     setLoading(true)
     let query = supabase
       .from('pedidos')
-      .select('*, pedido_items(*, productos(icono_url))')
+      .select('*, pedido_items(*, productos:producto_id(icono_url))')
       .order('created_at', { ascending: false })
 
     if (user && !isAdmin) {
@@ -347,7 +347,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
     if (selectedPedido?.id === pedidoId) {
       const { data: updatedPedido } = await supabase
         .from('pedidos')
-        .select('*, pedido_items(*, productos(icono_url))')
+        .select('*, pedido_items(*, productos:producto_id(icono_url))')
         .eq('id', pedidoId)
         .single()
       if (updatedPedido) {
@@ -528,7 +528,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
         .from('pedidos')
         .update({ pago_verificado: true, updated_at: new Date().toISOString() })
         .eq('id', pedido.id)
-        .select('*, pedido_items(*, productos(icono_url))')
+        .select('*, pedido_items(*, productos:producto_id(icono_url))')
         .single();
 
       if (error) {
@@ -603,7 +603,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
         updated_at: new Date().toISOString()
       })
       .eq('id', pedido.id)
-      .select('*, pedido_items(*, productos(icono_url))')
+      .select('*, pedido_items(*, productos:producto_id(icono_url))')
       .single();
 
     if (error) {
@@ -1082,7 +1082,10 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                   </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span style={{ fontWeight: 700, color: 'var(--accent-primary)' }}>
-                      {selectedPedido.atendido_por_id === user.id ? (perfil.nombres || perfil.usuario || 'Tú') : 'Otro Admin'}
+                      {selectedPedido.atendido_por_id === user.id ? 
+                        (perfil.nombres || perfil.usuario || 'Tú') : 
+                        (selectedPedido.atendido_por?.nombres ? `${selectedPedido.atendido_por.nombres} ${selectedPedido.atendido_por.apellidos || ''}`.trim() : 'Otro Admin')
+                      }
                     </span>
 
                     {/* Botón Liberar Pedido */}
@@ -1206,7 +1209,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                 {/* Status Ocupado */}
                 {selectedPedido.atendido_por_id && selectedPedido.atendido_por_id !== user.id && (
                   <div style={{ textAlign: 'center', padding: '10px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: '6px', color: 'var(--accent-error)', fontSize: '11px', marginTop: '8px' }}>
-                    🚫 En proceso por otro administrador
+                    🚫 En proceso por {selectedPedido.atendido_por?.nombres || 'otro administrador'}
                   </div>
                 )}
               </div>
@@ -1225,13 +1228,17 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'flex-start' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      {(item.producto_icono || item.productos?.icono_url) && (
-                        <img 
-                          src={item.producto_icono || item.productos?.icono_url} 
-                          alt="Icono" 
-                          style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--border-color)' }}
-                        />
-                      )}
+                      {(() => {
+                        const iconUrl = item.producto_icono || (Array.isArray(item.productos) ? item.productos[0]?.icono_url : item.productos?.icono_url);
+                        if (!iconUrl) return null;
+                        return (
+                          <img 
+                            src={iconUrl} 
+                            alt="Icono" 
+                            style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--border-color)' }}
+                          />
+                        );
+                      })()}
                       <span style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '20px' }}>{item.producto_nombre}</span>
                     </div>
                       
