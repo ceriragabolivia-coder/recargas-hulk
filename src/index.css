@@ -951,7 +951,14 @@ tr:last-child td { border-bottom: none; }
 
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-15px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes celebrate {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-15px) rotate(-2deg); }
+  50% { transform: translateY(0) rotate(0deg); }
+  75% { transform: translateY(-15px) rotate(2deg); }
 }
 
 @keyframes loadingDots {
@@ -961,11 +968,12 @@ tr:last-child td { border-bottom: none; }
 }
 
 .loading-illustration {
-  width: 280px;
+  width: 320px;
   height: auto;
   margin-bottom: 20px;
-  animation: float 4s ease-in-out infinite;
-  filter: drop-shadow(0 10px 20px rgba(0, 210, 255, 0.2));
+  animation: celebrate 1.5s ease-in-out infinite;
+  filter: drop-shadow(0 15px 30px rgba(0, 210, 255, 0.3));
+  border-radius: 24px;
 }
 
 .loading-text-dynamic {
