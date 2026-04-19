@@ -32,7 +32,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
   
   const [rechazandoItem, setRechazandoItem] = useState(null) // ID del item si se está rechazando
   const [motivoRechazo, setMotivoRechazo] = useState('')
-  const [cancelacionMensaje, setCancelacionMensaje] = useState(DEFAULT_CANCEL_MESSAGE)
+  const [cancelacionMensaje, setCancelacionMensaje] = useState("")
 
   // Paginación
   const [currentPage, setCurrentPage] = useState(1)
@@ -127,7 +127,8 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
   }, [targetOrderId, pedidos])
   useEffect(() => {
     if (selectedPedido) {
-      setCancelacionMensaje(DEFAULT_CANCEL_MESSAGE(selectedPedido.numero_pedido))
+      // Garantizar que el mensaje predeterminado use el número de pedido actual
+      setCancelacionMensaje(DEFAULT_CANCEL_MESSAGE(selectedPedido.numero_pedido || ''))
     }
   }, [selectedPedido?.id])
 
@@ -806,17 +807,19 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
 
     try {
       // 1. Detección y ejecución de reembolsos automáticos si aplica
-      const isBsUsed = selectedPedido.referencia_pago?.toLowerCase().includes('billetera bs');
-      const isUsdUsed = selectedPedido.referencia_pago?.toLowerCase().includes('billetera usd');
+      const refBaja = (selectedPedido.referencia_pago || "").toLowerCase();
+      const needsRefund = refBaja.includes('billetera bs') || 
+                          refBaja.includes('billetera usd') || 
+                          refBaja.includes('pago parcial');
 
-      if (isBsUsed || isUsdUsed) {
-        // Regex para capturar el monto ignorando símbolos como '$' o puntos de miles
-        const regex = /billetera\s+(bs|usd):\s*[$]?\s*([0-9.,]+)/gi;
+      if (needsRefund) {
+        // Regex robusta: busca la palabra billetera y el monto que le sigue
+        const regexValores = /(bs|usd):\s*[$]?\s*([0-9.,]+)/gi;
         let match;
         
         // Usamos un array de promesas si queremos paralelismo, o secuencial para evitar race conditions en la billetera
         // Secuencial es más seguro para integridad de saldos si es el mismo usuario
-        while ((match = regex.exec(selectedPedido.referencia_pago)) !== null) {
+        while ((match = regexValores.exec(refBaja)) !== null) {
           const moneda = match[1].toLowerCase();
           const montoStr = match[2].replace(/\./g, '').replace(/,/g, '.');
           const monto = parseFloat(montoStr);
