@@ -1235,30 +1235,25 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                                       (Array.isArray(item.producto) ? item.producto[0]?.icono_url : item.producto?.icono_url) ||
                                       item.icono_url; // Fallback final si viniera plano
 
-                        if (!iconUrl) {
-                          // Log discreto para depuración indirecta (invisible al usuario final usualmente)
-                          // console.log("Icon not found for item:", item.producto_nombre);
-                          return null;
-                        }
+                        if (!iconUrl) return null;
 
                         return (
                           <img 
                             src={iconUrl} 
                             alt="Icono" 
                             style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--border-color)' }}
-                            onError={(e) => {
-                              // Si la imagen falla al cargar, la ocultamos para no mostrar un cuadro roto
-                              e.currentTarget.style.display = 'none';
-                            }}
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
                           />
                         );
                       })()}
-                      <span style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '20px' }}>{item.producto_nombre}</span>
-                    </div>
-                      
-                      {/* ESTADO LABEL CLIENTE/GENERAL */}
-                      {item.estado === 'completado' && <span style={{ marginLeft: '10px', backgroundColor: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, verticalAlign: 'middle', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{fontSize: '14px'}}>✅</span> Recargado</span>}
-                      {item.estado === 'fallido' && <span style={{ marginLeft: '10px', backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, verticalAlign: 'middle', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{fontSize: '14px'}}>❌</span> Error</span>}
+                      <div>
+                        <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '20px' }}>{item.producto_nombre}</div>
+                        {/* ESTADO LABEL CLIENTE/GENERAL */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                          {item.estado === 'completado' && <span style={{ backgroundColor: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{fontSize: '14px'}}>✅</span> Recargado</span>}
+                          {item.estado === 'fallido' && <span style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{fontSize: '14px'}}>❌</span> Error</span>}
+                        </div>
+                      </div>
                     </div>
                     
                     <div style={{ textAlign: 'right' }}>
@@ -1281,7 +1276,8 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                        )}
                     </div>
                   </div>
-                  <div style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>
+
+                <div style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>
                     🎮 {item.juego_nombre} · Cantidad: {item.cantidad}
                   </div>
 
