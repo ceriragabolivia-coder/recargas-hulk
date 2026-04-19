@@ -632,8 +632,10 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
         }, async payload => {
           console.log("Evento recibido en chat (Admin):", payload)
           const newMsg = payload.new
-          // Solo notificar si NO soy yo quien lo envía (es decir, viene del cliente)
-          if (newMsg && newMsg.remitente_id !== perfil.cliente_uuid && !newMsg.es_sistema) {
+          // Solo notificar si NO es un mensaje de sistema y NO lo envía un administrador
+          const isFromAdmin = adminIdsRef.current.has(newMsg.remitente_id)
+          
+          if (newMsg && !isFromAdmin && !newMsg.es_sistema) {
             // Cargar info del cliente para el título del toast
             const { data: cliente } = await supabase.from('clientes').select('nombres').eq('id', newMsg.cliente_id).single()
             

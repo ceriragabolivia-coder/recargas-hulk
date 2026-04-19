@@ -872,7 +872,8 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
             cliente_id: selectedPedido.cliente.id,
             remitente_id: perfil?.cliente_uuid || null,
             mensaje: msgFinal,
-            leido: false
+            leido: false,
+            es_sistema: true
           });
         
         if (chatError) console.error("Error enviando mensaje al chat:", chatError);
