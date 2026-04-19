@@ -337,7 +337,7 @@ export default function Billetera({ onNavigate }) {
                             <td data-label="Método/Ref">
                               <div>
                                 <div style={{ fontSize: '13px' }}>{r.metodos_pago?.nombre}</div>
-                                <div style={{ fontSize: '11px', opacity: 0.7 }}>Ref: {r.referencia}</div>
+                                <div style={{ fontSize: '11px', opacity: 0.7 }}>Ref: {r.referencia_pago}</div>
                                 {r.comprobante_url && (
                                   <button 
                                     onClick={() => setSelectedComprobante(r.comprobante_url)}
@@ -405,7 +405,7 @@ export default function Billetera({ onNavigate }) {
                             <td data-label="Método/Ref">
                               <div>
                                 <div style={{ fontSize: '12px' }}>{r.metodos_pago?.nombre}</div>
-                                <div style={{ fontSize: '10px', opacity: 0.6 }}>Ref: {r.referencia}</div>
+                                <div style={{ fontSize: '10px', opacity: 0.6 }}>Ref: {r.referencia_pago}</div>
                               </div>
                             </td>
                             <td data-label="Fecha" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
@@ -453,7 +453,7 @@ export default function Billetera({ onNavigate }) {
                     .filter(r => r.estado !== 'aprobado' && (!isCliente || r.moneda !== 'usd'))
                     .map(r => ({
                       id: r.id, fecha: r.created_at,
-                      desc: `Solicitud de Recarga ${r.moneda === 'bs' ? '(Bs)' : '(USD)'} (${r.metodos_pago?.nombre || 'Pago'}) - Ref: ${r.referencia}`,
+                      desc: `Solicitud de Recarga ${r.moneda === 'bs' ? '(Bs)' : '(USD)'} (${r.metodos_pago?.nombre || 'Pago'}) - Ref: ${r.referencia_pago}`,
                       monto: r.monto, tipo: 'recarga', estado: r.estado, moneda: r.moneda || 'usd'
                     }))
                 ].sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
