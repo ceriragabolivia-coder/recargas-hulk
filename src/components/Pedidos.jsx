@@ -4,7 +4,7 @@ import { useAuth, useConfiguracion } from '../hooks/useData'
 import AlertModal from './AlertModal'
 import { playSuccessSound, playCashRegisterSound, playErrorSound, formatBs } from '../utils/helpers'
 
-const DEFAULT_CANCEL_MESSAGE = `Tu Pedido se ha cancelado motivado a que la referencia de pago que colocaste no ha podido ser encontrado en nuestro banco, es decir, el pago no pudo ser verificado y esto se debe a dos motivos:
+const DEFAULT_CANCEL_MESSAGE = (num) => `Tu Pedido #${num} se ha cancelado motivado a que la referencia de pago que colocaste no ha podido ser encontrado en nuestro banco, es decir, el pago no pudo ser verificado y esto se debe a dos motivos:
 
 -Colocaste mal el número de referencia de tu pago.
 
@@ -127,7 +127,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
   }, [targetOrderId, pedidos])
   useEffect(() => {
     if (selectedPedido) {
-      setCancelacionMensaje(DEFAULT_CANCEL_MESSAGE)
+      setCancelacionMensaje(DEFAULT_CANCEL_MESSAGE(selectedPedido.numero_pedido))
     }
   }, [selectedPedido?.id])
 
@@ -801,8 +801,52 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
       updated_at: now
     };
 
+    let msgFinal = cancelacionMensaje;
+    let reembolsosRealizados = [];
+
     try {
-      // 1. Actualizar el pedido
+      // 1. Detección y ejecución de reembolsos automáticos si aplica
+      const isBsUsed = selectedPedido.referencia_pago?.toLowerCase().includes('billetera bs');
+      const isUsdUsed = selectedPedido.referencia_pago?.toLowerCase().includes('billetera usd');
+
+      if (isBsUsed || isUsdUsed) {
+        // Regex para capturar el monto ignorando símbolos como '$' o puntos de miles
+        const regex = /billetera\s+(bs|usd):\s*[$]?\s*([0-9.,]+)/gi;
+        let match;
+        
+        // Usamos un array de promesas si queremos paralelismo, o secuencial para evitar race conditions en la billetera
+        // Secuencial es más seguro para integridad de saldos si es el mismo usuario
+        while ((match = regex.exec(selectedPedido.referencia_pago)) !== null) {
+          const moneda = match[1].toLowerCase();
+          const montoStr = match[2].replace(/\./g, '').replace(/,/g, '.');
+          const monto = parseFloat(montoStr);
+          
+          if (monto > 0) {
+            const { data: refundResult, error: refundError } = await supabase.rpc('reembolsar_pedido_rpc', {
+              p_pedido_id: selectedPedido.id,
+              p_admin_id: user.id,
+              p_notas: `Reembolso automático por cancelación de pago no encontrado (Pedido #${selectedPedido.numero_pedido})`,
+              p_moneda: moneda,
+              p_monto: monto,
+              p_cambiar_estado: false
+            });
+
+            if (!refundError && !refundResult?.error) {
+              reembolsosRealizados.push(moneda === 'bs' ? formatBs(monto) : formatUSD(monto));
+            } else {
+              console.error(`Error en reembolso automático (${moneda}):`, refundError || refundResult?.error);
+            }
+          }
+        }
+      }
+
+      // 2. Si hubo reembolsos, añadir posdata al mensaje
+      if (reembolsosRealizados.length > 0) {
+        msgFinal += `\n\nPD: El saldo de tu billetera utilizado en este pedido (${reembolsosRealizados.join(' y ')}) ha sido reintegrado exitosamente a tu cuenta.`;
+        updateData.observaciones = msgFinal;
+      }
+
+      // 3. Actualizar el pedido
       const { error: updateError } = await supabase
         .from('pedidos')
         .update(updateData)
@@ -810,28 +854,31 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
 
       if (updateError) throw updateError;
 
-      // 2. Enviar mensaje al chat automáticamente
-      // Necesitamos el ID interno del perfil del cliente (selectedPedido.cliente.id)
-      // y el ID interno del remitente (perfil.cliente_uuid)
+      // 4. Enviar mensaje al chat automáticamente
       if (selectedPedido.cliente?.id) {
         const { error: chatError } = await supabase
           .from('soporte_mensajes')
           .insert({
             cliente_id: selectedPedido.cliente.id,
             remitente_id: perfil?.cliente_uuid || null,
-            mensaje: cancelacionMensaje,
+            mensaje: msgFinal,
             leido: false
           });
         
         if (chatError) console.error("Error enviando mensaje al chat:", chatError);
       }
 
-      // 3. Actualizar estado local
+      // 5. Actualizar estado local
       playErrorSound();
-      const pedFinal = { ...selectedPedido, ...updateData };
+      const pedFinal = { ...selectedPedido, ...updateData, reembolso_billetera: reembolsosRealizados.length > 0 };
       setPedidos(prev => prev.map(p => p.id === selectedPedido.id ? pedFinal : p));
       setSelectedPedido(pedFinal);
-      showAlert("Pedido cancelado y mensaje enviado al cliente.", "success");
+
+      const alertMsg = reembolsosRealizados.length > 0
+        ? `✅ Pedido cancelado. Se reintegraron ${reembolsosRealizados.join(' y ')} a la billetera del cliente.`
+        : "Pedido cancelado y mensaje enviado al cliente.";
+      
+      showAlert(alertMsg, "success");
     } catch (err) {
       console.error("Error al cancelar pedido:", err);
       showAlert("Error al cancelar el pedido: " + err.message, "error");
