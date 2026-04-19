@@ -10,7 +10,9 @@ const DEFAULT_CANCEL_MESSAGE = (num) => `Tu Pedido #${num} se ha cancelado motiv
 
 -Estás colocando una referencia de un pago que no existe o que no se realizó correctamente.
 
+
 Por favor verifica en tu banco el número de referencia, o comunícate con tu banco para consultar sobre el estado de ese pago que a nuestra cuenta no llegó.
+
 
 Verifica estos motivos y vuelve a crear un nuevo pedido: Recuerda que si creas muchos pedidos con referencias de pagos que no existan, tu usuario podría ser expulsado por colocar referencias de pagos falsos.`;
 
@@ -18,6 +20,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
   const normalizedParams = typeof params === 'object' && params !== null ? params : { filterKey: params };
   const incomingFilterKey = normalizedParams.filterKey || filterKey;
   const targetOrderId = normalizedParams.orderId;
+  const targetOrderNumber = normalizedParams.orderNumber; // Para navegación desde chat
   const { user, perfil, isCliente } = useAuth()
   const { config } = useConfiguracion()
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
@@ -116,15 +119,19 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
       setSelectedPedido(null) // Regresar a la lista al cambiar de sección
     }
   }, [incomingFilterKey])
-  // Link directo desde Billetera u otras secciones
   useEffect(() => {
-    if (targetOrderId && pedidos.length > 0) {
-      const order = pedidos.find(p => p.id === targetOrderId)
-      if (order) {
-        setSelectedPedido(order)
+    if (pedidos.length > 0) {
+      if (targetOrderId) {
+        const order = pedidos.find(p => p.id === targetOrderId)
+        if (order) setSelectedPedido(order)
+      } else if (targetOrderNumber) {
+        // Limpiamos el '#' si viene incluido
+        const cleanNum = targetOrderNumber.replace('#', '').trim()
+        const order = pedidos.find(p => String(p.numero_pedido).padStart(6, '0') === cleanNum || String(p.numero_pedido) === cleanNum)
+        if (order) setSelectedPedido(order)
       }
     }
-  }, [targetOrderId, pedidos])
+  }, [targetOrderId, targetOrderNumber, pedidos])
   useEffect(() => {
     if (selectedPedido) {
       // Garantizar que el mensaje predeterminado use el número de pedido actual

@@ -291,6 +291,7 @@ export default function App() {
               key={currentParams?.targetClientId ? `${currentParams.targetClientId}_${currentParams.prefill}` : 'default'} 
               perfil={perfil} 
               params={currentParams} 
+              onNavigate={handleNavigate}
             />
           } />
           <Route path="/Mis-Pedidos" element={<Pedidos params={currentParams} onNavigate={handleNavigate} />} />
@@ -320,7 +321,7 @@ export default function App() {
       <Layout currentPage={currentPage} onNavigate={handleNavigate} onOpenChat={!isAdmin ? () => setIsSupportChatOpen(true) : undefined}>
         <PageRoutes />
         <Cart onGoToCheckout={() => navigate('/Checkout')} />
-        {!isAdmin && <SupportChat perfil={perfil} forceOpen={isSupportChatOpen} onClose={() => setIsSupportChatOpen(false)} />}
+        {!isAdmin && <SupportChat perfil={perfil} forceOpen={isSupportChatOpen} onClose={() => setIsSupportChatOpen(false)} onNavigate={handleNavigate} />}
       </Layout>
     </WalletProvider>
   )

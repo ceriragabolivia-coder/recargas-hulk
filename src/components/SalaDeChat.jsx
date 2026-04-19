@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import AlertModal from './AlertModal'
 
-export default function SalaDeChat({ perfil, params }) {
+export default function SalaDeChat({ perfil, params, onNavigate }) {
   const [chats, setChats] = useState([])
   const [selectedChat, setSelectedChat] = useState(null)
   const [messages, setMessages] = useState([])
@@ -502,6 +502,36 @@ export default function SalaDeChat({ perfil, params }) {
     return matchesSearch && matchesFilter
   })
 
+  // Helper para convertir #000XXX en un enlace clicable hacia el pedido
+  const renderMessageWithLinks = (text) => {
+    if (!text) return text
+    const parts = text.split(/(#\d+)/g)
+    return parts.map((part, i) => {
+      if (part.match(/#\d+/)) {
+        return (
+          <span 
+            key={i} 
+            style={{ 
+              textDecoration: 'underline', 
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              color: 'inherit'
+            }}
+            onClick={(e) => {
+              e.stopPropagation()
+              if (onNavigate) {
+                onNavigate('pedidos', { orderNumber: part })
+              }
+            }}
+          >
+            {part}
+          </span>
+        )
+      }
+      return part
+    })
+  }
+
   return (
     <div className="sala-chat-container">
       <div className={`chat-list-sidebar ${isMobileView && isMobileChat ? 'chat-hidden' : ''}`}>
@@ -731,7 +761,7 @@ export default function SalaDeChat({ perfil, params }) {
                           </div>
                         )}
 
-                        <div className="message-text">{m.mensaje}</div>
+                        <div className="message-text">{renderMessageWithLinks(m.mensaje)}</div>
                         <div className="message-meta">
                           {formatTime(m.created_at)}
                           {isMine && <span className={`message-status ${m.leido ? 'read' : ''}`}>✓✓</span>}

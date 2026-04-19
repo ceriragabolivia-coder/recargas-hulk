@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import AlertModal from './AlertModal'
 
-export default function SupportChat({ perfil, forceOpen, onClose }) {
+export default function SupportChat({ perfil, forceOpen, onClose, onNavigate }) {
   const [isOpen, setIsOpen] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   const [mensajes, setMensajes] = useState([])
@@ -438,6 +438,37 @@ export default function SupportChat({ perfil, forceOpen, onClose }) {
     } catch (error) { console.error(error) } finally { setIsUploading(false) }
   }
 
+  const renderMessageWithLinks = (text) => {
+    if (!text) return text
+    const parts = text.split(/(#\d+)/g)
+    return parts.map((part, i) => {
+      if (part.match(/#\d+/)) {
+        return (
+          <span 
+            key={i} 
+            style={{ 
+              textDecoration: 'underline', 
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              color: 'inherit'
+            }}
+            onClick={(e) => {
+              e.stopPropagation()
+              if (onNavigate) {
+                onNavigate('pedidos', { orderNumber: part })
+                setIsOpen(false)
+                if (onClose) onClose()
+              }
+            }}
+          >
+            {part}
+          </span>
+        )
+      }
+      return part
+    })
+  }
+
   if (!perfil) return null
 
   return (
@@ -599,7 +630,7 @@ export default function SupportChat({ perfil, forceOpen, onClose }) {
                             </div>
                           )}
 
-                          {m.mensaje}
+                          {renderMessageWithLinks(m.mensaje)}
                           <button 
                             className="reply-button-small" 
                             onClick={(e) => { e.stopPropagation(); setReplyingTo(m); }}
