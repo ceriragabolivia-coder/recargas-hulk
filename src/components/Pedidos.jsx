@@ -31,7 +31,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
     setLoading(true)
     let query = supabase
       .from('pedidos')
-      .select('*, pedido_items(*, productos:producto_id(icono_url))')
+      .select('*, pedido_items(*, productos(icono_url))')
       .order('created_at', { ascending: false })
 
     if (user && !isAdmin) {
@@ -347,7 +347,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
     if (selectedPedido?.id === pedidoId) {
       const { data: updatedPedido } = await supabase
         .from('pedidos')
-        .select('*, pedido_items(*, productos:producto_id(icono_url))')
+        .select('*, pedido_items(*, productos(icono_url))')
         .eq('id', pedidoId)
         .single()
       if (updatedPedido) {
@@ -528,7 +528,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
         .from('pedidos')
         .update({ pago_verificado: true, updated_at: new Date().toISOString() })
         .eq('id', pedido.id)
-        .select('*, pedido_items(*, productos:producto_id(icono_url))')
+        .select('*, pedido_items(*, productos(icono_url))')
         .single();
 
       if (error) {
@@ -603,7 +603,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
         updated_at: new Date().toISOString()
       })
       .eq('id', pedido.id)
-      .select('*, pedido_items(*, productos:producto_id(icono_url))')
+      .select('*, pedido_items(*, productos(icono_url))')
       .single();
 
     if (error) {
@@ -1229,13 +1229,27 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'flex-start' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       {(() => {
-                        const iconUrl = item.producto_icono || (Array.isArray(item.productos) ? item.productos[0]?.icono_url : item.productos?.icono_url);
-                        if (!iconUrl) return null;
+                        // Búsqueda exhaustiva del ícono en todas las posibles estructuras de Supabase
+                        const iconUrl = item.producto_icono || 
+                                      (Array.isArray(item.productos) ? item.productos[0]?.icono_url : item.productos?.icono_url) ||
+                                      (Array.isArray(item.producto) ? item.producto[0]?.icono_url : item.producto?.icono_url) ||
+                                      item.icono_url; // Fallback final si viniera plano
+
+                        if (!iconUrl) {
+                          // Log discreto para depuración indirecta (invisible al usuario final usualmente)
+                          // console.log("Icon not found for item:", item.producto_nombre);
+                          return null;
+                        }
+
                         return (
                           <img 
                             src={iconUrl} 
                             alt="Icono" 
                             style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--border-color)' }}
+                            onError={(e) => {
+                              // Si la imagen falla al cargar, la ocultamos para no mostrar un cuadro roto
+                              e.currentTarget.style.display = 'none';
+                            }}
                           />
                         );
                       })()}
