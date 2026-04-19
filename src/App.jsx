@@ -10,6 +10,7 @@ import { WalletProvider } from './context/WalletContext'
 import SupportChat from './components/SupportChat'
 import Cart from './components/Cart'
 import { Analytics } from "@vercel/analytics/react"
+import kidsGamingImg from './assets/kids_gaming_loading.png'
 
 // Componentes cargados dinámicamente (Lazy Load) para optimizar la velocidad inicial
 const Dashboard = lazy(() => import('./components/Dashboard'))
@@ -240,6 +241,22 @@ export default function App() {
     }
   }, [user, perfil, loading, refetch])
 
+  // --- VISTA DE CARGA MODERNA (PRUEBA) ---
+  // Para revertir a la clásica, simplemente descomenta el bloque de abajo y comenta este
+  if ((loading || (user && (!perfil || perfil.estado === 'cargando'))) && !forceLoad) {
+    return (
+      <div className="loading-screen-modern">
+        <img src={kidsGamingImg} alt="Cargando..." className="loading-illustration" />
+        <div className="loading-text-dynamic">Cargando Sistema</div>
+        <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '10px' }}>
+          Esto puede tardar unos segundos
+        </p>
+      </div>
+    )
+  }
+
+  /* 
+  // --- VISTA DE CARGA CLÁSICA (REVERSIÓN) ---
   if ((loading || (user && (!perfil || perfil.estado === 'cargando'))) && !forceLoad) {
     return (
       <div className="loading-screen">
@@ -249,6 +266,7 @@ export default function App() {
       </div>
     )
   }
+  */
 
   if (!user) {
     return isRegistering
