@@ -5,7 +5,7 @@ import { formatUSD, formatBs } from '../utils/helpers'
 import AlertModal from './AlertModal'
 
 export default function Usuarios({ onNavigate }) {
-  const { clientes, loading, updateProfileRoleAndDiscount, updateProfile, updateProfileStatus, ajustarSaldoWallet, ajustarSaldoWalletBs, refetch } = useClientes()
+  const { clientes, loading, updateProfileRoleAndDiscount, updateProfile, updateProfileStatus, ajustarSaldoWallet, ajustarSaldoWalletBs, resetUserPassword, refetch } = useClientes()
   const { perfil } = useAuth()
   
   const [editingRow, setEditingRow] = useState(null)
@@ -29,6 +29,11 @@ export default function Usuarios({ onNavigate }) {
   const [viendoMovimientos, setViendoMovimientos] = useState(null)
   const [movimientos, setMovimientos] = useState([])
   const [loadingMovimientos, setLoadingMovimientos] = useState(false)
+  
+  // Estados para Restablecer Contraseña
+  const [reseteandoPassword, setReseteandoPassword] = useState(null)
+  const [newPassword, setNewPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   const formatFecha = (iso) => {
     if (!iso) return '-'
@@ -137,6 +142,32 @@ export default function Usuarios({ onNavigate }) {
       refetch()
     } catch (err) {
       setAlertModal({ type: 'error', message: "Error al ajustar billetera: " + err.message })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleResetPassword = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      alert("La contraseña debe tener al menos 6 caracteres")
+      return
+    }
+    
+    setSaving(true)
+    try {
+      const { data, error } = await resetUserPassword(reseteandoPassword.auth_user_id, newPassword)
+      
+      if (error) throw error
+      if (data && !data.success) throw new Error(data.error)
+      
+      setAlertModal({ 
+        type: 'success', 
+        message: `Contraseña de ${reseteandoPassword.nombres} se ha restablecido exitosamente.` 
+      })
+      setReseteandoPassword(null)
+      setNewPassword('')
+    } catch (err) {
+      setAlertModal({ type: 'error', message: "Error al restablecer contraseña: " + err.message })
     } finally {
       setSaving(false)
     }
@@ -451,14 +482,26 @@ export default function Usuarios({ onNavigate }) {
                             >
                               📋 Historial
                             </button>
-                            <button 
-                              className="btn btn-ghost"
-                              style={{ padding: '6px 10px', fontSize: '12px' }}
-                              onClick={() => handleEditClick(cliente)}
-                              title="Editar usuario"
-                            >
-                              ✏️ Editar
-                            </button>
+                             <button 
+                               className="btn btn-ghost"
+                               style={{ padding: '6px 10px', fontSize: '12px' }}
+                               onClick={() => {
+                                 setReseteandoPassword(cliente)
+                                 setNewPassword('')
+                                 setShowPassword(false)
+                               }}
+                               title="Restablecer contraseña"
+                             >
+                               🔑 Clave
+                             </button>
+                             <button 
+                               className="btn btn-ghost"
+                               style={{ padding: '6px 10px', fontSize: '12px' }}
+                               onClick={() => handleEditClick(cliente)}
+                               title="Editar usuario"
+                             >
+                               ✏️ Editar
+                             </button>
                           </div>
                         )}
                       </td>
@@ -668,6 +711,51 @@ export default function Usuarios({ onNavigate }) {
                   </tbody>
                 </table>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Restablecer Contraseña */}
+      {reseteandoPassword && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999, backdropFilter: 'blur(10px)', animation: 'fadeIn 0.2s ease'
+        }}>
+          <div style={{ backgroundColor: '#1a1d21', borderRadius: '24px', width: '100%', maxWidth: '400px', padding: '32px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <h3 style={{ fontSize: '20px', marginBottom: '8px' }}>Restablecer Contraseña</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '24px' }}>
+              Estableciendo nueva clave para: <strong style={{color: '#fff'}}>{reseteandoPassword.nombres} {reseteandoPassword.apellidos}</strong>
+            </p>
+
+            <div className="form-group mb-24">
+              <label className="form-label">Nueva Contraseña</label>
+              <div style={{ position: 'relative' }}>
+                <input 
+                  type={showPassword ? "text" : "password"}
+                  className="form-input" 
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  autoFocus
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px'
+                  }}
+                >
+                  {showPassword ? '👁️' : '🕶️'}
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => setReseteandoPassword(null)} disabled={saving}>Cancelar</button>
+              <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleResetPassword} disabled={saving}>{saving ? 'Procesando...' : 'Cambiar Clave'}</button>
             </div>
           </div>
         </div>

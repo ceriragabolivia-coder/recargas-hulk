@@ -465,6 +465,14 @@ export function useClientes() {
     return { data, error }
   }
 
+  async function resetUserPassword(authUserId, newPassword) {
+    const { data, error } = await supabase.rpc('admin_reset_password_rpc', {
+      p_user_id: authUserId,
+      p_new_password: newPassword
+    })
+    return { data, error }
+  }
+
   useEffect(() => {
     fetchClientes()
   }, [])
@@ -480,6 +488,7 @@ export function useClientes() {
     updateProfileRoleAndDiscount,
     ajustarSaldoWallet,
     ajustarSaldoWalletBs,
+    resetUserPassword,
     refetch: fetchClientes 
   }
 }
