@@ -1278,10 +1278,10 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                       selectedPedido.estado === 'cancelado' ? '❌ Cancelado por' : '👤 Tomado por'}
                   </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontWeight: 700, color: 'var(--accent-primary)' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--accent-primary)', textTransform: 'capitalize' }}>
                       {selectedPedido.atendido_por_id === user.id ? 
-                        (perfil.nombres || perfil.usuario || 'Tú') : 
-                        (selectedPedido.atendido_por?.nombres ? `${selectedPedido.atendido_por.nombres} ${selectedPedido.atendido_por.apellidos || ''}`.trim() : 'Otro Admin')
+                        (perfil.nickname || perfil.nombres || perfil.usuario || 'Tú') : 
+                        (selectedPedido.atendido_por?.nickname || selectedPedido.atendido_por?.nombres || 'Otro Admin')
                       }
                     </span>
 
@@ -1405,8 +1405,8 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
 
                 {/* Status Ocupado */}
                 {selectedPedido.atendido_por_id && selectedPedido.atendido_por_id !== user.id && (
-                  <div style={{ textAlign: 'center', padding: '10px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: '6px', color: 'var(--accent-error)', fontSize: '11px', marginTop: '8px' }}>
-                    🚫 En proceso por {selectedPedido.atendido_por?.nombres || 'otro administrador'}
+                  <div style={{ textAlign: 'center', padding: '10px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: '6px', color: 'var(--accent-error)', fontSize: '11px', marginTop: '8px', textTransform: 'capitalize' }}>
+                    🚫 En proceso por {selectedPedido.atendido_por?.nickname || selectedPedido.atendido_por?.nombres || 'otro administrador'}
                   </div>
                 )}
               </div>
