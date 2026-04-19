@@ -1,8 +1,18 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth, useConfiguracion } from '../hooks/useData'
-import { playSuccessSound, playCashRegisterSound, playErrorSound, formatBs } from '../utils/helpers'
 import AlertModal from './AlertModal'
+import { playSuccessSound, playCashRegisterSound, playErrorSound, formatBs } from '../utils/helpers'
+
+const DEFAULT_CANCEL_MESSAGE = `Tu Pedido se ha cancelado motivado a que la referencia de pago que colocaste no ha podido ser encontrado en nuestro banco, es decir, el pago no pudo ser verificado y esto se debe a dos motivos:
+
+-Colocaste mal el número de referencia de tu pago.
+
+-Estás colocando una referencia de un pago que no existe o que no se realizó correctamente.
+
+Por favor verifica en tu banco el número de referencia, o comunícate con tu banco para consultar sobre el estado de ese pago que a nuestra cuenta no llegó.
+
+Verifica estos motivos y vuelve a crear un nuevo pedido: Recuerda que si creas muchos pedidos con referencias de pagos que no existan, tu usuario podría ser expulsado por colocar referencias de pagos falsos.`;
 
 export default function Pedidos({ filterKey, params, onNavigate }) {
   const normalizedParams = typeof params === 'object' && params !== null ? params : { filterKey: params };
@@ -22,6 +32,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
   
   const [rechazandoItem, setRechazandoItem] = useState(null) // ID del item si se está rechazando
   const [motivoRechazo, setMotivoRechazo] = useState('')
+  const [cancelacionMensaje, setCancelacionMensaje] = useState(DEFAULT_CANCEL_MESSAGE)
 
   // Paginación
   const [currentPage, setCurrentPage] = useState(1)
@@ -114,6 +125,12 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
       }
     }
   }, [targetOrderId, pedidos])
+  useEffect(() => {
+    if (selectedPedido) {
+      setCancelacionMensaje(DEFAULT_CANCEL_MESSAGE)
+    }
+  }, [selectedPedido?.id])
+
   // Cargar datos del cliente bajo demanda al abrir un pedido
   useEffect(() => {
     async function fetchClientData() {
@@ -765,6 +782,64 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
      setMotivoRechazo('')
   }
 
+  const confirmarCancelacionPagoNoEncontrado = async () => {
+    if (!selectedPedido) return;
+    if (!cancelacionMensaje.trim()) {
+      showAlert("El mensaje de cancelación no puede estar vacío.", "error");
+      return;
+    }
+
+    setLoading(true);
+    const now = new Date().toISOString();
+
+    const updateData = {
+      estado: 'cancelado',
+      pago_verificado: false,
+      observaciones: cancelacionMensaje,
+      atendido_por_id: user.id,
+      fecha_respuesta: now,
+      updated_at: now
+    };
+
+    try {
+      // 1. Actualizar el pedido
+      const { error: updateError } = await supabase
+        .from('pedidos')
+        .update(updateData)
+        .eq('id', selectedPedido.id);
+
+      if (updateError) throw updateError;
+
+      // 2. Enviar mensaje al chat automáticamente
+      // Necesitamos el ID interno del perfil del cliente (selectedPedido.cliente.id)
+      // y el ID interno del remitente (perfil.cliente_uuid)
+      if (selectedPedido.cliente?.id) {
+        const { error: chatError } = await supabase
+          .from('soporte_mensajes')
+          .insert({
+            cliente_id: selectedPedido.cliente.id,
+            remitente_id: perfil?.cliente_uuid || null,
+            mensaje: cancelacionMensaje,
+            leido: false
+          });
+        
+        if (chatError) console.error("Error enviando mensaje al chat:", chatError);
+      }
+
+      // 3. Actualizar estado local
+      playErrorSound();
+      const pedFinal = { ...selectedPedido, ...updateData };
+      setPedidos(prev => prev.map(p => p.id === selectedPedido.id ? pedFinal : p));
+      setSelectedPedido(pedFinal);
+      showAlert("Pedido cancelado y mensaje enviado al cliente.", "success");
+    } catch (err) {
+      console.error("Error al cancelar pedido:", err);
+      showAlert("Error al cancelar el pedido: " + err.message, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const showAlert = (message, type = 'info', onConfirm = null) => {
     setAlertModal({ message, type, onConfirm });
   }
@@ -1025,6 +1100,71 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                     )}
                   </div>
                 </div>
+
+                {/* BLOQUE DE CANCELACIÓN ESPECIAL (PAGO NO ENCONTRADO) */}
+                {isAdmin && selectedPedido.pago_verificado === false && selectedPedido.estado !== 'cancelado' && (
+                  <div style={{
+                    marginTop: '12px',
+                    padding: '16px',
+                    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    animation: 'fadeIn 0.3s ease'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                      <span style={{ fontSize: '20px' }}>⚠️</span>
+                      <h4 style={{ margin: 0, color: '#ef4444', fontSize: '14px', fontWeight: 800, textTransform: 'uppercase' }}>Pago No Verificado</h4>
+                    </div>
+                    
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '10px' }}>
+                      Si el pago no existe en el banco, puedes cancelar el pedido con el siguiente mensaje predeterminado:
+                    </p>
+
+                    <textarea
+                      value={cancelacionMensaje}
+                      onChange={(e) => setCancelacionMensaje(e.target.value)}
+                      style={{
+                        width: '100%',
+                        height: '140px',
+                        backgroundColor: 'rgba(0,0,0,0.2)',
+                        border: '1px solid rgba(239, 68, 68, 0.2)',
+                        borderRadius: '8px',
+                        color: '#fff',
+                        padding: '12px',
+                        fontSize: '13px',
+                        lineHeight: '1.4',
+                        marginBottom: '12px',
+                        outline: 'none',
+                        resize: 'none'
+                      }}
+                    />
+
+                    <button
+                      onClick={confirmarCancelacionPagoNoEncontrado}
+                      disabled={loading}
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        backgroundColor: '#ef4444',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '10px',
+                        fontWeight: 800,
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.target.style.filter = 'brightness(1.1)'}
+                      onMouseLeave={(e) => e.target.style.filter = 'none'}
+                    >
+                      {loading ? 'Procesando...' : '❌ Cancelar El Pedido'}
+                    </button>
+                  </div>
+                )}
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', backgroundColor: 'var(--bg-card)', borderRadius: '6px' }}>
                 <span style={{ color: 'var(--text-muted)', fontSize: '18px' }}>Total</span>
