@@ -240,7 +240,7 @@ export default function App() {
     }
   }, [user, perfil, loading, refetch])
 
-  if ((loading || (user && !perfil)) && !forceLoad) {
+  if ((loading || (user && (!perfil || perfil.estado === 'cargando'))) && !forceLoad) {
     return (
       <div className="loading-screen">
         <div className="spinner"></div>

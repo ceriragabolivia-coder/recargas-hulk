@@ -93,7 +93,7 @@ export function AuthProvider({ children }) {
       return await Promise.race([fetchPromise, timeoutPromise])
     } catch (err) {
       console.warn('⚠️ Auth: Usando perfil de emergencia debido a lentitud/error');
-      return { id: userId, rol: 'cliente', estado: 'pendiente', is_fallback: true }
+      return { id: userId, rol: 'cliente', estado: 'cargando', is_fallback: true }
     }
   }
 
@@ -125,8 +125,12 @@ export function AuthProvider({ children }) {
           lastUserIdRef.current = u.id
           setUser(u)
           const pData = await fetchPerfilData(u.id, u)
-          setPerfil(pData)
-          setupRealtime(u.id)
+          
+          // Actualización atómica para evitar parpadeos
+          if (pData) {
+            setPerfil(pData)
+            setupRealtime(u.id)
+          }
         }
       } catch (err) {
         console.error("❌ Auth: Error en inicialización inicial:", err)
@@ -155,8 +159,12 @@ export function AuthProvider({ children }) {
         setUser(u)
         setLoading(true)
         const pData = await fetchPerfilData(u.id, u)
-        setPerfil(pData)
-        setupRealtime(u.id)
+        
+        // Actualización atómica
+        if (pData) {
+          setPerfil(pData)
+          setupRealtime(u.id)
+        }
         setLoading(false)
       }
     })
