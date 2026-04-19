@@ -4,7 +4,7 @@ import { useAuth, useConfiguracion } from '../hooks/useData'
 import AlertModal from './AlertModal'
 import { playSuccessSound, playCashRegisterSound, playErrorSound, formatBs } from '../utils/helpers'
 
-const DEFAULT_CANCEL_MESSAGE = (num) => `Tu Pedido #${num} se ha cancelado motivado a que la referencia de pago que colocaste no ha podido ser encontrado en nuestro banco, es decir, el pago no pudo ser verificado y esto se debe a dos motivos:
+const DEFAULT_CANCEL_MESSAGE = (num) => `Tu Pedido #${num} se ha cancelado motivado a que la referencia de pago que colocaste no ha podido ser encontrado en nuestro banco, es decir, el pago no pudo ser verificado y esto se debe a alguno de los siguientes motivos:
 
 -Colocaste mal el número de referencia de tu pago.
 
