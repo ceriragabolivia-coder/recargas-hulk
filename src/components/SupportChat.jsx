@@ -590,19 +590,32 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate }) 
                   mensajes.map(m => {
                     const isMine = m.remitente_id === currentClienteId
                     return (
-                      <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMine ? 'flex-end' : 'flex-start' }}>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', marginLeft: '4px', marginRight: '4px' }}>
-                          {m.es_sistema ? 'Sistema' : (isMine ? 'Tú' : (m.remitente?.nombres || 'Soporte'))}
-                        </div>
+                      <div 
+                        key={m.id} 
+                        className={m.es_sistema ? 'message-bubble-wrapper system' : ''}
+                        style={{ 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          alignItems: m.es_sistema ? 'center' : (isMine ? 'flex-end' : 'flex-start'),
+                          width: '100%'
+                        }}
+                      >
+                        {!m.es_sistema && (
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', marginLeft: '4px', marginRight: '4px' }}>
+                            {isMine ? 'Tú' : (m.remitente?.nombres || 'Soporte')}
+                          </div>
+                        )}
                         <div className={`message-bubble ${m.es_sistema ? 'system' : ''}`} style={{ 
-                          backgroundColor: m.es_sistema ? 'rgba(255,255,255,0.05)' : (isMine ? 'var(--accent-primary)' : 'var(--bg-panel)'),
-                          color: isMine && !m.es_sistema ? '#000' : 'var(--text-primary)',
-                          padding: '10px 14px', borderRadius: '16px',
-                          borderBottomRightRadius: isMine ? '4px' : '16px',
-                          borderBottomLeftRadius: isMine ? '16px' : '4px',
-                          maxWidth: '85%', wordBreak: 'break-word', fontSize: '14px',
-                          fontStyle: m.es_sistema ? 'italic' : 'normal',
-                          border: m.es_sistema ? '1px dashed rgba(255,255,255,0.1)' : 'none',
+                          backgroundColor: m.es_sistema ? undefined : (isMine ? 'var(--accent-primary)' : 'var(--bg-panel)'),
+                          color: m.es_sistema ? undefined : (isMine ? '#000' : 'var(--text-primary)'),
+                          padding: m.es_sistema ? undefined : '10px 14px', 
+                          borderRadius: m.es_sistema ? undefined : '16px',
+                          borderBottomRightRadius: !m.es_sistema && isMine ? '4px' : undefined,
+                          borderBottomLeftRadius: !m.es_sistema && !isMine ? '4px' : undefined,
+                          maxWidth: m.es_sistema ? undefined : '85%', 
+                          wordBreak: 'break-word', 
+                          fontSize: m.es_sistema ? undefined : '14px',
+                          border: m.es_sistema ? undefined : 'none',
                           position: 'relative'
                         }}>
                           {m.quoted_id && (
