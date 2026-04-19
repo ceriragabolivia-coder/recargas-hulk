@@ -25,7 +25,8 @@ const NAV_ITEMS = [
 const DEFAULT_TASKBAR_ITEMS = [
   { key: 'pagos_pendientes', icon: '💳', label: 'Pagos Pendientes', color: '#ef4444' },
   { key: 'ordenes_pendientes', icon: '📋', label: 'Órdenes Pendientes', color: '#f59e0b' },
-  { key: 'recargas_pendientes', icon: '⚡', label: 'Recargas Pendientes', color: '#8b5cf6' },
+  { key: 'recargas_pendientes', icon: '⚡', label: 'Recargas de Pedidos', color: '#10b981' },
+  { key: 'billetera_pendientes', icon: '💼', label: 'Recargas Billetera', color: '#a855f7' },
   { key: 'soporte_pendientes', icon: '💬', label: 'Mensajes de Soporte', color: '#00d2ff' },
   { key: 'usuarios_online', icon: '👥', label: 'Usuarios en Línea', color: '#22c55e' },
 ]
@@ -82,7 +83,12 @@ function NotificationBar({ counts, onNavigate, config, onlineUsers }) {
             if (item.key === 'usuarios_online') {
               setShowOnlineDropdown(!showOnlineDropdown)
             } else {
-              onNavigate(item.key === 'soporte_pendientes' ? 'chats' : 'pedidos', item.key)
+              const target = item.key === 'soporte_pendientes' 
+                ? 'chats' 
+                : item.key === 'billetera_pendientes' 
+                  ? 'billetera' 
+                  : 'pedidos';
+              onNavigate(target, item.key)
             }
           }}
           className="notification-item"
@@ -311,7 +317,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
     }
     const adminIds = adminIdsRef.current
 
-    let pCount = 0, oCount = 0, rCount = 0, sCount = 0
+    let pCount = 0, oCount = 0, rCount = 0, sCount = 0, brCount = 0
 
     if (!isAdmin) {
       setCounts(prev => ({
@@ -339,7 +345,8 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
 
         pCount = p || 0
         oCount = o || 0
-        rCount = (r || 0) + (br || 0)
+        rCount = r || 0
+        brCount = br || 0
       } catch (err) {
         console.error("Error general fetchCounts Pedidos:", err)
       }
@@ -375,6 +382,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
       pagos_pendientes: pCount,
       ordenes_pendientes: oCount,
       recargas_pendientes: rCount,
+      billetera_pendientes: brCount,
       soporte_pendientes: sCount,
       usuarios_online: onlineUsers.length,
     }))
@@ -613,6 +621,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
           }
           fetchCounts()
         })
+        .subscribe()
       // 2c. Suscripción a CHATS de Soporte (Admin)
       const channelAdminChat = supabase
         .channel('chat_realtime_admin')
