@@ -74,6 +74,7 @@ export default function Checkout({ onFinish }) {
   const orderPreparingRef = React.useRef(false)
   const [comprobanteUrl, setComprobanteUrl] = useState(null)
   const [uploadingComprobante, setUploadingComprobante] = useState(false)
+  const [isAutomaticResult, setIsAutomaticResult] = useState(false)
 
   // Efecto para asegurar que la página siempre aparezca al inicio al cargar o cambiar de paso
   useEffect(() => {
@@ -301,6 +302,7 @@ export default function Checkout({ onFinish }) {
       }
 
       playCashRegisterSound()
+      setIsAutomaticResult(isGratis || isWalletOnly || isWalletBsOnly)
       setOrderFinished(true)
       setTimeout(() => { if (onFinish) onFinish() }, 15000)
     } catch (err) {
@@ -319,8 +321,17 @@ export default function Checkout({ onFinish }) {
           </div>
           <h2 style={{ color: 'var(--accent-success)' }}>¡Pedido Creado!</h2>
           <p style={{ color: 'var(--text-muted)', marginBottom: '32px', whiteSpace: 'pre-line' }}>
-            Tu pedido se ha registrado exitosamente. En estos momentos tu pago se está verificando.{"\n\n"}
-            Puedes consultar el estado en "Mis Pedidos" y el tiempo estimado es de 5 a 20 minutos para la respuesta.
+            {isAutomaticResult ? (
+              <>
+                Tu pedido se ha registrado exitosamente y está en proceso.{"\n\n"}
+                Dicho proceso comprende entre 5 a 20 minutos. Puedes consultar el estado en "Mis Pedidos".
+              </>
+            ) : (
+              <>
+                Tu pedido se ha registrado exitosamente. En estos momentos tu pago se está verificando.{"\n\n"}
+                Puedes consultar el estado en "Mis Pedidos" y el tiempo estimado es de 5 a 20 minutos para la respuesta.
+              </>
+            )}
           </p>
           <button className="btn btn-primary" onClick={onFinish}>Volver al Inicio</button>
         </div>
