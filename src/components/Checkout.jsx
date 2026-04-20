@@ -447,6 +447,21 @@ export default function Checkout({ onFinish }) {
                             </button>
                           </div>
 
+                          {selectedMetodo?.datos && (
+                            <button 
+                              className="btn btn-ghost btn-sm"
+                              style={{ width: '100%', marginBottom: '16px', border: '1px dashed var(--accent-primary)', borderRadius: '12px', color: 'var(--accent-primary)', fontWeight: 700, padding: '12px' }}
+                              onClick={(e) => {
+                                navigator.clipboard.writeText(selectedMetodo.datos);
+                                const btn = e.currentTarget;
+                                btn.innerText = '✅ ¡Datos de Pago Copiados!';
+                                setTimeout(() => { btn.innerText = '📋 Copiar Todos los Datos'; }, 2000);
+                              }}
+                            >
+                              📋 Copiar Todos los Datos
+                            </button>
+                          )}
+
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
                             {selectedMetodo?.datos.split('\n').filter(l => l.trim()).map((line, i) => (
                               <div key={i} style={{ 
