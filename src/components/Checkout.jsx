@@ -722,9 +722,9 @@ export default function Checkout({ onFinish }) {
                    </div>
                 )}
 
-                {/* Métodos de pago (solo si necesita pagar algo más) */}
+                {/* SECCIÓN DINÁMICA: SELECCIÓN O DATOS UNIFICADOS */}
                 {!isGratis && ((!useWalletPartial && !useWalletBs) || (!hasEnoughBalance && useWalletPartial) || (!hasEnoughBalanceBs && useWalletBs)) ? (
-                  <>
+                  <div className="form-group mb-24">
                     <label className="form-label" style={{ marginBottom: '12px', display: 'block' }}>
                       {useWalletPartial && !hasEnoughBalance 
                         ? `Método de pago para el resto (${formatUSD(remainingUSD)})` 
@@ -757,7 +757,8 @@ export default function Checkout({ onFinish }) {
                             className="btn btn-ghost btn-sm"
                             style={{ width: '100%', marginBottom: '12px', border: '1px dashed var(--accent-primary)', color: 'var(--accent-primary)', fontWeight: 700 }}
                             onClick={(e) => {
-                              navigator.clipboard.writeText(selectedMetodo.datos);
+                              const fullData = selectedMetodo.datos;
+                              navigator.clipboard.writeText(fullData);
                               const btn = e.currentTarget;
                               btn.innerText = '✅ ¡Datos Copiados!';
                               setTimeout(() => { btn.innerText = '📋 Copiar Todos los Datos'; }, 2000);
@@ -820,7 +821,7 @@ export default function Checkout({ onFinish }) {
                                 accept="image/*"
                                 onChange={handleComprobanteUpload}
                                 disabled={uploadingComprobante}
-                                style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
+                                style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}
                               />
                             </div>
                           </div>
@@ -854,17 +855,10 @@ export default function Checkout({ onFinish }) {
                         ))}
                       </div>
                     )}
-                      accept="image/*"
-                      onChange={handleComprobanteUpload}
-                      disabled={uploadingComprobante}
-                      style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}
-                    />
                   </div>
-                </div>
-              </>
-            )}
+                ) : null}
 
-            {/* Resumen de Montos */}
+            {/* Resumen de Montos - Siempre visible */}
             <div style={{ backgroundColor: 'var(--bg-panel)', padding: '20px', borderRadius: '16px', marginBottom: '24px', border: '1px solid var(--border-color)' }}>
               {!isCliente && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
