@@ -929,12 +929,10 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
                 <span className="desktop-only">{config?.estado_operativo === 'activo' ? 'Activos' : 'Horario de Descanso'}</span>
               </div>
             )}
-            <CartWidget />
             <WalletWidget onNavigate={handleMobileNavigate} />
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-            <div className="desktop-only"><LiveClock /></div>
             {isAdmin && <NotificationBar key="notif-bar" counts={counts} onNavigate={handleMobileNavigate} config={config} onlineUsers={onlineUsers} />}
+            <CartWidget />
           </div>
         </header>
         {children}
