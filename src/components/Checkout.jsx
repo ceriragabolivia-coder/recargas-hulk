@@ -733,9 +733,8 @@ export default function Checkout({ onFinish }) {
                         : 'Seleccionar Método de Pago'}
                     </label>
                     
-                    {selectedMetodoId && !isWalletOnly && !isWalletBsOnly ? (
-                      <div className="selected-method-container fade-in" style={{ padding: '20px', backgroundColor: 'var(--bg-panel)', borderRadius: '16px', border: '1px solid var(--accent-primary)', animation: 'slideIn 0.3s ease' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                      <div className="selected-method-container fade-in" style={{ padding: '20px', backgroundColor: 'var(--bg-panel)', borderRadius: '16px', border: '2px solid var(--accent-primary)', animation: 'slideIn 0.3s ease' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'var(--bg-card)', padding: '6px', overflow: 'hidden' }}>
                               {selectedMetodo?.icono_url ? <img src={selectedMetodo.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : '💳'}
@@ -745,39 +744,85 @@ export default function Checkout({ onFinish }) {
                           <button 
                             className="btn btn-ghost btn-sm" 
                             onClick={handleClearMetodo}
-                            style={{ color: '#ff5252', border: '1px solid rgba(255, 82, 82, 0.2)' }}
+                            style={{ color: '#ff5252', border: '1px solid rgba(255, 82, 82, 0.2)', padding: '4px 10px' }}
                           >
                             ✕ Cambiar
                           </button>
                         </div>
 
-                        {/* DATOS DEL MÉTODO (Los mismos de antes pero aquí mismo) */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                          <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Datos para reportar pago:</p>
-                          
+                        {/* BOTÓN COPIAR TODO */}
+                        {selectedMetodo?.datos && (
+                          <button 
+                            className="btn btn-ghost btn-sm"
+                            style={{ width: '100%', marginBottom: '12px', border: '1px dashed var(--accent-primary)', color: 'var(--accent-primary)', fontWeight: 700 }}
+                            onClick={(e) => {
+                              navigator.clipboard.writeText(selectedMetodo.datos);
+                              const btn = e.currentTarget;
+                              btn.innerText = '✅ ¡Datos Copiados!';
+                              setTimeout(() => { btn.innerText = '📋 Copiar Todos los Datos'; }, 2000);
+                            }}
+                          >
+                            📋 Copiar Todos los Datos
+                          </button>
+                        )}
+
+                        {/* DATOS DEL MÉTODO */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           {selectedMetodo?.datos.split('\n').filter(line => line.trim()).map((line, idx) => (
-                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', backgroundColor: 'var(--bg-primary)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: 'var(--bg-primary)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
                               <span style={{ fontSize: '13px', fontWeight: 500 }}>{line}</span>
                               <button 
-                                onClick={(e) => {
+                                onClick={() => {
                                   const textToCopy = line.split(':').slice(1).join(':').trim() || line.trim();
                                   navigator.clipboard.writeText(textToCopy);
-                                  const btn = e.currentTarget;
-                                  btn.innerText = '✅';
-                                  setTimeout(() => { btn.innerText = '📋'; }, 2000);
                                 }}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--accent-primary)' }}
-                                title="Copiar"
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: 'var(--accent-primary)' }}
                               >📋</button>
                             </div>
                           ))}
 
                           {selectedMetodo?.qr_url && (
-                             <div style={{ marginTop: '12px', textAlign: 'center' }}>
-                               <img src={selectedMetodo.qr_url} alt="QR" style={{ width: '120px', height: '120px', borderRadius: '12px', border: '1px solid var(--border-color)', padding: '4px', backgroundColor: 'white' }} />
+                             <div style={{ marginTop: '8px', textAlign: 'center' }}>
+                               <img src={selectedMetodo.qr_url} alt="QR" style={{ width: '140px', height: '140px', borderRadius: '12px', padding: '6px', backgroundColor: 'white' }} />
                                <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Escanea para pagar</p>
                              </div>
                           )}
+                        </div>
+
+                        {/* UNIFICACIÓN: CAMPOS DE REFERENCIA Y ARCHIVO */}
+                        <div style={{ marginTop: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+                          <div className="form-group mb-16">
+                            <label className="form-label" style={{ color: 'var(--accent-success)', fontWeight: 800 }}>Número de Referencia</label>
+                            <input 
+                              type="text" 
+                              className="form-input" 
+                              placeholder="Escribe la referencia de tu pago..."
+                              value={referencia}
+                              onChange={(e) => setReferencia(e.target.value)}
+                              style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--accent-success)' }}
+                            />
+                          </div>
+
+                          <div className="form-group mb-0">
+                            <label className="form-label">
+                              📎 Adjuntar Capture 
+                              <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginLeft: '8px' }}>(Opcional)</span>
+                            </label>
+                            <div style={{
+                              border: `1px dashed ${comprobanteUrl ? 'var(--accent-success)' : 'var(--border-color)'}`,
+                              borderRadius: '12px', padding: '12px', textAlign: 'center', cursor: 'pointer',
+                              position: 'relative', backgroundColor: comprobanteUrl ? 'rgba(34, 197, 94, 0.05)' : 'var(--bg-primary)'
+                            }}>
+                              {uploadingComprobante ? '⏳ Subiendo...' : comprobanteUrl ? '✅ Capture listo' : '📤 Toca para subir comprobante'}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleComprobanteUpload}
+                                disabled={uploadingComprobante}
+                                style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ) : (
@@ -916,12 +961,12 @@ export default function Checkout({ onFinish }) {
               style={{ width: '100%', height: '56px', fontSize: '18px', boxShadow: '0 8px 24px rgba(0, 210, 255, 0.3)' }}
               disabled={
                 isProcessing || 
-                (currentStep === 1 && !selectedMetodoId && !(useWalletPartial && hasEnoughBalance) && !(useWalletBs && hasEnoughBalanceBs) && !isGratis) || 
-                (currentStep === 2 && !referencia && !isGratis)
+                (!selectedMetodoId && !(useWalletPartial && hasEnoughBalance) && !(useWalletBs && hasEnoughBalanceBs) && !isGratis) ||
+                (selectedMetodoId && !isWalletOnly && !isWalletBsOnly && !referencia.trim() && !isGratis)
               }
-              onClick={currentStep === 1 ? handleNextStep : handleFinalizar}
+              onClick={handleFinalizar}
             >
-              {isProcessing ? 'Procesando...' : (currentStep === 1 && !isGratis) ? 'Confirmar y Pagar' : 'Finalizar Pedido'}
+              {isProcessing ? 'Procesando...' : 'Finalizar Pedido'}
             </button>
           </div>
         </div>
