@@ -136,14 +136,17 @@ export function CartProvider({ children }) {
     }
   }
 
+  const [isCartOpen, setIsCartOpen] = useState(false)
+
   const totalItems = useMemo(() => cart.reduce((acc, item) => acc + item.quantity, 0), [cart])
   const totalUSD = useMemo(() => cart.reduce((acc, item) => acc + (item.venta_usd * item.quantity), 0), [cart])
   const totalBs = useMemo(() => Math.round(cart.reduce((acc, item) => acc + (item.venta_bs * item.quantity), 0)), [cart])
 
   const value = useMemo(() => ({ 
     cart, addToCart, removeFromCart, updateQuantity, clearCart, checkout, 
-    totalItems, totalUSD, totalBs 
-  }), [cart, totalItems, totalUSD, totalBs])
+    totalItems, totalUSD, totalBs,
+    isCartOpen, setIsCartOpen
+  }), [cart, totalItems, totalUSD, totalBs, isCartOpen])
 
   return (
     <CartContext.Provider value={value}>

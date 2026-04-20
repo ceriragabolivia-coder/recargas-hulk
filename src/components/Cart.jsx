@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useCart, useAuth } from '../hooks/useData'
 import { formatUSD, formatBs } from '../utils/helpers'
+import { useLocation } from 'react-router-dom'
 
 export default function Cart({ onGoToCheckout }) {
   const { 
@@ -10,10 +11,14 @@ export default function Cart({ onGoToCheckout }) {
     clearCart,
     totalItems, 
     totalUSD, 
-    totalBs 
+    totalBs,
+    isCartOpen: isOpen,
+    setIsCartOpen: setIsOpen
   } = useCart()
   const { perfil, isCliente } = useAuth()
-  const [isOpen, setIsOpen] = useState(false)
+  const location = useLocation()
+
+  const isCheckoutPage = location.pathname.toLowerCase() === '/checkout'
 
   const handleGoToCheckout = () => {
     setIsOpen(false)
@@ -24,8 +29,8 @@ export default function Cart({ onGoToCheckout }) {
 
   return (
     <div style={{ position: 'fixed', bottom: '80px', right: '20px', zIndex: 9990, maxWidth: 'calc(100vw - 32px)' }}>
-      {/* Botón Flotante del Carrito */}
-      {!isOpen && (
+      {/* Botón Flotante del Carrito - OCULTO EN CHECKOUT */}
+      {!isOpen && !isCheckoutPage && (
         <button 
           className="btn btn-primary"
           style={{ 

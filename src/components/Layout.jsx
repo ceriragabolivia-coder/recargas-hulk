@@ -152,6 +152,9 @@ function NotificationBar({ counts, onNavigate, config, onlineUsers }) {
   )
 }
 
+  )
+}
+
 function WalletWidget({ onNavigate }) {
   const { wallet, adminSalesBalance, loading } = useWallet()
   const { perfil, isCliente } = useAuth()
@@ -226,6 +229,37 @@ function WalletWidget({ onNavigate }) {
       >
         +
       </button>
+    </div>
+  )
+}
+
+function CartWidget() {
+  const { totalItems, setIsCartOpen } = useCart()
+  
+  if (totalItems === 0) return null
+
+  return (
+    <div 
+      onClick={() => setIsCartOpen(true)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: '8px',
+        padding: '6px 12px', borderRadius: '14px',
+        backgroundColor: 'rgba(0, 210, 255, 0.1)',
+        border: '1px solid rgba(0, 210, 255, 0.3)',
+        cursor: 'pointer', transition: 'all 0.2s ease',
+        position: 'relative',
+        animation: 'bounceIn 0.5s'
+      }}
+      className="cart-widget-hover"
+    >
+      <span style={{ fontSize: '18px' }}>🛒</span>
+      <span className="badge badge-error" style={{ 
+        position: 'absolute', top: '-5px', right: '-5px',
+        minWidth: '18px', height: '18px', borderRadius: '9px',
+        fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center'
+      }}>
+        {totalItems}
+      </span>
     </div>
   )
 }
@@ -898,6 +932,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
                 <span className="desktop-only">{config?.estado_operativo === 'activo' ? 'Activos' : 'Horario de Descanso'}</span>
               </div>
             )}
+            <CartWidget />
             <WalletWidget onNavigate={handleMobileNavigate} />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
