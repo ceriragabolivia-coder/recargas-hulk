@@ -152,9 +152,6 @@ function NotificationBar({ counts, onNavigate, config, onlineUsers }) {
   )
 }
 
-  )
-}
-
 function WalletWidget({ onNavigate }) {
   const { wallet, adminSalesBalance, loading } = useWallet()
   const { perfil, isCliente } = useAuth()
