@@ -2098,6 +2098,20 @@ tr:last-child td { border-bottom: none; }
   width: 100% !important;
 }
 
+/* ============ UTILIDADES DE TABLA ============ */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 480px) {
+  .table th, .table td {
+    padding: 8px 10px !important;
+    font-size: 12px !important;
+  }
+}
+
 /* ============ PEDIDOS RESPONSIVE ============ */
 @media (max-width: 768px) {
   .pedidos-header-responsive {
@@ -2114,6 +2128,10 @@ tr:last-child td { border-bottom: none; }
   }
   .pedidos-gestion-grid {
     grid-template-columns: 1fr !important;
+  }
+  .kpi-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
   }
 }
 
@@ -2146,6 +2164,18 @@ tr:last-child td { border-bottom: none; }
   
   .catalogo-grid .card div {
     font-size: 14px !important;
+  }
+
+  .chat-list-sidebar {
+    width: 100% !important;
+  }
+  .chat-hidden {
+    display: none !important;
+  }
+  .sala-chat-container {
+    margin: 0 !important;
+    height: calc(100vh - 64px) !important;
+    border-radius: 0 !important;
   }
 }
 
