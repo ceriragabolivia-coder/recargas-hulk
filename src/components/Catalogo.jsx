@@ -171,10 +171,10 @@ export default function Catalogo() {
         </div>
       )}
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'flex-start' }}>
         
         {/* COLUMNA IZQUIERDA (Info y Características) */}
-        <div style={{ flex: '1 1 280px', maxWidth: '350px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div style={{ flex: '1 1 280px', maxWidth: '350px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
           
           <button className="btn btn-ghost" onClick={() => setSelectedJuego(null)} style={{ alignSelf: 'flex-start', padding: '4px 10px', backgroundColor: 'var(--bg-panel)', fontSize: '12px' }}>
             ← Volver al Catálogo
@@ -245,7 +245,7 @@ export default function Catalogo() {
         </div>
         
         {/* COLUMNA DERECHA (Formulario de Recarga y Productos) */}
-        <div style={{ flex: '2 1 500px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ flex: '2 1 500px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
           
           {config?.promo_banner_texto && (
             <a 
@@ -253,24 +253,24 @@ export default function Catalogo() {
               target={config.promo_banner_link ? "_blank" : "_self"}
               rel="noreferrer"
               style={{
-                display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px',
+                display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px',
                 background: 'linear-gradient(135deg, rgba(255, 171, 0, 0.15) 0%, rgba(255, 86, 48, 0.15) 100%)', 
-                borderRadius: '16px', border: '1px solid rgba(255, 171, 0, 0.3)', textDecoration: 'none',
+                borderRadius: '12px', border: '1px solid rgba(255, 171, 0, 0.3)', textDecoration: 'none',
               }}
             >
               {config.promo_banner_icono_url ? (
-                <img src={config.promo_banner_icono_url} alt="Promo" style={{ width: 40, height: 40, objectFit: 'contain' }} />
+                <img src={config.promo_banner_icono_url} alt="Promo" style={{ width: 32, height: 32, objectFit: 'contain' }} />
               ) : (
-                 <div style={{ fontSize: '24px' }}>🎁</div>
+                 <div style={{ fontSize: '20px' }}>🎁</div>
               )}
               <div>
-                <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#ffab00', marginBottom: '2px' }}>¡Oferta Especial!</h3>
-                <p style={{ fontSize: '13px', color: 'var(--text-primary)', lineHeight: '1.3' }}>{config.promo_banner_texto}</p>
+                <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#ffab00', marginBottom: '0px' }}>¡Oferta Especial!</h3>
+                <p style={{ fontSize: '12px', color: 'var(--text-primary)', lineHeight: '1.2', margin: 0 }}>{config.promo_banner_texto}</p>
               </div>
             </a>
           )}
 
-          <div className="card card-recharge-info" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderLeft: '4px solid var(--accent-primary)', padding: '12px' }}>
+          <div className="card card-recharge-info" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderLeft: '4px solid var(--accent-primary)', padding: '10px' }}>
             {selectedJuego.metodo_recarga === 'cuenta_completa' ? (
               <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
                 <div style={{ flex: '1 1 200px' }}>
