@@ -75,6 +75,8 @@ export default function Checkout({ onFinish }) {
   const [comprobanteUrl, setComprobanteUrl] = useState(null)
   const [uploadingComprobante, setUploadingComprobante] = useState(false)
   const [isAutomaticResult, setIsAutomaticResult] = useState(false)
+  const [createdPedidoData, setCreatedPedidoData] = useState(null)
+  const [showTracking, setShowTracking] = useState(false)
 
   // Efecto para asegurar que la página siempre aparezca al inicio al cargar o cambiar de paso
   useEffect(() => {
@@ -306,8 +308,9 @@ export default function Checkout({ onFinish }) {
 
       playCashRegisterSound()
       setIsAutomaticResult(isGratis || isWalletOnly || isWalletBsOnly)
+      setCreatedPedidoData(pedidoResult.data)
       setOrderFinished(true)
-      setTimeout(() => { if (onFinish) onFinish() }, 15000)
+      // Ya no cerramos automáticamente en 15s para dar tiempo a Ver Pedido
     } catch (err) {
       alert('Error: ' + err.message)
     } finally {
@@ -318,25 +321,43 @@ export default function Checkout({ onFinish }) {
   if (orderFinished) {
     return (
       <div className="page-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
-        <div className="card" style={{ textAlign: 'center', padding: '48px', maxWidth: '500px' }}>
-          <div style={{ marginBottom: '24px' }}>
-            <img src="/assets/Verificando.PNG.png" alt="Verificación" style={{ width: '140px' }} />
-          </div>
-          <h2 style={{ color: 'var(--accent-success)' }}>¡Pedido Creado!</h2>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '32px', whiteSpace: 'pre-line' }}>
-            {isAutomaticResult ? (
-              <>
-                Tu pedido se ha registrado exitosamente y está en proceso.{"\n\n"}
-                Dicho proceso comprende entre 5 a 20 minutos. Puedes consultar el estado en "Mis Pedidos".
-              </>
-            ) : (
-              <>
-                Tu pedido se ha registrado exitosamente. En estos momentos tu pago se está verificando.{"\n\n"}
-                Puedes consultar el estado en "Mis Pedidos" y el tiempo estimado es de 5 a 20 minutos para la respuesta.
-              </>
-            )}
-          </p>
-          <button className="btn btn-primary" onClick={onFinish}>Volver al Inicio</button>
+        <div className="card" style={{ textAlign: 'center', padding: '32px', maxWidth: '500px', width: '100%', borderRadius: '28px', border: '1px solid var(--border-color)', boxShadow: '0 12px 48px rgba(0,0,0,0.3)' }}>
+          {!showTracking ? (
+            <div className="fade-in">
+              <div style={{ marginBottom: '24px' }}>
+                <img src="/assets/Verificando.PNG.png" alt="Verificación" style={{ width: '120px' }} />
+              </div>
+              <h2 style={{ color: 'var(--accent-success)', fontWeight: 800 }}>¡Pedido Creado!</h2>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '32px', whiteSpace: 'pre-line', fontSize: '15px' }}>
+                {isAutomaticResult ? (
+                  <>
+                    Tu pedido se ha registrado exitosamente y está en proceso.{"\n\n"}
+                    Dicho proceso comprende entre 5 a 20 minutos. Puedes consultar el estado en "Mis Pedidos".
+                  </>
+                ) : (
+                  <>
+                    Tu pedido se ha registrado exitosamente. En estos momentos tu pago se está verificando.{"\n\n"}
+                    Puedes consultar el estado en "Mis Pedidos" y el tiempo estimado es de 5 a 20 minutos para la respuesta.
+                  </>
+                )}
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => setShowTracking(true)}
+                  style={{ height: '56px', borderRadius: '14px', fontSize: '16px', fontWeight: 800, background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0088ff 100%)' }}
+                >
+                  👁️ Ver Pedido
+                </button>
+                <button className="btn btn-ghost" onClick={onFinish} style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Volver al Inicio</button>
+              </div>
+            </div>
+          ) : (
+            <div className="tracking-view fade-in">
+              {/* REAL TIME TRACKING COMPONENT */}
+              <OrderTracking pedidoInitial={createdPedidoData} onBack={onFinish} />
+            </div>
+          )}
         </div>
       </div>
     )
@@ -627,6 +648,102 @@ export default function Checkout({ onFinish }) {
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+// ============================================================
+// OrderTracking - Componente para seguimiento en tiempo real
+// ============================================================
+function OrderTracking({ pedidoInitial, onBack }) {
+  const [pedido, setPedido] = useState(pedidoInitial)
+
+  useEffect(() => {
+    if (!pedido?.id) return
+
+    // Suscripción en tiempo real a cambios en este pedido
+    const channel = supabase
+      .channel(`tracking_order_${pedido.id}`)
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'pedidos',
+        filter: `id=eq.${pedido.id}`
+      }, (payload) => {
+        console.log('Cambio detectado en pedido:', payload.new)
+        setPedido(prev => ({ ...prev, ...payload.new }))
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [pedido?.id])
+
+  const getStatusDisplay = (estado) => {
+    switch (estado) {
+      case 'completado': return { label: 'Completado', icon: '✅', color: '#22c55e' }
+      case 'procesando': return { label: 'En Proceso', icon: '⚡', color: 'var(--accent-primary)' }
+      case 'reembolsado': return { label: 'Reembolsado', icon: '🔄', color: '#e040fb' }
+      case 'cancelado': return { label: 'Cancelado', icon: '❌', color: '#ef4444' }
+      default: return { label: 'Recibido', icon: '⏳', color: '#ffab00' }
+    }
+  }
+
+  const status = getStatusDisplay(pedido.estado)
+
+  return (
+    <div className="order-tracking fade-in">
+      <div style={{ marginBottom: '24px' }}>
+        <h3 style={{ color: 'var(--text-primary)', marginBottom: '4px', fontSize: '20px', fontWeight: 800 }}>Resumen del Pedido</h3>
+        <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>#{String(pedido.numero_pedido).padStart(6, '0')}</p>
+      </div>
+
+      <div style={{ 
+        padding: '24px', borderRadius: '24px', 
+        backgroundColor: 'rgba(255,255,255,0.03)', 
+        border: `1px solid ${status.color}33`,
+        marginBottom: '24px',
+        display: 'flex', alignItems: 'center', gap: '20px',
+        justifyContent: 'center'
+      }}>
+        <span style={{ fontSize: '40px' }}>{status.icon}</span>
+        <div style={{ textAlign: 'left' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Estatus Actual</div>
+          <div style={{ fontSize: '22px', fontWeight: 900, color: status.color }}>{status.label}</div>
+        </div>
+      </div>
+
+      {pedido.observaciones && (
+        <div style={{ 
+          padding: '16px', borderRadius: '16px', 
+          backgroundColor: 'rgba(245, 158, 11, 0.08)', 
+          border: '1px solid rgba(245, 158, 11, 0.3)',
+          marginBottom: '24px', textAlign: 'left'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+            <span style={{ fontSize: '14px' }}>📝</span>
+            <span style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Nota de Administración:</span>
+          </div>
+          <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500, lineHeight: '1.4' }}>{pedido.observaciones}</p>
+        </div>
+      )}
+
+      <div style={{ 
+        textAlign: 'left', marginBottom: '32px', padding: '16px', 
+        borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.02)',
+        border: '1px solid var(--border-color)'
+      }}>
+        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Detalle de recarga:</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-primary)', fontWeight: 600, fontSize: '15px' }}>
+          <span>Monto Total:</span>
+          <span style={{ color: 'var(--accent-success)', fontWeight: 800 }}>{formatUSD(pedido.total_usd)}</span>
+        </div>
+      </div>
+
+      <button className="btn btn-primary" onClick={onBack} style={{ width: '100%', height: '56px', borderRadius: '14px', fontSize: '16px', fontWeight: 800 }}>
+        Cerrar Seguimiento
+      </button>
     </div>
   )
 }
