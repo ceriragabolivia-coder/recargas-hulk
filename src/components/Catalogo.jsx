@@ -174,44 +174,44 @@ export default function Catalogo() {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-start' }}>
         
         {/* COLUMNA IZQUIERDA (Info y Características) */}
-        <div style={{ flex: '1 1 280px', maxWidth: '350px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ flex: '1 1 280px', maxWidth: '350px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           
-          <button className="btn btn-ghost" onClick={() => setSelectedJuego(null)} style={{ alignSelf: 'flex-start', padding: '8px 16px', backgroundColor: 'var(--bg-panel)' }}>
+          <button className="btn btn-ghost" onClick={() => setSelectedJuego(null)} style={{ alignSelf: 'flex-start', padding: '6px 12px', backgroundColor: 'var(--bg-panel)', fontSize: '13px' }}>
             ← Volver al Catálogo
           </button>
           
-          <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '12px 16px', gap: '4px' }}>
+          <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '10px 14px', gap: '2px' }}>
             {selectedJuego.icono_url ? (
-              <img src={selectedJuego.icono_url} alt={selectedJuego.nombre} style={{ width: 160, height: 160, minWidth: 160, minHeight: 160, flexShrink: 0, objectFit: 'cover', borderRadius: '24px', filter: 'drop-shadow(0 12px 24px rgba(0,0,0,0.4))', backgroundColor: 'rgba(255,255,255,0.02)' }} />
+              <img src={selectedJuego.icono_url} alt={selectedJuego.nombre} style={{ width: 140, height: 140, minWidth: 140, minHeight: 140, flexShrink: 0, objectFit: 'cover', borderRadius: '20px', filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.4))', backgroundColor: 'rgba(255,255,255,0.02)' }} />
             ) : (
-              <div style={{ fontSize: '120px' }}>🎮</div>
+              <div style={{ fontSize: '100px' }}>🎮</div>
             )}
             <div style={{ marginTop: '0px' }}>
-              <h1 style={{ fontSize: '24px', fontWeight: 800, margin: '4px 0 2px 0', color: 'var(--text-primary)' }}>{selectedJuego.nombre}</h1>
-              <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '4px' }}>Lista de Precios Oficial</p>
+              <h1 style={{ fontSize: '22px', fontWeight: 800, margin: '4px 0 0 0', color: 'var(--text-primary)' }}>{selectedJuego.nombre}</h1>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '0px' }}>Lista de Precios Oficial</p>
             </div>
           </div>
 
-          <div className="card" style={{ padding: '16px' }}>
-            <h3 style={{ fontSize: '14px', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '12px', letterSpacing: '1px', fontWeight: 700 }}> Características</h3>
+          <div className="card" style={{ padding: '12px 16px' }}>
+            <h3 style={{ fontSize: '13px', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '1px', fontWeight: 700 }}> Características</h3>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', borderBottom: '1px solid var(--border-color)' }}>
-                <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Tipo:</span>
-                <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{selectedJuego.caracteristicas_tipo || 'Recarga'}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '6px', borderBottom: '1px solid var(--border-color)' }}>
+                <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Tipo:</span>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{selectedJuego.caracteristicas_tipo || 'Recarga'}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', borderBottom: '1px solid var(--border-color)' }}>
-                <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Región:</span>
-                <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{selectedJuego.caracteristicas_region || 'Global'}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '6px', borderBottom: '1px solid var(--border-color)' }}>
+                <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Región:</span>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{selectedJuego.caracteristicas_region || 'Global'}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', borderBottom: '1px solid var(--border-color)' }}>
-                <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Entrega:</span>
-                <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{selectedJuego.caracteristicas_entrega || 'Inmediata'}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '6px', borderBottom: '1px solid var(--border-color)' }}>
+                <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Entrega:</span>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{selectedJuego.caracteristicas_entrega || 'Inmediata'}</span>
               </div>
             </div>
 
             {selectedJuego.caracteristicas_nota && (
-              <div style={{ marginTop: '16px', padding: '12px', backgroundColor: 'rgba(255, 171, 0, 0.1)', borderRadius: '8px', borderLeft: '3px solid var(--accent-warning)' }}>
+              <div style={{ marginTop: '8px', padding: '10px', backgroundColor: 'rgba(255, 171, 0, 0.1)', borderRadius: '8px', borderLeft: '3px solid var(--accent-warning)' }}>
                 <p style={{ fontSize: '12px', color: 'var(--accent-warning)', lineHeight: '1.4' }}>
                   <strong style={{ display: 'block', marginBottom: '4px' }}>Nota Importante:</strong>
                   {selectedJuego.caracteristicas_nota}
