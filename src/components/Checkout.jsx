@@ -657,12 +657,30 @@ export default function Checkout({ onFinish }) {
 // ============================================================
 function OrderTracking({ pedidoInitial, onBack }) {
   const [pedido, setPedido] = useState(pedidoInitial)
+  const [items, setItems] = useState([])
+  const [loadingItems, setLoadingItems] = useState(true)
 
   useEffect(() => {
     if (!pedido?.id) return
 
-    // Suscripción en tiempo real a cambios en este pedido
-    const channel = supabase
+    // 1. Fetch inicial de los items del pedido
+    const fetchItems = async () => {
+      setLoadingItems(true)
+      const { data, error } = await supabase
+        .from('pedido_items')
+        .select('*')
+        .eq('pedido_id', pedido.id)
+      
+      if (!error && data) {
+        setItems(data)
+      }
+      setLoadingItems(false)
+    }
+
+    fetchItems()
+
+    // 2. Suscripción a cambios en el pedido (Tabla pedidos)
+    const pedidoChannel = supabase
       .channel(`tracking_order_${pedido.id}`)
       .on('postgres_changes', { 
         event: 'UPDATE', 
@@ -670,23 +688,46 @@ function OrderTracking({ pedidoInitial, onBack }) {
         table: 'pedidos',
         filter: `id=eq.${pedido.id}`
       }, (payload) => {
-        console.log('Cambio detectado en pedido:', payload.new)
         setPedido(prev => ({ ...prev, ...payload.new }))
       })
       .subscribe()
 
+    // 3. Suscripción a cambios en los items del pedido (Tabla pedido_items)
+    const itemsChannel = supabase
+      .channel(`tracking_items_${pedido.id}`)
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'pedido_items',
+        filter: `pedido_id=eq.${pedido.id}`
+      }, (payload) => {
+        setItems(prev => prev.map(item => item.id === payload.new.id ? { ...item, ...payload.new } : item))
+      })
+      .subscribe()
+
     return () => {
-      supabase.removeChannel(channel)
+      supabase.removeChannel(pedidoChannel)
+      supabase.removeChannel(itemsChannel)
     }
   }, [pedido?.id])
 
   const getStatusDisplay = (estado) => {
     switch (estado) {
-      case 'completado': return { label: 'Completado', icon: '✅', color: '#22c55e' }
-      case 'procesando': return { label: 'En Proceso', icon: '⚡', color: 'var(--accent-primary)' }
-      case 'reembolsado': return { label: 'Reembolsado', icon: '🔄', color: '#e040fb' }
-      case 'cancelado': return { label: 'Cancelado', icon: '❌', color: '#ef4444' }
-      default: return { label: 'Recibido', icon: '⏳', color: '#ffab00' }
+      case 'completado': return { label: 'Completado', icon: '✅', color: '#22c55e', bg: 'rgba(34, 197, 94, 0.1)' }
+      case 'procesando': return { label: 'En Proceso', icon: '⚡', color: 'var(--accent-primary)', bg: 'rgba(0, 210, 255, 0.1)' }
+      case 'fallido': return { label: 'Fallido', icon: '❌', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' }
+      case 'reembolsado': return { label: 'Reembolsado', icon: '🔄', color: '#e040fb', bg: 'rgba(224, 64, 251, 0.1)' }
+      case 'cancelado': return { label: 'Cancelado', icon: '❌', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' }
+      default: return { label: 'Recibido', icon: '⏳', color: '#ffab00', bg: 'rgba(255, 171, 0, 0.1)' }
+    }
+  }
+
+  const getItemStatusIcon = (estado) => {
+    switch (estado) {
+      case 'completado': return '✅';
+      case 'fallido': return '❌';
+      case 'procesando': return '⚡';
+      default: return '⏳';
     }
   }
 
@@ -701,11 +742,12 @@ function OrderTracking({ pedidoInitial, onBack }) {
 
       <div style={{ 
         padding: '24px', borderRadius: '24px', 
-        backgroundColor: 'rgba(255,255,255,0.03)', 
+        backgroundColor: status.bg, 
         border: `1px solid ${status.color}33`,
         marginBottom: '24px',
         display: 'flex', alignItems: 'center', gap: '20px',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        boxShadow: `0 8px 24px ${status.color}11`
       }}>
         <span style={{ fontSize: '40px' }}>{status.icon}</span>
         <div style={{ textAlign: 'left' }}>
@@ -729,19 +771,46 @@ function OrderTracking({ pedidoInitial, onBack }) {
         </div>
       )}
 
-      <div style={{ 
-        textAlign: 'left', marginBottom: '32px', padding: '16px', 
-        borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.02)',
-        border: '1px solid var(--border-color)'
-      }}>
-        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Detalle de recarga:</div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-primary)', fontWeight: 600, fontSize: '15px' }}>
-          <span>Monto Total:</span>
-          <span style={{ color: 'var(--accent-success)', fontWeight: 800 }}>{formatUSD(pedido.total_usd)}</span>
+      {/* Lista de Paquetes Detallada */}
+      <div style={{ textAlign: 'left', marginBottom: '24px' }}>
+        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Paquetes en tu orden:</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {loadingItems ? (
+             <div style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '10px' }}>Cargando detalles...</div>
+          ) : items.map((item, idx) => (
+            <div key={idx} style={{ 
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+              padding: '12px 16px', borderRadius: '16px', 
+              backgroundColor: 'rgba(255,255,255,0.02)', 
+              border: item.estado === 'completado' ? '1px solid rgba(34, 197, 94, 0.2)' : '1px solid var(--border-color)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '18px' }}>{getItemStatusIcon(item.estado)}</span>
+                <div>
+                  <div style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '14px' }}>{item.producto_nombre}</div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '11px' }}>ID: {item.player_id || item.account_email || 'N/A'}</div>
+                </div>
+              </div>
+              <div style={{ color: item.estado === 'completado' ? '#22c55e' : 'var(--text-muted)', fontSize: '12px', fontWeight: 800 }}>
+                {item.estado === 'completado' ? 'RECARGADO' : item.estado?.toUpperCase() || 'PENDIENTE'}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      <button className="btn btn-primary" onClick={onBack} style={{ width: '100%', height: '56px', borderRadius: '14px', fontSize: '16px', fontWeight: 800 }}>
+      <div style={{ 
+        textAlign: 'left', marginBottom: '32px', padding: '16px', 
+        borderRadius: '20px', backgroundColor: 'rgba(0, 210, 255, 0.05)',
+        border: '1px solid var(--accent-primary)33'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-primary)', fontWeight: 600, fontSize: '16px', alignItems: 'center' }}>
+          <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Monto Total:</span>
+          <span style={{ color: 'var(--accent-primary)', fontSize: '20px', fontWeight: 900 }}>{formatBs(pedido.total_bs)}</span>
+        </div>
+      </div>
+
+      <button className="btn btn-primary" onClick={onBack} style={{ width: '100%', height: '56px', borderRadius: '16px', fontSize: '16px', fontWeight: 800, background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0088ff 100%)' }}>
         Cerrar Seguimiento
       </button>
     </div>
