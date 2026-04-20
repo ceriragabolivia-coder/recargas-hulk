@@ -75,6 +75,16 @@ export default function Checkout({ onFinish }) {
   const [comprobanteUrl, setComprobanteUrl] = useState(null)
   const [uploadingComprobante, setUploadingComprobante] = useState(false)
 
+  // Efecto para asegurar que la página siempre aparezca al inicio al cargar o cambiar de paso
+  // Esto es crucial para la experiencia en móviles reportada por el usuario.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const mainElement = document.querySelector('.main-content');
+    if (mainElement) {
+      mainElement.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [currentStep]);
+
   // Descuentos ganados en la ruleta (pendientes de usar)
   const [ruletaDescuentos, setRuletaDescuentos] = useState([])
   const [selectedRuletaDesc, setSelectedRuletaDesc] = useState(null)
