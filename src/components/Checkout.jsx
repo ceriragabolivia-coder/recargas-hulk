@@ -211,14 +211,21 @@ export default function Checkout({ onFinish }) {
     // Si selecciona un método normal, desactivar wallet-only
     if (id !== 'wallet') {
       setSelectedMetodoId(id)
-      // Si tiene saldo parcial, mantenerlo activado
+      // Forzamos scroll al inicio para ver los datos del método
+      setTimeout(() => {
+        const mainElement = document.querySelector('.main-content');
+        if (mainElement) mainElement.scrollTo({ top: 300, behavior: 'smooth' });
+      }, 100);
     } else {
-      // Solo permitir wallet-only si tiene saldo completo
       if (hasEnoughBalance) {
         setSelectedMetodoId('wallet')
         setUseWalletPartial(true)
       }
     }
+  }
+
+  const handleClearMetodo = () => {
+    setSelectedMetodoId('')
   }
 
   const handleToggleRuletaDesc = () => {
@@ -449,155 +456,35 @@ export default function Checkout({ onFinish }) {
       <div className="responsive-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '24px' }}>
         {/* COLUMNA IZQUIERDA: RESUMEN O DATOS DE PAGO */}
         <div className="card">
-          {currentStep === 1 ? (
-            <>
-              <div className="card-header">
-                <h3 className="card-title">Resumen de Productos</h3>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', backgroundColor: 'var(--border-color)', borderRadius: '0 0 12px 12px', overflow: 'hidden' }}>
-                {cart.map(item => (
-                  <div key={item.id} className="checkout-item" style={{ display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: 'var(--bg-card)' }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 8, overflow: 'hidden', backgroundColor: 'var(--bg-panel)', flexShrink: 0 }}>
-                      {item.icono_url ? <img src={item.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : '📦'}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div className="checkout-item-name" style={{ fontWeight: 'bold' }}>{item.nombre}</div>
-                      <div className="checkout-item-juego" style={{ color: 'var(--text-muted)' }}>{item.juego}</div>
-                      <div style={{ fontSize: 13, color: 'var(--accent-primary)', textTransform: 'uppercase', marginTop: 4 }}>
-                        Requisito: {item.metodo_recarga === 'cuenta_completa' ? '🔐 Cuenta' : item.metodo_recarga === 'usuario_clave' ? '👤 Usuario' : '🆔 ID'}
-                      </div>
-                      <div className="checkout-details-box" style={{ backgroundColor: 'var(--bg-primary)', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        {item.metodo_recarga === 'cuenta_completa' ? (
-                          <>
-                            <div style={{ color: 'var(--text-muted)' }}><span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Correo:</span> <span style={{ fontFamily: 'monospace' }}>{item.account_email || 'No proporcionado'}</span></div>
-                            <div style={{ color: 'var(--text-muted)' }}><span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Clave:</span> <span style={{ fontFamily: 'monospace' }}>{item.account_password || 'No proporcionada'}</span></div>
-                          </>
-                        ) : item.metodo_recarga === 'usuario_clave' ? (
-                          <>
-                            <div style={{ color: 'var(--text-muted)' }}><span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Usuario:</span> <span style={{ fontFamily: 'monospace' }}>{item.account_user || 'No proporcionado'}</span></div>
-                            <div style={{ color: 'var(--text-muted)' }}><span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Clave:</span> <span style={{ fontFamily: 'monospace' }}>{item.account_password || 'No proporcionada'}</span></div>
-                          </>
-                        ) : (
-                          <div style={{ color: 'var(--text-muted)' }}><span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>ID Jugador:</span> <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{item.player_id || 'No proporcionado'}</span></div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="checkout-item-price" style={{ textAlign: 'right' }}>
-                      {!isCliente && (
-                        <div className="checkout-price-usd" style={{ fontWeight: 600 }}>{item.quantity} x {formatUSD(item.venta_usd)}</div>
-                      )}
-                      <div className="checkout-price-bs" style={{ color: 'var(--accent-success)', fontWeight: 800 }}>{formatBs(item.venta_bs * item.quantity)}</div>
-                    </div>
-                    {/* Botón Eliminar Individual */}
-                    {!isProcessing && (
-                      <button 
-                        className="btn-remove-checkout-item" 
-                        onClick={() => removeFromCart(item.cart_id)}
-                        title="Eliminar del pedido"
-                      >✕</button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : (
-              <div style={{ padding: '32px', textAlign: 'center' }}>
+            <div style={{ padding: '24px', textAlign: 'center' }}>
+              <div style={{ marginBottom: '24px' }}>
                 <div style={{ 
-                  width: '100px', height: '100px', borderRadius: '30px', backgroundColor: 'rgba(0, 210, 255, 0.1)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px', margin: '0 auto 24px',
-                  overflow: 'hidden', border: '1px solid var(--border-color)'
+                  width: '80px', height: '80px', borderRadius: '24px', backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', margin: '0 auto 16px',
+                  border: '1px solid var(--accent-success)'
                 }}>
                   {selectedMetodo?.icono_url ? (
                     <img src={selectedMetodo.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                   ) : (
-                    <span>
-                      {selectedMetodo?.nombre.toLowerCase().includes('zelle') ? '🟣' : 
-                       selectedMetodo?.nombre.toLowerCase().includes('pago') ? '📱' : 
-                       selectedMetodo?.nombre.toLowerCase().includes('binance') ? '🟡' : '💳'}
-                    </span>
+                    <span>💳</span>
                   )}
                 </div>
-              
-              {expiresAt && <CountdownTimer expiryDate={expiresAt} onExpire={handleOrderExpired} />}
-
-              <h2 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '8px' }}>Pagar con {selectedMetodo?.nombre}</h2>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '32px' }}>Utiliza los siguientes datos para realizar tu transferencia:</p>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left' }}>
-                {selectedMetodo?.datos && (
-                  <button 
-                    className="btn btn-ghost btn-sm"
-                    style={{ 
-                      width: '100%', 
-                      marginBottom: '8px', 
-                      border: '1px dashed var(--accent-primary)',
-                      color: 'var(--accent-primary)',
-                      fontSize: '13px',
-                      fontWeight: 700,
-                      height: '40px'
-                    }}
-                    onClick={(e) => {
-                      navigator.clipboard.writeText(selectedMetodo.datos);
-                      const btn = e.currentTarget;
-                      const originalText = btn.innerText;
-                      btn.innerText = '✅ ¡Todos los datos copiados!';
-                      btn.style.borderColor = 'var(--accent-success)';
-                      btn.style.color = 'var(--accent-success)';
-                      setTimeout(() => {
-                        btn.innerText = originalText;
-                        btn.style.borderColor = 'var(--accent-primary)';
-                        btn.style.color = 'var(--accent-primary)';
-                      }, 2000);
-                    }}
-                  >
-                    📋 Copiar Todos Los Datos
-                  </button>
-                )}
-
-                {selectedMetodo?.datos.split('\n').filter(line => line.trim()).map((line, idx) => (
-                  <div key={idx} className="payment-detail-row">
-                    <div className="payment-detail-text">
-                      {line.includes('Banco:') ? '🏦 ' : line.includes('Teléfono:') ? '📱 ' : line.includes('Cédula:') ? '🆔 ' : line.includes('Pago:') ? '📱 ' : ''}
-                      {line}
-                    </div>
-                    <button 
-                      className="copy-btn-new"
-                      onClick={(e) => {
-                        const textToCopy = line.split(':').slice(1).join(':').trim() || line.trim();
-                        navigator.clipboard.writeText(textToCopy);
-                        const btn = e.currentTarget;
-                        const originalText = btn.innerText;
-                        btn.innerText = '¡Copiado!';
-                        btn.style.backgroundColor = 'var(--accent-success)';
-                        setTimeout(() => {
-                          btn.innerText = originalText;
-                          btn.style.backgroundColor = 'var(--accent-primary)';
-                        }, 2000);
-                      }}
-                    >
-                      Copiar
-                    </button>
-                  </div>
-                ))}
+                <h2 style={{ fontSize: '20px', fontWeight: 800 }}>Método: {selectedMetodo?.nombre}</h2>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Por favor, completa la referencia abajo.</p>
               </div>
 
-              {selectedMetodo?.qr_url && (
-                <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-                  <div className="qr-container-new">
-                    <img src={selectedMetodo.qr_url} alt="QR Pago" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                  </div>
-                  <p style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 600 }}>Escanea este código QR para realizar el pago</p>
+              {expiresAt && <CountdownTimer expiryDate={expiresAt} onExpire={handleOrderExpired} />}
+              
+              <div style={{ padding: '16px', backgroundColor: 'rgba(0, 210, 255, 0.05)', borderRadius: '12px', border: '1px solid var(--border-color)', textAlign: 'left' }}>
+                <p style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', color: 'var(--accent-primary)' }}>Resumen de Pago:</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                  <span>A pagar por {selectedMetodo?.nombre}:</span>
+                  <span style={{ fontWeight: 800, color: 'var(--accent-success)' }}>
+                    {selectedMetodo?.nombre.includes('USD') || selectedMetodo?.nombre.toLowerCase().includes('zelle') || selectedMetodo?.nombre.toLowerCase().includes('binance')
+                      ? formatUSD(remainingUSD)
+                      : formatBs(remainingBsFromWallet)}
+                  </span>
                 </div>
-              )}
-
-              {useWalletPartial && walletAmountToUse > 0 && (
-                <div style={{ marginTop: '16px', padding: '12px 16px', backgroundColor: 'rgba(34, 197, 94, 0.1)', borderRadius: '12px', color: '#22c55e', fontSize: '13px', fontWeight: 600 }}>
-                  💼 Se descontarán {formatUSD(walletAmountToUse)} de tu billetera. Solo debes pagar {formatUSD(remainingUSD)} por este método.
-                </div>
-              )}
-
-              <div style={{ marginTop: '16px', padding: '16px', backgroundColor: 'rgba(255, 171, 0, 0.1)', borderRadius: '12px', color: '#ffab00', fontSize: '14px' }}>
-                ⚠️ Una vez realizado el pago, completa los datos de recarga y el número de referencia a la derecha.
               </div>
             </div>
           )}
@@ -790,37 +677,87 @@ export default function Checkout({ onFinish }) {
                   <>
                     <label className="form-label" style={{ marginBottom: '12px', display: 'block' }}>
                       {useWalletPartial && !hasEnoughBalance 
-                        ? `Método de pago para el restante (${formatUSD(remainingUSD)})` 
+                        ? `Método de pago para el resto (${formatUSD(remainingUSD)})` 
                         : useWalletBs && !hasEnoughBalanceBs 
-                        ? `Método de pago para el restante (${formatBs(remainingBsFromWallet)})` 
+                        ? `Método de pago para el resto (${formatBs(remainingBsFromWallet)})` 
                         : 'Seleccionar Método de Pago'}
                     </label>
-                    <div className="payment-methods-grid">
-                      {metodos.filter(m => m.activo).map(m => (
-                        <button
-                          key={m.id}
-                          onClick={() => handleSelectMetodo(m.id)}
-                          className={`payment-method-btn ${selectedMetodoId === m.id ? 'active' : ''}`}
-                        >
-                          <div style={{ 
-                            width: '84px', height: '84px', borderRadius: '18px', 
-                            backgroundColor: 'var(--bg-card)', padding: '10px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
-                          }}>
-                            {m.icono_url ? (
-                              <img src={m.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                            ) : (
-                              <span style={{ fontSize: '30px' }}>
-                                {m.nombre.toLowerCase().includes('zelle') ? '🟣' : 
-                                 m.nombre.toLowerCase().includes('pago') ? '📱' : 
-                                 m.nombre.toLowerCase().includes('binance') ? '🟡' : '💳'}
-                              </span>
-                            )}
+                    
+                    {selectedMetodoId && !isWalletOnly && !isWalletBsOnly ? (
+                      <div className="selected-method-container fade-in" style={{ padding: '20px', backgroundColor: 'var(--bg-panel)', borderRadius: '16px', border: '1px solid var(--accent-primary)', animation: 'slideIn 0.3s ease' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'var(--bg-card)', padding: '6px', overflow: 'hidden' }}>
+                              {selectedMetodo?.icono_url ? <img src={selectedMetodo.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : '💳'}
+                            </div>
+                            <span style={{ fontWeight: 800, fontSize: '16px' }}>{selectedMetodo?.nombre}</span>
                           </div>
-                          <span style={{ fontSize: '13px', fontWeight: 600 }}>{m.nombre}</span>
-                        </button>
-                      ))}
-                    </div>
+                          <button 
+                            className="btn btn-ghost btn-sm" 
+                            onClick={handleClearMetodo}
+                            style={{ color: '#ff5252', border: '1px solid rgba(255, 82, 82, 0.2)' }}
+                          >
+                            ✕ Cambiar
+                          </button>
+                        </div>
+
+                        {/* DATOS DEL MÉTODO (Los mismos de antes pero aquí mismo) */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Datos para reportar pago:</p>
+                          
+                          {selectedMetodo?.datos.split('\n').filter(line => line.trim()).map((line, idx) => (
+                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', backgroundColor: 'var(--bg-primary)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+                              <span style={{ fontSize: '13px', fontWeight: 500 }}>{line}</span>
+                              <button 
+                                onClick={(e) => {
+                                  const textToCopy = line.split(':').slice(1).join(':').trim() || line.trim();
+                                  navigator.clipboard.writeText(textToCopy);
+                                  const btn = e.currentTarget;
+                                  btn.innerText = '✅';
+                                  setTimeout(() => { btn.innerText = '📋'; }, 2000);
+                                }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--accent-primary)' }}
+                                title="Copiar"
+                              >📋</button>
+                            </div>
+                          ))}
+
+                          {selectedMetodo?.qr_url && (
+                             <div style={{ marginTop: '12px', textAlign: 'center' }}>
+                               <img src={selectedMetodo.qr_url} alt="QR" style={{ width: '120px', height: '120px', borderRadius: '12px', border: '1px solid var(--border-color)', padding: '4px', backgroundColor: 'white' }} />
+                               <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Escanea para pagar</p>
+                             </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="payment-methods-grid">
+                        {metodos.filter(m => m.activo).map(m => (
+                          <button
+                            key={m.id}
+                            onClick={() => handleSelectMetodo(m.id)}
+                            className={`payment-method-btn ${selectedMetodoId === m.id ? 'active' : ''}`}
+                          >
+                            <div style={{ 
+                              width: '84px', height: '84px', borderRadius: '18px', 
+                              backgroundColor: 'var(--bg-card)', padding: '10px',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
+                            }}>
+                              {m.icono_url ? (
+                                <img src={m.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                              ) : (
+                                <span style={{ fontSize: '30px' }}>
+                                  {m.nombre.toLowerCase().includes('zelle') ? '🟣' : 
+                                   m.nombre.toLowerCase().includes('pago') ? '📱' : 
+                                   m.nombre.toLowerCase().includes('binance') ? '🟡' : '💳'}
+                                </span>
+                              )}
+                            </div>
+                            <span style={{ fontSize: '13px', fontWeight: 600 }}>{m.nombre}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </>
                 ) : null}
               </div>
