@@ -733,6 +733,7 @@ export default function Checkout({ onFinish }) {
                         : 'Seleccionar Método de Pago'}
                     </label>
                     
+                    {selectedMetodoId && !isWalletOnly && !isWalletBsOnly ? (
                       <div className="selected-method-container fade-in" style={{ padding: '20px', backgroundColor: 'var(--bg-panel)', borderRadius: '16px', border: '2px solid var(--accent-primary)', animation: 'slideIn 0.3s ease' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -853,51 +854,6 @@ export default function Checkout({ onFinish }) {
                         ))}
                       </div>
                     )}
-                  </>
-                ) : null}
-              </div>
-            ) : (
-              <>
-                <div className="form-group mb-24" style={{ paddingTop: 8 }}>
-                  <label className="form-label" style={{ color: 'var(--accent-success)', fontWeight: 'bold' }}>Coloca la referencia de tu pago aquí</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="Número de comprobante..."
-                    value={referencia}
-                    onChange={(e) => setReferencia(e.target.value)}
-                  />
-                </div>
-
-                {/* Comprobante de Pago - Opcional */}
-                <div className="form-group mb-24">
-                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    📎 Adjuntar Comprobante de Pago
-                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 400, padding: '2px 8px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.05)' }}>Opcional</span>
-                  </label>
-                  <div style={{
-                    border: `2px dashed ${comprobanteUrl ? 'var(--accent-success)' : 'var(--border-color)'}`,
-                    borderRadius: '14px', padding: '16px', textAlign: 'center', cursor: 'pointer',
-                    position: 'relative', transition: 'all 0.3s ease',
-                    backgroundColor: comprobanteUrl ? 'rgba(34, 197, 94, 0.05)' : 'transparent'
-                  }}>
-                    {uploadingComprobante ? (
-                      <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>⏳ Subiendo imagen...</div>
-                    ) : comprobanteUrl ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                        <img src={comprobanteUrl} alt="Comprobante" style={{ maxHeight: '120px', borderRadius: '8px', objectFit: 'contain' }} />
-                        <span style={{ fontSize: '12px', color: 'var(--accent-success)', fontWeight: 700 }}>✅ Comprobante adjuntado</span>
-                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Toca para cambiar</span>
-                      </div>
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontSize: '28px' }}>📤</span>
-                        <span style={{ fontSize: '13px', fontWeight: 600 }}>Toca para subir tu captura de pago</span>
-                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>JPG, PNG o GIF · La imagen se eliminará en 20 días</span>
-                      </div>
-                    )}
-                    <input
-                      type="file"
                       accept="image/*"
                       onChange={handleComprobanteUpload}
                       disabled={uploadingComprobante}
