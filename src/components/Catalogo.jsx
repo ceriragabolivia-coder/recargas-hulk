@@ -173,7 +173,8 @@ export default function Catalogo() {
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-start' }}>
         
-        {/* COLUMNA IZQUIERDA (Info y Car        <div style={{ flex: '1 1 280px', maxWidth: '350px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        {/* COLUMNA IZQUIERDA (Info y Características) */}
+        <div style={{ flex: '1 1 280px', maxWidth: '350px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
           
           <button className="btn btn-ghost" onClick={() => setSelectedJuego(null)} style={{ alignSelf: 'flex-start', padding: '4px 10px', backgroundColor: 'var(--bg-panel)', fontSize: '12px' }}>
             ← Volver al Catálogo
