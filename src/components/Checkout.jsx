@@ -454,8 +454,58 @@ export default function Checkout({ onFinish }) {
       </div>
 
       <div className="responsive-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '24px' }}>
-        {/* COLUMNA IZQUIERDA: RESUMEN O DATOS DE PAGO */}
         <div className="card">
+          {currentStep === 1 ? (
+            <>
+              <div className="card-header">
+                <h3 className="card-title">Resumen de Productos</h3>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', backgroundColor: 'var(--border-color)', borderRadius: '0 0 12px 12px', overflow: 'hidden' }}>
+                {cart.map(item => (
+                  <div key={item.id} className="checkout-item" style={{ display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: 'var(--bg-card)' }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 8, overflow: 'hidden', backgroundColor: 'var(--bg-panel)', flexShrink: 0 }}>
+                      {item.icono_url ? <img src={item.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : '📦'}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div className="checkout-item-name" style={{ fontWeight: 'bold' }}>{item.nombre}</div>
+                      <div className="checkout-item-juego" style={{ color: 'var(--text-muted)' }}>{item.juego}</div>
+                      <div style={{ fontSize: 13, color: 'var(--accent-primary)', textTransform: 'uppercase', marginTop: 4 }}>
+                        Requisito: {item.metodo_recarga === 'cuenta_completa' ? '🔐 Cuenta' : item.metodo_recarga === 'usuario_clave' ? '👤 Usuario' : '🆔 ID'}
+                      </div>
+                      <div className="checkout-details-box" style={{ backgroundColor: 'var(--bg-primary)', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        {item.metodo_recarga === 'cuenta_completa' ? (
+                          <>
+                            <div style={{ color: 'var(--text-muted)' }}><span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Correo:</span> <span style={{ fontFamily: 'monospace' }}>{item.account_email || 'No proporcionado'}</span></div>
+                            <div style={{ color: 'var(--text-muted)' }}><span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Clave:</span> <span style={{ fontFamily: 'monospace' }}>{item.account_password || 'No proporcionada'}</span></div>
+                          </>
+                        ) : item.metodo_recarga === 'usuario_clave' ? (
+                          <>
+                            <div style={{ color: 'var(--text-muted)' }}><span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Usuario:</span> <span style={{ fontFamily: 'monospace' }}>{item.account_user || 'No proporcionado'}</span></div>
+                            <div style={{ color: 'var(--text-muted)' }}><span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Clave:</span> <span style={{ fontFamily: 'monospace' }}>{item.account_password || 'No proporcionada'}</span></div>
+                          </>
+                        ) : (
+                          <div style={{ color: 'var(--text-muted)' }}><span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>ID Jugador:</span> <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{item.player_id || 'No proporcionado'}</span></div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="checkout-item-price" style={{ textAlign: 'right' }}>
+                      {!isCliente && (
+                        <div className="checkout-price-usd" style={{ fontWeight: 600 }}>{item.quantity} x {formatUSD(item.venta_usd)}</div>
+                      )}
+                      <div className="checkout-price-bs" style={{ color: 'var(--accent-success)', fontWeight: 800 }}>{formatBs(item.venta_bs * item.quantity)}</div>
+                    </div>
+                    {!isProcessing && (
+                      <button 
+                        className="btn-remove-checkout-item" 
+                        onClick={() => removeFromCart(item.cart_id)}
+                        title="Eliminar del pedido"
+                      >✕</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
             <div style={{ padding: '24px', textAlign: 'center' }}>
               <div style={{ marginBottom: '24px' }}>
                 <div style={{ 
@@ -480,7 +530,7 @@ export default function Checkout({ onFinish }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
                   <span>A pagar por {selectedMetodo?.nombre}:</span>
                   <span style={{ fontWeight: 800, color: 'var(--accent-success)' }}>
-                    {selectedMetodo?.nombre.includes('USD') || selectedMetodo?.nombre.toLowerCase().includes('zelle') || selectedMetodo?.nombre.toLowerCase().includes('binance')
+                    {selectedMetodo?.nombre?.includes('USD') || selectedMetodo?.nombre?.toLowerCase().includes('zelle') || selectedMetodo?.nombre?.toLowerCase().includes('binance')
                       ? formatUSD(remainingUSD)
                       : formatBs(remainingBsFromWallet)}
                   </span>
