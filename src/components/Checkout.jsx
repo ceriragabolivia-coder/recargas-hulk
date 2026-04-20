@@ -89,12 +89,12 @@ export default function Checkout({ onFinish }) {
   const [ruletaDescuentos, setRuletaDescuentos] = useState([])
   const [selectedRuletaDesc, setSelectedRuletaDesc] = useState(null)
   
-  // Cerramos el checkout si el carrito se queda vacío tras una eliminación
+  // Cerramos el checkout si el carrito se queda vacío tras una eliminación (pero no si estamos procesando el pago)
   useEffect(() => {
-    if (!orderFinished && cart.length === 0 && currentStep === 1) {
+    if (!orderFinished && !isProcessing && cart.length === 0 && currentStep === 1) {
       onFinish();
     }
-  }, [cart, orderFinished, onFinish, currentStep]);
+  }, [cart, orderFinished, isProcessing, onFinish, currentStep]);
 
   useEffect(() => {
     const targetUserId = user?.id || perfil?.cliente_uuid || perfil?.id
@@ -279,9 +279,12 @@ export default function Checkout({ onFinish }) {
 
       const pedidoId = pedidoResult.data.id;
 
+      const targetUserId = user?.id || perfil?.cliente_uuid || perfil?.id;
+      if (!targetUserId) throw new Error('No se pudo identificar al usuario para la transacción.');
+
       if (useWalletPartial && walletAmountToUse > 0) {
         await supabase.rpc('pagar_con_billetera_rpc', {
-          p_user_id: user.id,
+          p_user_id: targetUserId,
           p_amount: walletAmountToUse,
           p_pedido_id: pedidoId,
           p_description: isWalletOnly ? `Pago de pedido #${pedidoResult.data.numero_pedido}` : `Pago parcial - ${formatUSD(walletAmountToUse)}`
@@ -290,7 +293,7 @@ export default function Checkout({ onFinish }) {
 
       if (useWalletBs && walletBsAmountToUse > 0) {
         await supabase.rpc('pagar_con_billetera_bs_rpc', {
-          p_user_id: user.id,
+          p_user_id: targetUserId,
           p_amount: walletBsAmountToUse,
           p_pedido_id: pedidoId,
           p_description: isWalletBsOnly ? `Pago de pedido #${pedidoResult.data.numero_pedido}` : `Pago parcial (Bs) - ${formatBs(walletBsAmountToUse)}`
