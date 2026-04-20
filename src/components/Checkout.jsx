@@ -663,9 +663,9 @@ function OrderTracking({ pedidoInitial, onBack }) {
   useEffect(() => {
     if (!pedido?.id) return
 
-    // 1. Fetch inicial de los items del pedido
+    // 1. Función para obtener los items del pedido
     const fetchItems = async () => {
-      setLoadingItems(true)
+      // No ponemos loadingItems(true) aquí para evitar parpadeos en actualizaciones real-time
       const { data, error } = await supabase
         .from('pedido_items')
         .select('*')
@@ -689,6 +689,8 @@ function OrderTracking({ pedidoInitial, onBack }) {
         filter: `id=eq.${pedido.id}`
       }, (payload) => {
         setPedido(prev => ({ ...prev, ...payload.new }))
+        // Si el pedido cambia (ej: de Proceso a Completado), re-fetch de items por si acaso
+        fetchItems()
       })
       .subscribe()
 
@@ -696,12 +698,13 @@ function OrderTracking({ pedidoInitial, onBack }) {
     const itemsChannel = supabase
       .channel(`tracking_items_${pedido.id}`)
       .on('postgres_changes', { 
-        event: 'UPDATE', 
+        event: '*', 
         schema: 'public', 
         table: 'pedido_items',
         filter: `pedido_id=eq.${pedido.id}`
-      }, (payload) => {
-        setItems(prev => prev.map(item => item.id === payload.new.id ? { ...item, ...payload.new } : item))
+      }, () => {
+        // Ante cualquier cambio en los items de este pedido, refrescamos la lista completa
+        fetchItems()
       })
       .subscribe()
 
