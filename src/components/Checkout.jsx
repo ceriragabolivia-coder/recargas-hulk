@@ -418,64 +418,183 @@ export default function Checkout({ onFinish }) {
                 )}
 
                 <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '24px', marginBottom: '24px' }}>
-                   {isGratis ? (
-                     <div style={{ padding: '16px', backgroundColor: 'rgba(34, 197, 94, 0.1)', borderRadius: '12px', textAlign: 'center' }}>🎉 ¡Pago Cubierto!</div>
-                   ) : ((!useWalletPartial && !useWalletBs) || (!hasEnoughBalance && useWalletPartial) || (!hasEnoughBalanceBs && useWalletBs)) ? (
-                      selectedMetodoId && !isWalletOnly && !isWalletBsOnly ? (
-                        <div className="selected-method-details" style={{ padding: '16px', borderRadius: '12px', border: '1px solid var(--accent-primary)' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                             <span style={{ fontWeight: 'bold' }}>{selectedMetodo?.nombre}</span>
-                             <button className="btn btn-sm btn-ghost" onClick={() => setSelectedMetodoId('')}>Cambiar</button>
+                  {isGratis ? (
+                    <div style={{ padding: '32px 24px', textAlign: 'center', backgroundColor: 'rgba(34, 197, 94, 0.1)', borderRadius: '24px', color: 'var(--accent-success)', border: '2px dashed var(--accent-success)' }}>
+                      <div style={{ fontSize: '48px', marginBottom: '12px' }}>🎉</div>
+                      <h3 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '8px' }}>¡Pedido Gratuito!</h3>
+                      <p style={{ fontSize: '14px', opacity: 0.8 }}>Tu cupón cubre el 100% del total.</p>
+                    </div>
+                  ) : ((!useWalletPartial && !useWalletBs) || (!hasEnoughBalance && useWalletPartial) || (!hasEnoughBalanceBs && useWalletBs)) ? (
+                    <>
+                      {selectedMetodoId && !isWalletOnly && !isWalletBsOnly ? (
+                        <div className="selected-method-details fade-in">
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <div style={{ width: 60, height: 60, borderRadius: '16px', backgroundColor: 'var(--bg-panel)', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-color)' }}>
+                                <img src={selectedMetodo?.icono_url || ''} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span style={{ fontSize: '18px', fontWeight: 800 }}>{selectedMetodo?.nombre}</span>
+                                <span style={{ fontSize: '12px', color: 'var(--accent-primary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Datos para reportar:</span>
+                              </div>
+                            </div>
+                            <button 
+                              className="btn btn-ghost btn-sm" 
+                              onClick={() => setSelectedMetodoId('')}
+                              style={{ color: '#ff5252', border: '1px solid rgba(255, 82, 82, 0.15)', borderRadius: '10px', padding: '6px 12px', fontSize: '12px', fontWeight: 700 }}
+                            >
+                              <span style={{ marginRight: '4px' }}>✕</span> Cambiar
+                            </button>
                           </div>
-                          <div style={{ fontSize: '13px', marginBottom: '16px', whiteSpace: 'pre-line' }}>{selectedMetodo?.datos}</div>
-                          {selectedMetodo?.datos && (
-                            <button className="btn btn-sm btn-ghost" style={{ width: '100%', marginBottom: '16px' }} onClick={() => { navigator.clipboard.writeText(selectedMetodo.datos); alert('Copiado'); }}>📋 Copiar Datos</button>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+                            {selectedMetodo?.datos.split('\n').filter(l => l.trim()).map((line, i) => (
+                              <div key={i} style={{ 
+                                display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+                                padding: '14px 16px', backgroundColor: 'var(--bg-card)', borderRadius: '14px', 
+                                border: '1px solid var(--border-color)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
+                              }}>
+                                <span style={{ fontSize: '14px', fontWeight: 600 }}>{line}</span>
+                                <button 
+                                  onClick={() => {
+                                    const val = line.split(':').slice(1).join(':').trim() || line;
+                                    navigator.clipboard.writeText(val);
+                                  }} 
+                                  style={{ 
+                                    padding: '8px', borderRadius: '10px', background: 'rgba(0, 210, 255, 0.05)', 
+                                    border: '1px solid rgba(0, 210, 255, 0.1)', color: 'var(--accent-primary)', 
+                                    cursor: 'pointer', transition: 'all 0.2s'
+                                  }}
+                                  onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.9)'}
+                                  onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                                >📋</button>
+                              </div>
+                            ))}
+                          </div>
+
+                          {selectedMetodo?.qr_url && (
+                            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                              <div style={{ 
+                                display: 'inline-block', padding: '16px', backgroundColor: 'white', 
+                                borderRadius: '24px', boxShadow: '0 8px 32px rgba(0,0,0,0.3)', marginBottom: '12px',
+                                border: '4px solid var(--bg-panel)'
+                              }}>
+                                <img src={selectedMetodo.qr_url} alt="QR" style={{ width: '160px', height: '160px', objectFit: 'contain' }} />
+                              </div>
+                              <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>Escanea para pagar</p>
+                            </div>
                           )}
-                          <input type="text" className="form-input" placeholder="Referencia..." value={referencia} onChange={e => setReferencia(e.target.value)} style={{ marginBottom: '12px' }} />
-                          <div style={{ position: 'relative', border: '2px dashed var(--border-color)', padding: '12px', textAlign: 'center', borderRadius: '12px' }}>
-                             {uploadingComprobante ? '⏳ Subiendo...' : comprobanteUrl ? '✅ Capture Listo' : '📤 Subir Capture'}
-                             <input type="file" accept="image/*" onChange={handleComprobanteUpload} style={{ position: 'absolute', inset: 0, opacity: 0 }} />
+
+                          <div className="form-group mb-16">
+                            <label className="form-label" style={{ color: 'var(--accent-success)', fontWeight: 700, fontSize: '13px', marginBottom: '8px', display: 'block' }}>Número de Referencia</label>
+                            <input 
+                              type="text" className="form-input" placeholder="Ingresa la referencia del pago..."
+                              value={referencia} onChange={e => setReferencia(e.target.value)}
+                              style={{ border: '1px solid var(--accent-success)', borderRadius: '12px', height: '48px', padding: '0 16px' }}
+                            />
+                          </div>
+
+                          <div className="form-group mb-0">
+                            <label className="form-label" style={{ fontSize: '13px', fontWeight: 600 }}>Adjuntar Comprobante (Opcional)</label>
+                            <div style={{ 
+                              padding: '16px', border: '2px dashed var(--border-color)', borderRadius: '16px', 
+                              textAlign: 'center', position: 'relative', backgroundColor: 'rgba(255,255,255,0.02)',
+                              transition: 'all 0.3s'
+                            }}>
+                              <div style={{ fontSize: '24px', marginBottom: '6px' }}>{uploadingComprobante ? '⏳' : comprobanteUrl ? '✅' : '📤'}</div>
+                              <span style={{ fontSize: '13px', fontWeight: 600 }}>{uploadingComprobante ? 'Subiendo...' : comprobanteUrl ? 'Comprobante Listo' : 'Toca para subir captura'}</span>
+                              <input type="file" accept="image/*" onChange={handleComprobanteUpload} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
+                            </div>
                           </div>
                         </div>
                       ) : (
                         <div className="payment-methods-grid">
+                          <label className="form-label" style={{ gridColumn: '1 / -1', marginBottom: '12px', textAlign: 'center', fontSize: '14px', fontWeight: 700 }}>Selecciona un Método de Pago</label>
                           {metodos.filter(m => m.activo).map(m => (
-                            <button key={m.id} onClick={() => handleSelectMetodo(m.id)} className={`payment-method-btn ${selectedMetodoId === m.id ? 'active' : ''}`}>
-                               <div style={{ width: 44, height: 44, margin: '0 auto 8px', backgroundColor: 'white', borderRadius: 8, padding: 4 }}>
-                                  <img src={m.icono_url || ''} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                               </div>
-                               <span style={{ fontSize: '11px' }}>{m.nombre}</span>
+                            <button key={m.id} onClick={() => handleSelectMetodo(m.id)} className={`payment-method-btn ${selectedMetodoId === m.id ? 'active' : ''}`} style={{ borderRadius: '20px', padding: '16px 10px' }}>
+                              <div style={{ width: 64, height: 64, borderRadius: '16px', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', padding: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                                <img src={m.icono_url || ''} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                              </div>
+                              <span style={{ fontSize: '12px', fontWeight: 700, display: 'block' }}>{m.nombre}</span>
                             </button>
                           ))}
                         </div>
-                      )
-                   ) : (
-                     <div style={{ padding: '16px', backgroundColor: 'rgba(34, 197, 94, 0.1)', borderRadius: '12px' }}>✅ Saldo suficiente</div>
-                   )}
+                      )}
+                    </>
+                  ) : (
+                    <div style={{ padding: '24px', backgroundColor: 'rgba(34, 197, 94, 0.08)', borderRadius: '20px', border: '1px solid var(--accent-success)', color: 'var(--accent-success)', textAlign: 'center' }}>
+                      <div style={{ fontSize: '32px', marginBottom: '8px' }}>✅</div>
+                      <span style={{ fontWeight: 800, fontSize: '16px' }}>Pago Cubierto</span>
+                      <p style={{ fontSize: '12px', marginTop: '4px' }}>El monto se descontará de tu billetera.</p>
+                    </div>
+                  )}
                 </div>
               </>
             ) : (
-               <div style={{ padding: '40px', textAlign: 'center' }}>Esperando Pago...</div>
+              <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+                <div style={{ fontSize: '48px', marginBottom: '16px', animation: 'pulse 2s infinite' }}>⌛</div>
+                <h3 style={{ fontWeight: 800, marginBottom: '8px' }}>Procesando Pedido...</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Esperando confirmación del sistema.</p>
+              </div>
             )}
 
-            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
-               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '8px' }}>
-                 <span>Subtotal:</span>
-                 <span style={{ textDecoration: activeRuletaDesc ? 'line-through' : 'none' }}>{formatUSD(totalUSD)}</span>
-               </div>
-               {activeRuletaDesc && <div style={{ color: '#FFD700', fontSize: '13px', marginBottom: '8px' }}>Descuento Ruleta: -{formatUSD(totalUSD - discountedTotalUSD)}</div>}
-               {useWalletPartial && <div style={{ color: 'var(--accent-success)', fontSize: '13px', marginBottom: '8px' }}>Billetera USD: -{formatUSD(walletAmountToUse)}</div>}
-               {useWalletBs && <div style={{ color: '#a855f7', fontSize: '13px', marginBottom: '8px' }}>Billetera Bs: -{formatBs(walletBsAmountToUse)}</div>}
-               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '18px', marginTop: '12px' }}>
-                 <span>Total:</span>
-                 <div style={{ textAlign: 'right' }}>
-                    <div style={{ color: 'var(--accent-success)' }}>{useWalletBs ? formatBs(remainingBsFromWallet) : formatBs(remainingBs)}</div>
-                    <small style={{ color: 'var(--text-muted)', fontSize: '12px' }}>{formatUSD(remainingUSD)}</small>
-                 </div>
-               </div>
-               <button className="btn btn-primary btn-lg" style={{ width: '100%', marginTop: '20px' }} disabled={isProcessing || (!isGratis && !isWalletOnly && !isWalletBsOnly && selectedMetodoId && !referencia.trim())} onClick={handleFinalizar}>
-                 {isProcessing ? 'Procesando...' : 'Finalizar Pedido'}
-               </button>
+            <div style={{ backgroundColor: 'var(--bg-panel)', padding: '24px', borderRadius: '24px', border: '1px solid var(--border-color)', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '14px' }}>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Monto Total:</span>
+                <span style={{ fontWeight: 700, textDecoration: activeRuletaDesc ? 'line-through' : 'none', opacity: activeRuletaDesc ? 0.5 : 1 }}>{formatUSD(totalUSD)}</span>
+              </div>
+              
+              {activeRuletaDesc && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '14px', color: '#FFD700' }}>
+                  <span style={{ fontWeight: 600 }}>🎡 Descuento Ruleta:</span>
+                  <span style={{ fontWeight: 800 }}>-{formatUSD(totalUSD - discountedTotalUSD)}</span>
+                </div>
+              )}
+
+              {useWalletPartial && walletAmountToUse > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '14px', color: 'var(--accent-success)' }}>
+                  <span style={{ fontWeight: 600 }}>💵 Billetera USD:</span>
+                  <span style={{ fontWeight: 800 }}>-{formatUSD(walletAmountToUse)}</span>
+                </div>
+              )}
+
+              {useWalletBs && walletBsAmountToUse > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '14px', color: '#a855f7' }}>
+                  <span style={{ fontWeight: 600 }}>🏦 Billetera Bs:</span>
+                  <span style={{ fontWeight: 800 }}>-{formatBs(walletBsAmountToUse)}</span>
+                </div>
+              )}
+
+              <div style={{ borderTop: '2px dashed var(--border-color)', margin: '16px 0', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontWeight: 800, fontSize: '18px' }}>Total Pagar:</span>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ color: 'var(--accent-success)', fontSize: '24px', fontWeight: 900, textShadow: '0 0 12px rgba(34, 197, 94, 0.3)' }}>
+                    {useWalletBs && !hasEnoughBalanceBs ? formatBs(remainingBsFromWallet) : formatBs(remainingBs)}
+                  </div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: 600 }}>{formatUSD(remainingUSD)}</div>
+                </div>
+              </div>
+
+              <button 
+                className="btn btn-primary btn-lg" 
+                style={{ 
+                  width: '100%', marginTop: '20px', height: '64px', fontSize: '18px', fontWeight: 800,
+                  borderRadius: '18px', background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0088ff 100%)',
+                  boxShadow: '0 8px 24px rgba(0, 180, 255, 0.4)', border: 'none', color: 'white',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: isProcessing ? 'default' : 'pointer'
+                }}
+                disabled={isProcessing || (!isGratis && !isWalletOnly && !isWalletBsOnly && selectedMetodoId && !referencia.trim())}
+                onClick={handleFinalizar}
+                onMouseEnter={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(-2px)')}
+                onMouseLeave={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(0)')}
+              >
+                {isProcessing ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                    <div className="spinner-border spinner-border-sm" role="status" />
+                    <span>PROCESANDO...</span>
+                  </div>
+                ) : 'Confirmar y Pagar'}
+              </button>
             </div>
           </div>
         </div>
