@@ -659,16 +659,49 @@ export default function Billetera({ onNavigate }) {
                         <div style={{ fontSize: '10px', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Datos para la transferencia</div>
                       </div>
                     </div>
-                    {/* Datos del pago */}
-                    <div style={{ 
-                      whiteSpace: 'pre-line', fontSize: '15px', lineHeight: '1.7',
-                      fontWeight: 500, color: 'var(--text-primary)',
-                      padding: '14px 16px', borderRadius: '10px',
-                      backgroundColor: 'rgba(0,0,0,0.15)',
-                      border: '1px solid rgba(255,255,255,0.04)',
-                      fontFamily: 'monospace'
-                    }}>
-                      {selected.datos}
+                    {/* Botón Copiar Todo */}
+                    {selected.datos && (
+                      <button 
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        style={{ width: '100%', marginBottom: '16px', border: '1px dashed var(--accent-primary)', borderRadius: '12px', color: 'var(--accent-primary)', fontWeight: 700, padding: '12px' }}
+                        onClick={(e) => {
+                          navigator.clipboard.writeText(selected.datos);
+                          const btn = e.currentTarget;
+                          const originalText = btn.innerHTML;
+                          btn.innerHTML = '✅ ¡Datos de Pago Copiados!';
+                          setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+                        }}
+                      >
+                        📋 Copiar Todos los Datos
+                      </button>
+                    )}
+
+                    {/* Datos del pago divididos por línea con copiado individual */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {selected.datos.split('\n').filter(l => l.trim()).map((line, i) => (
+                        <div key={i} style={{ 
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+                          padding: '14px 16px', backgroundColor: 'var(--bg-card)', borderRadius: '14px', 
+                          border: '1px solid var(--border-color)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
+                        }}>
+                          <span style={{ fontSize: '14px', fontWeight: 600 }}>{line}</span>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const val = line.split(':').slice(1).join(':').trim() || line;
+                              navigator.clipboard.writeText(val);
+                            }} 
+                            style={{ 
+                              padding: '8px', borderRadius: '10px', background: 'rgba(0, 210, 255, 0.05)', 
+                              border: '1px solid rgba(0, 210, 255, 0.1)', color: 'var(--accent-primary)', 
+                              cursor: 'pointer', transition: 'all 0.2s'
+                            }}
+                            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.9)'}
+                            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                          >📋</button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )
