@@ -226,7 +226,7 @@ export default function Catalogo() {
               target="_blank" 
               rel="noreferrer"
               style={{
-                display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
+                display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px',
                 backgroundColor: 'rgba(0, 210, 255, 0.1)', borderRadius: '12px',
                 border: '1px solid rgba(0, 210, 255, 0.2)', textDecoration: 'none',
                 transition: 'all 0.2s ease', cursor: 'pointer'
@@ -234,10 +234,10 @@ export default function Catalogo() {
               onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.15)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
               onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.1)'; e.currentTarget.style.transform = 'translateY(0)' }}
             >
-              <div style={{ fontSize: '24px' }}>🔔</div>
+              <div style={{ fontSize: '20px' }}>🔔</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.3 }}>{config.tutorial_banner_texto}</div>
-                <div style={{ fontSize: '11px', color: 'var(--accent-primary)', marginTop: '4px' }}>Ver Tutorial →</div>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{config.tutorial_banner_texto}</div>
+                <div style={{ fontSize: '10px', color: 'var(--accent-primary)', marginTop: '2px' }}>Ver Tutorial →</div>
               </div>
             </a>
           )}
@@ -245,7 +245,7 @@ export default function Catalogo() {
         </div>
         
         {/* COLUMNA DERECHA (Formulario de Recarga y Productos) */}
-        <div style={{ flex: '2 1 500px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ flex: '2 1 500px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           
           {config?.promo_banner_texto && (
             <a 
@@ -253,24 +253,24 @@ export default function Catalogo() {
               target={config.promo_banner_link ? "_blank" : "_self"}
               rel="noreferrer"
               style={{
-                display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 20px',
+                display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px',
                 background: 'linear-gradient(135deg, rgba(255, 171, 0, 0.15) 0%, rgba(255, 86, 48, 0.15) 100%)', 
                 borderRadius: '16px', border: '1px solid rgba(255, 171, 0, 0.3)', textDecoration: 'none',
               }}
             >
               {config.promo_banner_icono_url ? (
-                <img src={config.promo_banner_icono_url} alt="Promo" style={{ width: 48, height: 48, objectFit: 'contain' }} />
+                <img src={config.promo_banner_icono_url} alt="Promo" style={{ width: 40, height: 40, objectFit: 'contain' }} />
               ) : (
-                 <div style={{ fontSize: '32px' }}>🎁</div>
+                 <div style={{ fontSize: '24px' }}>🎁</div>
               )}
               <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#ffab00', marginBottom: '4px' }}>¡Oferta Especial!</h3>
-                <p style={{ fontSize: '14px', color: 'var(--text-primary)', lineHeight: '1.4' }}>{config.promo_banner_texto}</p>
+                <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#ffab00', marginBottom: '2px' }}>¡Oferta Especial!</h3>
+                <p style={{ fontSize: '13px', color: 'var(--text-primary)', lineHeight: '1.3' }}>{config.promo_banner_texto}</p>
               </div>
             </a>
           )}
 
-          <div className="card card-recharge-info" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderLeft: '4px solid var(--accent-primary)', padding: '16px' }}>
+          <div className="card card-recharge-info" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderLeft: '4px solid var(--accent-primary)', padding: '12px' }}>
             {selectedJuego.metodo_recarga === 'cuenta_completa' ? (
               <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
                 <div style={{ flex: '1 1 200px' }}>
@@ -569,7 +569,10 @@ export default function Catalogo() {
                 border: '1px solid transparent',
                 backgroundColor: 'var(--bg-card)'
               }}
-              onClick={() => setSelectedJuego(juego)}
+              onClick={() => {
+                setSelectedJuego(juego);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               onMouseEnter={e => {
                 e.currentTarget.style.transform = 'translateY(-4px)'
                 e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 210, 255, 0.15)'
