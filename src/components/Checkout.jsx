@@ -663,54 +663,50 @@ function OrderTracking({ pedidoInitial, onBack }) {
   useEffect(() => {
     if (!pedido?.id) return
 
-    // 1. Función para obtener los items del pedido
-    const fetchItems = async () => {
-      // No ponemos loadingItems(true) aquí para evitar parpadeos en actualizaciones real-time
-      const { data, error } = await supabase
+    // 1. Función para obtener los datos actualizados
+    const refreshData = async () => {
+      // Actualizar Pedido
+      const { data: pedidoData } = await supabase
+        .from('pedidos')
+        .select('*')
+        .eq('id', pedido.id)
+        .single()
+      
+      if (pedidoData) setPedido(pedidoData)
+
+      // Actualizar Items
+      const { data: itemsData } = await supabase
         .from('pedido_items')
         .select('*')
         .eq('pedido_id', pedido.id)
       
-      if (!error && data) {
-        setItems(data)
-      }
+      if (itemsData) setItems(itemsData)
       setLoadingItems(false)
     }
 
-    fetchItems()
+    refreshData()
 
-    // 2. Suscripción a cambios en el pedido (Tabla pedidos)
+    // 2. Capa Real-time (Intento de actualización instantánea)
     const pedidoChannel = supabase
       .channel(`tracking_order_${pedido.id}`)
-      .on('postgres_changes', { 
-        event: 'UPDATE', 
-        schema: 'public', 
-        table: 'pedidos',
-        filter: `id=eq.${pedido.id}`
-      }, (payload) => {
-        setPedido(prev => ({ ...prev, ...payload.new }))
-        // Si el pedido cambia (ej: de Proceso a Completado), re-fetch de items por si acaso
-        fetchItems()
-      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: `id=eq.${pedido.id}` }, 
+        (payload) => setPedido(prev => ({ ...prev, ...payload.new })))
       .subscribe()
 
-    // 3. Suscripción a cambios en los items del pedido (Tabla pedido_items)
     const itemsChannel = supabase
       .channel(`tracking_items_${pedido.id}`)
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'pedido_items',
-        filter: `pedido_id=eq.${pedido.id}`
-      }, () => {
-        // Ante cualquier cambio en los items de este pedido, refrescamos la lista completa
-        fetchItems()
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedido_items', filter: `pedido_id=eq.${pedido.id}` }, 
+        () => refreshData())
       .subscribe()
+
+    // 3. Capa de Seguridad (Polling cada 3 segundos)
+    // Esto garantiza la actualización sin recargar la página
+    const interval = setInterval(refreshData, 3000)
 
     return () => {
       supabase.removeChannel(pedidoChannel)
       supabase.removeChannel(itemsChannel)
+      clearInterval(interval)
     }
   }, [pedido?.id])
 
@@ -792,6 +788,11 @@ function OrderTracking({ pedidoInitial, onBack }) {
                 <div>
                   <div style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '14px' }}>{item.producto_nombre}</div>
                   <div style={{ color: 'var(--text-muted)', fontSize: '11px' }}>ID: {item.player_id || item.account_email || 'N/A'}</div>
+                  {item.referencia_admin && (
+                    <div style={{ marginTop: '4px', fontSize: '11px', color: 'var(--accent-primary)', fontWeight: 700 }}>
+                      📌 Ref: {item.referencia_admin}
+                    </div>
+                  )}
                 </div>
               </div>
               <div style={{ color: item.estado === 'completado' ? '#22c55e' : 'var(--text-muted)', fontSize: '12px', fontWeight: 800 }}>
