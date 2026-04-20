@@ -714,16 +714,13 @@ export default function Checkout({ onFinish }) {
                 )}
 
                 {/* Opciones cuando es gratis */}
-                {isGratis && (
+                {isGratis ? (
                    <div style={{ padding: '24px', textAlign: 'center', backgroundColor: 'rgba(34, 197, 94, 0.1)', borderRadius: '16px', color: 'var(--accent-success)', border: '2px dashed var(--accent-success)' }}>
                      <div style={{ fontSize: '40px', marginBottom: '8px' }}>🎉</div>
                      <h3 style={{ fontSize: '20px', fontWeight: 'bold' }}>¡Pedido Gratuito!</h3>
                      <p style={{ marginTop: '8px' }}>Tu cupón cubre el 100% del pedido. Puedes finalizar tu pedido directamente.</p>
                    </div>
-                )}
-
-                {/* SECCIÓN DINÁMICA: SELECCIÓN O DATOS UNIFICADOS */}
-                {!isGratis && ((!useWalletPartial && !useWalletBs) || (!hasEnoughBalance && useWalletPartial) || (!hasEnoughBalanceBs && useWalletBs)) ? (
+                ) : ((!useWalletPartial && !useWalletBs) || (!hasEnoughBalance && useWalletPartial) || (!hasEnoughBalanceBs && useWalletBs)) ? (
                   <div className="form-group mb-24">
                     <label className="form-label" style={{ marginBottom: '12px', display: 'block' }}>
                       {useWalletPartial && !hasEnoughBalance 
@@ -857,6 +854,7 @@ export default function Checkout({ onFinish }) {
                     )}
                   </div>
                 ) : null}
+              ) : null}
 
             {/* Resumen de Montos - Siempre visible */}
             <div style={{ backgroundColor: 'var(--bg-panel)', padding: '20px', borderRadius: '16px', marginBottom: '24px', border: '1px solid var(--border-color)' }}>
