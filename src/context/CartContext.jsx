@@ -62,6 +62,8 @@ export function CartProvider({ children }) {
       const finalUSD = +(totalUSD * ruletaFactor).toFixed(2)
       const finalBs = Math.round(totalBs * ruletaFactor)
 
+      const isAutomatic = (referencia && (referencia.includes('BILLETERA') || referencia.includes('PAGO_TOTAL')))
+      
       const pedidoData = {
         // En la tabla 'pedidos', el campo que referencia a auth.users se llama 'cliente_id'
         cliente_id: user.id, 
@@ -70,7 +72,8 @@ export function CartProvider({ children }) {
         total_usd: finalUSD,
         total_bs: finalBs,
         estado: 'pendiente',
-        comprobante_url: comprobanteUrl || null
+        comprobante_url: comprobanteUrl || null,
+        pago_verificado: isAutomatic ? true : null
       }
 
       let pedido;
