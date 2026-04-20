@@ -317,11 +317,10 @@ export default function Checkout({ onFinish }) {
           <div style={{ marginBottom: '24px' }}>
             <img src="/assets/Verificando.PNG.png" alt="Verificación" style={{ width: '140px' }} />
           </div>
-          <h2 style={{ color: 'var(--accent-success)' }}>¡Pago Verificando!</h2>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '32px' }}>
-            Tu pedido se ha registrado exitosamente. En estos momentos su pago se está verificando.{"\n\n"}
-            Puedes consultar el estado en "Mis Pedidos".{"\n\n"}
-            Tiempo estimado: 5 a 20 minutos.
+          <h2 style={{ color: 'var(--accent-success)' }}>¡Pedido Creado!</h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '32px', whiteSpace: 'pre-line' }}>
+            Tu pedido se ha registrado exitosamente. En estos momentos tu pago se está verificando.{"\n\n"}
+            Puedes consultar el estado en "Mis Pedidos" y el tiempo estimado es de 5 a 20 minutos para la respuesta.
           </p>
           <button className="btn btn-primary" onClick={onFinish}>Volver al Inicio</button>
         </div>
