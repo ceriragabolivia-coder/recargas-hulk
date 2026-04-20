@@ -64,6 +64,24 @@ export default function Catalogo() {
   if (selectedJuego) {
     return (
     <div className="catalogo-container">
+      <style>{`
+        @media (max-width: 768px) {
+          .game-detail-flex { flex-direction: column !important; }
+          .game-info-col { max-width: 100% !important; flex: 1 1 100% !important; }
+          .game-recharge-col { flex: 1 1 100% !important; }
+          .catalogo-container { padding: 8px !important; }
+          .card-recharge-info { padding: 12px !important; }
+          .product-grid-mobile { 
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important; 
+            gap: 10px !important; 
+          }
+        }
+        @media (max-width: 360px) {
+          .product-grid-mobile { 
+            grid-template-columns: 1fr !important; 
+          }
+        }
+      `}</style>
       {/* MODAL DE CONFIRMACIÓN */}
       {pendingItem && (
         <div style={{
@@ -171,10 +189,10 @@ export default function Catalogo() {
         </div>
       )}
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'flex-start' }}>
+      <div className="game-detail-flex" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'flex-start' }}>
         
         {/* COLUMNA IZQUIERDA (Info y Características) */}
-        <div style={{ flex: '1 1 280px', maxWidth: '350px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        <div className="game-info-col" style={{ flex: '1 1 280px', maxWidth: '350px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
           
           <button className="btn btn-ghost" onClick={() => setSelectedJuego(null)} style={{ alignSelf: 'flex-start', padding: '4px 10px', backgroundColor: 'var(--bg-panel)', fontSize: '12px' }}>
             ← Volver al Catálogo
@@ -245,7 +263,7 @@ export default function Catalogo() {
         </div>
         
         {/* COLUMNA DERECHA (Formulario de Recarga y Productos) */}
-        <div style={{ flex: '2 1 500px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div className="game-recharge-col" style={{ flex: '2 1 500px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
           
           {config?.promo_banner_texto && (
             <a 
@@ -397,7 +415,7 @@ export default function Catalogo() {
                 <p style={{ marginTop: '16px', color: 'var(--text-muted)' }}>No hay productos activos en este momento.</p>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '16px' }}>
+              <div className="product-grid-mobile" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '16px' }}>
                 {selectedJuego.productos.map(p => {
                   const finalPrice = calcularPrecioVenta(p, selectedJuego, config, perfil)
                   return (

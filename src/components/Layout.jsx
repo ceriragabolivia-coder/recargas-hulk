@@ -858,9 +858,16 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
         
         @media (max-width: 768px) {
           .desktop-only { display: none !important; }
+          .mobile-only { display: block !important; }
           .mobile-no-border-left { border-left: none !important; padding-left: 0 !important; }
           .wallet-widget-hover { padding: 4px 10px !important; gap: 6px !important; }
+          .topbar { padding: 0 12px !important; gap: 4px !important; }
         }
+        @media (max-width: 480px) {
+          .wallet-widget-hover span:not(.desktop-only) { font-size: 11px !important; }
+          .wallet-widget-hover div { gap: 4px !important; }
+        }
+        .mobile-only { display: none; }
       `}</style>
       {/* Mobile Sidebar Backdrop */}
       <div className={`sidebar-backdrop ${sidebarOpen ? 'active' : ''}`} onClick={() => setSidebarOpen(false)} />
