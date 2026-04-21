@@ -72,13 +72,8 @@ export default function Catalogo() {
           .catalogo-container { padding: 8px !important; }
           .card-recharge-info { padding: 12px !important; }
           .product-grid-mobile { 
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important; 
+            grid-template-columns: repeat(2, 1fr) !important; 
             gap: 10px !important; 
-          }
-        }
-        @media (max-width: 360px) {
-          .product-grid-mobile { 
-            grid-template-columns: 1fr !important; 
           }
         }
       `}</style>
