@@ -212,6 +212,12 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                 .single()
               
               const fullMsg = { ...rawMessage, remitente: userData, es_sistema: !!rawMessage.es_sistema, quoted_id: rawMessage.quoted_id, archivo_url: rawMessage.archivo_url, tipo_archivo: rawMessage.tipo_archivo }
+              
+              // Si es un mensaje de sistema de cierre, actualizar estado local inmediatamente
+              if (!isAdmin && fullMsg.es_sistema && fullMsg.mensaje?.includes('TICKET CERRADO')) {
+                setClientStatus('resuelto')
+              }
+
               setMensajes(prev => {
                 const updated = [...prev, fullMsg]
                 // Solo verificar throttle al recibir un mensaje si soy cliente
@@ -260,7 +266,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       supabase.removeChannel(messageChannel)
       if (clientStatusChannel) supabase.removeChannel(clientStatusChannel)
     }
-  }, [isOpen, perfil, isAdmin, activeChatId, selectedChatClient])
+  }, [isOpen, perfil, isAdmin, activeChatId, selectedChatClient, currentClienteId])
 
   const handleSelectTicket = async (category) => {
     if (!currentClienteId || isAdmin) return
