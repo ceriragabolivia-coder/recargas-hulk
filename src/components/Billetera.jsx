@@ -311,7 +311,7 @@ export default function Billetera({ onNavigate }) {
                 ) : pendingRecargas.length === 0 ? (
                   <p className="text-muted center-text">No hay solicitudes pendientes.</p>
                 ) : (
-                  <div className="table-wrapper">
+                  <div className="table-container">
                     <table className="table table-cards-mobile">
                       <thead>
                         <tr>
@@ -378,7 +378,7 @@ export default function Billetera({ onNavigate }) {
                 {approvedRecargas.length === 0 ? (
                   <p className="text-muted center-text">No hay recargas aprobadas recientes.</p>
                 ) : (
-                  <div className="table-wrapper" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                  <div className="table-container" style={{ maxHeight: '300px', overflowY: 'auto' }}>
                     <table className="table table-cards-mobile">
                       <thead>
                         <tr>

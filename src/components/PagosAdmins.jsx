@@ -174,7 +174,7 @@ export default function PagosAdmins() {
         {saldos.length === 0 ? (
           <p className="text-muted center-text">No hay administradores con saldo registrado actualmente.</p>
         ) : (
-          <div className="table-wrapper">
+          <div className="table-container">
             <table className="table">
               <thead>
                 <tr>
