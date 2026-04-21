@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import AlertModal from './AlertModal'
 
-export default function SupportChat({ perfil, forceOpen, onClose, onNavigate }) {
-  const [isOpen, setIsOpen] = useState(false)
+export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, isPage = false }) {
+  const [isOpen, setIsOpen] = useState(isPage)
   const [isHovered, setIsHovered] = useState(false)
   const [mensajes, setMensajes] = useState([])
   const [newMessage, setNewMessage] = useState('')
@@ -472,11 +472,11 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate }) 
   if (!perfil) return null
 
   return (
-    <div className="support-chat-container">
+    <div className={isPage ? "support-chat-page-wrapper" : "support-chat-container"}>
       
       {/* Ventana de Chat */}
-      {isOpen && (
-        <div className="card support-chat-window">
+      {(isOpen || isPage) && (
+        <div className={`card support-chat-window ${isPage ? 'is-page' : ''}`}>
           
           {/* Header */}
           <div style={{ backgroundColor: 'var(--bg-panel)', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', flexShrink: 0 }}>
@@ -498,7 +498,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate }) 
                 )}
               </div>
             </div>
-            <button className="btn btn-ghost btn-icon btn-sm" onClick={() => { setIsOpen(false); if(onClose) onClose(); }}>×</button>
+            <button className="btn btn-ghost btn-icon btn-sm" onClick={() => { setIsOpen(false); if(onClose) onClose(); }} style={{ display: isPage ? 'none' : 'flex' }}>×</button>
           </div>
 
           {/* Body */}
@@ -785,36 +785,38 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate }) 
         </div>
       )}
 
-      {/* Burbuja Flotante Interactiva */}
-      <button 
-        className="btn btn-primary support-chat-toggle"
-        style={{ 
-          height: '48px', borderRadius: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center',
-          boxShadow: '0 8px 24px rgba(0, 210, 255, 0.3)', padding: isOpen || isHovered ? '0 18px' : '0',
-          width: isOpen || isHovered ? 'auto' : '48px',
-          fontSize: '14px', gap: '8px',
-          fontWeight: 'bold', border: 'none',
-          transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-          overflow: 'hidden', whiteSpace: 'nowrap'
-        }}
-        onClick={() => {
-          const newState = !isOpen;
-          setIsOpen(newState);
-          if (!newState && onClose) onClose();
-        }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        <div style={{ 
-          display: 'flex', alignItems: 'center', gap: '8px', 
-          opacity: isOpen || isHovered ? 1 : 0,
-          width: isOpen || isHovered ? 'auto' : '0px',
-          transition: 'all 0.3s ease'
-        }}>
-          <span>{isOpen ? 'Cerrar Chat' : 'Chat de Soporte'}</span>
-        </div>
-        <span style={{ fontSize: '20px', flexShrink: 0 }}>{isOpen ? '✕' : '💬'}</span>
-      </button>
+      {/* Burbuja Flotante Interactiva (Sola si NO es modo página) */}
+      {!isPage && (
+        <button 
+          className="btn btn-primary support-chat-toggle"
+          style={{ 
+            height: '48px', borderRadius: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center',
+            boxShadow: '0 8px 24px rgba(0, 210, 255, 0.3)', padding: isOpen || isHovered ? '0 18px' : '0',
+            width: isOpen || isHovered ? 'auto' : '48px',
+            fontSize: '14px', gap: '8px',
+            fontWeight: 'bold', border: 'none',
+            transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            overflow: 'hidden', whiteSpace: 'nowrap'
+          }}
+          onClick={() => {
+            const newState = !isOpen;
+            setIsOpen(newState);
+            if (!newState && onClose) onClose();
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <div style={{ 
+            display: 'flex', alignItems: 'center', gap: '8px', 
+            opacity: isOpen || isHovered ? 1 : 0,
+            width: isOpen || isHovered ? 'auto' : '0px',
+            transition: 'all 0.3s ease'
+          }}>
+            <span>{isOpen ? 'Cerrar Chat' : 'Chat de Soporte'}</span>
+          </div>
+          <span style={{ fontSize: '20px', flexShrink: 0 }}>{isOpen ? '✕' : '💬'}</span>
+        </button>
+      )}
 
       {/* Modal de Confirmación para la eliminación de mensajes */}
       <AlertModal 

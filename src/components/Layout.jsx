@@ -825,6 +825,9 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
       label = 'Mis Pedidos';
       path = '/Mis-Pedidos';
     }
+    if (!isAdmin && item.key === 'chats') {
+      label = 'Chat Con Soporte';
+    }
     
     return (
       <NavLink 
@@ -898,7 +901,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
               <div className="nav-section-label">Catálogo</div>
               {NAV_ITEMS.filter(item => ['catalogo', 'pedidos'].includes(item.key)).map(renderNavItem)}
               <div className="nav-section-label">Extras</div>
-              {NAV_ITEMS.filter(item => ['ruleta'].includes(item.key)).map(renderNavItem)}
+              {NAV_ITEMS.filter(item => ['ruleta', 'chats'].includes(item.key)).map(renderNavItem)}
               <div className="nav-section-label">Cuenta</div>
               {NAV_ITEMS.filter(i => ['billetera', 'perfil'].includes(i.key)).map(renderNavItem)}
             </>

@@ -149,7 +149,6 @@ export default function App() {
   
   const [currentParams, setCurrentParams] = useState(null)
   const [isRegistering, setIsRegistering] = useState(false)
-  const [isSupportChatOpen, setIsSupportChatOpen] = useState(false)
 
   // Sincronizar currentPage con la URL (opcional, pero ayuda a la transición)
   const currentPage = location.pathname.split('/')[1]?.toLowerCase() || 'catalogo'
@@ -305,12 +304,20 @@ export default function App() {
           <Route path="/Ruleta" element={<Ruleta />} />
           <Route path="/Checkout" element={<Checkout onFinish={() => navigate('/Registro-Ventas')} />} />
           <Route path="/Soporte" element={
-            <SalaDeChat 
-              key={currentParams?.targetClientId ? `${currentParams.targetClientId}_${currentParams.prefill}` : 'default'} 
-              perfil={perfil} 
-              params={currentParams} 
-              onNavigate={handleNavigate}
-            />
+            isAdmin ? (
+              <SalaDeChat 
+                key={currentParams?.targetClientId ? `${currentParams.targetClientId}_${currentParams.prefill}` : 'default'} 
+                perfil={perfil} 
+                params={currentParams} 
+                onNavigate={handleNavigate}
+              />
+            ) : (
+              <SupportChat 
+                perfil={perfil} 
+                isPage={true} 
+                onNavigate={handleNavigate} 
+              />
+            )
           } />
           <Route path="/Mis-Pedidos" element={<Pedidos params={currentParams} onNavigate={handleNavigate} />} />
           <Route path="/Gestion-Pedidos" element={<Pedidos params={currentParams} onNavigate={handleNavigate} />} />
@@ -336,10 +343,9 @@ export default function App() {
 
   return (
     <WalletProvider>
-      <Layout currentPage={currentPage} onNavigate={handleNavigate} onOpenChat={!isAdmin ? () => setIsSupportChatOpen(true) : undefined}>
+      <Layout currentPage={currentPage} onNavigate={handleNavigate} onOpenChat={() => navigate('/Soporte')}>
         <PageRoutes />
         <Cart onGoToCheckout={() => navigate('/Checkout')} />
-        {!isAdmin && <SupportChat perfil={perfil} forceOpen={isSupportChatOpen} onClose={() => setIsSupportChatOpen(false)} onNavigate={handleNavigate} />}
       </Layout>
     </WalletProvider>
   )

@@ -2564,3 +2564,35 @@ tr:last-child td { border-bottom: none; }
     margin-right: 12px !important;
   }
 }
+
+/* Soporte en modo página */
+.support-chat-page-wrapper {
+  padding: 20px;
+  width: 100%;
+  min-height: calc(100vh - 80px);
+  display: flex;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.support-chat-window.is-page {
+  width: 100% !important;
+  max-width: 1000px !important;
+  height: calc(100vh - 120px) !important;
+  max-height: none !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-lg);
+  margin: 0;
+  border: 1px solid var(--border-color);
+}
+
+@media (max-width: 768px) {
+  .support-chat-page-wrapper {
+    padding: 12px;
+    min-height: calc(100vh - 120px);
+  }
+  .support-chat-window.is-page {
+    height: calc(100vh - 140px) !important;
+    border-radius: 20px !important;
+  }
+}
