@@ -48,6 +48,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   const [recentPedidos, setRecentPedidos] = useState([])
   const [showOrderSelector, setShowOrderSelector] = useState(false)
   const [loadingPedidos, setLoadingPedidos] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
   
   // Determinar si el ticket está actualmente resuelto/cerrado para el cliente
   const lastMsg = mensajes[mensajes.length - 1]
@@ -55,7 +56,10 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   const isResolved = !isAdmin && (clientStatus === 'resuelto' || isLastMsgClosure) && ticketSubject !== null
 
   const loadMessages = async (chatId) => {
-    if (!chatId) return
+    if (!chatId) {
+      setInitialLoading(false)
+      return
+    }
     const { data } = await supabase
       .from('soporte_mensajes')
       .select(`
@@ -79,10 +83,28 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       
       // CARGAR ESTADO DEL CLIENTE
       if (!isAdmin) {
+        // Recuperar el tema del ticket del historial si existe uno activo
+        const lastTicketInitiated = [...sanitizedMessages].reverse().find(m => m.es_sistema && m.mensaje?.includes('TICKET INICIADO'))
+        const lastTicketClosed = [...sanitizedMessages].reverse().find(m => m.es_sistema && m.mensaje?.includes('TICKET CERRADO'))
+        
+        if (lastTicketInitiated) {
+          const initIndex = sanitizedMessages.indexOf(lastTicketInitiated)
+          const closeIndex = lastTicketClosed ? sanitizedMessages.indexOf(lastTicketClosed) : -1
+          
+          if (initIndex > closeIndex) {
+            // Existe un ticket iniciado después del último cierre
+            const subject = lastTicketInitiated.mensaje?.replace('🎫 TICKET INICIADO: ', '').trim()
+            setTicketSubject(subject)
+          }
+        }
+
         const { data: userData } = await supabase.from('clientes').select('soporte_status').eq('id', currentClienteId).single()
         if (userData) setClientStatus(userData.soporte_status)
         checkThrottling(sanitizedMessages)
       }
+      setInitialLoading(false)
+    } else {
+      setInitialLoading(false)
     }
   }
 
@@ -618,7 +640,11 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
             ) : (
               /* Vista de Mensajes (Cliente o Admin en un chat específico) */
               <>
-                {(mensajes.length === 0 && !isAdmin && !ticketSubject && clientStatus === null) ? (
+                {initialLoading ? (
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px' }}>
+                    <div className="spinner-small"></div>
+                  </div>
+                ) : (mensajes.length === 0 && !isAdmin && !ticketSubject && clientStatus === null) ? (
                   <div style={{ padding: '20px', textAlign: 'center' }}>
                     <div style={{ marginBottom: '20px', fontWeight: 'bold', fontSize: '15px' }}>
                       Selecciona el motivo de tu ticket:
@@ -748,7 +774,9 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                 )}
               </>
             )}
-          </div>
+            </>
+          )}
+        </div>
     
           {/* Footer Input */}
           {(!isAdmin || selectedChatClient) && (
