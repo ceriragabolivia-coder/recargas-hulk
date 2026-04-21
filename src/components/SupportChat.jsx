@@ -53,7 +53,10 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   // Determinar si el ticket está actualmente resuelto/cerrado para el cliente
   const lastMsg = mensajes[mensajes.length - 1]
   const isLastMsgClosure = lastMsg?.es_sistema && lastMsg?.mensaje?.includes('TICKET CERRADO')
-  const isResolved = !isAdmin && (clientStatus === 'resuelto' || isLastMsgClosure) && ticketSubject !== null
+  
+  // Consideramos que hay un ticket activo si el estado en BD es pendiente/critico o si hemos reconstruido el tema del historial
+  const hasActiveTicket = (clientStatus !== null && clientStatus !== 'resuelto') || ticketSubject !== null
+  const isResolved = !isAdmin && (clientStatus === 'resuelto' || isLastMsgClosure) && hasActiveTicket
 
   const loadMessages = async (chatId) => {
     if (!chatId) {
@@ -83,20 +86,21 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       
       // CARGAR ESTADO DEL CLIENTE
       if (!isAdmin) {
-        // Recuperar el tema del ticket del historial si existe uno activo
-        const lastTicketInitiated = [...sanitizedMessages].reverse().find(m => m.es_sistema && m.mensaje?.includes('TICKET INICIADO'))
-        const lastTicketClosed = [...sanitizedMessages].reverse().find(m => m.es_sistema && m.mensaje?.includes('TICKET CERRADO'))
-        
-        if (lastTicketInitiated) {
-          const initIndex = sanitizedMessages.indexOf(lastTicketInitiated)
-          const closeIndex = lastTicketClosed ? sanitizedMessages.indexOf(lastTicketClosed) : -1
-          
-          if (initIndex > closeIndex) {
-            // Existe un ticket iniciado después del último cierre
-            const subject = lastTicketInitiated.mensaje?.replace('🎫 TICKET INICIADO: ', '').trim()
-            setTicketSubject(subject)
+        // Recuperar el tema del ticket del historial si existe uno activo (recorriendo desde el final)
+        let activeSubject = null
+        for (let i = sanitizedMessages.length - 1; i >= 0; i--) {
+          const m = sanitizedMessages[i]
+          if (m.es_sistema) {
+            if (m.mensaje?.includes('TICKET INICIADO')) {
+              activeSubject = m.mensaje?.replace('🎫 TICKET INICIADO: ', '').trim()
+              break
+            }
+            if (m.mensaje?.includes('TICKET CERRADO')) {
+              break // Se cerró el último ticket, no hay tema activo
+            }
           }
         }
+        if (activeSubject) setTicketSubject(activeSubject)
 
         const { data: userData } = await supabase.from('clientes').select('soporte_status').eq('id', currentClienteId).single()
         if (userData) setClientStatus(userData.soporte_status)
@@ -361,6 +365,10 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
           { cliente_id: currentUserId, remitente_id: adminData.id, mensaje: infoMsg }
         ])
       }
+      
+      // 2. Actualizar estado del cliente a 'pendiente' para persistencia
+      await supabase.from('clientes').update({ soporte_status: 'pendiente' }).eq('id', currentClienteId)
+      setClientStatus('pendiente')
     }
     
     setTicketSubject(category)
@@ -644,7 +652,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px' }}>
                     <div className="spinner-small"></div>
                   </div>
-                ) : (mensajes.length === 0 && !isAdmin && !ticketSubject && clientStatus === null) ? (
+                ) : (mensajes.length === 0 && !isAdmin && !hasActiveTicket) ? (
                   <div style={{ padding: '20px', textAlign: 'center' }}>
                     <div style={{ marginBottom: '20px', fontWeight: 'bold', fontSize: '15px' }}>
                       Selecciona el motivo de tu ticket:
@@ -832,7 +840,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                     </div>
                   )}
                 </div>
-              ) : (!ticketSubject && !isAdmin) ? (
+              ) : (!hasActiveTicket && !isAdmin) ? (
                 <div style={{ backgroundColor: 'var(--bg-panel)', padding: '16px', textAlign: 'center' }}>
                   <div style={{ marginBottom: '12px', fontWeight: 'bold', fontSize: '14px' }}>
                     Selecciona el motivo de tu nuevo ticket:
