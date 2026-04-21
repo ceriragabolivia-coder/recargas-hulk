@@ -45,6 +45,11 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   const [remainingTime, setRemainingTime] = useState(0)
   const [loadingThrottle, setLoadingThrottle] = useState(false)
   const [clientStatus, setClientStatus] = useState(null)
+  
+  // Determinar si el ticket está actualmente resuelto/cerrado para el cliente
+  const lastMsg = mensajes[mensajes.length - 1]
+  const isLastMsgClosure = lastMsg?.es_sistema && lastMsg?.mensaje?.includes('TICKET CERRADO')
+  const isResolved = !isAdmin && (clientStatus === 'resuelto' || isLastMsgClosure) && ticketSubject !== null
 
   const loadMessages = async (chatId) => {
     if (!chatId) return
@@ -706,7 +711,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
           {/* Footer Input */}
           {(!isAdmin || selectedChatClient) && (
             <div style={{ borderTop: '1px solid var(--border-color)' }}>
-              {clientStatus === 'resuelto' && !isAdmin ? (
+              {isResolved ? (
                 <div style={{ backgroundColor: 'var(--bg-panel)', padding: '20px', textAlign: 'center' }}>
                   <div style={{ color: 'var(--accent-success)', fontWeight: 'bold', marginBottom: '12px', fontSize: '14px' }}>
                     ✅ Este ticket ha sido resuelto por la administración.
@@ -803,12 +808,12 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                         fontSize: '14px', 
                         borderRadius: '20px', 
                         padding: '8px 16px', 
-                        opacity: (isThrottled && !isAdmin) || (clientStatus === 'resuelto' && !isAdmin) ? 0.6 : 1 
+                        opacity: (isThrottled && !isAdmin) || isResolved ? 0.6 : 1 
                       }}
-                      placeholder={(clientStatus === 'resuelto' && !isAdmin) ? "Ticket resuelto" : ((isThrottled && !isAdmin) ? "Bloqueado" : "Escribe...")}
+                      placeholder={isResolved ? "Ticket resuelto" : ((isThrottled && !isAdmin) ? "Bloqueado" : "Escribe...")}
                       value={newMessage}
                       onChange={e => setNewMessage(e.target.value)}
-                      disabled={(isThrottled && !isAdmin) || (clientStatus === 'resuelto' && !isAdmin) || loadingThrottle || isUploading || !!audioBlob}
+                      disabled={(isThrottled && !isAdmin) || isResolved || loadingThrottle || isUploading || !!audioBlob}
                     />
                   )}
 
