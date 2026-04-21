@@ -2551,9 +2551,9 @@ tr:last-child td { border-bottom: none; }
   
   .support-chat-window {
     width: 94vw;
-    height: 75vh;
+    height: 65vh;
     max-width: 96vw;
-    max-height: 78vh;
+    max-height: 68vh;
     border-radius: 24px !important;
     box-shadow: 0 20px 60px rgba(0,0,0,0.8);
     margin-bottom: 8px;

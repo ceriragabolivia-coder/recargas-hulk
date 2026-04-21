@@ -479,7 +479,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate }) 
         <div className="card support-chat-window">
           
           {/* Header */}
-          <div style={{ backgroundColor: 'var(--bg-panel)', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)' }}>
+          <div style={{ backgroundColor: 'var(--bg-panel)', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               {isAdmin && selectedChatClient && (
                 <button 
