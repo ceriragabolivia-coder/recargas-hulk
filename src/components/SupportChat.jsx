@@ -472,11 +472,11 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate }) 
   if (!perfil) return null
 
   return (
-    <div className="support-chat-container" style={{ position: 'fixed', bottom: '32px', right: '20px', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px' }}>
+    <div className="support-chat-container">
       
       {/* Ventana de Chat */}
       {isOpen && (
-        <div className="card support-chat-window" style={{ width: '350px', height: '500px', maxWidth: 'calc(100vw - 32px)', maxHeight: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 12px 48px rgba(0,0,0,0.5)', padding: 0 }}>
+        <div className="card support-chat-window">
           
           {/* Header */}
           <div style={{ backgroundColor: 'var(--bg-panel)', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)' }}>
