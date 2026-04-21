@@ -297,29 +297,6 @@ function LiveClock() {
 
 export default function Layout({ currentPage, onNavigate, onOpenChat, children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [deferredPrompt, setDeferredPrompt] = useState(null)
-
-  // Manejo de instalación PWA
-  useEffect(() => {
-    const handleBeforeInstall = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
-  }, []);
-
-  const handleInstallApp = async () => {
-    if (!deferredPrompt) {
-      alert("Para instalar la App en tu dispositivo:\n\n1. Toca los tres puntos (⋮) del navegador.\n2. Busca la opción 'Instalar aplicación' o 'Agregar a la pantalla de inicio'.\n\n¡Es así de fácil!");
-      return;
-    }
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setDeferredPrompt(null);
-    }
-  };
 
   // Close sidebar when window resizes to desktop
   useEffect(() => {
@@ -892,9 +869,6 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
           .wallet-widget-hover div { gap: 4px !important; }
         }
         .mobile-only { display: none; }
-        @media (display-mode: standalone) {
-          .install-app-btn { display: none !important; }
-        }
       `}</style>
       {/* Mobile Sidebar Backdrop */}
       <div className={`sidebar-backdrop ${sidebarOpen ? 'active' : ''}`} onClick={() => setSidebarOpen(false)} />
@@ -947,24 +921,6 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
               style={{ width: '100%', backgroundColor: 'rgba(255, 82, 82, 0.1)', color: '#ff5252', border: '1px solid rgba(255, 82, 82, 0.2)', justifyContent: 'center' }}
             >
               🚪 Cerrar sesión
-            </button>
-
-            <button 
-              className="btn install-app-btn" 
-              onClick={handleInstallApp} 
-              style={{ 
-                width: '100%', 
-                background: 'linear-gradient(135deg, #863bff 0%, #00d2ff 100%)', 
-                color: 'white', 
-                border: 'none', 
-                justifyContent: 'center',
-                fontWeight: 800,
-                boxShadow: '0 4px 15px rgba(134, 59, 255, 0.3)',
-                marginTop: '4px',
-                animation: 'promo-pulse 2s infinite'
-              }}
-            >
-              📲 Descargar App
             </button>
           </div>
         </div>
