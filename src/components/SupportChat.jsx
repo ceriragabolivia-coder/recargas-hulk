@@ -45,6 +45,9 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   const [remainingTime, setRemainingTime] = useState(0)
   const [loadingThrottle, setLoadingThrottle] = useState(false)
   const [clientStatus, setClientStatus] = useState(null)
+  const [recentPedidos, setRecentPedidos] = useState([])
+  const [showOrderSelector, setShowOrderSelector] = useState(false)
+  const [loadingPedidos, setLoadingPedidos] = useState(false)
   
   // Determinar si el ticket está actualmente resuelto/cerrado para el cliente
   const lastMsg = mensajes[mensajes.length - 1]
@@ -125,6 +128,27 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       } else {
         setIsThrottled(false)
       }
+    }
+  }
+
+  const loadRecentPedidos = async () => {
+    if (!currentClienteId || isAdmin) return
+    setLoadingPedidos(true)
+    try {
+      const { data, error } = await supabase
+        .from('pedidos')
+        .select('id, numero_pedido, created_at, total_bs, estado')
+        .eq('cliente_id', currentClienteId)
+        .order('created_at', { ascending: false })
+        .limit(5)
+      
+      if (!error && data) {
+        setRecentPedidos(data)
+      }
+    } catch (err) {
+      console.error('Error loading recent pedidos:', err)
+    } finally {
+      setLoadingPedidos(false)
     }
   }
 
@@ -276,6 +300,24 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   const handleSelectTicket = async (category) => {
     if (!currentClienteId || isAdmin) return
     
+    // Si la categoría es Pedido y es cliente, mostrar selector de pedidos
+    if (category === 'Pedido no completado' && !showOrderSelector) {
+      await loadRecentPedidos()
+      setShowOrderSelector(true)
+      return
+    }
+
+    // Proceso normal para otras categorías o si ya se seleccionó pedido (llamado por handleSelectOrder)
+    await openTicket(category)
+  }
+
+  const handleSelectOrder = async (orderNumber) => {
+    const categoryWithOrder = `Pedido no completado (#${orderNumber})`
+    setShowOrderSelector(false)
+    await openTicket(categoryWithOrder)
+  }
+
+  const openTicket = async (category) => {
     // 1. Enviar mensaje de sistema con el motivo
     const { data: adminData } = await supabase.from('clientes').select('id').eq('rol', 'admin').limit(1).single()
     const senderId = adminData ? adminData.id : currentClienteId
@@ -723,6 +765,44 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                   >
                     🚀 Abrir Nuevo Ticket
                   </button>
+                </div>
+              ) : (showOrderSelector && !isAdmin) ? (
+                <div style={{ backgroundColor: 'var(--bg-panel)', padding: '16px' }}>
+                  <div style={{ marginBottom: '12px', fontWeight: 'bold', fontSize: '14px', textAlign: 'center', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>Selecciona el pedido:</span>
+                    <button onClick={() => setShowOrderSelector(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '18px' }}>×</button>
+                  </div>
+                  {loadingPedidos ? (
+                    <div style={{ textAlign: 'center', padding: '10px' }}><div className="spinner-small"></div></div>
+                  ) : recentPedidos.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '10px', fontSize: '13px', color: 'var(--text-muted)' }}>No tienes pedidos recientes.</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '150px', overflowY: 'auto' }}>
+                      {recentPedidos.map(p => {
+                        const orderNum = String(p.numero_pedido).padStart(6, '0')
+                        return (
+                          <div 
+                            key={p.id}
+                            onClick={() => handleSelectOrder(orderNum)}
+                            style={{
+                              padding: '10px', borderRadius: '8px', backgroundColor: 'var(--bg-card)',
+                              cursor: 'pointer', border: '1px solid var(--border-color)',
+                              display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px'
+                            }}
+                          >
+                            <div>
+                              <div style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>#{orderNum}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{new Date(p.created_at).toLocaleDateString()}</div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontWeight: 'bold' }}>{p.total_bs ? p.total_bs.toLocaleString() : '0'} BS</div>
+                              <div style={{ fontSize: '11px', color: p.estado === 'completado' ? 'var(--accent-success)' : 'var(--text-muted)' }}>{p.estado.toUpperCase()}</div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               ) : (!ticketSubject && !isAdmin) ? (
                 <div style={{ backgroundColor: 'var(--bg-panel)', padding: '16px', textAlign: 'center' }}>
