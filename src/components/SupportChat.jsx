@@ -189,8 +189,8 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       }
     }
 
-    // Suscripción a Realtime
-    const channel = supabase
+    // Suscripción a Realtime de Mensajes
+    const messageChannel = supabase
       .channel('soporte_mensajes')
       .on(
         'postgres_changes',
@@ -234,8 +234,31 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       )
       .subscribe()
 
+    // Suscripción a Realtime del Cliente (para detectar estado Resuelto/Pendiente)
+    let clientStatusChannel = null
+    if (!isAdmin && currentClienteId) {
+      clientStatusChannel = supabase
+        .channel(`cliente_status_${currentClienteId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'clientes',
+            filter: `id=eq.${currentClienteId}`
+          },
+          (payload) => {
+            if (payload.new && payload.new.soporte_status !== undefined) {
+              setClientStatus(payload.new.soporte_status)
+            }
+          }
+        )
+        .subscribe()
+    }
+
     return () => {
-      supabase.removeChannel(channel)
+      supabase.removeChannel(messageChannel)
+      if (clientStatusChannel) supabase.removeChannel(clientStatusChannel)
     }
   }, [isOpen, perfil, isAdmin, activeChatId, selectedChatClient])
 
@@ -281,7 +304,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   const handleSendMessage = async (e) => {
     e.preventDefault()
     if ((!newMessage.trim() && !pendingFile) || !activeChatId) return
-    if (!isAdmin && isThrottled) return
+    if (!isAdmin && (isThrottled || clientStatus === 'resuelto')) return
 
     setLoadingThrottle(true)
     let uploadedUrl = null
@@ -542,7 +565,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
             ) : (
               /* Vista de Mensajes (Cliente o Admin en un chat específico) */
               <>
-                {!isAdmin && !ticketSubject && clientStatus === null && mensajes.length === 0 ? (
+                {(mensajes.length === 0 && !isAdmin && !ticketSubject && clientStatus === null) ? (
                   <div style={{ padding: '20px', textAlign: 'center' }}>
                     <div style={{ marginBottom: '20px', fontWeight: 'bold', fontSize: '15px' }}>
                       Selecciona el motivo de tu ticket:
@@ -571,105 +594,109 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                       </button>
                     </div>
                   </div>
-                ) : (mensajes.length === 0) ? (
-                  <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '40px', padding: '0 20px' }}>
-                    {ticketSubject ? (
-                      <div>
-                        <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold', marginBottom: '8px' }}>
-                          Ticket: {ticketSubject}
-                        </div>
-                        <div style={{ fontSize: '14px' }}>
-                          Explica tu caso; sé detallado y explica en un sólo mensaje para ser atendida tu solicitud. Una vez que envíes el mensaje sólo podrás escribir nuevamente cuando la administración responda a tu chat...
-                        </div>
+                ) : (
+                  <>
+                    {mensajes.length === 0 ? (
+                      <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '40px', padding: '0 20px' }}>
+                        {ticketSubject ? (
+                          <div>
+                            <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold', marginBottom: '8px' }}>
+                              Ticket: {ticketSubject}
+                            </div>
+                            <div style={{ fontSize: '14px' }}>
+                              Explica tu caso; sé detallado y explica en un sólo mensaje para ser atendida tu solicitud. Una vez que envíes el mensaje sólo podrás escribir nuevamente cuando la administración responda a tu chat...
+                            </div>
+                          </div>
+                        ) : (
+                          'Empezando un nuevo chat...'
+                        )}
                       </div>
                     ) : (
-                      'Empezando un nuevo chat...'
-                    )}
-                  </div>
-                ) : (
-                  mensajes.map(m => {
-                    const isMine = m.remitente_id === currentClienteId
-                    return (
-                      <div 
-                        key={m.id} 
-                        className={m.es_sistema ? 'message-bubble-wrapper system' : ''}
-                        style={{ 
-                          display: 'flex', 
-                          flexDirection: 'column', 
-                          alignItems: m.es_sistema ? 'center' : (isMine ? 'flex-end' : 'flex-start'),
-                          width: '100%'
-                        }}
-                      >
-                        {!m.es_sistema && (
-                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', marginLeft: '4px', marginRight: '4px' }}>
-                            {isMine ? 'Tú' : (m.remitente?.nombres || 'Soporte')}
-                          </div>
-                        )}
-                        <div className={`message-bubble ${m.es_sistema ? 'system' : ''}`} style={{ 
-                          backgroundColor: m.es_sistema ? undefined : (isMine ? 'var(--accent-primary)' : 'var(--bg-panel)'),
-                          color: m.es_sistema ? undefined : (isMine ? '#000' : 'var(--text-primary)'),
-                          padding: m.es_sistema ? undefined : '10px 14px', 
-                          borderRadius: m.es_sistema ? undefined : '16px',
-                          borderBottomRightRadius: !m.es_sistema && isMine ? '4px' : undefined,
-                          borderBottomLeftRadius: !m.es_sistema && !isMine ? '4px' : undefined,
-                          maxWidth: m.es_sistema ? undefined : '85%', 
-                          wordBreak: 'break-word', 
-                          fontSize: m.es_sistema ? undefined : '14px',
-                          border: m.es_sistema ? undefined : 'none',
-                          position: 'relative'
-                        }}>
-                          {m.quoted_id && (
-                            <div className="quoted-message-preview mini" style={{ marginBottom: '8px', borderLeftColor: isMine ? '#000' : 'var(--accent-primary)' }}>
-                              <div className="quoted-message-sender" style={{ color: isMine ? '#000' : 'var(--accent-primary)', opacity: 0.8 }}>
-                                {mensajes.find(msg => msg.id === m.quoted_id)?.remitente_id === currentClienteId ? 'Tú' : (mensajes.find(msg => msg.id === m.quoted_id)?.remitente?.nombres || 'Soporte')}
-                              </div>
-                              <div className="quoted-message-text truncate" style={{ fontSize: '11px', opacity: 0.7 }}>
-                                {mensajes.find(msg => msg.id === m.quoted_id)?.mensaje || 'Mensaje original...'}
-                              </div>
-                            </div>
-                          )}
-
-                          {m.archivo_url && (
-                            <div className="message-media" style={{ marginBottom: '8px' }}>
-                              {m.tipo_archivo === 'imagen' && (
-                                <img src={m.archivo_url} alt="Adjunto" style={{ width: '100%', borderRadius: '8px', display: 'block', cursor: 'pointer' }} onClick={() => window.open(m.archivo_url, '_blank')} />
-                              )}
-                              {m.tipo_archivo === 'video' && (
-                                <video src={m.archivo_url} controls style={{ width: '100%', borderRadius: '8px', display: 'block' }} />
-                              )}
-                              {m.tipo_archivo === 'audio' && (
-                                <audio src={m.archivo_url} controls style={{ width: '200px', height: '35px', display: 'block' }} />
-                              )}
-                            </div>
-                          )}
-
-                          {renderMessageWithLinks(m.mensaje)}
-                          <button 
-                            className="reply-button-small" 
-                            onClick={(e) => { e.stopPropagation(); setReplyingTo(m); }}
-                            style={{ position: 'absolute', right: '-25px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', opacity: 0.5, color: '#fff' }}
+                      mensajes.map(m => {
+                        const isMine = m.remitente_id === currentClienteId
+                        return (
+                          <div 
+                            key={m.id} 
+                            className={m.es_sistema ? 'message-bubble-wrapper system' : ''}
+                            style={{ 
+                              display: 'flex', 
+                              flexDirection: 'column', 
+                              alignItems: m.es_sistema ? 'center' : (isMine ? 'flex-end' : 'flex-start'),
+                              width: '100%'
+                            }}
                           >
-                            ↩
-                          </button>
-                          {isAdmin && isMine && (
-                            <button 
-                              className="delete-button-small" 
-                              onClick={(e) => { e.stopPropagation(); handleDeleteMessage(m.id); }}
-                              title="Eliminar mensaje"
-                            >
-                              🗑️
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })
+                            {!m.es_sistema && (
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', marginLeft: '4px', marginRight: '4px' }}>
+                                {isMine ? 'Tú' : (m.remitente?.nombres || 'Soporte')}
+                              </div>
+                            )}
+                            <div className={`message-bubble ${m.es_sistema ? 'system' : ''}`} style={{ 
+                              backgroundColor: m.es_sistema ? undefined : (isMine ? 'var(--accent-primary)' : 'var(--bg-panel)'),
+                              color: m.es_sistema ? undefined : (isMine ? '#000' : 'var(--text-primary)'),
+                              padding: m.es_sistema ? undefined : '10px 14px', 
+                              borderRadius: m.es_sistema ? undefined : '16px',
+                              borderBottomRightRadius: !m.es_sistema && isMine ? '4px' : undefined,
+                              borderBottomLeftRadius: !m.es_sistema && !isMine ? '4px' : undefined,
+                              maxWidth: m.es_sistema ? undefined : '85%', 
+                              wordBreak: 'break-word', 
+                              fontSize: m.es_sistema ? undefined : '14px',
+                              border: m.es_sistema ? undefined : 'none',
+                              position: 'relative'
+                            }}>
+                              {m.quoted_id && (
+                                <div className="quoted-message-preview mini" style={{ marginBottom: '8px', borderLeftColor: isMine ? '#000' : 'var(--accent-primary)' }}>
+                                  <div className="quoted-message-sender" style={{ color: isMine ? '#000' : 'var(--accent-primary)', opacity: 0.8 }}>
+                                    {mensajes.find(msg => msg.id === m.quoted_id)?.remitente_id === currentClienteId ? 'Tú' : (mensajes.find(msg => msg.id === m.quoted_id)?.remitente?.nombres || 'Soporte')}
+                                  </div>
+                                  <div className="quoted-message-text truncate" style={{ fontSize: '11px', opacity: 0.7 }}>
+                                    {mensajes.find(msg => msg.id === m.quoted_id)?.mensaje || 'Mensaje original...'}
+                                  </div>
+                                </div>
+                              )}
+    
+                              {m.archivo_url && (
+                                <div className="message-media" style={{ marginBottom: '8px' }}>
+                                  {m.tipo_archivo === 'imagen' && (
+                                    <img src={m.archivo_url} alt="Adjunto" style={{ width: '100%', borderRadius: '8px', display: 'block', cursor: 'pointer' }} onClick={() => window.open(m.archivo_url, '_blank')} />
+                                  )}
+                                  {m.tipo_archivo === 'video' && (
+                                    <video src={m.archivo_url} controls style={{ width: '100%', borderRadius: '8px', display: 'block' }} />
+                                  )}
+                                  {m.tipo_archivo === 'audio' && (
+                                    <audio src={m.archivo_url} controls style={{ width: '200px', height: '35px', display: 'block' }} />
+                                  )}
+                                </div>
+                              )}
+    
+                              {renderMessageWithLinks(m.mensaje)}
+                              <button 
+                                className="reply-button-small" 
+                                onClick={(e) => { e.stopPropagation(); setReplyingTo(m); }}
+                                style={{ position: 'absolute', right: '-25px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', opacity: 0.5, color: '#fff' }}
+                              >
+                                ↩
+                              </button>
+                              {isAdmin && isMine && (
+                                <button 
+                                  className="delete-button-small" 
+                                  onClick={(e) => { e.stopPropagation(); handleDeleteMessage(m.id); }}
+                                  title="Eliminar mensaje"
+                                >
+                                  🗑️
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })
+                    )}
+                    <div ref={messagesEndRef} />
+                  </>
                 )}
-                <div ref={messagesEndRef} />
               </>
             )}
           </div>
-
+    
           {/* Footer Input */}
           {(!isAdmin || selectedChatClient) && (
             <div style={{ borderTop: '1px solid var(--border-color)' }}>
@@ -685,6 +712,17 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                   >
                     🚀 Abrir Nuevo Ticket
                   </button>
+                </div>
+              ) : (!ticketSubject && !isAdmin) ? (
+                <div style={{ backgroundColor: 'var(--bg-panel)', padding: '16px', textAlign: 'center' }}>
+                  <div style={{ marginBottom: '12px', fontWeight: 'bold', fontSize: '14px' }}>
+                    Selecciona el motivo de tu nuevo ticket:
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+                    <button className="btn btn-primary btn-sm" onClick={() => handleSelectTicket('Pedido no completado')}>📦 Pedido</button>
+                    <button className="btn btn-primary btn-sm" onClick={() => handleSelectTicket('Problema con un pago')}>💳 Pago</button>
+                    <button className="btn btn-primary btn-sm" onClick={() => handleSelectTicket('Otro motivo')}>❓ Otro</button>
+                  </div>
                 </div>
               ) : (
                 <>
@@ -754,11 +792,17 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                     <input 
                       type="text" 
                       className="form-input" 
-                      style={{ flex: 1, fontSize: '14px', borderRadius: '20px', padding: '8px 16px', opacity: (isThrottled && !isAdmin) ? 0.6 : 1 }}
-                      placeholder={(isThrottled && !isAdmin) ? "Bloqueado" : "Escribe..."}
+                      style={{ 
+                        flex: 1, 
+                        fontSize: '14px', 
+                        borderRadius: '20px', 
+                        padding: '8px 16px', 
+                        opacity: (isThrottled && !isAdmin) || (clientStatus === 'resuelto' && !isAdmin) ? 0.6 : 1 
+                      }}
+                      placeholder={(clientStatus === 'resuelto' && !isAdmin) ? "Ticket resuelto" : ((isThrottled && !isAdmin) ? "Bloqueado" : "Escribe...")}
                       value={newMessage}
                       onChange={e => setNewMessage(e.target.value)}
-                      disabled={(isThrottled && !isAdmin) || loadingThrottle || isUploading || !!audioBlob}
+                      disabled={(isThrottled && !isAdmin) || (clientStatus === 'resuelto' && !isAdmin) || loadingThrottle || isUploading || !!audioBlob}
                     />
                   )}
 
