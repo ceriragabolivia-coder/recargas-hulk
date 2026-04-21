@@ -297,6 +297,26 @@ function LiveClock() {
 
 export default function Layout({ currentPage, onNavigate, onOpenChat, children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [deferredPrompt, setDeferredPrompt] = useState(null)
+
+  // Manejo de instalación PWA
+  useEffect(() => {
+    const handleBeforeInstall = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
 
   // Close sidebar when window resizes to desktop
   useEffect(() => {
@@ -922,6 +942,26 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
             >
               🚪 Cerrar sesión
             </button>
+
+            {deferredPrompt && (
+              <button 
+                className="btn" 
+                onClick={handleInstallApp} 
+                style={{ 
+                  width: '100%', 
+                  background: 'linear-gradient(135deg, #863bff 0%, #00d2ff 100%)', 
+                  color: 'white', 
+                  border: 'none', 
+                  justifyContent: 'center',
+                  fontWeight: 800,
+                  boxShadow: '0 4px 15px rgba(134, 59, 255, 0.3)',
+                  marginTop: '4px',
+                  animation: 'promo-pulse 2s infinite'
+                }}
+              >
+                📲 Descargar App
+              </button>
+            )}
           </div>
         </div>
       </aside>

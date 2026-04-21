@@ -1,0 +1,17 @@
+{
+  "name": "Ceriraga App",
+  "short_name": "Ceriraga",
+  "description": "Sistema de Gestión de Recargas Ceriraga",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F1716",
+  "theme_color": "#863bff",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
