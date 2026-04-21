@@ -782,9 +782,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                 )}
               </>
             )}
-            </>
-          )}
-        </div>
+          </div>
     
           {/* Footer Input */}
           {(!isAdmin || selectedChatClient) && (
