@@ -472,7 +472,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
       <div style={{
         position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
         backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 1200, backdropFilter: 'blur(10px)', animation: 'fadeIn 0.3s ease'
+        zIndex: 1200, animation: 'fadeIn 0.3s ease'
       }} onClick={() => setShowReembolsoModal(false)}>
         <div style={{
           backgroundColor: '#1a1d21', width: '100%', maxWidth: '420px', borderRadius: '24px',
@@ -667,7 +667,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
       <div style={{
         position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
         backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 1100, backdropFilter: 'blur(10px)', animation: 'fadeIn 0.3s ease'
+        zIndex: 1100, animation: 'fadeIn 0.3s ease'
       }} onClick={() => setShowClientModal(false)}>
         <div style={{
           backgroundColor: '#1a1d21', width: '100%', maxWidth: '450px', borderRadius: '24px',

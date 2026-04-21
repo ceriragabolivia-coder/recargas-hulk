@@ -154,7 +154,7 @@ export default function Catalogo() {
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
             backgroundColor: 'rgba(0,0,0,0.92)', zIndex: 10000,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '20px', backdropFilter: 'blur(8px)', animation: 'fadeIn 0.2s'
+            padding: '20px', animation: 'fadeIn 0.2s'
           }}
           onClick={() => setShowGuideModal(false)}
         >

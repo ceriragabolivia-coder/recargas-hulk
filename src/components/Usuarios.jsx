@@ -574,7 +574,7 @@ export default function Usuarios({ onNavigate }) {
         <div style={{
           position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
           backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 9999, backdropFilter: 'blur(10px)', animation: 'fadeIn 0.2s ease'
+          zIndex: 9999, animation: 'fadeIn 0.2s ease'
         }}>
           <div style={{ backgroundColor: '#1a1d21', borderRadius: '24px', width: '100%', maxWidth: '450px', padding: '32px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.05)' }}>
             <h3 style={{ fontSize: '20px', marginBottom: '8px' }}>Ajustar Saldo de Billetera</h3>
@@ -658,7 +658,7 @@ export default function Usuarios({ onNavigate }) {
         <div style={{
           position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
           backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 9999, backdropFilter: 'blur(10px)', animation: 'fadeIn 0.2s ease'
+          zIndex: 9999, animation: 'fadeIn 0.2s ease'
         }}>
           <div style={{ backgroundColor: '#1a1d21', borderRadius: '24px', width: '100%', maxWidth: '700px', padding: '32px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.05)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -721,7 +721,7 @@ export default function Usuarios({ onNavigate }) {
         <div style={{
           position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
           backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 9999, backdropFilter: 'blur(10px)', animation: 'fadeIn 0.2s ease'
+          zIndex: 9999, animation: 'fadeIn 0.2s ease'
         }}>
           <div style={{ backgroundColor: '#1a1d21', borderRadius: '24px', width: '100%', maxWidth: '400px', padding: '32px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.05)' }}>
             <h3 style={{ fontSize: '20px', marginBottom: '8px' }}>Restablecer Contraseña</h3>

@@ -96,6 +96,7 @@ body {
   top: 0;
   z-index: 100;
   backdrop-filter: blur(20px);
+  will-change: transform;
 }
 
 .sidebar-header {
@@ -190,6 +191,11 @@ body {
   overflow-x: hidden;
   background: var(--bg-primary);
   min-width: 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.topbar {
+  will-change: transform;
 }
 
 .page-header {
@@ -1489,9 +1495,9 @@ tr:last-child td { border-bottom: none; }
 }
 
 @keyframes pulse-animation {
-  0% { transform: scale(1); opacity: 1; filter: brightness(1); }
-  50% { transform: scale(1.2); opacity: 0.8; filter: brightness(1.5); }
-  100% { transform: scale(1); opacity: 1; filter: brightness(1); }
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.85; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .pulse-animation {
@@ -2482,3 +2488,27 @@ tr:last-child td { border-bottom: none; }
   word-break: break-word;
 }
 
+
+/* ============ PERFORMANCE OPTIMIZATIONS FOR MOBILE ============ */
+@media (max-width: 768px) {
+  * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .card, .kpi-card, .sidebar, .glass-morphism, .notification-item {
+    background-color: var(--bg-secondary) !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .pulse-animation {
+    animation: none !important; /* Desactivar animaciones continuas en móviles */
+  }
+
+  /* Asegurar suavidad de scroll nativo */
+  .main-content, .sidebar-nav, .table-container {
+    -webkit-overflow-scrolling: touch;
+  }
+}

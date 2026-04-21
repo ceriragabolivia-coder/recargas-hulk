@@ -36,7 +36,7 @@ const AlertModal = ({ isOpen, type = 'info', title, message, onConfirm, onCancel
     <div style={{
       position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
       backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 9999, backdropFilter: 'blur(10px)', animation: 'fadeIn 0.2s ease'
+      zIndex: 9999, animation: 'fadeIn 0.2s ease'
     }}>
       <style>{`
         @keyframes fadeIn {

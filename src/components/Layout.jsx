@@ -112,9 +112,7 @@ function NotificationBar({ counts, onNavigate, config, onlineUsers }) {
               className="glass-morphism"
               style={{
                 position: 'absolute', top: 'calc(100% + 10px)', right: 0,
-                width: '280px', maxHeight: '400px', overflowY: 'auto',
-                backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                backdropFilter: 'blur(12px)',
+                backgroundColor: 'rgba(15, 23, 22, 0.98)',
                 borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.1)',
                 boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4)',
                 zIndex: 1000, padding: '12px',
@@ -954,7 +952,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
             backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 20000,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '20px', backdropFilter: 'blur(8px)', animation: 'fadeIn 0.3s ease'
+            padding: '20px', animation: 'fadeIn 0.3s ease'
           }}
           onClick={handleClosePopup}
         >
@@ -1036,7 +1034,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
               boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5)',
               display: 'flex', gap: '12px', padding: '16px', pointerEvents: 'auto',
               animation: 'slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-              position: 'relative', overflow: 'hidden', backdropFilter: 'blur(12px)',
+              position: 'relative', overflow: 'hidden',
               cursor: 'pointer'
             }}
             onClick={() => {
@@ -1105,7 +1103,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
             backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 40000,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '20px', backdropFilter: 'blur(10px)', animation: 'fadeIn 0.3s ease'
+            padding: '20px', animation: 'fadeIn 0.3s ease'
           }}
           onClick={() => setActiveNotiDetail(null)}
         >

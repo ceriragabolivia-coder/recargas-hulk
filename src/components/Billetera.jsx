@@ -775,7 +775,7 @@ export default function Billetera({ onNavigate }) {
           style={{
             position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
             backgroundColor: 'rgba(0,0,0,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 3000, backdropFilter: 'blur(15px)', padding: '20px', animation: 'fadeIn 0.3s ease'
+            zIndex: 3000, padding: '20px', animation: 'fadeIn 0.3s ease'
           }}
           onClick={() => setSelectedComprobante(null)}
         >
