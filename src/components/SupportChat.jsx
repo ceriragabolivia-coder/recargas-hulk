@@ -787,7 +787,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate }) 
 
       {/* Burbuja Flotante Interactiva */}
       <button 
-        className="btn btn-primary"
+        className="btn btn-primary support-chat-toggle"
         style={{ 
           height: '48px', borderRadius: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center',
           boxShadow: '0 8px 24px rgba(0, 210, 255, 0.3)', padding: isOpen || isHovered ? '0 18px' : '0',

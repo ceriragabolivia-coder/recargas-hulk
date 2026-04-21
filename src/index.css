@@ -2542,18 +2542,25 @@ tr:last-child td { border-bottom: none; }
 @media (max-width: 768px) {
   .support-chat-container {
     bottom: 12px;
-    right: 12px;
-    left: auto;
-    align-items: flex-end;
+    right: 0;
+    left: 0;
+    width: 100%;
+    align-items: center;
     padding: 0;
   }
   
   .support-chat-window {
-    width: 90vw;
+    width: 94vw;
     height: 75vh;
-    max-width: 92vw;
+    max-width: 96vw;
     max-height: 78vh;
     border-radius: 24px !important;
     box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    margin-bottom: 8px;
+  }
+
+  .support-chat-toggle {
+    align-self: flex-end !important;
+    margin-right: 12px !important;
   }
 }
