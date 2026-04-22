@@ -36,20 +36,20 @@ export default function Catalogo() {
     setIsVerificando(true)
     setVerificacionResultado(null)
 
-    const juegoNombre = selectedJuego.nombre.toLowerCase()
+    const juegoNombreNormalizado = selectedJuego.nombre.toLowerCase().replace(/\s/g, '')
     
     try {
       let url = ''
-      if (juegoNombre.includes('free fire')) {
+      if (juegoNombreNormalizado.includes('freefire')) {
         url = `https://tiendagiftven.net/conexion_api/api.php?action=ValidarParametros&id=${localRechargeData.player_id}`
-      } else if (juegoNombre.includes('bloodstrike')) {
+      } else if (juegoNombreNormalizado.includes('bloodstrike')) {
         url = `https://pay.neteasegames.com/gameclub/bloodstrike/-1/login-role?roleid=${localRechargeData.player_id}&client_type=gameclub`
       }
 
       const response = await fetch(url)
       const data = await response.json()
       
-      if (juegoNombre.includes('free fire')) {
+      if (juegoNombreNormalizado.includes('freefire')) {
         if (data.alerta === 'green') {
           setVerificacionResultado({
             success: true,
@@ -62,7 +62,7 @@ export default function Catalogo() {
             mensaje: data.mensaje || 'Jugador no encontrado'
           })
         }
-      } else if (juegoNombre.includes('bloodstrike')) {
+      } else if (juegoNombreNormalizado.includes('bloodstrike')) {
         // Formato Netease: { code: 200, msg: "success", data: { role_name: "..." } }
         if (data.code === 200 || data.msg === 'success') {
           setVerificacionResultado({
@@ -471,7 +471,7 @@ export default function Catalogo() {
                   style={{ backgroundColor: 'var(--bg-card)', padding: '20px', fontSize: '18px', fontWeight: 'bold', letterSpacing: '1px' }}
                 />
                 
-                {(selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('bloodstrike')) && (
+                {(selectedJuego.nombre.toLowerCase().replace(/\s/g, '').includes('freefire') || selectedJuego.nombre.toLowerCase().replace(/\s/g, '').includes('bloodstrike')) && (
                   <div style={{ marginTop: '12px' }}>
                     <button 
                       className="btn"
