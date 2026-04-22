@@ -27,7 +27,7 @@ export default function Catalogo() {
   const [isVerificando, setIsVerificando] = useState(false)
   const [verificacionResultado, setVerificacionResultado] = useState(null)
 
-  const handleVerificarFreeFire = async () => {
+  const handleVerificarJugador = async () => {
     if (!localRechargeData.player_id.trim()) {
       alert('Por favor introduce primero el ID del jugador.')
       return
@@ -36,21 +36,46 @@ export default function Catalogo() {
     setIsVerificando(true)
     setVerificacionResultado(null)
 
+    const juegoNombre = selectedJuego.nombre.toLowerCase()
+    
     try {
-      const response = await fetch(`https://tiendagiftven.net/conexion_api/api.php?action=ValidarParametros&id=${localRechargeData.player_id}`)
+      let url = ''
+      if (juegoNombre.includes('free fire')) {
+        url = `https://tiendagiftven.net/conexion_api/api.php?action=ValidarParametros&id=${localRechargeData.player_id}`
+      } else if (juegoNombre.includes('bloodstrike')) {
+        url = `https://pay.neteasegames.com/gameclub/bloodstrike/-1/login-role?roleid=${localRechargeData.player_id}&client_type=gameclub`
+      }
+
+      const response = await fetch(url)
       const data = await response.json()
       
-      if (data.alerta === 'green') {
-        setVerificacionResultado({
-          success: true,
-          nickname: data.nickname,
-          mensaje: data.mensaje
-        })
-      } else {
-        setVerificacionResultado({
-          success: false,
-          mensaje: data.mensaje || 'Jugador no encontrado'
-        })
+      if (juegoNombre.includes('free fire')) {
+        if (data.alerta === 'green') {
+          setVerificacionResultado({
+            success: true,
+            nickname: data.nickname,
+            mensaje: data.mensaje
+          })
+        } else {
+          setVerificacionResultado({
+            success: false,
+            mensaje: data.mensaje || 'Jugador no encontrado'
+          })
+        }
+      } else if (juegoNombre.includes('bloodstrike')) {
+        // Formato Netease: { code: 200, msg: "success", data: { role_name: "..." } }
+        if (data.code === 200 || data.msg === 'success') {
+          setVerificacionResultado({
+            success: true,
+            nickname: data.data?.role_name || 'Jugador Encontrado',
+            mensaje: 'ID Verificado exitosamente'
+          })
+        } else {
+          setVerificacionResultado({
+            success: false,
+            mensaje: data.msg || 'ID de BloodStrike no válido o no encontrado'
+          })
+        }
       }
     } catch (error) {
       console.error('Error verificando jugador:', error)
@@ -446,11 +471,11 @@ export default function Catalogo() {
                   style={{ backgroundColor: 'var(--bg-card)', padding: '20px', fontSize: '18px', fontWeight: 'bold', letterSpacing: '1px' }}
                 />
                 
-                {selectedJuego.nombre.toLowerCase().includes('free fire') && (
+                {(selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('bloodstrike')) && (
                   <div style={{ marginTop: '12px' }}>
                     <button 
                       className="btn"
-                      onClick={handleVerificarFreeFire}
+                      onClick={handleVerificarJugador}
                       disabled={isVerificando}
                       style={{ 
                         width: '100%', 
