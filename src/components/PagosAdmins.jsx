@@ -18,6 +18,11 @@ export default function PagosAdmins() {
   const [adminSelected, setAdminSelected] = useState(null)
   const [showLiquidarModal, setShowLiquidarModal] = useState(false)
 
+  // Estados para Detalle de Pedido
+  const [selectedOrderNumber, setSelectedOrderNumber] = useState(null)
+  const [orderDetail, setOrderDetail] = useState(null)
+  const [loadingOrder, setLoadingOrder] = useState(false)
+
   const fetchData = async () => {
     setLoading(true)
     try {
@@ -109,6 +114,89 @@ export default function PagosAdmins() {
     setReferenciaLiquidar('')
     setShowLiquidarModal(true)
   }
+
+  const handleOpenOrderDetail = async (orderNumber) => {
+    setSelectedOrderNumber(orderNumber)
+    setLoadingOrder(true)
+    setOrderDetail(null)
+    
+    try {
+      // 1. Obtener datos básicos del pedido y sus items
+      const { data: ped, error: pError } = await supabase
+        .from('pedidos')
+        .select('*, pedido_items(*)')
+        .eq('numero_pedido', parseInt(orderNumber))
+        .maybeSingle()
+      
+      if (pError) throw pError
+      if (!ped) {
+        showAlert("No se encontró el pedido #" + orderNumber, "error")
+        setSelectedOrderNumber(null)
+        return
+      }
+
+      // 2. Obtener datos del cliente
+      const { data: cli } = await supabase
+        .from('clientes')
+        .select('*')
+        .or(`id.eq.${ped.cliente_id},auth_user_id.eq.${ped.cliente_id}`)
+        .maybeSingle()
+
+      setOrderDetail({ ...ped, cliente: cli })
+    } catch (err) {
+      console.error("Error fetching order detail:", err)
+      showAlert("No se pudo cargar el detalle del pedido #" + orderNumber, "error")
+      setSelectedOrderNumber(null)
+    } finally {
+      setLoadingOrder(false)
+    }
+  }
+
+  const renderDetallesLink = (notas) => {
+    if (!notas) return '-';
+    // Buscar patrón tipo "Pedido #000253" o "#000253"
+    const regex = /(Pedido\s*#)(\d+)/gi;
+    const parts = notas.split(regex);
+    
+    if (parts.length === 1) return notas;
+
+    const result = [];
+    let lastIndex = 0;
+    let match;
+    
+    // Reset regex
+    const myRegex = /(Pedido\s*#)(\d+)/gi;
+
+    while ((match = myRegex.exec(notas)) !== null) {
+      // Texto antes del match
+      result.push(notas.substring(lastIndex, match.index));
+      
+      const prefix = match[1];
+      const orderNum = match[2];
+      
+      result.push(
+        <span key={match.index}>
+          {prefix}
+          <span 
+            style={{ 
+              color: 'var(--accent-primary)', 
+              fontWeight: 800, 
+              cursor: 'pointer',
+              textDecoration: 'underline'
+            }}
+            onClick={() => handleOpenOrderDetail(orderNum)}
+          >
+            {orderNum}
+          </span>
+        </span>
+      );
+      
+      lastIndex = myRegex.lastIndex;
+    }
+    
+    result.push(notas.substring(lastIndex));
+    return result;
+  };
 
   const handleLiquidar = async () => {
     if (!montoLiquidar || isNaN(montoLiquidar) || Number(montoLiquidar) <= 0) {
@@ -283,7 +371,9 @@ export default function PagosAdmins() {
                       <td style={{ fontSize: '12px', fontWeight: 600, color: 'var(--accent-primary)' }}>
                         {h.referencia || '-'}
                       </td>
-                      <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{h.notas}</td>
+                      <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                        {renderDetallesLink(h.notas)}
+                      </td>
                       <td>
                         {h.liquidador_nombre ? (
                           <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--accent-primary)' }}>
@@ -357,6 +447,122 @@ export default function PagosAdmins() {
               >
                 Cancelar
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Detalle de Pedido */}
+      {selectedOrderNumber && (
+        <div className="modal-overlay" onClick={() => setSelectedOrderNumber(null)}>
+          <div className="modal-content" style={{ maxWidth: '600px', padding: '0', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
+            <div style={{ 
+              backgroundColor: 'var(--bg-panel)', 
+              padding: '24px', 
+              borderBottom: '1px solid var(--border-color)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <h2 style={{ fontSize: '20px', margin: 0 }}>Detalle de Pedido #{selectedOrderNumber}</h2>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>Información completa de la orden administrativa</p>
+              </div>
+              <button className="btn btn-ghost" onClick={() => setSelectedOrderNumber(null)} style={{ fontSize: '20px', padding: '8px' }}>✕</button>
+            </div>
+
+            <div style={{ padding: '24px', maxHeight: '70vh', overflowY: 'auto' }}>
+              {loadingOrder ? (
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                  <div className="spinner" style={{ margin: '0 auto 16px' }}></div>
+                  <p>Cargando información del pedido...</p>
+                </div>
+              ) : orderDetail ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  
+                  {/* Fila 1: Cliente y Estado */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="card" style={{ padding: '16px', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                      <label style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Cliente</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--bg-panel)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👤</div>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: '14px' }}>{orderDetail.cliente?.nombres || 'Cliente Desconocido'}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--accent-primary)' }}>@{orderDetail.cliente?.usuario || 'user'}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="card" style={{ padding: '16px', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                      <label style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Estado General</label>
+                      <div style={{ 
+                        display: 'inline-flex', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 800,
+                        backgroundColor: orderDetail.estado === 'completado' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(255, 171, 0, 0.15)',
+                        color: orderDetail.estado === 'completado' ? '#22c55e' : '#ffab00'
+                      }}>
+                        {orderDetail.estado === 'completado' ? '✅ COMPLETADO' : '⏳ ' + orderDetail.estado.toUpperCase()}
+                      </div>
+                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '6px' }}>{new Date(orderDetail.created_at).toLocaleString()}</div>
+                    </div>
+                  </div>
+
+                  {/* Fila 2: Pagos y Referencia */}
+                  <div className="card" style={{ padding: '16px', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                      <div>
+                        <label style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', display: 'block' }}>Total Abonado</label>
+                        <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent-success)' }}>{formatBs(orderDetail.total_bs)}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{formatUSD(orderDetail.total_usd)}</div>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', display: 'block' }}>Referencia de Pago</label>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent-primary)' }}>{orderDetail.referencia_pago || 'S/R'}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{orderDetail.pago_verificado ? '✅ Verificado por Admin' : '⏳ Pendiente'}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Paquetes */}
+                  <div>
+                    <h3 style={{ fontSize: '14px', textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '1px' }}>Paquetes de la Orden</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {orderDetail.pedido_items?.map((item, idx) => (
+                        <div key={idx} className="card" style={{ padding: '12px', borderLeft: '4px solid var(--accent-primary)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                              <div style={{ fontWeight: 800, fontSize: '14px' }}>{item.producto_nombre}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{item.juego_nombre} (x{item.cantidad})</div>
+                            </div>
+                            <div style={{ fontWeight: 700, color: 'var(--accent-success)' }}>{formatBs(item.precio_bs)}</div>
+                          </div>
+                          <div style={{ marginTop: '8px', padding: '8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '6px', fontSize: '12px' }}>
+                            <span style={{ color: 'var(--text-muted)' }}>ID Jugador: </span>
+                            <span style={{ fontWeight: 800, color: 'var(--accent-primary)', letterSpacing: '1px' }}>{item.player_id || item.account_email || item.account_user || 'N/A'}</span>
+                          </div>
+                          {item.referencia_admin && (
+                            <div style={{ marginTop: '4px', fontSize: '11px', color: 'var(--accent-primary)', fontWeight: 600 }}>
+                              📌 Ref. Recarga: {item.referencia_admin}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {orderDetail.observaciones && (
+                     <div style={{ padding: '12px', backgroundColor: 'rgba(255, 171, 0, 0.05)', borderRadius: '8px', border: '1px solid rgba(255, 171, 0, 0.2)' }}>
+                        <div style={{ fontSize: '10px', color: '#ffab00', fontWeight: 800, textTransform: 'uppercase', marginBottom: '4px' }}>Notas Administrativas</div>
+                        <p style={{ fontSize: '13px', margin: 0, whiteSpace: 'pre-line' }}>{orderDetail.observaciones}</p>
+                     </div>
+                  )}
+
+                </div>
+              ) : (
+                <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No se pudo cargar la información.</p>
+              )}
+            </div>
+            
+            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-color)', backgroundColor: 'rgba(0,0,0,0.1)', textAlign: 'right' }}>
+              <button className="btn btn-primary" onClick={() => setSelectedOrderNumber(null)}>Cerrar Detalle</button>
             </div>
           </div>
         </div>
