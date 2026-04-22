@@ -54,7 +54,7 @@ function CountdownTimer({ expiryDate, onExpire }) {
 
 export default function Checkout({ onFinish }) {
   const { cart, removeFromCart, clearCart, checkout, totalUSD, totalBs } = useCart()
-  const { registrarVenta } = useVentas()
+  const { registrarVenta, verificarYRegistrarReferencia } = useVentas()
   const { metodos, cancelarPedidosExpirados, loading: loadingMetodos } = useMetodosPago()
   const { perfil, user, isCliente } = useAuth()
   const { wallet } = useWallet()
@@ -252,6 +252,19 @@ export default function Checkout({ onFinish }) {
 
     setIsProcessing(true)
     try {
+      // 1. Validar referencia duplicada (Si no es pago con billetera o gratis)
+      if (!isWalletOnly && !isWalletBsOnly && !isGratis) {
+        try {
+          await verificarYRegistrarReferencia(referencia, remainingBs || remainingBsFromWallet, 'pedido')
+        } catch (err) {
+          if (err.message === 'Referencia Duplicada') {
+            alert('Referencia Duplicada')
+            setIsProcessing(false)
+            return
+          }
+          throw err
+        }
+      }
       let finalMetodoId = selectedMetodoId
       let finalReferencia = referencia
 

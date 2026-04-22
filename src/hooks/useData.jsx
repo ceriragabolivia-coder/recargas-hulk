@@ -191,6 +191,21 @@ export function useVentas() {
     return { data, error }
   }
 
+  async function verificarYRegistrarReferencia(referencia, monto, origen) {
+    const { data, error } = await supabase.rpc('validar_y_registrar_referencia_rpc', {
+      p_referencia: referencia,
+      p_monto: monto,
+      p_usuario_id: perfil?.cliente_uuid || perfil?.id,
+      p_origen: origen
+    })
+    
+    if (error) throw error
+    if (data && !data.success) {
+      throw new Error(data.message)
+    }
+    return data
+  }
+
   async function deleteVenta(id) {
     const { error } = await supabase.from('ventas').delete().eq('id', id)
     if (!error) {
@@ -299,6 +314,7 @@ export function useVentas() {
     fetchHistorial, 
     fetchResumenPeriodo, 
     limpiarComprobantes,
+    verificarYRegistrarReferencia,
     refetch: fetchVentasHoy 
   }
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useWallet, useAuth, useMetodosPago } from '../hooks/useData'
+import { useWallet, useAuth, useMetodosPago, useVentas } from '../hooks/useData'
 import { formatUSD, formatBs } from '../utils/helpers'
 import { supabase } from '../lib/supabase'
 import AlertModal from './AlertModal'
@@ -9,6 +9,7 @@ export default function Billetera({ onNavigate }) {
   const { perfil, isCliente } = useAuth()
   const { metodos } = useMetodosPago()
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
+  const { verificarYRegistrarReferencia } = useVentas()
 
   const [monto, setMonto] = useState('')
   const [monedaRecarga, setMonedaRecarga] = useState('bs') // Cambiado a 'bs' por defecto
@@ -151,17 +152,31 @@ export default function Billetera({ onNavigate }) {
     }
 
     setIsProcessing(true)
-    const { error } = await solicitarRecarga(Number(monto), metodoId, referencia, comprobanteUrl, monedaRecarga)
-    setIsProcessing(false)
+    try {
+      // Validar referencia duplicada
+      try {
+        await verificarYRegistrarReferencia(referencia, monto, 'recarga')
+      } catch (err) {
+        if (err.message === 'Referencia Duplicada') {
+          setAlertModal({ type: 'error', message: 'Referencia Duplicada' })
+          setIsProcessing(false)
+          return
+        }
+        throw err
+      }
 
-    if (!error) {
+      const { error } = await solicitarRecarga(Number(monto), metodoId, referencia, comprobanteUrl, monedaRecarga)
+      if (error) throw error
+
       setAlertModal({ type: 'success', message: `Solicitud de recarga en ${monedaRecarga === 'bs' ? 'Bolívares' : 'Dólares'} enviada con éxito. Tu saldo se actualizará una vez sea verificado por administración.` })
       setMonto('')
       setReferencia('')
       setMetodoId('')
       setComprobanteUrl(null)
-    } else {
-      setAlertModal({ type: 'error', message: 'Error al enviar solicitud: ' + error.message })
+    } catch (err) {
+      setAlertModal({ type: 'error', message: 'Error al enviar solicitud: ' + err.message })
+    } finally {
+      setIsProcessing(false)
     }
   }
 
