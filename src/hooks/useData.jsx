@@ -195,7 +195,7 @@ export function useVentas() {
     const { data, error } = await supabase.rpc('validar_y_registrar_referencia_rpc', {
       p_referencia: referencia,
       p_monto: monto,
-      p_usuario_id: perfil?.cliente_uuid || perfil?.id,
+      p_usuario_id: perfil?.id, // ID de la cuenta (Auth)
       p_origen: origen
     })
     
