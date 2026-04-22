@@ -63,11 +63,11 @@ export default function Catalogo() {
           })
         }
       } else if (juegoNombreNormalizado.includes('bloodstrike')) {
-        // Formato Netease: { code: 200, msg: "success", data: { role_name: "..." } }
-        if (data.code === 200 || data.msg === 'success') {
+        // Formato Netease real: { code: "0000", msg: null, data: { rolename: "..." } }
+        if (data.code === "0000" || data.msg === 'success') {
           setVerificacionResultado({
             success: true,
-            nickname: data.data?.role_name || 'Jugador Encontrado',
+            nickname: data.data?.rolename || 'Jugador Encontrado',
             mensaje: 'ID Verificado exitosamente'
           })
         } else {
