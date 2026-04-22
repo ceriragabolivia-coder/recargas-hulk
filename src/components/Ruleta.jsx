@@ -35,6 +35,7 @@ export default function Ruleta() {
   const [showModal, setShowModal]         = useState(false)
   const [historial, setHistorial]         = useState([])
   const [loading, setLoading]             = useState(true)
+  const [selectedPrize, setSelectedPrize] = useState(null)
   
   const audioSpin = useRef(null)
   const audioWin = useRef(null)
@@ -143,7 +144,7 @@ export default function Ruleta() {
   const wheelSize = Math.min(440, typeof window !== 'undefined' ? window.innerWidth - 64 : 440)
 
   return (
-    <div className="page-content" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px 40px' }}>
+    <div className="page-content" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px 20px' }}>
       <style>{`
         @keyframes winPop  { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
         @keyframes starSpin{ from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
@@ -154,7 +155,7 @@ export default function Ruleta() {
       `}</style>
 
       {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: 40, paddingTop: 20 }}>
+      <div style={{ textAlign: 'center', marginBottom: 20, paddingTop: 0 }}>
         <h1 style={{ fontSize: 38, fontWeight: 900, margin: '0 0 10px', background: 'linear-gradient(135deg,#FFD700,#FF6B6B)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           {config.ruleta_titulo}
         </h1>
@@ -175,7 +176,7 @@ export default function Ruleta() {
                 <div 
                   key={p.id}
                   className="prize-item"
-                  onClick={() => setResultado(p)}
+                  onClick={() => setSelectedPrize(p)}
                   style={{ 
                     padding: '12px 16px', borderRadius: '14px', background: 'rgba(255,255,255,0.03)', 
                     border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'all 0.2s ease',
@@ -190,33 +191,6 @@ export default function Ruleta() {
                 </div>
               ))}
             </div>
-
-            {/* Panel de Información del Premio Seleccionado */}
-            {resultado && !spinning && (
-              <div style={{ 
-                marginTop: '24px', padding: '20px', borderRadius: '20px', 
-                background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.2)',
-                animation: 'winPop 0.3s ease-out'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
-                  <span style={{ fontSize: '32px' }}>{resultado.emoji || '🎁'}</span>
-                  <div>
-                    <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 900, color: '#FFD700' }}>{resultado.nombre}</h3>
-                    <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Detalles del Premio</span>
-                  </div>
-                </div>
-                <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.6', color: 'var(--text-primary)' }}>
-                  {resultado.descripcion || "Este premio se acredita automáticamente al ganar. ¡Prueba tu suerte para obtenerlo!"}
-                </p>
-                {resultado.valor > 0 && (
-                  <div style={{ marginTop: '12px', display: 'flex', gap: '10px' }}>
-                    <div style={{ padding: '4px 12px', borderRadius: '8px', background: 'rgba(255,255,255,0.1)', fontSize: '12px', fontWeight: 700 }}>
-                      Valor: {resultado.tipo === 'saldo_bs' ? formatBs(resultado.valor) : resultado.tipo === 'saldo_usd' ? formatUSD(resultado.valor) : `${resultado.valor}% Desc.`}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Historial rápido */}
@@ -358,6 +332,34 @@ export default function Ruleta() {
 
             <button className="btn btn-primary" style={{ width: '100%', height: 60, fontSize: 18, fontWeight: 900, borderRadius: 16 }} onClick={() => setShowModal(false)}>
               ENTENDIDO
+            </button>
+          </div>
+        </div>
+      )}
+      {/* Modal de Información de Premio */}
+      {selectedPrize && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 60000, background: 'rgba(0,0,0,.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={() => setSelectedPrize(null)}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 28, padding: '32px', maxWidth: 400, width: '100%', textAlign: 'center', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 25px 50px rgba(0,0,0,0.5)', animation: 'winPop 0.3s ease-out' }}
+            onClick={e => e.stopPropagation()}>
+            
+            <div style={{ fontSize: 72, marginBottom: 16 }}>{selectedPrize.emoji || '🎁'}</div>
+            <h2 style={{ fontSize: 24, fontWeight: 900, color: '#FFD700', marginBottom: 8 }}>{selectedPrize.nombre}</h2>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 16 }}>Detalles del Premio</div>
+            
+            <div style={{ padding: '20px', borderRadius: '16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', marginBottom: 24 }}>
+              <p style={{ margin: 0, fontSize: '15px', lineHeight: '1.6', color: 'var(--text-primary)' }}>
+                {selectedPrize.descripcion || "Este premio se acredita automáticamente al ganar. ¡Prueba tu suerte para obtenerlo!"}
+              </p>
+              {selectedPrize.valor > 0 && (
+                <div style={{ marginTop: '16px', display: 'inline-block', padding: '6px 16px', borderRadius: '10px', background: 'rgba(255,215,0,0.1)', color: '#FFD700', fontSize: '14px', fontWeight: 800 }}>
+                  VALOR: {selectedPrize.tipo === 'saldo_bs' ? formatBs(selectedPrize.valor) : selectedPrize.tipo === 'saldo_usd' ? formatUSD(selectedPrize.valor) : `${selectedPrize.valor}% Desc.`}
+                </div>
+              )}
+            </div>
+
+            <button className="btn btn-primary" style={{ width: '100%', height: 50, borderRadius: 12 }} onClick={() => setSelectedPrize(null)}>
+              CERRAR VENTANA
             </button>
           </div>
         </div>
