@@ -714,12 +714,18 @@ export default function Billetera({ onNavigate }) {
                   type="text" 
                   className="form-input" 
                   placeholder="Últimos 6 dígitos de la referencia..."
-                  maxLength={6}
                   value={referencia}
-                  onChange={(e) => setReferencia(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    if (val.length > 6) {
+                      setReferencia(val.slice(-6));
+                    } else {
+                      setReferencia(val);
+                    }
+                  }}
                   onPaste={e => {
                     e.preventDefault();
-                    const pasteData = e.clipboardData.getData('text').replace(/\D/g, '');
+                    const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
                     setReferencia(pasteData.slice(-6));
                   }}
                   required
