@@ -310,6 +310,8 @@ export default function Catalogo() {
 
           </div>
 
+          )}
+
           {config?.tutorial_banner_texto && config?.tutorial_banner_link && (
             <a 
               href={config.tutorial_banner_link} 
@@ -332,11 +334,6 @@ export default function Catalogo() {
             </a>
           )}
 
-        </div>
-        
-        {/* COLUMNA DERECHA (Formulario de Recarga y Productos) */}
-        <div className="game-recharge-col" style={{ flex: '2 1 500px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          
           {config?.promo_banner_texto && (
             <a 
               href={config.promo_banner_link || '#'} 
@@ -346,6 +343,7 @@ export default function Catalogo() {
                 display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px',
                 background: 'linear-gradient(135deg, rgba(255, 171, 0, 0.15) 0%, rgba(255, 86, 48, 0.15) 100%)', 
                 borderRadius: '12px', border: '1px solid rgba(255, 171, 0, 0.3)', textDecoration: 'none',
+                marginTop: '4px'
               }}
             >
               {config.promo_banner_icono_url ? (
@@ -353,12 +351,18 @@ export default function Catalogo() {
               ) : (
                  <div style={{ fontSize: '20px' }}>🎁</div>
               )}
-              <div>
-                <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#ffab00', marginBottom: '0px' }}>¡Oferta Especial!</h3>
-                <p style={{ fontSize: '12px', color: 'var(--text-primary)', lineHeight: '1.2', margin: 0 }}>{config.promo_banner_texto}</p>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ fontSize: '13px', fontWeight: 800, color: '#ffab00', marginBottom: '0px' }}>¡Oferta Especial!</h3>
+                <p style={{ fontSize: '11px', color: 'var(--text-primary)', lineHeight: '1.2', margin: 0 }}>{config.promo_banner_texto}</p>
               </div>
             </a>
           )}
+
+        </div>
+        
+        {/* COLUMNA DERECHA (Formulario de Recarga y Productos) */}
+        <div className="game-recharge-col" style={{ flex: '2 1 500px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          
 
           <div className="card card-recharge-info" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderLeft: '4px solid var(--accent-primary)', padding: '10px' }}>
             {selectedJuego.metodo_recarga === 'cuenta_completa' ? (
