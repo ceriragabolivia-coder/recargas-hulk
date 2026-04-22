@@ -629,7 +629,7 @@ export default function Catalogo() {
                       onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent-primary)'; e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.05)' }}
                       onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)' }}
                     >
-                      <span style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis' }}>👤 {c.nombre_perfil || 'Cuenta'}</span>
+                      <span style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis' }}>👤 {c.player_id || c.email || c.username || c.nombre_perfil || 'Cuenta'}</span>
                       <button 
                         onClick={(e) => { e.stopPropagation(); if(window.confirm('¿Eliminar esta cuenta guardada?')) eliminarCuenta(c.id); }}
                         style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: '14px', padding: '0 4px', transition: 'color 0.2s' }}
