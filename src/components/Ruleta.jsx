@@ -143,169 +143,221 @@ export default function Ruleta() {
   const wheelSize = Math.min(440, typeof window !== 'undefined' ? window.innerWidth - 64 : 440)
 
   return (
-    <div className="page-content" style={{ maxWidth: 700, margin: '0 auto', padding: '0 16px 40px' }}>
+    <div className="page-content" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px 40px' }}>
       <style>{`
         @keyframes winPop  { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
         @keyframes starSpin{ from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
         @keyframes spinBtn { 0%,100%{box-shadow:0 0 20px rgba(255,215,0,.5)} 50%{box-shadow:0 0 40px rgba(255,215,0,.9)} }
         @keyframes float   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+        .prize-item:hover { background: rgba(255,215,0,0.08) !important; border-color: rgba(255,215,0,0.3) !important; transform: translateX(5px); }
+        .wheel-container { perspective: 1000px; }
       `}</style>
 
       {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: 20, paddingTop: 8 }}>
-        <h1 style={{ fontSize: 30, fontWeight: 900, margin: '0 0 6px', background: 'linear-gradient(135deg,#FFD700,#FF6B6B)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+      <div style={{ textAlign: 'center', marginBottom: 40, paddingTop: 20 }}>
+        <h1 style={{ fontSize: 38, fontWeight: 900, margin: '0 0 10px', background: 'linear-gradient(135deg,#FFD700,#FF6B6B)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           {config.ruleta_titulo}
         </h1>
-        {config.ruleta_descripcion && <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: 0 }}>{config.ruleta_descripcion}</p>}
-
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 10, padding: '6px 18px', borderRadius: 20, background: girosDisp > 0 ? 'rgba(255,215,0,.12)' : 'rgba(255,255,255,.04)', border: `1px solid ${girosDisp > 0 ? 'rgba(255,215,0,.4)' : 'rgba(255,255,255,.1)'}` }}>
-          <span>{girosDisp > 0 ? '🎰' : '⏳'}</span>
-          <span style={{ fontWeight: 700, color: girosDisp > 0 ? '#FFD700' : 'var(--text-muted)', fontSize: 14 }}>
-            {girosDisp > 0 ? `${girosDisp} giro${girosDisp !== 1 ? 's' : ''} disponible${girosDisp !== 1 ? 's' : ''}` : 'Sin giros — completa un pedido para ganar uno'}
-          </span>
-        </div>
+        {config.ruleta_descripcion && <p style={{ color: 'var(--text-muted)', fontSize: 16, margin: 0 }}>{config.ruleta_descripcion}</p>}
       </div>
 
-      {/* Wheel area */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-
-        {/* Pointer arrow */}
-        <div style={{ zIndex: 10, marginBottom: -18, position: 'relative' }}>
-          <div style={{ width: 0, height: 0, borderLeft: '14px solid transparent', borderRight: '14px solid transparent', borderTop: '30px solid #FF3333', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,.5))' }} />
-          <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 6, height: 6, borderRadius: '50%', background: '#fff', marginTop: -4 }} />
-        </div>
-
-        {/* Wheel SVG */}
-        <div style={{
-          transform: `rotate(${rotation}deg)`,
-          transition: animate ? 'transform 6s cubic-bezier(0.17,0.67,0.08,1)' : 'none',
-          willChange: 'transform',
-          borderRadius: '50%',
-          boxShadow: '0 0 0 6px #0d1b4b, 0 0 0 10px #1a3a8f, 0 0 0 14px #FFD700, 0 16px 40px rgba(0,0,0,.6)'
-        }}>
-          <svg viewBox="0 0 300 300" width={wheelSize} height={wheelSize} style={{ display: 'block' }}>
-            <defs>
-              <radialGradient id="hubG" cx="40%" cy="35%"><stop offset="0%" stopColor="#60a5fa" /><stop offset="100%" stopColor="#1e3a8a" /></radialGradient>
-            </defs>
-
-            {/* Outer decorative ring */}
-            <circle cx={CX} cy={CY} r={R + 10} fill="#0d1b4b" />
-            <circle cx={CX} cy={CY} r={R + 6}  fill="none" stroke="#FFD700" strokeWidth="2" strokeDasharray="5 3" />
-
-            {segments.length === 0
-              ? <circle cx={CX} cy={CY} r={R} fill="#1e2a4a" />
-              : segments.map((seg, idx) => {
-                  const fontSize = segments.length > 12 ? 6.5 : segments.length > 8 ? 7.5 : 9
-                  return (
-                    <g key={seg.id}>
-                      <path d={arc(CX, CY, R, seg.startAngle, seg.endAngle)} fill={seg.color || seg.colorFallback} stroke="rgba(255,255,255,.2)" strokeWidth="1.5" />
-                      <g transform={`rotate(${seg.midAngle - 90}, ${CX}, ${CY})`}>
-                        <text x={CX + 42} y={CY} textAnchor="start" dominantBaseline="middle"
-                          fontSize={fontSize} fontWeight="800" fill="white"
-                          style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.8))' }}>
-                          {seg.emoji || '🎁'} {seg.nombre}
-                        </text>
-                      </g>
-                    </g>
-                  )
-                })
-            }
-
-            {/* Center hub */}
-            <circle cx={CX} cy={CY} r={R_INNER + 10} fill="#0d1b4b" />
-            <circle cx={CX} cy={CY} r={R_INNER + 6}  fill="url(#hubG)" />
-            <circle cx={CX} cy={CY} r={R_INNER}       fill="#1e3a8a" stroke="#FFD700" strokeWidth="2" />
-            <text x={CX} y={CY} textAnchor="middle" dominantBaseline="middle" fontSize="22">⭐</text>
-          </svg>
-        </div>
-
-        {/* Decorative base */}
-        <div style={{ marginTop: -6, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <div style={{ width: 36, height: 56, background: 'linear-gradient(180deg,#1a3a8f,#0d1f5c)', borderRadius: '4px 4px 0 0' }} />
-          <div style={{ width: 150, height: 24, background: 'linear-gradient(180deg,#1a3a8f,#0d1f5c)', borderRadius: '6px 6px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            {[...Array(6)].map((_, i) => <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: '#FFD700', boxShadow: '0 0 8px #FFD700' }} />)}
-          </div>
-          <div style={{ width: 180, height: 12, background: '#07123d', borderRadius: '0 0 8px 8px' }} />
-        </div>
-
-        {/* Spin button */}
-        <button onClick={handleSpin} disabled={spinning || girosDisp <= 0 || segments.length === 0}
-          style={{
-            marginTop: 24, padding: '14px 52px', fontSize: 18, fontWeight: 900,
-            borderRadius: 50, border: 'none',
-            cursor: spinning || girosDisp <= 0 ? 'not-allowed' : 'pointer',
-            background: spinning || girosDisp <= 0 ? 'rgba(255,255,255,.07)' : 'linear-gradient(135deg,#FFD700,#FF8C00)',
-            color: spinning || girosDisp <= 0 ? 'var(--text-muted)' : '#1a1a2e',
-            transition: 'all .3s',
-            boxShadow: spinning || girosDisp <= 0 ? 'none' : '0 8px 28px rgba(255,215,0,.45)',
-            letterSpacing: 1,
-            animation: girosDisp > 0 && !spinning ? 'spinBtn 2s infinite' : 'none'
-          }}>
-          {spinning ? '🌀 Girando...' : girosDisp > 0 ? '🎰 ¡GIRAR!' : '🔒 Sin Giros'}
-        </button>
-        {segments.length === 0 && !loading && (
-          <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 8 }}>No hay premios configurados aún.</p>
-        )}
-      </div>
-
-      {/* Spin history */}
-      {historial.length > 0 && (
-        <div className="card" style={{ marginTop: 32, padding: 20 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 800, marginBottom: 12 }}>🏆 Mis últimos premios</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {historial.map((h, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.06)' }}>
-                <span style={{ fontWeight: 600, fontSize: 14 }}>{h.premio_nombre}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {!isCliente && h.tipo === 'saldo_usd' && h.valor > 0 && <span style={{ color: '#22c55e', fontWeight: 700, fontSize: 13 }}>+{formatUSD(h.valor)}</span>}
-                  {h.tipo === 'saldo_bs'  && h.valor > 0 && <span style={{ color: '#a855f7', fontWeight: 700, fontSize: 13 }}>+{formatBs(h.valor)}</span>}
-                  <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>{new Date(h.created_at).toLocaleDateString('es-VE')}</span>
+      <div style={{ display: 'flex', gap: '40px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+        
+        {/* COLUMNA IZQUIERDA: LISTA DE PREMIOS */}
+        <div style={{ flex: '1 1 400px', minWidth: 320 }}>
+          <div className="card" style={{ padding: '24px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 900, marginBottom: 20, display: 'flex', alignItems: 'center', gap: '10px' }}>
+              📜 Inventario de Premios
+            </h2>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {premios.map(p => (
+                <div 
+                  key={p.id}
+                  className="prize-item"
+                  onClick={() => setResultado(p)}
+                  style={{ 
+                    padding: '12px 16px', borderRadius: '14px', background: 'rgba(255,255,255,0.03)', 
+                    border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'all 0.2s ease',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '24px' }}>{p.emoji || '🎁'}</span>
+                    <span style={{ fontWeight: 700, fontSize: '15px' }}>{p.nombre}</span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--accent-primary)', fontWeight: 800 }}>VER INFO</div>
                 </div>
+              ))}
+            </div>
+
+            {/* Panel de Información del Premio Seleccionado */}
+            {resultado && !spinning && (
+              <div style={{ 
+                marginTop: '24px', padding: '20px', borderRadius: '20px', 
+                background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.2)',
+                animation: 'winPop 0.3s ease-out'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '32px' }}>{resultado.emoji || '🎁'}</span>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 900, color: '#FFD700' }}>{resultado.nombre}</h3>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Detalles del Premio</span>
+                  </div>
+                </div>
+                <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.6', color: 'var(--text-primary)' }}>
+                  {resultado.descripcion || "Este premio se acredita automáticamente al ganar. ¡Prueba tu suerte para obtenerlo!"}
+                </p>
+                {resultado.valor > 0 && (
+                  <div style={{ marginTop: '12px', display: 'flex', gap: '10px' }}>
+                    <div style={{ padding: '4px 12px', borderRadius: '8px', background: 'rgba(255,255,255,0.1)', fontSize: '12px', fontWeight: 700 }}>
+                      Valor: {resultado.tipo === 'saldo_bs' ? formatBs(resultado.valor) : resultado.tipo === 'saldo_usd' ? formatUSD(resultado.valor) : `${resultado.valor}% Desc.`}
+                    </div>
+                  </div>
+                )}
               </div>
-            ))}
+            )}
+          </div>
+
+          {/* Historial rápido */}
+          {historial.length > 0 && (
+            <div className="card" style={{ marginTop: '20px', padding: '20px', borderRadius: '24px' }}>
+              <h3 style={{ fontSize: 16, fontWeight: 800, marginBottom: 12 }}>🏆 Mis últimos premios</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {historial.map((h, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.06)' }}>
+                    <span style={{ fontWeight: 600, fontSize: 14 }}>{h.premio_nombre}</span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>{new Date(h.created_at).toLocaleDateString('es-VE')}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* COLUMNA DERECHA: RULETA */}
+        <div style={{ flex: '1 1 500px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          
+          <div style={{ 
+            display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 30, 
+            padding: '8px 24px', borderRadius: '50px', background: girosDisp > 0 ? 'rgba(255,215,0,.15)' : 'rgba(255,255,255,.05)', 
+            border: `2px solid ${girosDisp > 0 ? '#FFD700' : 'rgba(255,255,255,.1)'}`,
+            boxShadow: girosDisp > 0 ? '0 0 20px rgba(255,215,0,0.2)' : 'none'
+          }}>
+            <span style={{ fontSize: '20px' }}>{girosDisp > 0 ? '🎰' : '⏳'}</span>
+            <span style={{ fontWeight: 900, color: girosDisp > 0 ? '#FFD700' : 'var(--text-muted)', fontSize: 16 }}>
+              {girosDisp > 0 ? `${girosDisp} GIROS DISPONIBLES` : 'SIN GIROS DISPONIBLES'}
+            </span>
+          </div>
+
+          <div className="wheel-container" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            {/* Pointer arrow */}
+            <div style={{ zIndex: 10, marginBottom: -18, position: 'relative' }}>
+              <div style={{ width: 0, height: 0, borderLeft: '16px solid transparent', borderRight: '16px solid transparent', borderTop: '34px solid #FF3333', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.5))' }} />
+              <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 8, height: 8, borderRadius: '50%', background: '#fff', marginTop: -5 }} />
+            </div>
+
+            {/* Wheel SVG */}
+            <div style={{
+              transform: `rotate(${rotation}deg)`,
+              transition: animate ? 'transform 6s cubic-bezier(0.17,0.67,0.08,1)' : 'none',
+              willChange: 'transform',
+              borderRadius: '50%',
+              boxShadow: '0 0 0 8px #0d1b4b, 0 0 0 14px #1a3a8f, 0 0 0 20px #FFD700, 0 25px 60px rgba(0,0,0,.7)'
+            }}>
+              <svg viewBox="0 0 300 300" width={wheelSize} height={wheelSize} style={{ display: 'block' }}>
+                <defs>
+                  <radialGradient id="hubG" cx="40%" cy="35%"><stop offset="0%" stopColor="#60a5fa" /><stop offset="100%" stopColor="#1e3a8a" /></radialGradient>
+                </defs>
+                <circle cx={CX} cy={CY} r={R + 10} fill="#0d1b4b" />
+                <circle cx={CX} cy={CY} r={R + 6}  fill="none" stroke="#FFD700" strokeWidth="2" strokeDasharray="5 3" />
+
+                {segments.length === 0
+                  ? <circle cx={CX} cy={CY} r={R} fill="#1e2a4a" />
+                  : segments.map((seg, idx) => {
+                      const fontSize = segments.length > 12 ? 6.5 : segments.length > 8 ? 7.5 : 9
+                      return (
+                        <g key={seg.id}>
+                          <path d={arc(CX, CY, R, seg.startAngle, seg.endAngle)} fill={seg.color || seg.colorFallback} stroke="rgba(255,255,255,.2)" strokeWidth="1.5" />
+                          <g transform={`rotate(${seg.midAngle - 90}, ${CX}, ${CY})`}>
+                            <text x={CX + 42} y={CY} textAnchor="start" dominantBaseline="middle"
+                              fontSize={fontSize} fontWeight="800" fill="white"
+                              style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.8))' }}>
+                              {seg.emoji || '🎁'} {seg.nombre}
+                            </text>
+                          </g>
+                        </g>
+                      )
+                    })
+                }
+
+                <circle cx={CX} cy={CY} r={R_INNER + 10} fill="#0d1b4b" />
+                <circle cx={CX} cy={CY} r={R_INNER + 6}  fill="url(#hubG)" />
+                <circle cx={CX} cy={CY} r={R_INNER}       fill="#1e3a8a" stroke="#FFD700" strokeWidth="2" />
+                <text x={CX} y={CY} textAnchor="middle" dominantBaseline="middle" fontSize="22">⭐</text>
+              </svg>
+            </div>
+
+            {/* Decorative base */}
+            <div style={{ marginTop: -8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ width: 44, height: 64, background: 'linear-gradient(180deg,#1a3a8f,#0d1f5c)', borderRadius: '4px 4px 0 0' }} />
+              <div style={{ width: 180, height: 28, background: 'linear-gradient(180deg,#1a3a8f,#0d1f5c)', borderRadius: '8px 8px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                {[...Array(6)].map((_, i) => <div key={i} style={{ width: 12, height: 12, borderRadius: '50%', background: '#FFD700', boxShadow: '0 0 10px #FFD700' }} />)}
+              </div>
+              <div style={{ width: 220, height: 14, background: '#07123d', borderRadius: '0 0 10px 10px' }} />
+            </div>
+
+            {/* Spin button */}
+            <button onClick={handleSpin} disabled={spinning || girosDisp <= 0 || segments.length === 0}
+              style={{
+                marginTop: 40, padding: '18px 70px', fontSize: 22, fontWeight: 1000,
+                borderRadius: 50, border: 'none',
+                cursor: spinning || girosDisp <= 0 ? 'not-allowed' : 'pointer',
+                background: spinning || girosDisp <= 0 ? 'rgba(255,255,255,.07)' : 'linear-gradient(135deg,#FFD700,#FF8C00)',
+                color: spinning || girosDisp <= 0 ? 'var(--text-muted)' : '#1a1a2e',
+                transition: 'all .3s',
+                boxShadow: spinning || girosDisp <= 0 ? 'none' : '0 12px 35px rgba(255,215,0,.5)',
+                letterSpacing: 2,
+                animation: girosDisp > 0 && !spinning ? 'spinBtn 2s infinite' : 'none',
+                textTransform: 'uppercase'
+              }}>
+              {spinning ? 'Girando...' : '¡GIRAR AHORA!'}
+            </button>
           </div>
         </div>
-      )}
+
+      </div>
 
       {/* Result Modal */}
       {showModal && resultado && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50000, background: 'rgba(0,0,0,.88)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
           onClick={() => setShowModal(false)}>
-          <div style={{ background: 'var(--bg-card)', borderRadius: 28, padding: '36px 32px', maxWidth: 420, width: '100%', textAlign: 'center', border: '1px solid rgba(255,215,0,.3)', boxShadow: '0 30px 60px rgba(0,0,0,.8)', animation: 'winPop .5s cubic-bezier(.175,.885,.32,1.275)' }}
+          <div style={{ background: 'var(--bg-card)', borderRadius: 28, padding: '40px', maxWidth: 450, width: '100%', textAlign: 'center', border: '2px solid #FFD700', boxShadow: '0 30px 80px rgba(0,0,0,0.9)', animation: 'winPop .6s cubic-bezier(.175,.885,.32,1.275)' }}
             onClick={e => e.stopPropagation()}>
 
-            <div style={{ fontSize: 72, marginBottom: 12, display: 'block' }}>{resultado.tipo === 'sin_premio' ? '😅' : resultado.emoji || '🎁'}</div>
+            <div style={{ fontSize: 84, marginBottom: 16 }}>{resultado.tipo === 'sin_premio' ? '😅' : resultado.emoji || '🎁'}</div>
 
             <h2 style={{
-              fontSize: 26, fontWeight: 900, marginBottom: 8,
+              fontSize: 32, fontWeight: 1000, marginBottom: 12,
               ...(resultado.tipo !== 'sin_premio' ? { background: 'linear-gradient(135deg,#FFD700,#FF8C00)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' } : { color: 'var(--text-muted)' })
             }}>
-              {resultado.tipo === 'sin_premio' ? '¡Suerte la próxima!' : '¡Felicidades! 🎉'}
+              {resultado.tipo === 'sin_premio' ? '¡Suerte la próxima!' : '¡HA GANADO UN PREMIO! 🎉'}
             </h2>
 
-            <div style={{ padding: '16px 20px', borderRadius: 16, background: resultado.tipo === 'sin_premio' ? 'rgba(255,255,255,.03)' : 'rgba(255,215,0,.07)', border: `1px solid ${resultado.tipo === 'sin_premio' ? 'rgba(255,255,255,.08)' : 'rgba(255,215,0,.25)'}`, marginBottom: 20 }}>
-              <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 4 }}>{resultado.premio_nombre}</div>
-              {!isCliente && resultado.valor > 0 && resultado.tipo === 'saldo_usd' && (
-                <div style={{ fontSize: 32, fontWeight: 900, color: '#22c55e' }}>+{formatUSD(resultado.valor)}</div>
+            <div style={{ padding: '24px', borderRadius: 20, background: resultado.tipo === 'sin_premio' ? 'rgba(255,255,255,.04)' : 'rgba(255,215,0,.1)', border: `2px solid ${resultado.tipo === 'sin_premio' ? 'rgba(255,255,255,.1)' : '#FFD700'}`, marginBottom: 25 }}>
+              <div style={{ fontSize: 24, fontWeight: 900, marginBottom: 6 }}>{resultado.premio_nombre || resultado.nombre}</div>
+              {resultado.valor > 0 && (
+                <div style={{ fontSize: 38, fontWeight: 1000, color: resultado.tipo === 'saldo_bs' ? '#a855f7' : '#22c55e' }}>
+                  +{resultado.tipo === 'saldo_bs' ? formatBs(resultado.valor) : resultado.tipo === 'saldo_usd' ? formatUSD(resultado.valor) : `${resultado.valor}%`}
+                </div>
               )}
-              {resultado.valor > 0 && resultado.tipo === 'saldo_bs' && (
-                <div style={{ fontSize: 32, fontWeight: 900, color: '#a855f7' }}>+{formatBs(resultado.valor)}</div>
+              {resultado.acreditado && (
+                <div style={{ color: '#22c55e', fontSize: 14, marginTop: 10, fontWeight: 700 }}>✅ Acreditado automáticamente</div>
               )}
-              {resultado.acreditado && resultado.tipo !== 'descuento' && (
-                <div style={{ color: '#22c55e', fontSize: 13, marginTop: 6 }}>✅ Acreditado a tu billetera</div>
-              )}
-              {resultado.tipo === 'descuento' && (
-                <div style={{ color: '#FFD700', fontSize: 13, marginTop: 6 }}>✅ Guardado para tu próxima compra</div>
-              )}
-              {resultado.premio_descripcion && <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 8, marginBottom: 0 }}>{resultado.premio_descripcion}</p>}
             </div>
 
-            <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 20 }}>
-              Giros restantes: <strong style={{ color: 'var(--text-primary)' }}>{resultado.giros_restantes ?? girosDisp}</strong>
-            </p>
-
-            <button className="btn btn-primary" style={{ width: '100%', height: 50, fontSize: 16 }} onClick={() => setShowModal(false)}>
-              {(resultado.giros_restantes ?? girosDisp) > 0 ? '🎰 Girar de nuevo' : '✅ Cerrar'}
+            <button className="btn btn-primary" style={{ width: '100%', height: 60, fontSize: 18, fontWeight: 900, borderRadius: 16 }} onClick={() => setShowModal(false)}>
+              ENTENDIDO
             </button>
           </div>
         </div>
