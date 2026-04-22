@@ -115,34 +115,52 @@ export default function PagosAdmins() {
     setShowLiquidarModal(true)
   }
 
-  const handleOpenOrderDetail = async (orderNumber) => {
+  const handleOpenOrderDetail = async (orderNumber, pedidoId) => {
     setSelectedOrderNumber(orderNumber)
     setLoadingOrder(true)
     setOrderDetail(null)
     
     try {
-      // 1. Obtener datos básicos del pedido y sus items
-      const { data: ped, error: pError } = await supabase
+      let query = supabase
         .from('pedidos')
-        .select('*, pedido_items(*)')
-        .eq('numero_pedido', parseInt(orderNumber))
-        .maybeSingle()
-      
-      if (pError) throw pError
-      if (!ped) {
-        showAlert("No se encontró el pedido #" + orderNumber, "error")
-        setSelectedOrderNumber(null)
-        return
+        .select('*, pedido_items(*)');
+
+      // 1. Priorizar búsqueda por UUID si lo tenemos
+      if (pedidoId) {
+        query = query.eq('id', pedidoId);
+      } else {
+        // Backup: Buscar por número de pedido (probamos con número e intentamos ser flexibles)
+        const cleanNum = orderNumber.toString().replace('#', '').trim();
+        query = query.or(`numero_pedido.eq.${parseInt(cleanNum)},numero_pedido.eq.${cleanNum}`);
       }
 
-      // 2. Obtener datos del cliente
-      const { data: cli } = await supabase
-        .from('clientes')
-        .select('*')
-        .or(`id.eq.${ped.cliente_id},auth_user_id.eq.${ped.cliente_id}`)
-        .maybeSingle()
+      const { data: ped, error: pError } = await query.maybeSingle();
+      
+      if (pError) throw pError;
+      if (!ped) {
+        // Último intento: Si no se encontró, tal vez el número de pedido es un string exacto
+        const { data: pedRetry } = await supabase
+          .from('pedidos')
+          .select('*, pedido_items(*)')
+          .eq('numero_pedido', orderNumber.toString().trim())
+          .maybeSingle();
+        
+        if (!pedRetry) {
+          showAlert("No se encontró el pedido #" + orderNumber, "error");
+          setSelectedOrderNumber(null);
+          return;
+        }
+        setOrderDetail(pedRetry);
+      } else {
+        // Encontramos el pedido, ahora el cliente
+        const { data: cli } = await supabase
+          .from('clientes')
+          .select('*')
+          .or(`id.eq.${ped.cliente_id},auth_user_id.eq.${ped.cliente_id}`)
+          .maybeSingle()
 
-      setOrderDetail({ ...ped, cliente: cli })
+        setOrderDetail({ ...ped, cliente: cli })
+      }
     } catch (err) {
       console.error("Error fetching order detail:", err)
       showAlert("No se pudo cargar el detalle del pedido #" + orderNumber, "error")
@@ -152,7 +170,7 @@ export default function PagosAdmins() {
     }
   }
 
-  const renderDetallesLink = (notas) => {
+  const renderDetallesLink = (notas, pedidoId) => {
     if (!notas) return '-';
     // Buscar patrón tipo "Pedido #000253" o "#000253"
     const regex = /(Pedido\s*#)(\d+)/gi;
@@ -184,7 +202,7 @@ export default function PagosAdmins() {
               cursor: 'pointer',
               textDecoration: 'underline'
             }}
-            onClick={() => handleOpenOrderDetail(orderNum)}
+            onClick={() => handleOpenOrderDetail(orderNum, pedidoId)}
           >
             {orderNum}
           </span>
@@ -372,7 +390,7 @@ export default function PagosAdmins() {
                         {h.referencia || '-'}
                       </td>
                       <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                        {renderDetallesLink(h.notas)}
+                        {renderDetallesLink(h.notas, h.pedido_id)}
                       </td>
                       <td>
                         {h.liquidador_nombre ? (
