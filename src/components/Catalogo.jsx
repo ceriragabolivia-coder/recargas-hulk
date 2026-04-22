@@ -20,6 +20,44 @@ export default function Catalogo() {
   const [showGuideModal, setShowGuideModal] = useState(false)
   const [pendingItem, setPendingItem] = useState(null)
   const [infoProductModal, setInfoProductModal] = useState(null)
+  const [isVerificando, setIsVerificando] = useState(false)
+  const [verificacionResultado, setVerificacionResultado] = useState(null)
+
+  const handleVerificarFreeFire = async () => {
+    if (!localRechargeData.player_id.trim()) {
+      alert('Por favor introduce primero el ID del jugador.')
+      return
+    }
+
+    setIsVerificando(true)
+    setVerificacionResultado(null)
+
+    try {
+      const response = await fetch(`https://tiendagiftven.net/conexion_api/api.php?action=ValidarParametros&id=${localRechargeData.player_id}`)
+      const data = await response.json()
+      
+      if (data.alerta === 'green') {
+        setVerificacionResultado({
+          success: true,
+          nickname: data.nickname,
+          mensaje: data.mensaje
+        })
+      } else {
+        setVerificacionResultado({
+          success: false,
+          mensaje: data.mensaje || 'Jugador no encontrado'
+        })
+      }
+    } catch (error) {
+      console.error('Error verificando jugador:', error)
+      setVerificacionResultado({
+        success: false,
+        mensaje: 'Error al conectar con la API de verificación'
+      })
+    } finally {
+      setIsVerificando(false)
+    }
+  }
 
   const confirmAddToCart = () => {
     if (!pendingItem) return
@@ -391,9 +429,77 @@ export default function Catalogo() {
                   onChange={e => {
                     const numericValue = e.target.value.replace(/[^0-9]/g, '');
                     setLocalRechargeData({...localRechargeData, player_id: numericValue});
+                    if (verificacionResultado) setVerificacionResultado(null);
                   }}
                   style={{ backgroundColor: 'var(--bg-card)', padding: '20px', fontSize: '18px', fontWeight: 'bold', letterSpacing: '1px' }}
                 />
+                
+                {selectedJuego.nombre.toLowerCase().includes('free fire') && (
+                  <div style={{ marginTop: '12px' }}>
+                    <button 
+                      className="btn"
+                      onClick={handleVerificarFreeFire}
+                      disabled={isVerificando}
+                      style={{ 
+                        width: '100%', 
+                        padding: '12px', 
+                        backgroundColor: 'rgba(255,255,255,0.05)', 
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '12px',
+                        color: 'var(--text-primary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        fontSize: '14px',
+                        cursor: isVerificando ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {isVerificando ? (
+                        <>
+                          <div className="spinner-small" style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.1)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                          <span>Verificando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>👤 Verificar nombre del jugador</span>
+                        </>
+                      )}
+                    </button>
+
+                    {verificacionResultado && (
+                      <div style={{ 
+                        marginTop: '12px', 
+                        padding: '12px 16px', 
+                        borderRadius: '12px', 
+                        backgroundColor: verificacionResultado.success ? 'rgba(0, 200, 83, 0.1)' : 'rgba(255, 82, 82, 0.1)',
+                        border: `1px solid ${verificacionResultado.success ? '#00c853' : '#ff5252'}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        animation: 'fadeIn 0.3s'
+                      }}>
+                        <div style={{ 
+                          fontSize: '18px', 
+                          color: verificacionResultado.success ? '#00c853' : '#ff5252' 
+                        }}>
+                          {verificacionResultado.success ? '✅' : '❌'}
+                        </div>
+                        <div>
+                          <p style={{ 
+                            margin: 0, 
+                            fontSize: '14px', 
+                            fontWeight: 700, 
+                            color: verificacionResultado.success ? '#00c853' : '#ff5252' 
+                          }}>
+                            {verificacionResultado.success ? `Jugador encontrado: ${verificacionResultado.nickname}` : verificacionResultado.mensaje}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '12px' }}>
                   Asegúrese de escribir su ID correctamente. Los paquetes que seleccione a continuación se asignarán a este perfil.
                 </p>
