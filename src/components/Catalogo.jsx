@@ -163,7 +163,7 @@ export default function Catalogo() {
           email: localRechargeData.account_email,
           password: localRechargeData.account_password,
           username: localRechargeData.account_user,
-          nombre_perfil: verificacionResultado?.nickname || localRechargeData.player_id || localRechargeData.account_email || localRechargeData.account_user || 'Cuenta Guardada'
+          nombre_perfil: localRechargeData.player_id || localRechargeData.account_email || localRechargeData.account_user || 'Cuenta'
         })
       }
 
@@ -180,7 +180,7 @@ export default function Catalogo() {
           email: localRechargeData.account_email,
           password: localRechargeData.account_password,
           username: localRechargeData.account_user,
-          nombre_perfil: verificacionResultado?.nickname || localRechargeData.player_id || localRechargeData.account_email || localRechargeData.account_user || 'Cuenta Guardada'
+          nombre_perfil: localRechargeData.player_id || localRechargeData.account_email || localRechargeData.account_user || 'Cuenta'
         })
       }
 
