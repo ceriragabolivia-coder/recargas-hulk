@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/proxy/bloodstrike",
+      "destination": "https://pay.neteasegames.com/gameclub/bloodstrike/-1/login-role"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

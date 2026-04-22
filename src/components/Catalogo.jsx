@@ -43,7 +43,7 @@ export default function Catalogo() {
       if (juegoNombreNormalizado.includes('freefire')) {
         url = `https://tiendagiftven.net/conexion_api/api.php?action=ValidarParametros&id=${localRechargeData.player_id}`
       } else if (juegoNombreNormalizado.includes('bloodstrike')) {
-        url = `https://pay.neteasegames.com/gameclub/bloodstrike/-1/login-role?roleid=${localRechargeData.player_id}&client_type=gameclub`
+        url = `/proxy/bloodstrike?roleid=${localRechargeData.player_id}&client_type=gameclub`
       }
 
       const response = await fetch(url)
