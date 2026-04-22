@@ -713,9 +713,15 @@ export default function Billetera({ onNavigate }) {
                 <input 
                   type="text" 
                   className="form-input" 
-                  placeholder="ID de transacción o referencia..."
+                  placeholder="Últimos 6 dígitos de la referencia..."
+                  maxLength={6}
                   value={referencia}
-                  onChange={(e) => setReferencia(e.target.value)}
+                  onChange={(e) => setReferencia(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onPaste={e => {
+                    e.preventDefault();
+                    const pasteData = e.clipboardData.getData('text').replace(/\D/g, '');
+                    setReferencia(pasteData.slice(-6));
+                  }}
                   required
                 />
               </div>

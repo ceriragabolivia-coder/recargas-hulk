@@ -537,8 +537,17 @@ export default function Checkout({ onFinish }) {
                           <div className="form-group mb-16">
                             <label className="form-label" style={{ color: 'var(--accent-success)', fontWeight: 700, fontSize: '13px', marginBottom: '8px', display: 'block' }}>Número de Referencia</label>
                             <input 
-                              type="text" className="form-input" placeholder="Ingresa la referencia del pago..."
-                              value={referencia} onChange={e => setReferencia(e.target.value)}
+                              type="text" 
+                              className="form-input" 
+                              placeholder="Ingresa los últimos 6 dígitos de la referencia..."
+                              maxLength={6}
+                              value={referencia} 
+                              onChange={e => setReferencia(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                              onPaste={e => {
+                                e.preventDefault();
+                                const pasteData = e.clipboardData.getData('text').replace(/\D/g, '');
+                                setReferencia(pasteData.slice(-6));
+                              }}
                               style={{ border: '1px solid var(--accent-success)', borderRadius: '12px', height: '48px', padding: '0 16px' }}
                             />
                           </div>
