@@ -646,3 +646,71 @@ export function useNotificacionesPush() {
 
   return { enviarNotificacion, fetchNotificacionesActivas }
 }
+
+// ========================
+// HOOK: Cuentas Guardadas
+// ========================
+export function useCuentasGuardadas(juegoId) {
+  const { user } = useAuth()
+  const [cuentas, setCuentas] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  async function fetchCuentas() {
+    if (!user || !juegoId) {
+      setCuentas([])
+      setLoading(false)
+      return
+    }
+    const { data, error } = await supabase
+      .from('cuentas_guardadas')
+      .select('*')
+      .eq('auth_user_id', user.id)
+      .eq('juego_id', juegoId)
+      .order('created_at', { ascending: false })
+    
+    if (data) setCuentas(data)
+    setLoading(false)
+  }
+
+  async function guardarCuenta(cuentaData) {
+    if (!user || !juegoId) return { error: 'Sesión no iniciada o juego no seleccionado' }
+    
+    // Verificar si ya existe una cuenta idéntica para evitar duplicados
+    const { data: existente } = await supabase
+      .from('cuentas_guardadas')
+      .select('id')
+      .eq('auth_user_id', user.id)
+      .eq('juego_id', juegoId)
+      .eq('player_id', cuentaData.player_id || '')
+      .eq('email', cuentaData.email || '')
+      .eq('username', cuentaData.username || '')
+      .maybeSingle()
+
+    if (existente) return { data: existente, error: null }
+
+    const { data, error } = await supabase
+      .from('cuentas_guardadas')
+      .insert([{ ...cuentaData, auth_user_id: user.id, juego_id: juegoId }])
+      .select()
+      .single()
+    
+    if (!error && data) setCuentas(prev => [data, ...prev])
+    return { data, error }
+  }
+
+  async function eliminarCuenta(id) {
+    const { error } = await supabase
+      .from('cuentas_guardadas')
+      .delete()
+      .eq('id', id)
+    
+    if (!error) setCuentas(prev => prev.filter(c => c.id !== id))
+    return { error }
+  }
+
+  useEffect(() => {
+    fetchCuentas()
+  }, [user?.id, juegoId])
+
+  return { cuentas, loading, guardarCuenta, eliminarCuenta, refetch: fetchCuentas }
+}

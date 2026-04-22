@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useConfiguracion, useTodosLosProductos, useCart, useAuth } from '../hooks/useData'
+import { useConfiguracion, useTodosLosProductos, useCart, useAuth, useCuentasGuardadas } from '../hooks/useData'
 import { calcularPrecioVenta, formatBs, formatUSD } from '../utils/helpers'
 
 export default function Catalogo() {
@@ -62,6 +62,21 @@ export default function Catalogo() {
     account_password: '',
     account_user: ''
   })
+  
+  const { cuentas, guardarCuenta, eliminarCuenta } = useCuentasGuardadas(selectedJuegoId)
+  const [shouldSaveData, setShouldSaveData] = useState(false)
+
+  const handleSelectCuenta = (cuenta) => {
+    setLocalRechargeData({
+      player_id: cuenta.player_id || '',
+      account_email: cuenta.email || '',
+      account_password: cuenta.password || '',
+      account_user: cuenta.username || ''
+    })
+    if (cuenta.player_id !== localRechargeData.player_id) {
+      setVerificacionResultado(null)
+    }
+  }
   
   const [showGuideModal, setShowGuideModal] = useState(false)
   const [pendingItem, setPendingItem] = useState(null)
@@ -139,10 +154,34 @@ export default function Catalogo() {
     if (buyMode === 'single') {
       clearCart() // Opción B: Limpiar carrito antes de compra directa
       addToCart(p, selectedJuego, finalPrice, localRechargeData)
+
+      if (shouldSaveData) {
+        guardarCuenta({
+          tipo_dato: selectedJuego.metodo_recarga || 'id',
+          player_id: localRechargeData.player_id,
+          email: localRechargeData.account_email,
+          password: localRechargeData.account_password,
+          username: localRechargeData.account_user,
+          nombre_perfil: verificacionResultado?.nickname || localRechargeData.player_id || localRechargeData.account_email || localRechargeData.account_user || 'Cuenta Guardada'
+        })
+      }
+
       setPendingItem(null)
       navigate('/Checkout')
     } else {
       addToCart(p, selectedJuego, finalPrice, localRechargeData)
+      
+      if (shouldSaveData) {
+        guardarCuenta({
+          tipo_dato: selectedJuego.metodo_recarga || 'id',
+          player_id: localRechargeData.player_id,
+          email: localRechargeData.account_email,
+          password: localRechargeData.account_password,
+          username: localRechargeData.account_user,
+          nombre_perfil: verificacionResultado?.nickname || localRechargeData.player_id || localRechargeData.account_email || localRechargeData.account_user || 'Cuenta Guardada'
+        })
+      }
+
       setAddedItem(p.id)
       setTimeout(() => setAddedItem(null), 1000)
       setPendingItem(null)
@@ -567,6 +606,53 @@ export default function Catalogo() {
                 </p>
               </div>
             )}
+
+            {/* SECCIÓN DE CUENTAS GUARDADAS */}
+            {cuentas.length > 0 && (
+              <div style={{ marginTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
+                <label className="form-label" style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--accent-primary)', fontWeight: 800, letterSpacing: '1px', marginBottom: '8px', display: 'block' }}>
+                  📁 Tus Cuentas Guardadas
+                </label>
+                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', scrollbarWidth: 'none' }}>
+                  {cuentas.map(c => (
+                    <div 
+                      key={c.id}
+                      onClick={() => handleSelectCuenta(c)}
+                      style={{ 
+                        padding: '6px 12px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '10px', 
+                        border: '1px solid var(--border-color)', cursor: 'pointer', whiteSpace: 'nowrap',
+                        display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', transition: 'all 0.2s',
+                        color: 'var(--text-primary)'
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent-primary)'; e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.05)' }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)' }}
+                    >
+                      <span style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis' }}>👤 {c.nombre_perfil || 'Cuenta'}</span>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); if(window.confirm('¿Eliminar esta cuenta guardada?')) eliminarCuenta(c.id); }}
+                        style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: '14px', padding: '0 4px', transition: 'color 0.2s' }}
+                        onMouseEnter={e => e.currentTarget.style.color = '#ff5252'}
+                        onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
+                      >✕</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', backgroundColor: 'rgba(0, 210, 255, 0.03)', borderRadius: '12px', border: '1px solid rgba(0, 210, 255, 0.1)' }}>
+              <input 
+                type="checkbox" 
+                id="save-data-checkbox"
+                checked={shouldSaveData}
+                onChange={(e) => setShouldSaveData(e.target.checked)}
+                style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--accent-primary)' }}
+              />
+              <label htmlFor="save-data-checkbox" style={{ fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 500 }}>
+                Guardar estos datos para futuras compras
+              </label>
+            </div>
+
           </div>
 
           <div>
