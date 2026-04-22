@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useConfiguracion, useTodosLosProductos, useCart, useAuth } from '../hooks/useData'
 import { calcularPrecioVenta, formatBs, formatUSD } from '../utils/helpers'
@@ -11,6 +11,16 @@ export default function Catalogo() {
   const navigate = useNavigate()
   
   const [selectedJuegoId, setSelectedJuegoId] = useState(() => localStorage.getItem('selectedJuegoId'))
+  
+  // Escuchar el evento de reset desde el sidebar
+  useEffect(() => {
+    const handleReset = () => {
+      setSelectedJuegoId(null);
+      localStorage.removeItem('selectedJuegoId');
+    };
+    window.addEventListener('reset-catalogo', handleReset);
+    return () => window.removeEventListener('reset-catalogo', handleReset);
+  }, []);
 
   const juegosData = useMemo(() => {
     const map = {}

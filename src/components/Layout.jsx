@@ -829,12 +829,21 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
       label = 'Chat Con Soporte';
     }
     
+    const isCatalogo = item.key === 'catalogo';
+    
     return (
       <NavLink 
         key={item.key} 
         to={path} 
         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-        onClick={() => setSidebarOpen(false)}
+        onClick={() => {
+          setSidebarOpen(false);
+          if (isCatalogo) {
+            localStorage.removeItem('selectedJuegoId');
+            // Notificar al componente Catalogo si ya está montado
+            window.dispatchEvent(new Event('reset-catalogo'));
+          }
+        }}
       >
         <span className="nav-item-icon">{item.icon}</span>
         <span>{label}</span>
