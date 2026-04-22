@@ -161,7 +161,7 @@ export default function Billetera({ onNavigate }) {
           setAlertModal({ 
             type: 'error', 
             title: 'Referencia Duplicada',
-            message: 'Esta referencia ya ha sido utilizada en otros pedidos, si intentas registrar referencias duplicadas para usar el mismo pago para dos pedidos diferentes podrías ser suspendido del sistema' 
+            message: 'Esta referencia ya ha sido utilizada en otros pedidos, si intentas registrar referencias duplicadas para usar el mismo pago para dos pedidos diferentes podrías ser suspendido del sistema.\n\nSi crees que ha ocurrido un error, comunícate con soporte' 
           })
           setIsProcessing(false)
           return
