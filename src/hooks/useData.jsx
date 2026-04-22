@@ -675,26 +675,48 @@ export function useCuentasGuardadas(juegoId) {
   async function guardarCuenta(cuentaData) {
     if (!user || !juegoId) return { error: 'Sesión no iniciada o juego no seleccionado' }
     
+    // Limpiar campos para evitar undefined
+    const cleanData = {
+      player_id: cuentaData.player_id || null,
+      email: cuentaData.email || null,
+      password: cuentaData.password || null,
+      username: cuentaData.username || null,
+      nombre_perfil: cuentaData.nombre_perfil || 'Cuenta Guardada',
+      tipo_dato: cuentaData.tipo_dato || 'id'
+    }
+
     // Verificar si ya existe una cuenta idéntica para evitar duplicados
-    const { data: existente } = await supabase
+    let query = supabase
       .from('cuentas_guardadas')
       .select('id')
       .eq('auth_user_id', user.id)
       .eq('juego_id', juegoId)
-      .eq('player_id', cuentaData.player_id || '')
-      .eq('email', cuentaData.email || '')
-      .eq('username', cuentaData.username || '')
-      .maybeSingle()
+    
+    if (cleanData.player_id) query = query.eq('player_id', cleanData.player_id)
+    else query = query.is('player_id', null)
 
+    if (cleanData.email) query = query.eq('email', cleanData.email)
+    else query = query.is('email', null)
+
+    if (cleanData.username) query = query.eq('username', cleanData.username)
+    else query = query.is('username', null)
+
+    const { data: existente, error: errorCheck } = await query.maybeSingle()
+
+    if (errorCheck) console.error('Error verificando duplicado:', errorCheck)
     if (existente) return { data: existente, error: null }
 
     const { data, error } = await supabase
       .from('cuentas_guardadas')
-      .insert([{ ...cuentaData, auth_user_id: user.id, juego_id: juegoId }])
+      .insert([{ ...cleanData, auth_user_id: user.id, juego_id: juegoId }])
       .select()
       .single()
     
-    if (!error && data) setCuentas(prev => [data, ...prev])
+    if (error) {
+      console.error('Error al guardar cuenta:', error)
+    } else if (data) {
+      setCuentas(prev => [data, ...prev])
+    }
     return { data, error }
   }
 

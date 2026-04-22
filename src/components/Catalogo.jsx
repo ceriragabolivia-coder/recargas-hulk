@@ -147,7 +147,7 @@ export default function Catalogo() {
     }
   }
 
-  const confirmAddToCart = () => {
+  const confirmAddToCart = async () => {
     if (!pendingItem) return
     const { p, selectedJuego, finalPrice, localRechargeData } = pendingItem
     
@@ -156,7 +156,8 @@ export default function Catalogo() {
       addToCart(p, selectedJuego, finalPrice, localRechargeData)
 
       if (shouldSaveData) {
-        guardarCuenta({
+        console.log('💾 Guardando cuenta en base de datos...')
+        await guardarCuenta({
           tipo_dato: selectedJuego.metodo_recarga || 'id',
           player_id: localRechargeData.player_id,
           email: localRechargeData.account_email,
@@ -172,7 +173,8 @@ export default function Catalogo() {
       addToCart(p, selectedJuego, finalPrice, localRechargeData)
       
       if (shouldSaveData) {
-        guardarCuenta({
+        console.log('💾 Guardando cuenta en base de datos...')
+        await guardarCuenta({
           tipo_dato: selectedJuego.metodo_recarga || 'id',
           player_id: localRechargeData.player_id,
           email: localRechargeData.account_email,
