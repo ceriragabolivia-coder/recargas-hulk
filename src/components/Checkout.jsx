@@ -3,6 +3,7 @@ import { useCart, useVentas, useMetodosPago, useAuth, useWallet } from '../hooks
 import { formatUSD, formatBs, playCashRegisterSound } from '../utils/helpers'
 import { supabase } from '../lib/supabase'
 import { useConfiguracion } from '../hooks/useData'
+import AlertModal from './AlertModal'
 
 // ============================================================
 // CountdownTimer - FUERA del componente Checkout
@@ -77,6 +78,7 @@ export default function Checkout({ onFinish }) {
   const [isAutomaticResult, setIsAutomaticResult] = useState(false)
   const [createdPedidoData, setCreatedPedidoData] = useState(null)
   const [showTracking, setShowTracking] = useState(false)
+  const [alertModal, setAlertModal] = useState(null)
 
   // Efecto para asegurar que la página siempre aparezca al inicio al cargar o cambiar de paso
   useEffect(() => {
@@ -246,7 +248,7 @@ export default function Checkout({ onFinish }) {
 
   const handleFinalizar = async () => {
     if (!isWalletOnly && !isWalletBsOnly && !referencia.trim() && !isGratis) {
-      alert('Por favor ingresa el número de referencia de tu pago.')
+      setAlertModal({ type: 'warning', message: 'Por favor ingresa el número de referencia de tu pago.' })
       return
     }
 
@@ -258,7 +260,7 @@ export default function Checkout({ onFinish }) {
           await verificarYRegistrarReferencia(referencia, remainingBs || remainingBsFromWallet, 'pedido')
         } catch (err) {
           if (err.message === 'Referencia Duplicada') {
-            alert('Referencia Duplicada')
+            setAlertModal({ type: 'error', title: 'Referencia Duplicada', message: 'Esta referencia ya ha sido utilizada en las últimas 48 horas. Por favor, verifica el número.' })
             setIsProcessing(false)
             return
           }
@@ -325,7 +327,7 @@ export default function Checkout({ onFinish }) {
       setOrderFinished(true)
       // Ya no cerramos automáticamente en 15s para dar tiempo a Ver Pedido
     } catch (err) {
-      alert('Error: ' + err.message)
+      setAlertModal({ type: 'error', message: 'Error: ' + err.message })
     } finally {
       setIsProcessing(false)
     }
@@ -679,6 +681,17 @@ export default function Checkout({ onFinish }) {
           </div>
         </div>
       </div>
+
+      {alertModal && (
+        <AlertModal
+          isOpen={!!alertModal}
+          type={alertModal.type}
+          title={alertModal.title}
+          message={alertModal.message}
+          onConfirm={alertModal.onConfirm || (() => setAlertModal(null))}
+          onCancel={alertModal.onCancel || (() => setAlertModal(null))}
+        />
+      )}
     </div>
   )
 }
