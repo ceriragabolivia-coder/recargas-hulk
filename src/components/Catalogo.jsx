@@ -520,7 +520,6 @@ export default function Catalogo() {
           </div>
 
           <div>
-          <div style={{ marginBottom: '24px' }}>
             <div style={{ 
               display: 'flex', 
               backgroundColor: 'rgba(255,255,255,0.03)', 
