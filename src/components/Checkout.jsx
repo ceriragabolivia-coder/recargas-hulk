@@ -582,20 +582,16 @@ export default function Checkout({ onFinish }) {
                               type="text" 
                               className="form-input" 
                               placeholder="Últimos 6 dígitos de la referencia..."
+                              maxLength={6}
                               value={referencia} 
                               onChange={e => {
-                                const val = e.target.value.replace(/\D/g, '');
-                                if (val.length > 6) {
-                                  // Si se pegan más de 6, tomamos los últimos 6
-                                  setReferencia(val.slice(-6));
-                                } else {
-                                  setReferencia(val);
-                                }
+                                const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                setReferencia(val);
                               }}
                               onPaste={e => {
                                 e.preventDefault();
-                                const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
-                                setReferencia(pasteData.slice(-6));
+                                const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+                                setReferencia(pasteData);
                               }}
                               style={{ border: '1px solid var(--accent-success)', borderRadius: '12px', height: '48px', padding: '0 16px' }}
                             />
