@@ -310,8 +310,6 @@ export default function Catalogo() {
 
           </div>
 
-          )}
-
           {config?.tutorial_banner_texto && config?.tutorial_banner_link && (
             <a 
               href={config.tutorial_banner_link} 
