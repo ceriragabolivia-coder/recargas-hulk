@@ -268,6 +268,15 @@ export default function Checkout({ onFinish }) {
             setIsProcessing(false)
             return
           }
+          if (err.message === 'Referencia Rechazada') {
+            setAlertModal({ 
+              type: 'error', 
+              title: 'Referencia Inválida', 
+              message: 'Esta referencia fue RECHAZADA anteriormente por administración por ser inexistente o inválida.\n\nIntentar registrar pagos falsos repetidamente resultará en el baneo de tu cuenta.' 
+            })
+            setIsProcessing(false)
+            return
+          }
           throw err
         }
       }
