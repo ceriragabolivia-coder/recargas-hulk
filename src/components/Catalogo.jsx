@@ -12,6 +12,27 @@ export default function Catalogo() {
   
   const [selectedJuegoId, setSelectedJuegoId] = useState(() => localStorage.getItem('selectedJuegoId'))
 
+  const juegosData = useMemo(() => {
+    const map = {}
+    productos.forEach(p => {
+      const jData = Array.isArray(p.juegos) ? p.juegos[0] : p.juegos
+      if (!jData || jData.activo === false) return
+
+      if (!map[jData.id]) {
+        map[jData.id] = { ...jData, productos: [] }
+      }
+      map[jData.id].productos.push(p)
+    })
+    
+    const arr = Object.values(map)
+    arr.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''))
+    
+    arr.forEach(j => {
+      j.productos.sort((a, b) => (a.orden || 0) - (b.orden || 0) || (a.costo_base || 0) - (b.costo_base || 0))
+    })
+    return arr
+  }, [productos])
+
   const selectedJuego = useMemo(() => 
     selectedJuegoId ? juegosData.find(j => String(j.id) === String(selectedJuegoId)) : null
   , [juegosData, selectedJuegoId])
@@ -118,27 +139,6 @@ export default function Catalogo() {
     }
   }
   
-  const juegosData = useMemo(() => {
-    const map = {}
-    productos.forEach(p => {
-      // Robustez: Manejar si 'juegos' es un objeto o un array de un solo elemento
-      const jData = Array.isArray(p.juegos) ? p.juegos[0] : p.juegos
-      if (!jData || jData.activo === false) return
-
-      if (!map[jData.id]) {
-        map[jData.id] = { ...jData, productos: [] }
-      }
-      map[jData.id].productos.push(p)
-    })
-    
-    const arr = Object.values(map)
-    arr.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''))
-    
-    arr.forEach(j => {
-      j.productos.sort((a, b) => (a.orden || 0) - (b.orden || 0) || (a.costo_base || 0) - (b.costo_base || 0))
-    })
-    return arr
-  }, [productos])
 
   if (loading || loadingConfig) {
     return (
