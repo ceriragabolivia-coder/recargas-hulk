@@ -678,6 +678,7 @@ export function useCuentasGuardadas(juegoId) {
     // Limpiar campos para evitar undefined
     const cleanData = {
       player_id: cuentaData.player_id || null,
+      zone_id: cuentaData.zone_id || null,
       email: cuentaData.email || null,
       password: cuentaData.password || null,
       username: cuentaData.username || null,
@@ -694,6 +695,9 @@ export function useCuentasGuardadas(juegoId) {
     
     if (cleanData.player_id) query = query.eq('player_id', cleanData.player_id)
     else query = query.is('player_id', null)
+
+    if (cleanData.zone_id) query = query.eq('zone_id', cleanData.zone_id)
+    else query = query.is('zone_id', null)
 
     if (cleanData.email) query = query.eq('email', cleanData.email)
     else query = query.is('email', null)

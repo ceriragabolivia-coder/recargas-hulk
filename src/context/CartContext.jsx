@@ -18,7 +18,7 @@ export function CartProvider({ children }) {
   }, [cart])
 
   const addToCart = (product, juego, finalPrice, rechargeData) => {
-    const cartId = `${product.id}-${rechargeData.player_id || rechargeData.account_email || Date.now()}`
+    const cartId = `${product.id}-${rechargeData.player_id || rechargeData.account_email || Date.now()}-${rechargeData.zone_id || ''}`
     
     const itemToAdd = {
       ...product,
@@ -121,6 +121,7 @@ export function CartProvider({ children }) {
             account_email: item.account_email || null,
             account_password: item.account_password || null,
             account_user: item.account_user || null,
+            zone_id: item.zone_id || null,
             producto_icono: item.icono_url || null
           })
         }

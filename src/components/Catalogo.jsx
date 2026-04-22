@@ -58,6 +58,7 @@ export default function Catalogo() {
 
   const [localRechargeData, setLocalRechargeData] = useState({
     player_id: '',
+    zone_id: '',
     account_email: '',
     account_password: '',
     account_user: ''
@@ -69,6 +70,7 @@ export default function Catalogo() {
   const handleSelectCuenta = (cuenta) => {
     setLocalRechargeData({
       player_id: cuenta.player_id || '',
+      zone_id: cuenta.zone_id || '',
       account_email: cuenta.email || '',
       account_password: cuenta.password || '',
       account_user: cuenta.username || ''
@@ -160,6 +162,7 @@ export default function Catalogo() {
         await guardarCuenta({
           tipo_dato: selectedJuego.metodo_recarga || 'id',
           player_id: localRechargeData.player_id,
+          zone_id: localRechargeData.zone_id,
           email: localRechargeData.account_email,
           password: localRechargeData.account_password,
           username: localRechargeData.account_user,
@@ -177,6 +180,7 @@ export default function Catalogo() {
         await guardarCuenta({
           tipo_dato: selectedJuego.metodo_recarga || 'id',
           player_id: localRechargeData.player_id,
+          zone_id: localRechargeData.zone_id,
           email: localRechargeData.account_email,
           password: localRechargeData.account_password,
           username: localRechargeData.account_user,
@@ -259,6 +263,8 @@ export default function Catalogo() {
                     ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Correo:</span><br/>{pendingItem.localRechargeData.account_email}<br/><div style={{height:8}}></div><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Clave:</span><br/>{pendingItem.localRechargeData.account_password}</>
                     : pendingItem.selectedJuego.metodo_recarga === 'usuario_clave'
                     ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Usuario:</span><br/>{pendingItem.localRechargeData.account_user}<br/><div style={{height:8}}></div><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Clave:</span><br/>{pendingItem.localRechargeData.account_password}</>
+                    : pendingItem.selectedJuego.metodo_recarga === 'id_zone'
+                    ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>ID:</span> {pendingItem.localRechargeData.player_id}<br/><div style={{height:4}}></div><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>ZONE ID:</span> {pendingItem.localRechargeData.zone_id}</>
                     : <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>ID/UID:</span><br/>{pendingItem.localRechargeData.player_id}</>}
                 </span>
               </div>
@@ -530,14 +536,32 @@ export default function Catalogo() {
                   placeholder="ID del Jugador"
                   value={localRechargeData.player_id}
                   onChange={e => {
-                    const numericValue = e.target.value.replace(/[^0-9]/g, '');
+                    const numericValue = e.target.value.replace(/[^0-9]/g, '').slice(0, 15);
                     setLocalRechargeData({...localRechargeData, player_id: numericValue});
                     if (verificacionResultado) setVerificacionResultado(null);
                   }}
                   style={{ backgroundColor: 'var(--bg-card)', padding: '20px', fontSize: '18px', fontWeight: 'bold', letterSpacing: '1px' }}
                 />
                 
-                {(selectedJuego.nombre.toLowerCase().replace(/\s/g, '').includes('freefire') || selectedJuego.nombre.toLowerCase().replace(/\s/g, '').includes('bloodstrike')) && (
+                {selectedJuego.metodo_recarga === 'id_zone' && (
+                  <div style={{ marginTop: '16px' }}>
+                    <label className="form-label" style={{ color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '16px' }}>
+                      🆔 Zone ID
+                    </label>
+                    <input 
+                      type="text" 
+                      className="form-input recharge-input" 
+                      placeholder="Zone ID (Máx 4 dígitos)"
+                      maxLength={4}
+                      value={localRechargeData.zone_id}
+                      onChange={e => {
+                        const numericValue = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
+                        setLocalRechargeData({...localRechargeData, zone_id: numericValue});
+                      }}
+                      style={{ backgroundColor: 'var(--bg-card)', padding: '20px', fontSize: '18px', fontWeight: 'bold', letterSpacing: '1px' }}
+                    />
+                  </div>
+                )}
                   <div style={{ marginTop: '12px' }}>
                     <button 
                       className="btn"

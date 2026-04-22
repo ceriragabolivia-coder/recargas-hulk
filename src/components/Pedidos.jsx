@@ -1512,6 +1512,10 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                         <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>👤 {item.account_user}</div>
                         <div style={{ color: 'var(--accent-primary)', marginTop: '4px', fontFamily: 'monospace' }}>🔑 {item.account_password}</div>
                       </div>
+                    ) : item.metodo_recarga === 'id_zone' ? (
+                      <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)', color: 'var(--accent-primary)', fontWeight: 'bold' }}>
+                        🆔 ID: {item.player_id} | 🌐 ZONE ID: {item.zone_id}
+                      </div>
                     ) : item.player_id && (
                       <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)', color: 'var(--accent-primary)', fontWeight: 'bold' }}>
                         🆔 ID del Jugador: {item.player_id}

@@ -972,15 +972,18 @@ export default function GestionProductos() {
               onChange={e => setFormGame({ ...formGame, metodo_recarga: e.target.value })}
             >
               <option value="id_jugador">🆔 ID del Jugador</option>
+              <option value="id_zone">🆔 ID + Zone ID</option>
               <option value="cuenta_completa">🔐 Correo y Clave</option>
               <option value="usuario_clave">👤 Usuario y Clave</option>
             </select>
             <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
               {formGame.metodo_recarga === 'id_jugador'
                 ? 'Se le pedirá al cliente solo su ID identificador en el juego.'
-                : formGame.metodo_recarga === 'cuenta_completa'
-                  ? 'Se le pedirá al cliente su correo electrónico y contraseña del juego.'
-                  : 'Se le pedirá al cliente su nombre de usuario y contraseña del juego.'}
+                : formGame.metodo_recarga === 'id_zone'
+                  ? 'Se le pedirá al cliente su ID del jugador y su ID de zona (ej. Mobile Legends).'
+                  : formGame.metodo_recarga === 'cuenta_completa'
+                    ? 'Se le pedirá al cliente su correo electrónico y contraseña del juego.'
+                    : 'Se le pedirá al cliente su nombre de usuario y contraseña del juego.'}
             </p>
           </div>
 
