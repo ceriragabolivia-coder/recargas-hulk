@@ -98,16 +98,25 @@ export default function GestionRuleta() {
 
   const saveConfig = async () => {
     setSaving(true)
-    const updates = [
-      { clave: 'ruleta_activa', valor: config.ruleta_activa === 'true' ? 1 : 0 },
-      { clave: 'ruleta_titulo', valor_texto: config.ruleta_titulo },
-      { clave: 'ruleta_descripcion', valor_texto: config.ruleta_descripcion }
-    ]
-    for (const item of updates) {
-      await supabase.from('configuracion').update(item).eq('clave', item.clave)
+    try {
+      const updates = [
+        { clave: 'ruleta_activa', valor: config.ruleta_activa === 'true' ? 1 : 0, descripcion: 'Estado de la Ruleta' },
+        { clave: 'ruleta_titulo', valor_texto: config.ruleta_titulo, valor: 0, descripcion: 'Título de la Ruleta' },
+        { clave: 'ruleta_descripcion', valor_texto: config.ruleta_descripcion, valor: 0, descripcion: 'Descripción de la Ruleta' }
+      ]
+      
+      const { error } = await supabase
+        .from('configuracion')
+        .upsert(updates, { onConflict: 'clave' })
+      
+      if (error) throw error
+      alert('✅ Configuración guardada correctamente')
+    } catch (err) {
+      console.error("Error saveConfig:", err)
+      alert('❌ Error al guardar configuración: ' + err.message)
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
-    alert('✅ Configuración guardada correctamente')
   }
 
   const fetchHistorial = async () => {
@@ -130,12 +139,33 @@ export default function GestionRuleta() {
   // ── Actions ─────────────────────────────────────────────────────────
   const savePremio = async () => {
     setSaving(true)
-    const payload = { ...form, valor: Number(form.valor) || 0, probabilidad: Number(form.probabilidad) || 1 }
-    if (editing) await supabase.from('ruleta_premios').update(payload).eq('id', editing)
-    else await supabase.from('ruleta_premios').insert(payload)
-    await fetchPremios()
-    setShowForm(false)
-    setSaving(false)
+    try {
+      // Limpiar payload de campos internos de Supabase
+      const { id, created_at, ...cleanForm } = form
+      const payload = { 
+        ...cleanForm, 
+        valor: Number(form.valor) || 0, 
+        probabilidad: Number(form.probabilidad) || 1 
+      }
+
+      let result
+      if (editing) {
+        result = await supabase.from('ruleta_premios').update(payload).eq('id', editing)
+      } else {
+        result = await supabase.from('ruleta_premios').insert(payload)
+      }
+
+      if (result.error) throw result.error
+      
+      await fetchPremios()
+      setShowForm(false)
+      alert('✅ Premio guardado correctamente')
+    } catch (err) {
+      console.error("Error savePremio:", err)
+      alert('❌ Error al guardar premio: ' + err.message)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleGrant = async () => {
