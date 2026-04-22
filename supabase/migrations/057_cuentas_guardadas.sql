@@ -1,8 +1,10 @@
--- Migración para guardar IDs y datos de cuenta de usuarios
+-- Corrección de la migración para cuentas_guardadas (juego_id debe ser INT para coincidir con el esquema)
+DROP TABLE IF EXISTS cuentas_guardadas;
+
 CREATE TABLE IF NOT EXISTS cuentas_guardadas (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     auth_user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    juego_id UUID NOT NULL REFERENCES juegos(id) ON DELETE CASCADE,
+    juego_id INT NOT NULL REFERENCES juegos(id) ON DELETE CASCADE,
     tipo_dato TEXT NOT NULL, -- 'id', 'cuenta_completa', 'usuario_clave'
     player_id TEXT,
     email TEXT,
@@ -33,7 +35,7 @@ CREATE POLICY "Usuarios pueden eliminar sus propias cuentas guardadas"
     ON cuentas_guardadas FOR DELETE
     USING (auth.uid() = auth_user_id);
 
--- Trigger para updated_at
+-- Trigger para updated_at (asumiendo que la función ya existe de la migración anterior, pero la recreamos por seguridad)
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -42,6 +44,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_cuentas_guardadas_updated_at ON cuentas_guardadas;
 CREATE TRIGGER update_cuentas_guardadas_updated_at
     BEFORE UPDATE ON cuentas_guardadas
     FOR EACH ROW
