@@ -54,6 +54,7 @@ export default function Catalogo() {
           setVerificacionResultado({
             success: true,
             nickname: data.nickname,
+            verified_id: localRechargeData.player_id,
             mensaje: data.mensaje
           })
         } else {
@@ -68,6 +69,7 @@ export default function Catalogo() {
           setVerificacionResultado({
             success: true,
             nickname: data.data?.rolename || 'Jugador Encontrado',
+            verified_id: localRechargeData.player_id,
             mensaje: 'ID Verificado exitosamente'
           })
         } else {
@@ -647,6 +649,15 @@ export default function Catalogo() {
                           if (!localRechargeData.player_id.trim()) {
                             alert('Por favor introduce el ID del jugador primero.')
                             return
+                          }
+                          
+                          // Validación obligatoria para Free Fire y Blood Strike
+                          const juegoNormalizado = selectedJuego.nombre.toLowerCase().replace(/\s/g, '')
+                          if (juegoNormalizado.includes('freefire') || juegoNormalizado.includes('bloodstrike')) {
+                            if (!verificacionResultado?.success || verificacionResultado.verified_id !== localRechargeData.player_id) {
+                              alert('Debes verificar el nombre del jugador antes de seleccionar un paquete.')
+                              return
+                            }
                           }
                         }
                         
