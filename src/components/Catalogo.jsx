@@ -424,7 +424,7 @@ export default function Catalogo() {
                 <input 
                   type="text" 
                   className="form-input recharge-input" 
-                  placeholder="ID del perfil al que se asignarán los paquetes..."
+                  placeholder="ID del Jugador"
                   value={localRechargeData.player_id}
                   onChange={e => {
                     const numericValue = e.target.value.replace(/[^0-9]/g, '');
