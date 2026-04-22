@@ -158,7 +158,11 @@ export default function Billetera({ onNavigate }) {
         await verificarYRegistrarReferencia(referencia, monto, 'recarga')
       } catch (err) {
         if (err.message === 'Referencia Duplicada') {
-          setAlertModal({ type: 'error', message: 'Referencia Duplicada' })
+          setAlertModal({ 
+            type: 'error', 
+            title: 'Referencia Duplicada',
+            message: 'Esta referencia ya ha sido utilizada en otros pedidos, si intentas registrar referencias duplicadas para usar el mismo pago para dos pedidos diferentes podrías ser suspendido del sistema' 
+          })
           setIsProcessing(false)
           return
         }
