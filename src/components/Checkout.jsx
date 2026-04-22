@@ -437,10 +437,10 @@ export default function Checkout({ onFinish }) {
           <div className="card-header">
             <h3 className="card-title">Método de Pago</h3>
           </div>
-          <div style={{ padding: '24px' }}>
+          <div style={{ padding: '16px' }}>
             {currentStep === 1 ? (
               <>
-                <div className="form-group mb-24" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className="form-group mb-12" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {hasAnySaldo && !isGratis && !isCliente && (
                     <div onClick={handleToggleWalletPartial} className="checkout-toggle-card" style={{ border: `2px solid ${useWalletPartial ? 'var(--accent-success)' : 'var(--border-color)'}`, opacity: useWalletBs ? 0.5 : 1 }}>
                       <span>💵 Usar Saldo USD</span>
@@ -470,7 +470,7 @@ export default function Checkout({ onFinish }) {
                    </div>
                 )}
 
-                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '24px', marginBottom: '24px' }}>
+                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginBottom: '16px' }}>
                   {isGratis ? (
                     <div style={{ padding: '32px 24px', textAlign: 'center', backgroundColor: 'rgba(34, 197, 94, 0.1)', borderRadius: '24px', color: 'var(--accent-success)', border: '2px dashed var(--accent-success)' }}>
                       <div style={{ fontSize: '48px', marginBottom: '12px' }}>🎉</div>
@@ -595,7 +595,7 @@ export default function Checkout({ onFinish }) {
                         </div>
                       ) : (
                         <div className="payment-methods-grid">
-                          <label className="form-label" style={{ gridColumn: '1 / -1', marginBottom: '12px', textAlign: 'center', fontSize: '14px', fontWeight: 700 }}>Selecciona un Método de Pago</label>
+                          <label className="form-label" style={{ gridColumn: '1 / -1', marginBottom: '8px', textAlign: 'center', fontSize: '14px', fontWeight: 700 }}>Selecciona un Método de Pago</label>
                           {metodos.filter(m => m.activo).map(m => (
                             <button key={m.id} onClick={() => handleSelectMetodo(m.id)} className={`payment-method-btn ${selectedMetodoId === m.id ? 'active' : ''}`} style={{ borderRadius: '20px', padding: '16px 10px' }}>
                               <div style={{ width: 64, height: 64, borderRadius: '16px', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', padding: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
@@ -624,7 +624,7 @@ export default function Checkout({ onFinish }) {
               </div>
             )}
 
-            <div style={{ backgroundColor: 'var(--bg-panel)', padding: '24px', borderRadius: '24px', border: '1px solid var(--border-color)', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+            <div style={{ backgroundColor: 'var(--bg-panel)', padding: '16px', borderRadius: '24px', border: '1px solid var(--border-color)', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '14px' }}>
                 <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Monto Total:</span>
                 <span style={{ fontWeight: 700, textDecoration: activeRuletaDesc ? 'line-through' : 'none', opacity: activeRuletaDesc ? 0.5 : 1 }}>{formatUSD(totalUSD)}</span>
@@ -664,7 +664,7 @@ export default function Checkout({ onFinish }) {
               <button 
                 className="btn btn-primary btn-lg" 
                 style={{ 
-                  width: '100%', marginTop: '20px', height: '64px', fontSize: '18px', fontWeight: 800,
+                  width: '100%', marginTop: '12px', height: '56px', fontSize: '18px', fontWeight: 800,
                   borderRadius: '18px', background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0088ff 100%)',
                   boxShadow: '0 8px 24px rgba(0, 180, 255, 0.4)', border: 'none', color: 'white',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: isProcessing ? 'default' : 'pointer'
