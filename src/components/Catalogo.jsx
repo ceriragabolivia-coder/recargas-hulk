@@ -1,14 +1,18 @@
 import React, { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useConfiguracion, useTodosLosProductos, useCart, useAuth } from '../hooks/useData'
 import { calcularPrecioVenta, formatBs, formatUSD } from '../utils/helpers'
 
 export default function Catalogo() {
   const { productos, loading } = useTodosLosProductos()
   const { config, loading: loadingConfig } = useConfiguracion()
-  const { addToCart } = useCart()
+  const { addToCart, clearCart } = useCart()
   const { perfil, isCliente } = useAuth()
+  const navigate = useNavigate()
+  
   const [selectedJuego, setSelectedJuego] = useState(null)
   const [addedItem, setAddedItem] = useState(null) 
+  const [buyMode, setBuyMode] = useState('single') // 'single' o 'multiple'
 
   const [localRechargeData, setLocalRechargeData] = useState({
     player_id: '',
@@ -62,10 +66,18 @@ export default function Catalogo() {
   const confirmAddToCart = () => {
     if (!pendingItem) return
     const { p, selectedJuego, finalPrice, localRechargeData } = pendingItem
-    addToCart(p, selectedJuego, finalPrice, localRechargeData)
-    setAddedItem(p.id)
-    setTimeout(() => setAddedItem(null), 1000)
-    setPendingItem(null)
+    
+    if (buyMode === 'single') {
+      clearCart() // Opción B: Limpiar carrito antes de compra directa
+      addToCart(p, selectedJuego, finalPrice, localRechargeData)
+      setPendingItem(null)
+      navigate('/Checkout')
+    } else {
+      addToCart(p, selectedJuego, finalPrice, localRechargeData)
+      setAddedItem(p.id)
+      setTimeout(() => setAddedItem(null), 1000)
+      setPendingItem(null)
+    }
   }
   
   const juegosData = useMemo(() => {
@@ -508,6 +520,62 @@ export default function Catalogo() {
           </div>
 
           <div>
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ 
+              display: 'flex', 
+              backgroundColor: 'rgba(255,255,255,0.03)', 
+              borderRadius: '16px', 
+              padding: '6px',
+              border: '1px solid var(--border-color)',
+              marginBottom: '20px',
+              gap: '6px'
+            }}>
+              <button 
+                onClick={() => setBuyMode('single')}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  backgroundColor: buyMode === 'single' ? 'var(--accent-primary)' : 'transparent',
+                  color: buyMode === 'single' ? '#000' : 'var(--text-muted)',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: buyMode === 'single' ? '0 4px 15px rgba(0, 210, 255, 0.4)' : 'none'
+                }}
+              >
+                <span style={{ fontSize: '18px' }}>🛍️</span> Comprar un paquete
+              </button>
+              <button 
+                onClick={() => setBuyMode('multiple')}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  backgroundColor: buyMode === 'multiple' ? 'var(--accent-primary)' : 'transparent',
+                  color: buyMode === 'multiple' ? '#000' : 'var(--text-muted)',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: buyMode === 'multiple' ? '0 4px 15px rgba(0, 210, 255, 0.4)' : 'none'
+                }}
+              >
+                <span style={{ fontSize: '18px' }}>🛒</span> Comprar varios paquetes
+              </button>
+            </div>
+
             <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', color: 'var(--text-primary)' }}>Selecciona un paquete</h2>
             
             {selectedJuego.productos.length === 0 ? (
