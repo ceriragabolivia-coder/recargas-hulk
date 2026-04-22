@@ -535,7 +535,9 @@ export default function Checkout({ onFinish }) {
                           )}
 
                           <div className="form-group mb-16">
-                            <label className="form-label" style={{ color: 'var(--accent-success)', fontWeight: 700, fontSize: '13px', marginBottom: '8px', display: 'block' }}>Número de Referencia</label>
+                            <label className="form-label" style={{ color: 'var(--accent-success)', fontWeight: 700, fontSize: '13px', marginBottom: '8px', display: 'block' }}>
+                              Número de Referencia <span style={{ fontSize: '10px', opacity: 0.8 }}>(Últimos 6 dígitos)</span>
+                            </label>
                             <input 
                               type="text" 
                               className="form-input" 

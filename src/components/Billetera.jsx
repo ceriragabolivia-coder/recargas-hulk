@@ -709,7 +709,7 @@ export default function Billetera({ onNavigate }) {
 
 
               <div className="form-group">
-                <label className="form-label">Número de Referencia</label>
+                <label className="form-label">Número de Referencia <span style={{ fontSize: '10px', opacity: 0.7 }}>(Últimos 6 dígitos)</span></label>
                 <input 
                   type="text" 
                   className="form-input" 
