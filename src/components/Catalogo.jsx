@@ -562,6 +562,8 @@ export default function Catalogo() {
                     />
                   </div>
                 )}
+
+                {(selectedJuego.nombre.toLowerCase().replace(/\s/g, '').includes('freefire') || selectedJuego.nombre.toLowerCase().replace(/\s/g, '').includes('bloodstrike')) && (
                   <div style={{ marginTop: '12px' }}>
                     <button 
                       className="btn"
