@@ -302,7 +302,7 @@ export default function App() {
           <Route path="/Mi-Perfil" element={<Perfil />} />
           <Route path="/Billetera" element={<Billetera onNavigate={handleNavigate} />} />
           <Route path="/Ruleta" element={<Ruleta />} />
-          <Route path="/Checkout" element={<Checkout onFinish={() => navigate('/Registro-Ventas')} />} />
+          <Route path="/Checkout" element={<Checkout onFinish={() => navigate(-1)} />} />
           <Route path="/Soporte" element={
             isAdmin ? (
               <SalaDeChat 

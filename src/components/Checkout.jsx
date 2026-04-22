@@ -384,11 +384,32 @@ export default function Checkout({ onFinish }) {
 
   return (
     <div className="page-content">
-      <div className="page-header mb-8" style={{ paddingBottom: 0 }}>
-        <h1 className="page-title">Confirmación de la compra</h1>
-        <p className="page-subtitle">
-          {currentStep === 1 ? 'Revisa tus productos y selecciona cómo deseas pagar.' : 'Realiza el pago y coloca los datos.'}
-        </p>
+      <div className="page-header mb-8" style={{ paddingBottom: 0, display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <button 
+          className="btn btn-ghost btn-icon" 
+          onClick={onFinish}
+          title="Regresar"
+          style={{ 
+            borderRadius: '50%', 
+            width: '44px', 
+            height: '44px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '18px',
+            backgroundColor: 'var(--bg-glass)',
+            border: '1px solid var(--border-color)',
+            flexShrink: 0
+          }}
+        >
+          ←
+        </button>
+        <div>
+          <h1 className="page-title" style={{ margin: 0 }}>Confirmación de la compra</h1>
+          <p className="page-subtitle" style={{ margin: 0 }}>
+            {currentStep === 1 ? 'Revisa tus productos y selecciona cómo deseas pagar.' : 'Realiza el pago y coloca los datos.'}
+          </p>
+        </div>
       </div>
 
       <div className="responsive-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '8px' }}>
