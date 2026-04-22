@@ -10,7 +10,18 @@ export default function Catalogo() {
   const { perfil, isCliente } = useAuth()
   const navigate = useNavigate()
   
-  const [selectedJuego, setSelectedJuego] = useState(null)
+  const [selectedJuegoId, setSelectedJuegoId] = useState(() => localStorage.getItem('selectedJuegoId'))
+
+  const selectedJuego = useMemo(() => 
+    selectedJuegoId ? juegosData.find(j => String(j.id) === String(selectedJuegoId)) : null
+  , [juegosData, selectedJuegoId])
+
+  const handleSetSelectedJuego = (juego) => {
+    const id = juego?.id || null
+    setSelectedJuegoId(id)
+    if (id) localStorage.setItem('selectedJuegoId', id)
+    else localStorage.removeItem('selectedJuegoId')
+  }
   const [addedItem, setAddedItem] = useState(null) 
   const [buyMode, setBuyMode] = useState('single') // 'single' o 'multiple'
 
@@ -266,7 +277,7 @@ export default function Catalogo() {
         {/* COLUMNA IZQUIERDA (Info y Características) */}
         <div className="game-info-col" style={{ flex: '1 1 280px', maxWidth: '350px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
           
-          <button className="btn btn-ghost" onClick={() => setSelectedJuego(null)} style={{ alignSelf: 'flex-start', padding: '4px 10px', backgroundColor: 'var(--bg-panel)', fontSize: '12px' }}>
+          <button className="btn btn-ghost" onClick={() => handleSetSelectedJuego(null)} style={{ alignSelf: 'flex-start', padding: '4px 10px', backgroundColor: 'var(--bg-panel)', fontSize: '12px' }}>
             ← Volver al Catálogo
           </button>
           
@@ -794,7 +805,7 @@ export default function Catalogo() {
                 backgroundColor: 'var(--bg-card)'
               }}
               onClick={() => {
-                setSelectedJuego(juego);
+                handleSetSelectedJuego(juego);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               onMouseEnter={e => {
