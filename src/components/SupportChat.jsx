@@ -349,6 +349,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       
       const orders = await loadRecentPedidos()
       if (orders && orders.length > 0) {
+        setRecentPedidos(orders)
         setShowOrderSelector(true)
       } else {
         // Si no hay pedidos recientes, abrir el ticket directamente con el motivo genérico
