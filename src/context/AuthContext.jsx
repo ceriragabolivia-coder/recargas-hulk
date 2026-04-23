@@ -22,16 +22,22 @@ export function AuthProvider({ children }) {
       
       // Async lookup without blocking return
       Promise.all([
-        supabase.from('clientes').select('id').eq('auth_user_id', userId).maybeSingle(),
+        supabase.from('perfiles').select('*').eq('id', userId).maybeSingle(),
+        supabase.from('clientes').select('*').eq('auth_user_id', userId).maybeSingle(),
         supabase.from('billeteras').select('*').eq('auth_user_id', userId).maybeSingle()
-      ]).then(([resC, resB]) => {
+      ]).then(([resP, resC, resB]) => {
         setTimeout(() => {
           setPerfil(prev => {
             if (!prev) return prev;
+            const clienteData = resC.data || {};
+            const perfilData = resP.data || {};
+            const walletData = resB.data || {};
             return {
               ...prev,
-              ...(resB.data || {}),
-              cliente_uuid: resC.data?.id || prev.cliente_uuid
+              ...clienteData,
+              ...perfilData,
+              ...walletData,
+              cliente_uuid: clienteData.id || prev.cliente_uuid
             }
           });
         }, 500); // Dar tiempo a que el setPerfil síncrono ocurra

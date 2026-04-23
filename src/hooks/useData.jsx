@@ -419,11 +419,25 @@ export function useClientes() {
   }
 
   async function updateProfile(authUserId, updates) {
-    const { error } = await supabase
+    // Actualizar tabla clientes
+    const { error: errorCli } = await supabase
       .from('clientes')
       .update(updates)
       .eq('auth_user_id', authUserId)
-    return { error }
+    
+    // Actualizar tabla perfiles (para disparar realtime y persistencia en AuthContext)
+    const perfilesUpdates = {}
+    if (updates.avatar_url) perfilesUpdates.avatar_url = updates.avatar_url
+    if (updates.nickname) perfilesUpdates.nickname = updates.nickname
+    
+    if (Object.keys(perfilesUpdates).length > 0) {
+      await supabase
+        .from('perfiles')
+        .update(perfilesUpdates)
+        .eq('id', authUserId)
+    }
+
+    return { error: errorCli }
   }
 
   async function updateProfileRoleAndDiscount(authUserId, updates) {
