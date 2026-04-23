@@ -594,12 +594,12 @@ export default function Checkout({ onFinish }) {
                               maxLength={6}
                               value={referencia} 
                               onChange={e => {
-                                const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                const val = e.target.value.replace(/\D/g, '').slice(-6);
                                 setReferencia(val);
                               }}
                               onPaste={e => {
                                 e.preventDefault();
-                                const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+                                const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(-6);
                                 setReferencia(pasteData);
                               }}
                               style={{ border: '1px solid var(--accent-success)', borderRadius: '12px', height: '48px', padding: '0 16px' }}
