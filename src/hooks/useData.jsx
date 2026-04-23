@@ -128,7 +128,7 @@ export function useProductos(juegoId) {
 // HOOK: Ventas
 // ========================
 export function useVentas() {
-  const { perfil } = useAuth()
+  const { perfil, user } = useAuth()
   const [ventasHoy, setVentasHoy] = useState([])
   const [resumen, setResumen] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -147,13 +147,18 @@ export function useVentas() {
     const hoy = getLocalDateString(new Date())
     const { start, end } = getLocalBounds(hoy)
 
-    const { data: ventas } = await supabase
+    let query = supabase
       .from('ventas')
-      .select('*, juegos(nombre), productos(nombre)')
-      .eq('vendedor_id', perfil.cliente_uuid)
+      .select('*, juegos(nombre), productos(nombre), vendedor:vendedor_id(nombres, apellidos, nickname)')
       .gte('created_at', start)
       .lte('created_at', end)
       .order('created_at', { ascending: false })
+
+    if (user?.email !== 'ceriraga@gmail.com') {
+      query = query.eq('vendedor_id', perfil.cliente_uuid)
+    }
+
+    const { data: ventas } = await query
       
     if (ventas) setVentasHoy(ventas)
 
@@ -245,13 +250,18 @@ export function useVentas() {
     const startISO = getLocalBounds(fechaDesde).start
     const endISO = getLocalBounds(fechaHasta).end
 
-    const { data } = await supabase
+    let query = supabase
       .from('ventas')
-      .select('*, juegos(nombre), productos(nombre)')
-      .eq('vendedor_id', perfil.cliente_uuid)
+      .select('*, juegos(nombre), productos(nombre), vendedor:vendedor_id(nombres, apellidos, nickname)')
       .gte('created_at', startISO)
       .lte('created_at', endISO)
       .order('created_at', { ascending: false })
+
+    if (user?.email !== 'ceriraga@gmail.com') {
+      query = query.eq('vendedor_id', perfil.cliente_uuid)
+    }
+
+    const { data } = await query
     return data || []
   }
 

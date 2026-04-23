@@ -349,6 +349,11 @@ export default function RegistroVentas() {
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                         {v.hora.substring(0, 5)} • Ganancia: {formatUSD(v.ganancia_usd)}
+                        {v.vendedor && (
+                          <span style={{ marginLeft: 8, color: 'var(--accent-primary)', fontWeight: 700 }}>
+                            👤 {v.vendedor.nickname || v.vendedor.nombres}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="venta-item-amount">{formatBs(v.precio_venta_bs)}</div>
