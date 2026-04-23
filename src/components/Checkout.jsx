@@ -591,7 +591,6 @@ export default function Checkout({ onFinish }) {
                               type="text" 
                               className="form-input" 
                               placeholder="Últimos 6 dígitos de la referencia..."
-                              maxLength={6}
                               value={referencia} 
                               onChange={e => {
                                 const val = e.target.value.replace(/\D/g, '').slice(-6);
