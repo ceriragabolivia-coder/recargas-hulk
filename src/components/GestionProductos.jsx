@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useJuegos, useProductos, useConfiguracion } from '../hooks/useData'
-import { calcularPrecioVenta, formatUSD, formatBs, getOptimizedImageUrl, removeWhiteBackground } from '../utils/helpers'
+import { calcularPrecioVenta, formatUSD, formatBs, removeWhiteBackground } from '../utils/helpers'
 import { supabase } from '../lib/supabase'
 import AlertModal from './AlertModal'
 
@@ -483,7 +483,7 @@ export default function GestionProductos() {
             onClick={() => document.getElementById('game-logo-upload').click()}
           >
             {selectedJuego.icono_url ? (
-              <img src={getOptimizedImageUrl(selectedJuego.icono_url, 150)} alt={selectedJuego.nombre} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={selectedJuego.icono_url} alt={selectedJuego.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
               <span style={{ fontSize: 24, color: 'var(--text-muted)' }}>🎮</span>
             )}
@@ -607,7 +607,7 @@ export default function GestionProductos() {
                           onClick={() => document.getElementById(`prod-icon-${prod.id}`).click()}
                         >
                           {prod.icono_url ? (
-                            <img src={getOptimizedImageUrl(prod.icono_url, 80)} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                            <img src={prod.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                           ) : (
                             <span style={{ fontSize: 8, color: 'var(--text-muted)' }}>📦</span>
                           )}
@@ -840,7 +840,7 @@ export default function GestionProductos() {
                   {newInfoFile ? (
                     <img src={URL.createObjectURL(newInfoFile)} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : formData.info_adicional_imagen_url ? (
-                    <img src={getOptimizedImageUrl(formData.info_adicional_imagen_url, 400)} alt="info" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={formData.info_adicional_imagen_url} alt="info" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     <span style={{ fontSize: 24, opacity: 0.3 }}>🖼️</span>
                   )}
@@ -999,7 +999,7 @@ export default function GestionProductos() {
                 alignItems: 'center', justifyContent: 'center'
               }}>
                 {formGame.guia_id_url ? (
-                  <img src={getOptimizedImageUrl(formGame.guia_id_url, 400)} alt="Guia" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={formGame.guia_id_url} alt="Guia" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <span style={{ fontSize: 24, opacity: 0.3 }}>🖼️</span>
                 )}
