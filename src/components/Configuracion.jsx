@@ -1501,7 +1501,7 @@ export default function Configuracion() {
                       💡 <strong>Tip:</strong> El sistema removerá automáticamente el fondo blanco de las imágenes que subas para que se vean transparentes.
                     </p>
                     <p style={{ marginTop: '8px', fontSize: '11px', color: 'var(--accent-warning)', backgroundColor: 'rgba(255, 209, 102, 0.05)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255, 209, 102, 0.1)' }}>
-                      ⚠️ <strong>Rendimiento:</strong> Una densidad muy alta (>25) puede causar lentitud en dispositivos móviles. Se recomienda mantener un equilibrio para asegurar una navegación fluida.
+                      ⚠️ <strong>Rendimiento:</strong> Una densidad muy alta (&gt;25) puede causar lentitud en dispositivos móviles. Se recomienda mantener un equilibrio para asegurar una navegación fluida.
                     </p>
                   </div>
 
