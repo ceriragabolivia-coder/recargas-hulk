@@ -8,6 +8,7 @@ export default function FloatingBackground() {
   const speed = parseFloat(config.bg_floating_speed || '10');
   const density = parseInt(config.bg_floating_density || '15');
   const size = parseInt(config.bg_floating_size || '80');
+  const opacity = config.bg_floating_opacity || '0.4';
   
   const images = useMemo(() => {
     try {
@@ -41,7 +42,7 @@ export default function FloatingBackground() {
   if (!isEnabled || images.length === 0) return null;
 
   return (
-    <div className="floating-background-container">
+    <div className="floating-background-container" style={{ '--float-opacity': opacity }}>
       {elements.map(el => (
         <div 
           key={el.id}
@@ -61,8 +62,7 @@ export default function FloatingBackground() {
             style={{ 
               width: '100%', 
               height: '100%', 
-              objectFit: 'contain',
-              opacity: 0.6
+              objectFit: 'contain'
             }} 
           />
         </div>

@@ -1518,28 +1518,29 @@ tr:last-child td { border-bottom: none; }
   z-index: -1;
   overflow: hidden;
   background: transparent;
+  contain: strict; /* Optimización para que no afecte al layout principal */
 }
 
 .floating-element {
   position: absolute;
-  bottom: -150px;
+  bottom: -200px;
   opacity: 0;
-  will-change: transform, opacity;
+  will-change: transform; /* Avisar al navegador para usar la GPU */
 }
 
 @keyframes float-up {
   0% {
-    transform: translateY(0) rotate(0deg);
+    transform: translate3d(0, 0, 0) rotate(0deg);
     opacity: 0;
   }
   10% {
-    opacity: 0.1;
+    opacity: var(--float-opacity, 0.4);
   }
   90% {
-    opacity: 0.1;
+    opacity: var(--float-opacity, 0.4);
   }
   100% {
-    transform: translateY(-120vh) rotate(360deg);
+    transform: translate3d(0, -130vh, 0) rotate(360deg);
     opacity: 0;
   }
 }

@@ -53,6 +53,7 @@ export default function Configuracion() {
   const [bgFloatingSpeed, setBgFloatingSpeed] = useState('10')
   const [bgFloatingDensity, setBgFloatingDensity] = useState('15')
   const [bgFloatingSize, setBgFloatingSize] = useState('80')
+  const [bgFloatingOpacity, setBgFloatingOpacity] = useState('0.4')
   const [bgFloatingImages, setBgFloatingImages] = useState([])
   
   // Ref para evitar que las actualizaciones de Realtime sobrescriban lo que el admin está escribiendo
@@ -80,6 +81,7 @@ export default function Configuracion() {
       setBgFloatingSpeed(config.bg_floating_speed || '10')
       setBgFloatingDensity(config.bg_floating_density || '15')
       setBgFloatingSize(config.bg_floating_size || '80')
+      setBgFloatingOpacity(config.bg_floating_opacity || '0.4')
       try {
         setBgFloatingImages(JSON.parse(config.bg_floating_images || '[]'))
       } catch (e) {
@@ -1444,6 +1446,17 @@ export default function Configuracion() {
                           style={{ width: '100%' }}
                         />
                       </div>
+                      <div className="form-group">
+                        <label className="form-label">Opacidad / Transparencia ({Math.round(parseFloat(bgFloatingOpacity) * 100)}%)</label>
+                        <input 
+                          type="range" min="0.05" max="1" step="0.05"
+                          value={bgFloatingOpacity} 
+                          onChange={(e) => setBgFloatingOpacity(e.target.value)}
+                          onMouseUp={() => updateConfig('bg_floating_opacity', bgFloatingOpacity, true)}
+                          onTouchEnd={() => updateConfig('bg_floating_opacity', bgFloatingOpacity, true)}
+                          style={{ width: '100%' }}
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -1486,6 +1499,9 @@ export default function Configuracion() {
                     )}
                     <p style={{ marginTop: '16px', fontSize: '12px', color: 'var(--text-muted)' }}>
                       💡 <strong>Tip:</strong> El sistema removerá automáticamente el fondo blanco de las imágenes que subas para que se vean transparentes.
+                    </p>
+                    <p style={{ marginTop: '8px', fontSize: '11px', color: 'var(--accent-warning)', backgroundColor: 'rgba(255, 209, 102, 0.05)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255, 209, 102, 0.1)' }}>
+                      ⚠️ <strong>Rendimiento:</strong> Una densidad muy alta (>25) puede causar lentitud en dispositivos móviles. Se recomienda mantener un equilibrio para asegurar una navegación fluida.
                     </p>
                   </div>
 
