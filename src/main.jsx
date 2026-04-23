@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
 import './index.css'
+import { Analytics } from '@vercel/analytics/react'
 
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
@@ -47,6 +48,7 @@ if (!rootElement) {
           <AuthProvider>
             <CartProvider>
               <App />
+              <Analytics />
             </CartProvider>
           </AuthProvider>
         </ConfigProvider>
