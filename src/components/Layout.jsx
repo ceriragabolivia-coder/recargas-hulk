@@ -115,7 +115,7 @@ function NotificationBar({ counts, onNavigate, config, onlineUsers }) {
                 backgroundColor: 'rgba(15, 23, 22, 0.98)',
                 borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.1)',
                 boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4)',
-                zIndex: 1000, padding: '12px',
+                zIndex: 99999, padding: '12px',
                 animation: 'slideDown 0.2s ease-out'
               }}
               onClick={e => e.stopPropagation()}
@@ -941,7 +941,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
         </div>
       </aside>
       <main className="main-content">
-        <header className="topbar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', height: '64px', gap: '8px' }}>
+        <header className="topbar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', height: '64px', gap: '8px', position: 'sticky', top: 0, backgroundColor: 'var(--bg-primary)', zIndex: 1000, borderBottom: '1px solid var(--border-color)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
             <button className="mobile-hamburger" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Menu">
               {sidebarOpen ? '✕' : '☰'}
