@@ -213,6 +213,10 @@ export function AuthProvider({ children }) {
          const pData = await fetchPerfilData(user.id, user)
          setPerfil(pData)
        }
+    },
+    updatePassword: async (newPassword) => {
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      return { error }
     }
   }), [user, perfil, loading, isAdminOrRevendedor])
 

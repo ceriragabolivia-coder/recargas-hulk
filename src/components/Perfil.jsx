@@ -25,14 +25,20 @@ export default function Perfil() {
     setLoading(true)
     setMessage({ type: '', text: '' })
 
-    const { error } = await updateProfile(user.id, { whatsapp })
-    
-    if (error) {
-      setMessage({ type: 'error', text: 'Error al actualizar WhatsApp: ' + error.message })
-    } else {
-      setMessage({ type: 'success', text: 'WhatsApp actualizado correctamente' })
+    try {
+      const { error } = await updateProfile(user.id, { whatsapp })
+      
+      if (error) {
+        setMessage({ type: 'error', text: 'Error al actualizar WhatsApp: ' + error.message })
+      } else {
+        setMessage({ type: 'success', text: 'WhatsApp actualizado correctamente' })
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error)
+      setMessage({ type: 'error', text: 'Ocurrió un error inesperado al actualizar' })
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const handleChangePassword = async (e) => {
@@ -49,16 +55,22 @@ export default function Perfil() {
     setLoading(true)
     setMessage({ type: '', text: '' })
 
-    const { error } = await updatePassword(newPassword)
-    
-    if (error) {
-      setMessage({ type: 'error', text: 'Error al cambiar contraseña: ' + error.message })
-    } else {
-      setMessage({ type: 'success', text: 'Contraseña actualizada con éxito' })
-      setNewPassword('')
-      setConfirmPassword('')
+    try {
+      const { error } = await updatePassword(newPassword)
+      
+      if (error) {
+        setMessage({ type: 'error', text: 'Error al cambiar contraseña: ' + error.message })
+      } else {
+        setMessage({ type: 'success', text: 'Contraseña actualizada con éxito' })
+        setNewPassword('')
+        setConfirmPassword('')
+      }
+    } catch (error) {
+      console.error('Error changing password:', error)
+      setMessage({ type: 'error', text: 'Ocurrió un error inesperado al cambiar la contraseña' })
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const handleAvatarUpload = async (event) => {
