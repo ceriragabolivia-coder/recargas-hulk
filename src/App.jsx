@@ -9,6 +9,7 @@ import { WalletProvider } from './context/WalletContext'
 // Componentes estáticos (carga inmediata)
 import SupportChat from './components/SupportChat'
 import Cart from './components/Cart'
+import FloatingBackground from './components/FloatingBackground'
 import kidsGamingImg from './assets/kids_gaming_loading.png'
 
 // Componentes cargados dinámicamente (Lazy Load) para optimizar la velocidad inicial
@@ -289,6 +290,7 @@ export default function App() {
 
   return (
     <WalletProvider>
+      <FloatingBackground />
       <Layout currentPage={currentPage} onNavigate={handleNavigate} onOpenChat={() => navigate('/Soporte')}>
         <AppRoutes 
           isAdmin={isAdmin} 

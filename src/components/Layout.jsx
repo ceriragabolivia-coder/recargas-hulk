@@ -872,7 +872,6 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
 
   return (
     <div className="app-layout">
-      <FloatingBackground />
       <style>{`
         @keyframes promo-pulse {
           0% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.4); transform: scale(1); }
