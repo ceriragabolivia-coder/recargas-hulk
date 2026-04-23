@@ -43,10 +43,10 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
   const loadChats = async (noLoading = false) => {
     try {
       if (!noLoading) setLoading(true)
-      // 1. Obtener todos los mensajes (incluyendo quoted_id y media)
+      // 1. Obtener todos los mensajes
       const { data: messagesData, error: messagesError } = await supabase
         .from('soporte_mensajes')
-        .select('id, cliente_id, created_at, leido, remitente_id, mensaje, es_sistema, quoted_id, archivo_url, tipo_archivo')
+        .select('*')
         .order('created_at', { ascending: false })
       
       if (messagesError) {
@@ -72,7 +72,7 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
       // 3. Obtener la info de esos clientes (solo campos confirmados)
       const { data: clientsData, error: clientsError } = await supabase
         .from('clientes')
-        .select('id, nombres, apellidos, whatsapp, auth_user_id, soporte_status, soporte_status_changed_at')
+        .select('*')
         .in('id', uniqueClientIds)
           
       if (clientsError) {
@@ -82,21 +82,6 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
       }
 
       if (clientsData) {
-        // 4. Enriquecer con Roles y Billeteras (Fetch paralelo por auth_user_id)
-        const authIds = clientsData.map(c => c.auth_user_id).filter(id => id !== null)
-        let rolesMap = {}
-        let walletsMap = {}
-
-        if (authIds.length > 0) {
-          const [resP, resB] = await Promise.all([
-            supabase.from('perfiles').select('id, rol').in('id', authIds),
-            supabase.from('billeteras').select('auth_user_id, saldo, saldo_bs').in('auth_user_id', authIds)
-          ])
-          
-          if (resP.data) resP.data.forEach(p => rolesMap[p.id] = p.rol)
-          if (resB.data) resB.data.forEach(b => walletsMap[b.auth_user_id] = b)
-        }
-
         // 5. Mapear y calcular mensajes no leídos por cada cliente + info del último mensaje
         const now = new Date()
         const expiredChatIds = []
@@ -120,18 +105,12 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
             m => m.cliente_id === client.id && !m.leido && m.remitente_id !== currentUserId
           ).length
           
-          const wallet = walletsMap[client.auth_user_id] || {}
-          const rol = (rolesMap[client.auth_user_id] || 'cliente').toLowerCase()
-          
           return {
             ...client,
             soporte_status: currentStatus,
             display_name: `${client.nombres || ''} ${client.apellidos || ''}`.trim() || 'Usuario sin nombre',
             lastMessage: lastMsg,
-            unreadCount,
-            rol,
-            saldo: wallet.saldo || 0,
-            saldo_bs: wallet.saldo_bs || 0
+            unreadCount
           }
         })
         
@@ -146,7 +125,9 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
         // Ordenar: primero los que tienen mensajes no leídos, luego por fecha de último mensaje
         chatsProcessed.sort((a, b) => {
           if (b.unreadCount !== a.unreadCount) return b.unreadCount - a.unreadCount
-          return new Date(b.lastMessage.created_at) - new Date(a.lastMessage.created_at)
+          const timeA = a.lastMessage?.created_at ? new Date(a.lastMessage.created_at).getTime() : 0
+          const timeB = b.lastMessage?.created_at ? new Date(b.lastMessage.created_at).getTime() : 0
+          return timeB - timeA
         })
         
         setChats(chatsProcessed)
