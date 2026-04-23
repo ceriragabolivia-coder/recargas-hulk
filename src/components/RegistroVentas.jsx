@@ -30,6 +30,7 @@ export default function RegistroVentas() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [cantidades, setCantidades] = useState({})
   const [alertModal, setAlertModal] = useState(null) // { type, title, message, onConfirm }
+  const [selectedVentaDetalle, setSelectedVentaDetalle] = useState(null)
 
   const isBuscando = search.trim().length > 0;
 
@@ -342,7 +343,12 @@ export default function RegistroVentas() {
                 </div>
               ) : (
                 ventasHoy.map(v => (
-                  <div key={v.id} className="venta-item" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div 
+                    key={v.id} 
+                    className="venta-item" 
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+                    onClick={() => setSelectedVentaDetalle(v)}
+                  >
                     <div style={{ flex: 1, overflow: 'hidden' }}>
                       <div className="venta-item-name" style={{ whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                         {v.juegos?.nombre ? `${v.juegos.nombre} - ${v.productos?.nombre || '?'}` : (v.notas || 'Venta Libre')}
@@ -359,7 +365,10 @@ export default function RegistroVentas() {
                     <div className="venta-item-amount">{formatBs(v.precio_venta_bs)}</div>
                       <button 
                         className="btn btn-ghost btn-icon btn-sm" 
-                        onClick={() => handleDeleteVenta(v.id, v.juegos?.nombre ? v.productos?.nombre : v.notas)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteVenta(v.id, v.juegos?.nombre ? v.productos?.nombre : v.notas);
+                        }}
                       title="Eliminar venta"
                       style={{ padding: 4, width: 24, height: 24, minHeight: 24, marginLeft: 4 }}
                     >
@@ -397,6 +406,58 @@ export default function RegistroVentas() {
             {toast.type === 'success' ? '✅' : '❌'} {toast.message}
           </div>
         </div>
+      )}
+
+      {selectedVentaDetalle && (
+        <AlertModal
+          isOpen={!!selectedVentaDetalle}
+          title={`Detalle de Venta #${selectedVentaDetalle.id}`}
+          type="info"
+          onConfirm={() => setSelectedVentaDetalle(null)}
+          message={(
+            <div style={{ textAlign: 'left', fontSize: '13px' }}>
+              <div style={{ marginBottom: '12px', padding: '10px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
+                <div style={{ fontWeight: 'bold', color: 'var(--accent-primary)', marginBottom: '4px' }}>PRODUCTO / SERVICIO</div>
+                <div>{selectedVentaDetalle.juegos?.nombre} - {selectedVentaDetalle.productos?.nombre}</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{selectedVentaDetalle.notas}</div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+                <div style={{ flex: 1, padding: '10px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
+                  <div style={{ fontWeight: 'bold', color: 'var(--accent-primary)', marginBottom: '4px' }}>MONTO</div>
+                  <div style={{ fontWeight: 'bold', color: 'var(--accent-success)' }}>{formatBs(selectedVentaDetalle.precio_venta_bs)}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>({formatUSD(selectedVentaDetalle.precio_venta_usd)})</div>
+                </div>
+                <div style={{ flex: 1, padding: '10px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
+                  <div style={{ fontWeight: 'bold', color: 'var(--accent-primary)', marginBottom: '4px' }}>ADMIN RESPONSABLE</div>
+                  <div>{selectedVentaDetalle.vendedor?.nickname || selectedVentaDetalle.vendedor?.nombres || 'Sistema'}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{selectedVentaDetalle.fecha} {selectedVentaDetalle.hora.substring(0, 5)}</div>
+                </div>
+              </div>
+
+              {selectedVentaDetalle.pedido ? (
+                <div style={{ padding: '10px', backgroundColor: 'rgba(0,210,255,0.05)', borderRadius: '8px', border: '1px solid rgba(0,210,255,0.1)' }}>
+                  <div style={{ fontWeight: 'bold', color: 'var(--accent-primary)', marginBottom: '8px' }}>DATOS DEL PEDIDO #{selectedVentaDetalle.pedido.numero_pedido}</div>
+                  <div style={{ marginBottom: '4px' }}><strong>Cliente:</strong> {selectedVentaDetalle.pedido.cliente?.nombres} {selectedVentaDetalle.pedido.cliente?.apellidos}</div>
+                  <div style={{ marginBottom: '4px' }}><strong>Referencia:</strong> {selectedVentaDetalle.pedido.referencia_pago}</div>
+                  <div style={{ marginBottom: '4px' }}><strong>Procesado por:</strong> {selectedVentaDetalle.pedido.atendido_por?.nickname || selectedVentaDetalle.pedido.atendido_por?.nombres || '-'}</div>
+                  <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                    <strong>Items:</strong>
+                    <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
+                      {selectedVentaDetalle.pedido.pedido_items?.map((item, i) => (
+                        <li key={i}>{item.cantidad}x {item.productos?.nombre}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '10px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                  Esta fue una venta manual (no asociada a un pedido)
+                </div>
+              )}
+            </div>
+          )}
+        />
       )}
 
       {alertModal && (

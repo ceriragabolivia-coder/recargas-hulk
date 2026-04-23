@@ -281,7 +281,8 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
             p_player_id: item.player_id,
             p_account_email: item.account_email,
             p_account_password: item.account_password,
-            p_vendedor_id: perfil?.cliente_uuid
+            p_vendedor_id: perfil?.cliente_uuid,
+            p_pedido_id: pedidoActual.id
           })
           if (rpcError) throw rpcError
         }

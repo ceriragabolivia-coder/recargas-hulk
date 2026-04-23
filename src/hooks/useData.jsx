@@ -139,7 +139,7 @@ export function useVentas() {
     return { start: startObj.toISOString(), end: endObj.toISOString() }
   }
 
-  async function fetchVentasHoy() {
+  async function fetchVentasHoy(forceOwnSales = false) {
     if (!perfil?.cliente_uuid) {
        setLoading(false)
        return 
@@ -149,12 +149,23 @@ export function useVentas() {
 
     let query = supabase
       .from('ventas')
-      .select('*, juegos(nombre), productos(nombre), vendedor:vendedor_id(nombres, apellidos, nickname)')
+      .select(`
+        *,
+        juegos(nombre),
+        productos(nombre),
+        vendedor:vendedor_id(nombres, apellidos, nickname),
+        pedido:pedido_id(
+          *,
+          cliente:cliente_id(nombres, apellidos, nickname, usuario),
+          atendido_por:clientes!atendido_por_id(nombres, apellidos, nickname),
+          pedido_items(*, productos(nombre))
+        )
+      `)
       .gte('created_at', start)
       .lte('created_at', end)
       .order('created_at', { ascending: false })
 
-    if (user?.email !== 'ceriraga@gmail.com') {
+    if (user?.email !== 'ceriraga@gmail.com' || forceOwnSales) {
       query = query.eq('vendedor_id', perfil.cliente_uuid)
     }
 
@@ -245,19 +256,30 @@ export function useVentas() {
     }
   }
 
-  async function fetchHistorial(fechaDesde, fechaHasta) {
+  async function fetchHistorial(fechaDesde, fechaHasta, forceOwnSales = false) {
     if (!perfil?.cliente_uuid) return []
     const startISO = getLocalBounds(fechaDesde).start
     const endISO = getLocalBounds(fechaHasta).end
 
     let query = supabase
       .from('ventas')
-      .select('*, juegos(nombre), productos(nombre), vendedor:vendedor_id(nombres, apellidos, nickname)')
+      .select(`
+        *,
+        juegos(nombre),
+        productos(nombre),
+        vendedor:vendedor_id(nombres, apellidos, nickname),
+        pedido:pedido_id(
+          *,
+          cliente:cliente_id(nombres, apellidos, nickname, usuario),
+          atendido_por:clientes!atendido_por_id(nombres, apellidos, nickname),
+          pedido_items(*, productos(nombre))
+        )
+      `)
       .gte('created_at', startISO)
       .lte('created_at', endISO)
       .order('created_at', { ascending: false })
 
-    if (user?.email !== 'ceriraga@gmail.com') {
+    if (user?.email !== 'ceriraga@gmail.com' || forceOwnSales) {
       query = query.eq('vendedor_id', perfil.cliente_uuid)
     }
 

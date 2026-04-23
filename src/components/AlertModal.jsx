@@ -60,9 +60,9 @@ const AlertModal = ({ isOpen, type = 'info', title, message, onConfirm, onCancel
           {title || (type === 'confirm' ? 'Confirmación' : 'Mensaje del Sistema')}
         </h3>
         
-        <p style={{ color: '#94a3b8', fontSize: '15px', lineHeight: '1.6', marginBottom: '24px' }}>
+        <div style={{ color: '#94a3b8', fontSize: '15px', lineHeight: '1.6', marginBottom: '24px' }}>
           {message}
-        </p>
+        </div>
         
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
           {isConfirm && (

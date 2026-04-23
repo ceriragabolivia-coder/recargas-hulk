@@ -432,14 +432,14 @@ function QuickManualSaleWidget({ onSaleComplete, config }) {
       </div>
     </div>
   )
-}
-
 export default function Dashboard() {
   const { resumen, loading: loadingVentas, fetchResumenPeriodo, fetchHistorial, limpiarComprobantes, refetch: refetchVentas } = useVentas()
   const { config, loading: loadingConfig, updateConfig } = useConfiguracion()
-  const { perfil } = useAuth()
-  const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
-
+  const { user, perfil } = useAuth()
+  const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
+  const isSuperAdmin = user?.email === 'ceriraga@gmail.com'
+  
+  const [viewMode, setViewMode] = useState('global') // 'global' | 'own'
   const [isEditingTasa, setIsEditingTasa] = useState(false)
   const [nuevaTasa, setNuevaTasa] = useState('')
   const [savingTasa, setSavingTasa] = useState(false)
@@ -448,6 +448,11 @@ export default function Dashboard() {
   const [refreshKey, setRefreshKey] = useState(0) // Used to trigger refresh
   const [rangoFechas, setRangoFechas] = useState('7d')
   const [loadingCharts, setLoadingCharts] = useState(true)
+
+  // Recargar ventas cuando cambie el modo de vista
+  React.useEffect(() => {
+    refetch(viewMode === 'own')
+  }, [viewMode])
 
   // Limpieza automática de comprobantes antiguos (> 20 días)
   React.useEffect(() => {
@@ -481,7 +486,7 @@ export default function Dashboard() {
       const fHasta = hoyLocal
 
       const [resumenes] = await Promise.all([
-        fetchResumenPeriodo(fDesde, fHasta)
+        fetchResumenPeriodo(fDesde, fHasta, viewMode === 'own')
       ])
 
       const diasNombres = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
@@ -531,9 +536,30 @@ export default function Dashboard() {
             }, null, 2)}
           </pre>
         )}
-        <div>
-          <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">Resumen general de tu centro de recargas</p>
+        <div className="flex items-center gap-16">
+          <div style={{ marginRight: '16px' }}>
+            <h1 className="page-title">Dashboard</h1>
+            <p className="page-subtitle">Resumen general de tu centro de recargas</p>
+          </div>
+          
+          {isSuperAdmin && (
+            <div className="flex gap-8" style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '4px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <button 
+                className={`btn btn-sm ${viewMode === 'global' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setViewMode('global')}
+                style={{ borderRadius: '10px', fontSize: '12px', padding: '6px 16px' }}
+              >
+                📊 Ventas Globales
+              </button>
+              <button 
+                className={`btn btn-sm ${viewMode === 'own' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setViewMode('own')}
+                style={{ borderRadius: '10px', fontSize: '12px', padding: '6px 16px' }}
+              >
+                👤 Ventas Propias
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
