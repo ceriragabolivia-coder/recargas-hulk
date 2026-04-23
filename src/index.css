@@ -189,7 +189,7 @@ body {
   height: 100dvh;
   overflow-y: auto;
   overflow-x: hidden;
-  background: var(--bg-primary);
+  background: transparent;
   min-width: 0;
   -webkit-overflow-scrolling: touch;
 }

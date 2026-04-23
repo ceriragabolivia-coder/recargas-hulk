@@ -139,8 +139,63 @@ const SuspendedView = ({ onLogout, onRefresh, type = 'suspendido' }) => (
   </div>
 )
 
+// Componente de rutas separado para evitar re-montado al cambiar estado de App
+const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
+  const fallback = (
+    <div className="loading-screen">
+      <div className="spinner"></div>
+      <p>Cargando sección...</p>
+    </div>
+  );
+
+  return (
+    <Suspense fallback={fallback}>
+      <Routes>
+        {/* Rutas Universales */}
+        <Route path="/Lista-De-Precios" element={<Catalogo />} />
+        <Route path="/Mi-Perfil" element={<Perfil />} />
+        <Route path="/Billetera" element={<Billetera onNavigate={handleNavigate} />} />
+        <Route path="/Ruleta" element={<Ruleta />} />
+        <Route path="/Checkout" element={<Checkout onFinish={() => window.history.back()} />} />
+        <Route path="/Soporte" element={
+          isAdmin ? (
+            <SalaDeChat 
+              key={currentParams?.targetClientId ? `${currentParams.targetClientId}_${currentParams.prefill}` : 'default'} 
+              perfil={perfil} 
+              params={currentParams} 
+              onNavigate={handleNavigate}
+            />
+          ) : (
+            <SupportChat 
+              perfil={perfil} 
+              isPage={true} 
+              onNavigate={handleNavigate} 
+            />
+          )
+        } />
+        <Route path="/Mis-Pedidos" element={<Pedidos params={currentParams} onNavigate={handleNavigate} />} />
+        <Route path="/Gestion-Pedidos" element={<Pedidos params={currentParams} onNavigate={handleNavigate} />} />
+
+        {/* Rutas Administrativas */}
+        <Route path="/Dashboard" element={isAdmin ? <Dashboard /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Registro-Ventas" element={isAdmin ? <RegistroVentas /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Gestion-Productos" element={isAdmin ? <GestionProductos /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Configuracion" element={isAdmin ? <Configuracion /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Usuarios" element={isAdmin ? <Usuarios onNavigate={handleNavigate} /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Reportes" element={isAdmin ? <Reportes /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Pagos-Admins" element={isAdmin ? <PagosAdmins /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Revendedores" element={isAdmin ? <Revendedores onNavigate={handleNavigate} /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Gestion-Ruleta" element={isAdmin ? <GestionRuleta /> : <Navigate to="/Lista-De-Precios" replace />} />
+
+        {/* Redirección por defecto */}
+        <Route path="/" element={<Navigate to={isAdmin ? "/Dashboard" : "/Lista-De-Precios"} replace />} />
+        <Route path="*" element={<Navigate to={isAdmin ? "/Dashboard" : "/Lista-De-Precios"} replace />} />
+      </Routes>
+    </Suspense>
+  )
+}
+
 export default function App() {
-  console.log('📦 Renderizando App...');
   const navigate = useNavigate()
   const location = useLocation()
   const { user, perfil, loading, logout, refetch } = useAuth()
@@ -149,11 +204,9 @@ export default function App() {
   const [currentParams, setCurrentParams] = useState(null)
   const [isRegistering, setIsRegistering] = useState(false)
 
-  // Sincronizar currentPage con la URL (opcional, pero ayuda a la transición)
   const currentPage = location.pathname.split('/')[1]?.toLowerCase() || 'catalogo'
 
   const handleNavigate = (page, params = null) => {
-    // Si la página viene en formato de ruta interna o URL semántica
     const pathMap = {
       'dashboard': '/Dashboard',
       'catalogo': '/Lista-De-Precios',
@@ -180,20 +233,12 @@ export default function App() {
 
   // Aplicar favicon
   React.useEffect(() => {
-    if (config && config.favicon_url) {
-      // Eliminar favicons viejos para evitar conflictos de tipo/MIME
+    if (config?.favicon_url) {
       const existingLinks = document.querySelectorAll("link[rel~='icon']")
       existingLinks.forEach(l => l.parentNode.removeChild(l))
-
-      // Crear el nuevo link
       const link = document.createElement('link')
       link.rel = 'icon'
       link.href = config.favicon_url
-      // Intentar detectar el tipo por extensión o dejar que el navegador lo maneje
-      if (config.favicon_url.toLowerCase().endsWith('.svg')) link.type = 'image/svg+xml'
-      else if (config.favicon_url.toLowerCase().endsWith('.png')) link.type = 'image/png'
-      else if (config.favicon_url.toLowerCase().endsWith('.ico')) link.type = 'image/x-icon'
-
       document.head.appendChild(link)
     }
   }, [config?.favicon_url])
@@ -207,70 +252,27 @@ export default function App() {
   const hasRedirectedRef = React.useRef(false)
   React.useEffect(() => {
     if (perfil && !hasRedirectedRef.current && location.pathname === '/') {
-      if (perfil.rol === 'admin') {
-        navigate('/Dashboard', { replace: true })
-      } else {
-        navigate('/Lista-De-Precios', { replace: true })
-      }
+      navigate(perfil.rol === 'admin' ? '/Dashboard' : '/Lista-De-Precios', { replace: true })
       hasRedirectedRef.current = true
     }
   }, [perfil, location.pathname])
 
-  // Timeout de seguridad para evitar spinner infinito en producción
   const [forceLoad, setForceLoad] = useState(false)
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (loading) {
-        console.warn("⚠️ Sistema tardando demasiado en cargar. Forzando visibilidad...")
-        setForceLoad(true)
-      }
+      if (loading) setForceLoad(true)
     }, 4000)
     return () => clearTimeout(timer)
   }, [loading])
 
-  // Watchdog: Si tenemos user pero no perfil después de 2s, intentar refetch manual
-  useEffect(() => {
-    if (user && !perfil && !loading) {
-      const t = setTimeout(() => {
-        console.log("🛠️ Watchdog: Intentando recuperación de perfil...");
-        refetch();
-      }, 2000);
-      return () => clearTimeout(t);
-    }
-  }, [user, perfil, loading, refetch])
-
-  // --- VISTA DE CARGA MODERNA (PRUEBA) ---
-  // Para revertir a la clásica, simplemente descomenta el bloque de abajo y comenta este
   if ((loading || (user && (!perfil || perfil.estado === 'cargando'))) && !forceLoad) {
     return (
       <div className="loading-screen-modern">
-        <img 
-          src={kidsGamingImg} 
-          alt="Cargando..." 
-          className="loading-illustration" 
-          width="320" 
-          height="320" 
-        />
+        <img src={kidsGamingImg} alt="Cargando..." className="loading-illustration" width="320" height="320" />
         <div className="loading-text-dynamic">Cargando Sistema</div>
-        <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '10px' }}>
-          Esto puede tardar unos segundos
-        </p>
       </div>
     )
   }
-
-  /* 
-  // --- VISTA DE CARGA CLÁSICA (REVERSIÓN) ---
-  if ((loading || (user && (!perfil || perfil.estado === 'cargando'))) && !forceLoad) {
-    return (
-      <div className="loading-screen">
-        <div className="spinner"></div>
-        <p>Iniciando sistema...</p>
-        <p style={{ fontSize: '0.8rem', marginTop: '10px', opacity: 0.6 }}>Esto puede tardar unos segundos</p>
-      </div>
-    )
-  }
-  */
 
   if (!user) {
     return isRegistering
@@ -278,7 +280,6 @@ export default function App() {
       : <Login onGoToRegister={() => setIsRegistering(true)} />
   }
 
-  // Lógica de Estados (Pendiente / Rechazado / Suspendido / Baneado)
   if (perfil?.estado === 'pendiente') return <PendingView onLogout={logout} onRefresh={refetch} />
   if (perfil?.estado === 'rechazado') return <RejectedView onLogout={logout} onRefresh={refetch} />
   if (perfil?.estado === 'suspendido') return <SuspendedView onLogout={logout} onRefresh={refetch} type="suspendido" />
@@ -286,70 +287,15 @@ export default function App() {
 
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
 
-  const ProtectedRoute = ({ children }) => {
-    if (!isAdmin) return <Navigate to="/Lista-De-Precios" replace />
-    return children
-  }
-
-  const PageRoutes = () => {
-    const fallback = (
-      <div className="loading-screen">
-        <div className="spinner"></div>
-        <p>Cargando sección...</p>
-      </div>
-    );
-
-    return (
-      <Suspense fallback={fallback}>
-        <Routes>
-          {/* Rutas Universales */}
-          <Route path="/Lista-De-Precios" element={<Catalogo />} />
-          <Route path="/Mi-Perfil" element={<Perfil />} />
-          <Route path="/Billetera" element={<Billetera onNavigate={handleNavigate} />} />
-          <Route path="/Ruleta" element={<Ruleta />} />
-          <Route path="/Checkout" element={<Checkout onFinish={() => navigate(-1)} />} />
-          <Route path="/Soporte" element={
-            isAdmin ? (
-              <SalaDeChat 
-                key={currentParams?.targetClientId ? `${currentParams.targetClientId}_${currentParams.prefill}` : 'default'} 
-                perfil={perfil} 
-                params={currentParams} 
-                onNavigate={handleNavigate}
-              />
-            ) : (
-              <SupportChat 
-                perfil={perfil} 
-                isPage={true} 
-                onNavigate={handleNavigate} 
-              />
-            )
-          } />
-          <Route path="/Mis-Pedidos" element={<Pedidos params={currentParams} onNavigate={handleNavigate} />} />
-          <Route path="/Gestion-Pedidos" element={<Pedidos params={currentParams} onNavigate={handleNavigate} />} />
-
-          {/* Rutas Administrativas */}
-          <Route path="/Dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/Registro-Ventas" element={<ProtectedRoute><RegistroVentas /></ProtectedRoute>} />
-          <Route path="/Gestion-Productos" element={<ProtectedRoute><GestionProductos /></ProtectedRoute>} />
-          <Route path="/Configuracion" element={<ProtectedRoute><Configuracion /></ProtectedRoute>} />
-          <Route path="/Usuarios" element={<ProtectedRoute><Usuarios onNavigate={handleNavigate} /></ProtectedRoute>} />
-          <Route path="/Reportes" element={<ProtectedRoute><Reportes /></ProtectedRoute>} />
-          <Route path="/Pagos-Admins" element={<ProtectedRoute><PagosAdmins /></ProtectedRoute>} />
-          <Route path="/Revendedores" element={<ProtectedRoute><Revendedores onNavigate={handleNavigate} /></ProtectedRoute>} />
-          <Route path="/Gestion-Ruleta" element={<ProtectedRoute><GestionRuleta /></ProtectedRoute>} />
-
-          {/* Redirección por defecto */}
-          <Route path="/" element={<Navigate to={isAdmin ? "/Dashboard" : "/Lista-De-Precios"} replace />} />
-          <Route path="*" element={<Navigate to={isAdmin ? "/Dashboard" : "/Lista-De-Precios"} replace />} />
-        </Routes>
-      </Suspense>
-    )
-  }
-
   return (
     <WalletProvider>
       <Layout currentPage={currentPage} onNavigate={handleNavigate} onOpenChat={() => navigate('/Soporte')}>
-        <PageRoutes />
+        <AppRoutes 
+          isAdmin={isAdmin} 
+          perfil={perfil} 
+          currentParams={currentParams} 
+          handleNavigate={handleNavigate} 
+        />
         <Cart onGoToCheckout={() => navigate('/Checkout')} />
       </Layout>
     </WalletProvider>
