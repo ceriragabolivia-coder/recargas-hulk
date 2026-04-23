@@ -73,7 +73,11 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
       // 3. Obtener la info de esos clientes (solo campos confirmados)
       const { data: clientsData, error: clientsError } = await supabase
         .from('clientes')
-        .select('id, nombres, apellidos, whatsapp, auth_user_id, soporte_status, soporte_status_changed_at')
+        .select(`
+          id, nombres, apellidos, whatsapp, auth_user_id, soporte_status, soporte_status_changed_at,
+          perfil:perfiles!auth_user_id(rol),
+          billetera:billeteras!auth_user_id(saldo, saldo_bs)
+        `)
         .in('id', uniqueClientIds)
           
       if (clientsError) {
@@ -93,7 +97,7 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
           if (currentStatus === 'resuelto' && client.soporte_status_changed_at) {
             const changedAt = new Date(client.soporte_status_changed_at)
             const diffHours = (now - changedAt) / (1000 * 60 * 60)
-            if (diffHours >= 10) {
+            if (diffHours >= 1) {
               currentStatus = null
               expiredChatIds.push(client.id)
             }
@@ -106,12 +110,18 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
             m => m.cliente_id === client.id && !m.leido && m.remitente_id !== currentUserId
           ).length
           
+          const wallet = client.billetera?.[0] || client.billetera || {}
+          const rol = (client.perfil?.[0]?.rol || client.perfil?.rol || 'cliente').toLowerCase()
+          
           return {
             ...client,
-            soporte_status: currentStatus, // Usar el estado potencialmente expirado
+            soporte_status: currentStatus,
             display_name: `${client.nombres || ''} ${client.apellidos || ''}`.trim() || 'Usuario sin nombre',
             lastMessage: lastMsg,
-            unreadCount
+            unreadCount,
+            rol,
+            saldo: wallet.saldo || 0,
+            saldo_bs: wallet.saldo_bs || 0
           }
         })
         
@@ -200,6 +210,14 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
     }
   }, [messages])
+
+  // Ticker para forzar re-procesamiento de expiraciones cada minuto
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadChats(true) // Recargar chats en segundo plano para limpiar expirados
+    }, 60000)
+    return () => clearInterval(interval)
+  }, [])
   
   // 4. Manejar selección inicial (Remonta gracias a 'key' en App.jsx)
   useEffect(() => {
@@ -619,10 +637,26 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
                 </div>
                 <div className="chat-item-info">
                   <div className="chat-item-top">
-                    <span className="chat-item-name" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span className="chat-item-name" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       {chat.display_name}
-                      {chat.soporte_status && (
-                         <span title={getStatusBadge(chat.soporte_status)?.label} style={{ fontSize: '10px' }}>
+                      {chat.rol === 'revendedor' && (
+                        <span style={{ fontSize: '8px', padding: '1px 4px', backgroundColor: 'rgba(139, 92, 246, 0.15)', color: '#a78bfa', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: '3px', fontWeight: 800 }}>REV</span>
+                      )}
+                      {chat.soporte_status === 'resuelto' && (
+                         <span 
+                           title="Resuelto recientemente" 
+                           style={{ 
+                             display: 'flex', alignItems: 'center', justifyContent: 'center',
+                             width: '16px', height: '16px', borderRadius: '50%',
+                             backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981',
+                             fontSize: '10px', border: '1px solid rgba(16, 185, 129, 0.3)'
+                           }}
+                         >
+                           ✓
+                         </span>
+                      )}
+                      {chat.soporte_status && chat.soporte_status !== 'resuelto' && (
+                         <span title={getStatusBadge(chat.soporte_status)?.label} style={{ fontSize: '10px', opacity: 0.8 }}>
                            {getStatusBadge(chat.soporte_status)?.icon}
                          </span>
                       )}
@@ -659,6 +693,15 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
                 <div>
                   <div className="chat-header-name" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {selectedChat.display_name}
+                    {selectedChat.rol === 'revendedor' && (
+                      <span style={{ 
+                        fontSize: '9px', padding: '1px 6px', borderRadius: '4px', fontWeight: 800,
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)', color: '#a78bfa',
+                        border: '1px solid #8b5cf6', textTransform: 'uppercase'
+                      }}>
+                        ⭐ Revendedor
+                      </span>
+                    )}
                     {selectedChat.soporte_status && (
                       <span style={{ 
                         fontSize: '9px', padding: '1px 6px', borderRadius: '4px', fontWeight: 700,
@@ -671,8 +714,12 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
                       </span>
                     )}
                   </div>
-                  <div className="chat-header-status text-xs">
-                    {selectedChat.whatsapp || 'Sin WhatsApp'}
+                  <div className="chat-header-status text-xs" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>{selectedChat.whatsapp || 'Sin WhatsApp'}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>•</span>
+                    <span style={{ color: 'var(--accent-success)', fontWeight: 600 }}>Saldo: ${parseFloat(selectedChat.saldo || 0).toFixed(2)}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>/</span>
+                    <span style={{ color: '#a855f7', fontWeight: 600 }}>{parseFloat(selectedChat.saldo_bs || 0).toLocaleString('es-VE')} Bs</span>
                   </div>
                 </div>
               </div>

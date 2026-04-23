@@ -328,6 +328,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
           (payload) => {
             if (payload.new && payload.new.soporte_status !== undefined) {
               setClientStatus(payload.new.soporte_status)
+              console.log('[DEBUG CHAT] Client status updated:', payload.new.soporte_status)
             }
           }
         )
