@@ -42,7 +42,7 @@
   /* Tamaños */
   --sidebar-width: 260px;
   --sidebar-collapsed: 70px;
-  --header-height: 65px;
+  --header-height: 64px;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -1105,7 +1105,10 @@ tr:last-child td { border-bottom: none; }
 .sidebar-backdrop {
   display: none;
   position: fixed;
-  inset: 0;
+  top: var(--header-height);
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(0, 0, 0, 0.6);
   z-index: 99;
   backdrop-filter: blur(4px);
@@ -1130,6 +1133,8 @@ tr:last-child td { border-bottom: none; }
     transform: translateX(-100%);
     z-index: 200;
     box-shadow: none;
+    top: var(--header-height);
+    height: calc(100dvh - var(--header-height));
   }
 
   .sidebar.mobile-open {
@@ -2256,6 +2261,21 @@ tr:last-child td { border-bottom: none; }
   .catalogo-container .btn-ghost {
     padding: 6px 12px !important;
     font-size: 13px !important;
+  }
+
+  .sidebar-header {
+    padding: 12px 16px !important;
+    gap: 8px !important;
+  }
+  .sidebar-header img {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .sidebar-title {
+    font-size: 15px !important;
+  }
+  .sidebar-subtitle {
+    font-size: 10px !important;
   }
 }
 
