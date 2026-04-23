@@ -432,6 +432,8 @@ function QuickManualSaleWidget({ onSaleComplete, config }) {
       </div>
     </div>
   )
+}
+
 export default function Dashboard() {
   const { resumen, loading: loadingVentas, fetchResumenPeriodo, fetchHistorial, limpiarComprobantes, refetch: refetchVentas } = useVentas()
   const { config, loading: loadingConfig, updateConfig } = useConfiguracion()
