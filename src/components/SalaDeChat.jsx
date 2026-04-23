@@ -19,6 +19,11 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
   const [deleteData, setDeleteData] = useState({ isOpen: false, messageId: null })
   const [pendingFile, setPendingFile] = useState(null)
   const [filePreview, setFilePreview] = useState(null)
+  const [quickResponses, setQuickResponses] = useState([])
+  const [showQuickResMenu, setShowQuickResMenu] = useState(false)
+  const [showQuickResManage, setShowQuickResManage] = useState(false)
+  const [editingResponse, setEditingResponse] = useState({ titulo: '', mensaje: '' })
+  const [isSavingQuickRes, setIsSavingQuickRes] = useState(false)
   const messagesEndRef = useRef(null)
   const lastAppliedParamsRef = useRef(null)
   const selectedChatRef = useRef(null)
@@ -139,6 +144,20 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
     }
   }
 
+  // 1b. Cargar respuestas rápidas
+  const loadQuickResponses = async () => {
+    const { data, error } = await supabase
+      .from('soporte_respuestas_rapidas')
+      .select('*')
+      .order('created_at', { ascending: true })
+    
+    if (error) {
+      console.error('Error fetching quick responses:', error)
+    } else {
+      setQuickResponses(data || [])
+    }
+  }
+
   // 2. Cargar mensajes
   const loadMessages = async (clientId) => {
     if (!clientId) return
@@ -190,6 +209,8 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
         }
       })
       .subscribe()
+    
+    loadQuickResponses()
 
     return () => {
       supabase.removeChannel(channel)
@@ -865,10 +886,49 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
               )}
 
               <form className="chat-input-area" onSubmit={handleSendMessage}>
-                <label className="btn btn-icon btn-ghost" style={{ cursor: 'pointer' }}>
-                  📎
-                  <input type="file" hidden onChange={handleFileSelect} accept="image/*,video/*" />
-                </label>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <button 
+                    type="button" 
+                    className={`btn btn-icon btn-ghost ${showQuickResMenu ? 'active' : ''}`} 
+                    onClick={() => setShowQuickResMenu(!showQuickResMenu)}
+                    title="Respuestas Rápidas"
+                  >
+                    ⚡
+                  </button>
+
+                  {showQuickResMenu && (
+                    <div className="quick-res-menu fade-in">
+                      <div className="quick-res-menu-header">
+                        <span>Respuestas Rápidas</span>
+                        <button className="btn btn-xs btn-ghost" onClick={() => { setShowQuickResManage(true); setShowQuickResMenu(false); setEditingResponse({ titulo: '', mensaje: '' }); }}>⚙️</button>
+                      </div>
+                      <div className="quick-res-menu-list">
+                        {quickResponses.length === 0 ? (
+                          <div className="p-3 text-center text-xs text-muted">No hay respuestas configuradas</div>
+                        ) : (
+                          quickResponses.map(qr => (
+                            <div 
+                              key={qr.id} 
+                              className="quick-res-item"
+                              onClick={() => {
+                                setNewMessage(prev => (prev ? prev + ' ' : '') + qr.mensaje)
+                                setShowQuickResMenu(false)
+                              }}
+                            >
+                              <div className="quick-res-item-title">{qr.titulo}</div>
+                              <div className="quick-res-item-text truncate">{qr.mensaje}</div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <label className="btn btn-icon btn-ghost" style={{ cursor: 'pointer' }}>
+                    📎
+                    <input type="file" hidden onChange={handleFileSelect} accept="image/*,video/*" />
+                  </label>
+                </div>
                 
                 {isRecording ? (
                   <div className="recording-bar" onClick={stopRecording}>
@@ -915,6 +975,82 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
         onConfirm={confirmDeleteMessage}
         onCancel={cancelDeleteMessage}
       />
+
+      {showQuickResManage && (
+        <div className="modal-overlay" onClick={() => setShowQuickResManage(false)}>
+          <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="modal-title mb-0">Gestionar Respuestas Rápidas</h2>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowQuickResManage(false)}>✕</button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+              <div>
+                <h3 className="text-sm font-bold mb-4">Nueva / Editar Respuesta</h3>
+                <form onSubmit={handleSaveQuickResponse}>
+                  <div className="form-group">
+                    <label className="form-label">Título Corto</label>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      placeholder="Ej: Saludo Inicial"
+                      value={editingResponse.titulo}
+                      onChange={e => setEditingResponse({...editingResponse, titulo: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Mensaje Completo</label>
+                    <textarea 
+                      className="form-input" 
+                      style={{ minHeight: '150px' }}
+                      placeholder="Escribe aquí el texto que se insertará..."
+                      value={editingResponse.mensaje}
+                      onChange={e => setEditingResponse({...editingResponse, mensaje: e.target.value})}
+                      required
+                    ></textarea>
+                  </div>
+                  <div className="flex gap-3">
+                    <button type="submit" className="btn btn-primary flex-1" disabled={isSavingQuickRes}>
+                      {isSavingQuickRes ? 'Guardando...' : (editingResponse.id ? 'Actualizar' : 'Crear Respuesta')}
+                    </button>
+                    {editingResponse.id && (
+                      <button type="button" className="btn btn-ghost" onClick={() => setEditingResponse({ titulo: '', mensaje: '' })}>
+                        Cancelar
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold mb-4">Lista de Respuestas</h3>
+                <div className="quick-res-manage-list">
+                  {quickResponses.map(qr => (
+                    <div key={qr.id} className="quick-res-manage-item">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="font-bold text-sm">{qr.titulo}</span>
+                        <div className="flex gap-2">
+                          <button className="btn btn-xs btn-ghost" onClick={() => setEditingResponse(qr)}>✏️</button>
+                          <button className="btn btn-xs btn-ghost text-danger" onClick={() => handleDeleteQuickResponse(qr.id)}>🗑️</button>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted" style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        {qr.mensaje}
+                      </p>
+                    </div>
+                  ))}
+                  {quickResponses.length === 0 && (
+                    <div className="text-center p-8 text-muted text-sm border-dashed border-2 border-opacity-10 rounded-xl">
+                      No hay respuestas creadas aún.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
