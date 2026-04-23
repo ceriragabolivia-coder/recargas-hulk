@@ -509,6 +509,58 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
     }
   }
 
+  const handleSaveQuickResponse = async (e) => {
+    e.preventDefault()
+    if (!editingResponse.titulo || !editingResponse.mensaje) return
+    
+    setIsSavingQuickRes(true)
+    try {
+      if (editingResponse.id) {
+        const { error } = await supabase
+          .from('soporte_respuestas_rapidas')
+          .update({
+            titulo: editingResponse.titulo,
+            mensaje: editingResponse.mensaje
+          })
+          .eq('id', editingResponse.id)
+        if (error) throw error
+      } else {
+        const { error } = await supabase
+          .from('soporte_respuestas_rapidas')
+          .insert([{
+            titulo: editingResponse.titulo,
+            mensaje: editingResponse.mensaje
+          }])
+        if (error) throw error
+      }
+      
+      await loadQuickResponses()
+      setEditingResponse({ titulo: '', mensaje: '' })
+      setShowQuickResManage(false)
+    } catch (error) {
+      console.error('Error saving quick response:', error)
+      alert('Error al guardar la respuesta rápida: ' + error.message)
+    } finally {
+      setIsSavingQuickRes(false)
+    }
+  }
+
+  const handleDeleteQuickResponse = async (id) => {
+    if (!window.confirm('¿Seguro que deseas eliminar esta respuesta rápida?')) return
+    
+    try {
+      const { error } = await supabase
+        .from('soporte_respuestas_rapidas')
+        .delete()
+        .eq('id', id)
+      if (error) throw error
+      await loadQuickResponses()
+    } catch (error) {
+      console.error('Error deleting quick response:', error)
+      alert('Error al eliminar la respuesta rápida')
+    }
+  }
+
   const formatTime = (dateStr) => {
     const date = new Date(dateStr)
     const now = new Date()
