@@ -48,6 +48,13 @@ export default function Configuracion() {
   const [cashbackPorcentaje, setCashbackPorcentaje] = useState('0')
   const [cashbackActivo, setCashbackActivo] = useState(false)
   
+  // Estados para Fondo Flotante
+  const [bgFloatingEnabled, setBgFloatingEnabled] = useState(false)
+  const [bgFloatingSpeed, setBgFloatingSpeed] = useState('10')
+  const [bgFloatingDensity, setBgFloatingDensity] = useState('15')
+  const [bgFloatingSize, setBgFloatingSize] = useState('80')
+  const [bgFloatingImages, setBgFloatingImages] = useState([])
+  
   // Ref para evitar que las actualizaciones de Realtime sobrescriban lo que el admin está escribiendo
   const initialized = useRef(false)
 
@@ -67,6 +74,17 @@ export default function Configuracion() {
       setPromoBannerIconoUrl(config.promo_banner_icono_url || '')
       setTutorialBannerTexto(config.tutorial_banner_texto || '')
       setTutorialBannerLink(config.tutorial_banner_link || '')
+
+      // Fondo Flotante
+      setBgFloatingEnabled(config.bg_floating_enabled === 'true')
+      setBgFloatingSpeed(config.bg_floating_speed || '10')
+      setBgFloatingDensity(config.bg_floating_density || '15')
+      setBgFloatingSize(config.bg_floating_size || '80')
+      try {
+        setBgFloatingImages(JSON.parse(config.bg_floating_images || '[]'))
+      } catch (e) {
+        setBgFloatingImages([])
+      }
 
       initialized.current = true
     }
@@ -118,6 +136,34 @@ export default function Configuracion() {
     } finally {
       setUploadingImage(false)
     }
+  }
+
+  const handleFloatingImageUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploadingImage(true)
+    try {
+      const pngBlob = await removeWhiteBackground(file)
+      const path = `floating-bg/${Date.now()}.png`
+      const { error: uploadError } = await supabase.storage.from('logos').upload(path, pngBlob, { contentType: 'image/png' })
+      if (uploadError) throw uploadError
+      const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(path)
+      
+      const newImages = [...bgFloatingImages, publicUrl]
+      setBgFloatingImages(newImages)
+      await updateConfig('bg_floating_images', JSON.stringify(newImages), true)
+      setAlertModal({ type: 'success', message: 'Imagen añadida correctamente al efecto flotante' })
+    } catch (err) {
+      setAlertModal({ type: 'error', message: 'Error al subir la imagen: ' + err.message })
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
+  const handleRemoveFloatingImage = async (url) => {
+    const newImages = bgFloatingImages.filter(img => img !== url)
+    setBgFloatingImages(newImages)
+    await updateConfig('bg_floating_images', JSON.stringify(newImages), true)
   }
 
   const handleSubmit = async (e) => {
@@ -320,6 +366,13 @@ export default function Configuracion() {
             onClick={() => setActiveTab('cashback')}
           >
             💸 Cash Back
+          </button>
+          <button 
+            className={`btn ${activeTab === 'efectos' ? 'btn-primary' : 'btn-ghost'}`}
+            style={{ justifyContent: 'flex-start', textAlign: 'left' }}
+            onClick={() => setActiveTab('efectos')}
+          >
+            ✨ Efectos Visuales
           </button>
         </div>
 
@@ -1314,6 +1367,126 @@ export default function Configuracion() {
                         </p>
                       </div>
                     </div>
+                  </div>
+
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'efectos' && (
+            <>
+              <div className="card-header">
+                <h2 className="card-title">✨ Efectos Visuales (Fondo)</h2>
+              </div>
+              <div style={{ padding: '24px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', maxWidth: '800px' }}>
+                  
+                  {/* Control Maestro */}
+                  <div style={{ padding: '24px', backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+                      <div>
+                        <h3 style={{ fontSize: '18px', fontWeight: 'bold' }}>Elementos Flotantes</h3>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Activa imágenes que "levitan" desde el fondo hacia arriba.</p>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          const newValue = !bgFloatingEnabled
+                          setBgFloatingEnabled(newValue)
+                          updateConfig('bg_floating_enabled', newValue ? 'true' : 'false', true)
+                        }}
+                        style={{
+                          width: '50px', height: '26px', borderRadius: '13px', 
+                          backgroundColor: bgFloatingEnabled ? 'var(--accent-success)' : '#3f3f46',
+                          position: 'relative', cursor: 'pointer', border: 'none', transition: 'all 0.3s'
+                        }}
+                      >
+                        <div style={{
+                          width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white',
+                          position: 'absolute', top: '3px', 
+                          left: bgFloatingEnabled ? '27px' : '3px',
+                          transition: 'all 0.3s'
+                        }} />
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px', opacity: bgFloatingEnabled ? 1 : 0.5, pointerEvents: bgFloatingEnabled ? 'auto' : 'none' }}>
+                      <div className="form-group">
+                        <label className="form-label">Velocidad de Ascenso ({bgFloatingSpeed})</label>
+                        <input 
+                          type="range" min="1" max="50" 
+                          value={bgFloatingSpeed} 
+                          onChange={(e) => setBgFloatingSpeed(e.target.value)}
+                          onMouseUp={() => updateConfig('bg_floating_speed', bgFloatingSpeed, true)}
+                          onTouchEnd={() => updateConfig('bg_floating_speed', bgFloatingSpeed, true)}
+                          style={{ width: '100%' }}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Densidad / Cantidad ({bgFloatingDensity})</label>
+                        <input 
+                          type="range" min="5" max="50" 
+                          value={bgFloatingDensity} 
+                          onChange={(e) => setBgFloatingDensity(e.target.value)}
+                          onMouseUp={() => updateConfig('bg_floating_density', bgFloatingDensity, true)}
+                          onTouchEnd={() => updateConfig('bg_floating_density', bgFloatingDensity, true)}
+                          style={{ width: '100%' }}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Tamaño Base ({bgFloatingSize}px)</label>
+                        <input 
+                          type="range" min="30" max="150" 
+                          value={bgFloatingSize} 
+                          onChange={(e) => setBgFloatingSize(e.target.value)}
+                          onMouseUp={() => updateConfig('bg_floating_size', bgFloatingSize, true)}
+                          onTouchEnd={() => updateConfig('bg_floating_size', bgFloatingSize, true)}
+                          style={{ width: '100%' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Galería de Imágenes */}
+                  <div style={{ padding: '24px', backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                      <h3 style={{ fontSize: '16px', fontWeight: 'bold' }}>Imágenes del Efecto</h3>
+                      <div>
+                        <input type="file" id="bg-img-upload" style={{ display: 'none' }} accept="image/*" onChange={handleFloatingImageUpload} disabled={uploadingImage} />
+                        <label htmlFor="bg-img-upload" className="btn btn-primary btn-sm">
+                          {uploadingImage ? 'Procesando...' : '+ Subir Imagen'}
+                        </label>
+                      </div>
+                    </div>
+                    
+                    {bgFloatingImages.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '40px', border: '2px dashed var(--border-color)', borderRadius: '12px', color: 'var(--text-muted)' }}>
+                        No hay imágenes configuradas. Sube algunas (cubos, monedas, logos) para ver el efecto.
+                      </div>
+                    ) : (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '16px' }}>
+                        {bgFloatingImages.map((img, idx) => (
+                          <div key={idx} style={{ 
+                            position: 'relative', height: '100px', borderRadius: '12px', 
+                            backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px'
+                          }}>
+                            <img src={img} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                            <button 
+                              onClick={() => handleRemoveFloatingImage(img)}
+                              style={{ 
+                                position: 'absolute', top: '-8px', right: '-8px', width: '24px', height: '24px', 
+                                borderRadius: '50%', backgroundColor: 'var(--accent-danger)', color: 'white',
+                                border: 'none', cursor: 'pointer', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                              }}
+                            >✕</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <p style={{ marginTop: '16px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                      💡 <strong>Tip:</strong> El sistema removerá automáticamente el fondo blanco de las imágenes que subas para que se vean transparentes.
+                    </p>
                   </div>
 
                 </div>

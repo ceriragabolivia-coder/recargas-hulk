@@ -3,6 +3,7 @@ import { useAuth, useConfiguracion, useWallet, useMensajesSistema, useNotificaci
 import { NavLink, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { formatUSD, formatBs } from '../utils/helpers'
+import FloatingBackground from './FloatingBackground'
 
 const NAV_ITEMS = [
   { key: 'dashboard', icon: '📊', label: 'Dashboard', path: '/Dashboard' },
@@ -871,6 +872,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
 
   return (
     <div className="app-layout">
+      <FloatingBackground />
       <style>{`
         @keyframes promo-pulse {
           0% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.4); transform: scale(1); }
