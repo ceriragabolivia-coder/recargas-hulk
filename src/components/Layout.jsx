@@ -339,9 +339,15 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
   const fetchCounts = useCallback(async () => {
     // 1. Obtener IDs de administradores (solo una vez o según sea necesario)
     if (adminIdsRef.current.size === 0) {
-      const { data: adminsData } = await supabase.from('perfiles').select('id').ilike('rol', 'admin')
-      const ids = new Set(adminsData?.map(a => a.id) || [])
+      const { data: adminsP } = await supabase.from('perfiles').select('id').ilike('rol', 'admin')
+      const authIds = adminsP?.map(a => a.id) || []
+      
+      const { data: adminsC } = await supabase.from('clientes').select('id').in('auth_user_id', authIds)
+      const clienteIds = adminsC?.map(c => c.id) || []
+
+      const ids = new Set([...authIds, ...clienteIds])
       if (perfil?.id) ids.add(perfil.id)
+      if (perfil?.cliente_uuid) ids.add(perfil.cliente_uuid)
       adminIdsRef.current = ids
     }
     const adminIds = adminIdsRef.current
@@ -661,8 +667,8 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
         }, async payload => {
           console.log("Evento recibido en chat (Admin):", payload)
           const newMsg = payload.new
-          // Solo notificar si NO es un mensaje de sistema y NO lo envía un administrador
-          const isFromAdmin = adminIdsRef.current.has(newMsg.remitente_id)
+          const isFromMe = newMsg.remitente_id === perfil?.id || newMsg.remitente_id === perfil?.cliente_uuid
+          const isFromAdmin = adminIdsRef.current.has(newMsg.remitente_id) || isFromMe
           
           if (newMsg && !isFromAdmin && !newMsg.es_sistema) {
             // Cargar info del cliente para el título del toast
