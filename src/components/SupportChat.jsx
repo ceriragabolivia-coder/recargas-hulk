@@ -163,23 +163,20 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   }
 
   const loadRecentPedidos = async () => {
-    if (!currentClienteId || isAdmin) return []
+    if (!currentUserId || isAdmin) return []
     setLoadingPedidos(true)
     try {
       const { data, error } = await supabase
         .from('pedidos')
         .select('id, numero_pedido, created_at, total_bs, estado')
-        .eq('cliente_id', currentClienteId)
+        .eq('cliente_id', currentUserId)
         .order('created_at', { ascending: false })
         .limit(5)
       
-      if (!error && data) {
-        setRecentPedidos(data)
-        return data
-      }
-      return []
+      if (error) throw error
+      return data || []
     } catch (err) {
-      console.error('Error loading recent pedidos:', err)
+      console.error("Error loading orders:", err)
       return []
     } finally {
       setLoadingPedidos(false)
