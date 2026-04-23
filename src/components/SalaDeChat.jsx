@@ -69,15 +69,10 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
         setLoading(false)
         return
       }
-
       // 3. Obtener la info de esos clientes (solo campos confirmados)
       const { data: clientsData, error: clientsError } = await supabase
         .from('clientes')
-        .select(`
-          id, nombres, apellidos, whatsapp, auth_user_id, soporte_status, soporte_status_changed_at,
-          perfil:perfiles!auth_user_id(rol),
-          billetera:billeteras!auth_user_id(saldo, saldo_bs)
-        `)
+        .select('id, nombres, apellidos, whatsapp, auth_user_id, soporte_status, soporte_status_changed_at')
         .in('id', uniqueClientIds)
           
       if (clientsError) {
@@ -87,12 +82,27 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
       }
 
       if (clientsData) {
-        // 4. Mapear y calcular mensajes no leídos por cada cliente + info del último mensaje
+        // 4. Enriquecer con Roles y Billeteras (Fetch paralelo por auth_user_id)
+        const authIds = clientsData.map(c => c.auth_user_id).filter(id => id !== null)
+        let rolesMap = {}
+        let walletsMap = {}
+
+        if (authIds.length > 0) {
+          const [resP, resB] = await Promise.all([
+            supabase.from('perfiles').select('id, rol').in('id', authIds),
+            supabase.from('billeteras').select('auth_user_id, saldo, saldo_bs').in('auth_user_id', authIds)
+          ])
+          
+          if (resP.data) resP.data.forEach(p => rolesMap[p.id] = p.rol)
+          if (resB.data) resB.data.forEach(b => walletsMap[b.auth_user_id] = b)
+        }
+
+        // 5. Mapear y calcular mensajes no leídos por cada cliente + info del último mensaje
         const now = new Date()
         const expiredChatIds = []
         
         const chatsProcessed = clientsData.map(client => {
-          // Lógica de expiración: si es 'resuelto' y pasó más de 24h
+          // Lógica de expiración: si es 'resuelto' y pasó más de 1h
           let currentStatus = client.soporte_status
           if (currentStatus === 'resuelto' && client.soporte_status_changed_at) {
             const changedAt = new Date(client.soporte_status_changed_at)
@@ -110,8 +120,8 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
             m => m.cliente_id === client.id && !m.leido && m.remitente_id !== currentUserId
           ).length
           
-          const wallet = client.billetera?.[0] || client.billetera || {}
-          const rol = (client.perfil?.[0]?.rol || client.perfil?.rol || 'cliente').toLowerCase()
+          const wallet = walletsMap[client.auth_user_id] || {}
+          const rol = (rolesMap[client.auth_user_id] || 'cliente').toLowerCase()
           
           return {
             ...client,
