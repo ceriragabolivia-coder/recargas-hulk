@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useConfiguracion, useTodosLosProductos, useCart, useAuth, useCuentasGuardadas } from '../hooks/useData'
-import { calcularPrecioVenta, formatBs, formatUSD } from '../utils/helpers'
+import { calcularPrecioVenta, formatBs, formatUSD, getOptimizedImageUrl } from '../utils/helpers'
 
 export default function Catalogo() {
   const { productos, loading } = useTodosLosProductos()
@@ -340,7 +340,15 @@ export default function Catalogo() {
           
           <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '6px 12px', gap: '0px' }}>
             {selectedJuego.icono_url ? (
-              <img src={selectedJuego.icono_url} alt={selectedJuego.nombre} style={{ width: 110, height: 110, minWidth: 110, minHeight: 110, flexShrink: 0, objectFit: 'cover', borderRadius: '16px', filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.4))', backgroundColor: 'rgba(255,255,255,0.02)' }} />
+              <img 
+                src={getOptimizedImageUrl(selectedJuego.icono_url, 200)} 
+                alt={selectedJuego.nombre} 
+                loading="eager"
+                fetchpriority="high"
+                width="110"
+                height="110"
+                style={{ width: 110, height: 110, minWidth: 110, minHeight: 110, flexShrink: 0, objectFit: 'cover', borderRadius: '16px', filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.4))', backgroundColor: 'rgba(255,255,255,0.02)' }} 
+              />
             ) : (
               <div style={{ fontSize: '80px' }}>🎮</div>
             )}
@@ -802,7 +810,14 @@ export default function Catalogo() {
                       }}
                     >
                       {p.icono_url ? (
-                        <img src={p.icono_url} alt="" style={{ width: 96, height: 96, objectFit: 'contain', marginBottom: '16px', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }} />
+                        <img 
+                          src={getOptimizedImageUrl(p.icono_url, 150)} 
+                          alt="" 
+                          loading="lazy"
+                          width="96"
+                          height="96"
+                          style={{ width: 96, height: 96, objectFit: 'contain', marginBottom: '16px', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }} 
+                        />
                       ) : (
                         <div style={{ fontSize: '56px', marginBottom: '12px' }}>💎</div>
                       )}
@@ -914,7 +929,7 @@ export default function Catalogo() {
       </div>
 
       <div className="catalogo-grid">
-        {juegosData.map(juego => {
+        {juegosData.map((juego, index) => {
           const catIcon = (juego.categorias && juego.categorias.icono) ? juego.categorias.icono : '🎮'
           return (
             <div 
@@ -946,7 +961,15 @@ export default function Catalogo() {
               }}
             >
               {juego.icono_url ? (
-                <img src={juego.icono_url} alt={juego.nombre} style={{ width: 84, height: 84, objectFit: 'cover', borderRadius: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }} />
+                <img 
+                  src={getOptimizedImageUrl(juego.icono_url, 150)} 
+                  alt={juego.nombre} 
+                  loading={index < 6 ? "eager" : "lazy"}
+                  fetchpriority={index < 4 ? "high" : "auto"}
+                  width="84"
+                  height="84"
+                  style={{ width: 84, height: 84, objectFit: 'cover', borderRadius: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }} 
+                />
               ) : (
                 <div style={{ fontSize: '72px' }}>{catIcon}</div>
               )}

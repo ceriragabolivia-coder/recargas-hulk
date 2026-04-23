@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useAuth, useConfiguracion, useWallet, useMensajesSistema, useNotificacionesPush, useCart } from '../hooks/useData'
 import { NavLink, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { formatUSD, formatBs } from '../utils/helpers'
+import { formatUSD, formatBs, getOptimizedImageUrl } from '../utils/helpers'
 
 const NAV_ITEMS = [
   { key: 'dashboard', icon: '📊', label: 'Dashboard', path: '/Dashboard' },
@@ -132,7 +132,7 @@ function NotificationBar({ counts, onNavigate, config, onlineUsers }) {
                 {onlineUsers.map((u, i) => (
                   <div key={i} className="online-user-item" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px', borderRadius: '10px', transition: 'all 0.2s' }}>
                     <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      {u.avatar_url ? <img src={u.avatar_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '12px', color: '#fff' }}>{u.nickname?.[0]?.toUpperCase() || u.email?.[0]?.toUpperCase() || '?'}</span>}
+                      {u.avatar_url ? <img src={getOptimizedImageUrl(u.avatar_url, 64)} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '12px', color: '#fff' }}>{u.nickname?.[0]?.toUpperCase() || u.email?.[0]?.toUpperCase() || '?'}</span>}
                     </div>
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.nickname || u.email?.split('@')[0]}</div>
@@ -884,7 +884,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
       <aside className={`sidebar ${sidebarOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-header">
           {config?.sidebar_logo_url ? (
-            <img src={config.sidebar_logo_url} alt="Logo" style={{ width: '40px', height: '40px', objectFit: 'contain', borderRadius: '8px' }} />
+            <img src={getOptimizedImageUrl(config.sidebar_logo_url, 80)} alt="Logo" loading="eager" width="40" height="40" style={{ width: '40px', height: '40px', objectFit: 'contain', borderRadius: '8px' }} />
           ) : (
             <div className="sidebar-logo">⚡</div>
           )}
@@ -920,7 +920,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '4px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0, color: 'var(--text-primary)' }}>
-                {perfil?.avatar_url ? <img src={perfil.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span>{user?.email?.[0].toUpperCase()}</span>}
+                {perfil?.avatar_url ? <img src={getOptimizedImageUrl(perfil.avatar_url, 80)} alt="Avatar" loading="eager" width="40" height="40" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span>{user?.email?.[0].toUpperCase()}</span>}
               </div>
               <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>{user?.email?.split('@')[0]}</div>
             </div>
@@ -993,7 +993,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
 
             {activePopup.imagen_url && (
               <div style={{ width: '100%', maxHeight: '250px', overflow: 'hidden' }}>
-                <img src={activePopup.imagen_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={getOptimizedImageUrl(activePopup.imagen_url, 400)} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
             )}
 
@@ -1070,7 +1070,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
 
             {noti.imagen_url && (
               <div style={{ width: '60px', height: '60px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
-                <img src={noti.imagen_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={getOptimizedImageUrl(noti.imagen_url, 100)} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
             )}
 
@@ -1140,7 +1140,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
 
             {activeNotiDetail.imagen_url && (
               <div style={{ width: '100%', maxHeight: '350px', overflow: 'hidden', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <img src={activeNotiDetail.imagen_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={getOptimizedImageUrl(activeNotiDetail.imagen_url, 500)} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
             )}
 

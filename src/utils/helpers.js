@@ -180,3 +180,22 @@ export function removeWhiteBackground(file, threshold = 240) {
     img.src = URL.createObjectURL(file)
   })
 }
+
+/**
+ * Optimiza la URL de una imagen de Supabase usando transformación nativa.
+ * Si no es una URL de Supabase, la devuelve intacta.
+ */
+export function getOptimizedImageUrl(url, width = 200, quality = 80) {
+  if (!url || !url.includes('supabase.co') || url.includes('.svg')) return url
+  
+  // Si ya tiene parámetros de transformación, no añadir más
+  if (url.includes('?width=')) return url
+
+  // Supabase Image Transformation usa el endpoint /render/image/public/
+  if (url.includes('/storage/v1/object/public/')) {
+    return url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') 
+      + `?width=${width}&quality=${quality}&resize=contain`
+  }
+  
+  return url
+}
