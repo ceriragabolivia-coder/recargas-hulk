@@ -451,9 +451,8 @@ export default function Dashboard() {
   const [rangoFechas, setRangoFechas] = useState('7d')
   const [loadingCharts, setLoadingCharts] = useState(true)
 
-  // Recargar ventas cuando cambie el modo de vista
   React.useEffect(() => {
-    refetch(viewMode === 'own')
+    refetchVentas(viewMode === 'own')
   }, [viewMode])
 
   // Limpieza automática de comprobantes antiguos (> 20 días)
