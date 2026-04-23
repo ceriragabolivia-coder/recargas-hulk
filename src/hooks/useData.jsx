@@ -625,8 +625,8 @@ export function useMensajesSistema() {
 // HOOK: Notificaciones Push
 // ========================
 export function useNotificacionesPush() {
-  async function enviarNotificacion(notificacion, duracionHoras = 1) {
-    const expira_at = new Date(Date.now() + duracionHoras * 60 * 60 * 1000).toISOString()
+  async function enviarNotificacion(notificacion, duracionMinutos = 60) {
+    const expira_at = new Date(Date.now() + duracionMinutos * 60 * 1000).toISOString()
     const { data, error } = await supabase
       .from('notificaciones_clientes')
       .insert([{ ...notificacion, expira_at }])

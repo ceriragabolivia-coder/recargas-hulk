@@ -23,7 +23,8 @@ export default function Configuracion() {
 
   // Estado para Notificaciones Push
   const [formNoti, setFormNoti] = useState({ titulo: '', mensaje: '', imagen_url: null })
-  const [notiDuracion, setNotiDuracion] = useState(24) // Por defecto 24 horas
+  const [notiDuracion, setNotiDuracion] = useState(1) // Por defecto 1 hora
+  const [notiUnidad, setNotiUnidad] = useState('horas') // 'horas' o 'minutos'
   const [sendingNoti, setSendingNoti] = useState(false)
 
   // Estado para el favicon y logo sidebar
@@ -1129,12 +1130,26 @@ export default function Configuracion() {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Duración de visibilidad (Horas)</label>
+                      <label className="form-label">Duración de visibilidad</label>
+                      <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                        <button 
+                          type="button"
+                          className={`btn btn-xs ${notiUnidad === 'horas' ? 'btn-primary' : 'btn-ghost'}`}
+                          style={{ borderRadius: '8px', fontSize: '10px', padding: '4px 12px' }}
+                          onClick={() => { setNotiUnidad('horas'); if(notiDuracion > 72) setNotiDuracion(24); }}
+                        >Horas</button>
+                        <button 
+                          type="button"
+                          className={`btn btn-xs ${notiUnidad === 'minutos' ? 'btn-primary' : 'btn-ghost'}`}
+                          style={{ borderRadius: '8px', fontSize: '10px', padding: '4px 12px' }}
+                          onClick={() => { setNotiUnidad('minutos'); if(notiDuracion > 60) setNotiDuracion(30); }}
+                        >Minutos</button>
+                      </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <input 
                           type="range" 
                           min="1" 
-                          max="72" 
+                          max={notiUnidad === 'horas' ? "72" : "60"} 
                           step="1"
                           style={{ flex: 1 }}
                           value={notiDuracion}
@@ -1145,11 +1160,11 @@ export default function Configuracion() {
                           padding: '4px 8px', borderRadius: '8px', border: '1px solid var(--border-color)',
                           fontSize: '14px', fontWeight: 700, color: 'var(--accent-primary)'
                         }}>
-                          {notiDuracion}h
+                          {notiDuracion}{notiUnidad === 'horas' ? 'h' : 'm'}
                         </span>
                       </div>
                       <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                        Tiempo que el mensaje será visible para quienes entren a la web más tarde.
+                        La notificación desaparecerá automáticamente después de {notiDuracion} {notiUnidad}.
                       </p>
                     </div>
 
@@ -1161,7 +1176,8 @@ export default function Configuracion() {
                         onClick={async () => {
                           setSendingNoti(true)
                           try {
-                            const { error } = await enviarNotificacion(formNoti, notiDuracion)
+                            const duracionFinal = notiUnidad === 'horas' ? notiDuracion * 60 : notiDuracion
+                            const { error } = await enviarNotificacion(formNoti, duracionFinal)
                             if (error) throw error
                             setAlertModal({ type: 'success', message: '¡Notificación enviada con éxito!' })
                             setFormNoti({ titulo: '', mensaje: '', imagen_url: null })
