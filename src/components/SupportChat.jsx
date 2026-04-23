@@ -163,13 +163,25 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   }
 
   const loadRecentPedidos = async () => {
-    if (!currentUserId || isAdmin) return []
+    const authId = perfil?.id
+    const clienteUuid = perfil?.cliente_uuid
+    
+    if (!authId && !clienteUuid) return []
+    
     setLoadingPedidos(true)
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('pedidos')
         .select('id, numero_pedido, created_at, total_bs, estado')
-        .eq('cliente_id', currentUserId)
+      
+      // Intentar buscar por ambos IDs para máxima compatibilidad
+      if (authId && clienteUuid && authId !== clienteUuid) {
+        query = query.or(`cliente_id.eq.${authId},cliente_id.eq.${clienteUuid}`)
+      } else {
+        query = query.eq('cliente_id', authId || clienteUuid)
+      }
+
+      const { data, error } = await query
         .order('created_at', { ascending: false })
         .limit(5)
       
