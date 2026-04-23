@@ -56,7 +56,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   
   // Consideramos que hay un ticket activo si el estado en BD es pendiente/critico o si hemos reconstruido el tema del historial
   const hasActiveTicket = (clientStatus !== null && clientStatus !== 'resuelto') || ticketSubject !== null
-  const isResolved = !isAdmin && (clientStatus === 'resuelto' || isLastMsgClosure) && hasActiveTicket
+  const isResolved = !isAdmin && clientStatus === 'resuelto' && hasActiveTicket
 
   const loadMessages = async (chatId) => {
     if (!chatId) {
@@ -126,6 +126,11 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
     for (const m of reversed) {
       // Si el mensaje es de sistema pero el remitente es un admin, cuenta como respuesta
       // Si el mensaje NO es de sistema y el remitente es admin, también.
+      // Si el mensaje es de sistema y es un inicio de ticket, es un "reset" para el throttling
+      if (m.es_sistema && m.mensaje?.includes('TICKET INICIADO')) {
+        break
+      }
+
       if (m.remitente_id !== currentUserId) {
         break // El administrador (o sistema) respondió. Detener conteo.
       }
@@ -158,7 +163,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   }
 
   const loadRecentPedidos = async () => {
-    if (!currentClienteId || isAdmin) return
+    if (!currentClienteId || isAdmin) return []
     setLoadingPedidos(true)
     try {
       const { data, error } = await supabase
@@ -170,9 +175,12 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       
       if (!error && data) {
         setRecentPedidos(data)
+        return data
       }
+      return []
     } catch (err) {
       console.error('Error loading recent pedidos:', err)
+      return []
     } finally {
       setLoadingPedidos(false)
     }
@@ -326,14 +334,21 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   const handleSelectTicket = async (category) => {
     if (!currentClienteId || isAdmin) return
     
-    // Si la categoría es Pedido y es cliente, mostrar selector de pedidos
-    if (category === 'Pedido no completado' && !showOrderSelector) {
-      await loadRecentPedidos()
-      setShowOrderSelector(true)
+    // Si la categoría es Pedido y es cliente, intentar mostrar selector de pedidos
+    if (category === 'Pedido no completado') {
+      if (showOrderSelector) return // Evitar doble clic si ya está abierto el selector
+      
+      const orders = await loadRecentPedidos()
+      if (orders && orders.length > 0) {
+        setShowOrderSelector(true)
+      } else {
+        // Si no hay pedidos recientes, abrir el ticket directamente con el motivo genérico
+        await openTicket(category)
+      }
       return
     }
 
-    // Proceso normal para otras categorías o si ya se seleccionó pedido (llamado por handleSelectOrder)
+    // Proceso normal para otras categorías
     await openTicket(category)
   }
 
@@ -344,9 +359,13 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   }
 
   const openTicket = async (category) => {
+    setClientStatus('pendiente')
+    setTicketSubject(category)
+    setShowOrderSelector(false) // Asegurar que el selector se cierre al iniciar ticket
+
     // 1. Enviar mensaje de sistema con el motivo
-    const { data: adminData } = await supabase.from('clientes').select('id').eq('rol', 'admin').limit(1).single()
-    const senderId = adminData ? adminData.id : currentClienteId
+    const { data: adminData } = await supabase.from('clientes').select('id').ilike('rol', 'admin').limit(1).single()
+    const senderId = adminData?.id || currentClienteId
     
     if (senderId) {
       const ticketMsg = `🎫 TICKET INICIADO: ${category.toUpperCase()}`
@@ -361,17 +380,14 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       // Fallback si no hay columna es_sistema
       if (error && (error.code === '42703' || error.message?.includes('es_sistema'))) {
         await supabase.from('soporte_mensajes').insert([
-          { cliente_id: currentUserId, remitente_id: adminData.id, mensaje: ticketMsg },
-          { cliente_id: currentUserId, remitente_id: adminData.id, mensaje: infoMsg }
+          { cliente_id: currentUserId, remitente_id: senderId, mensaje: ticketMsg },
+          { cliente_id: currentUserId, remitente_id: senderId, mensaje: infoMsg }
         ])
       }
       
-      // 2. Actualizar estado del cliente a 'pendiente' para persistencia
+      // 2. Actualizar estado del cliente a 'pendiente' para persistencia en BD
       await supabase.from('clientes').update({ soporte_status: 'pendiente' }).eq('id', currentClienteId)
-      setClientStatus('pendiente')
     }
-    
-    setTicketSubject(category)
   }
 
   const handleNewTicket = async () => {
@@ -442,7 +458,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       
       // 4. Auto-respuesta admin si aplica
       if (!isAdmin) {
-        const { data: adminData } = await supabase.from('clientes').select('id').eq('rol', 'admin').limit(1).single()
+        const { data: adminData } = await supabase.from('clientes').select('id').ilike('rol', 'admin').limit(1).single()
         if (adminData) {
           await supabase.from('soporte_mensajes').insert({
             cliente_id: activeChatId,
