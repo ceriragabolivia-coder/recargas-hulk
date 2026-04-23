@@ -9,7 +9,6 @@ import { WalletProvider } from './context/WalletContext'
 // Componentes estáticos (carga inmediata)
 import SupportChat from './components/SupportChat'
 import Cart from './components/Cart'
-import { Analytics } from "@vercel/analytics/react"
 import kidsGamingImg from './assets/kids_gaming_loading.png'
 
 // Componentes cargados dinámicamente (Lazy Load) para optimizar la velocidad inicial
@@ -245,7 +244,13 @@ export default function App() {
   if ((loading || (user && (!perfil || perfil.estado === 'cargando'))) && !forceLoad) {
     return (
       <div className="loading-screen-modern">
-        <img src={kidsGamingImg} alt="Cargando..." className="loading-illustration" />
+        <img 
+          src={kidsGamingImg} 
+          alt="Cargando..." 
+          className="loading-illustration" 
+          width="320" 
+          height="320" 
+        />
         <div className="loading-text-dynamic">Cargando Sistema</div>
         <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '10px' }}>
           Esto puede tardar unos segundos

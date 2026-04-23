@@ -753,21 +753,24 @@ export default function Catalogo() {
                   return (
                     <div 
                       key={p.id}
+                      className="product-card-premium"
                       style={{
-                        backgroundColor: '#00ff00',
-                        borderRadius: '16px',
-                        padding: '20px 16px',
+                        background: 'linear-gradient(135deg, rgba(0, 210, 255, 0.1) 0%, rgba(123, 47, 247, 0.1) 100%)',
+                        backdropFilter: 'blur(10px)',
+                        borderRadius: '20px',
+                        padding: '24px 16px',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
                         textAlign: 'center',
                         cursor: 'pointer',
-                        boxShadow: '0 8px 24px rgba(0, 255, 0, 0.25)',
-                        transition: 'transform 0.2s',
-                        color: '#000000',
-                        border: '2px solid transparent',
-                        position: 'relative'
+                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        position: 'relative',
+                        overflow: 'hidden'
                       }}
                       onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
                       onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}

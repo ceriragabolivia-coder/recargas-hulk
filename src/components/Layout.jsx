@@ -31,11 +31,23 @@ const DEFAULT_TASKBAR_ITEMS = [
   { key: 'usuarios_online', icon: '👥', label: 'Usuarios en Línea', color: '#22c55e' },
 ]
 
+// Contexto de audio global para reutilizar recursos
+let globalAudioContext = null;
+const getAudioContext = () => {
+  if (!globalAudioContext) {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) globalAudioContext = new AudioContext();
+  }
+  return globalAudioContext;
+};
+
 const playNotificationSound = () => {
   try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    const ctx = new AudioContext();
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    
+    if (ctx.state === 'suspended') ctx.resume();
+
     const osc = ctx.createOscillator();
     const gainNode = ctx.createGain();
     osc.type = 'sine';
@@ -49,7 +61,7 @@ const playNotificationSound = () => {
     osc.start();
     osc.stop(ctx.currentTime + 0.5);
   } catch (e) {
-    console.log("Audio not supported or blocked by browser policy");
+    console.log("Audio notification failed:", e);
   }
 };
 
@@ -513,9 +525,9 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
   // Sonido de Campanita (Bell) - respeta política de autoplay del navegador
   const playBellSound = () => {
     try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext
-      if (!AudioCtx) return
-      const audioCtx = new AudioCtx()
+      const audioCtx = getAudioContext();
+      if (!audioCtx) return;
+
       // Si el contexto está suspendido por política de autoplay, intentar resumirlo
       const tryPlay = () => {
         const playTone = (freq, start, duration, vol) => {
