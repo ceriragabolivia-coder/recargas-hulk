@@ -26,15 +26,36 @@ export default function FloatingBackground() {
       return;
     }
 
-    const newElements = Array.from({ length: density }).map((_, i) => ({
-      id: i,
-      image: images[i % images.length],
-      left: `${Math.random() * 100}%`,
-      delay: `${Math.random() * 20}s`,
-      duration: `${(25 / (speed / 10)) + Math.random() * 10}s`,
-      size: `${size + (Math.random() * 40)}px`,
-      rotate: `${Math.random() * 360}deg`
-    }));
+    // Barajar las imágenes disponibles para evitar que aparezcan en el mismo orden
+    const shuffledImages = [...images].sort(() => Math.random() - 0.5);
+    
+    // Crear bins (columnas) para asegurar que se distribuyan por todo el ancho sin amontonarse
+    const numBins = density;
+    const binWidth = 100 / numBins;
+
+    const newElements = Array.from({ length: density }).map((_, i) => {
+      // Posición horizontal dentro de su propia columna (bin)
+      const binStart = i * binWidth;
+      const left = binStart + (Math.random() * (binWidth * 0.8)); // 0.8 para dejar un margen entre columnas
+      
+      // Seleccionar imagen aleatoria o barajada
+      const image = shuffledImages[i % shuffledImages.length];
+      
+      // Variación de escala y opacidad individual para profundidad
+      const individualScale = 0.6 + Math.random() * 0.8; // entre 0.6x y 1.4x el tamaño base
+      const individualOpacity = 0.3 + Math.random() * 0.7; // variación local sobre la opacidad base
+      
+      return {
+        id: i,
+        image: image,
+        left: `${left}%`,
+        delay: `${Math.random() * 25}s`, // Más dispersión en el tiempo
+        duration: `${(25 / (speed / 10)) + Math.random() * 15}s`,
+        size: `${size * individualScale}px`,
+        rotate: `${Math.random() * 360}deg`,
+        opacity: individualOpacity
+      };
+    });
 
     setElements(newElements);
   }, [isEnabled, images, density, speed, size]);
@@ -53,7 +74,8 @@ export default function FloatingBackground() {
             height: el.size,
             animation: `float-up ${el.duration} linear infinite`,
             animationDelay: el.delay,
-            transform: `rotate(${el.rotate})`
+            transform: `rotate(${el.rotate})`,
+            opacity: el.opacity
           }}
         >
           <img 
