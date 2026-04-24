@@ -273,9 +273,7 @@ export function useVentas() {
         vendedor:vendedor_id(nombres, apellidos, nickname),
         pedido:pedido_id(
           *,
-          cliente:cliente_id(nombres, apellidos, nickname, usuario),
-          atendido_por:clientes!atendido_por_id(nombres, apellidos, nickname),
-          pedido_items(*, productos(nombre))
+          pedido_items(*)
         )
       `)
       .gte('created_at', startISO)
@@ -292,13 +290,12 @@ export function useVentas() {
     return data || []
   }
 
-  async function fetchResumenPeriodo(fechaDesde, fechaHasta) {
-    const ventas = await fetchHistorial(fechaDesde, fechaHasta)
+  async function fetchResumenPeriodo(fechaDesde, fechaHasta, forceOwnSales = false) {
+    const ventas = await fetchHistorial(fechaDesde, fechaHasta, forceOwnSales)
     const resMap = {}
     ventas.forEach(v => {
       const d = new Date(v.created_at)
-      const tzOffset = 4 * 60 * 60000;
-      const localDate = new Date(d.getTime() - tzOffset).toISOString().split('T')[0]
+      const localDate = getLocalDateString(d)
       
       if (!resMap[localDate]) {
         resMap[localDate] = { fecha: localDate, ganancias_totales: 0, ventas_totales_usd: 0, ventas_totales_bs: 0, recargas_totales: 0 }
