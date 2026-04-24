@@ -608,12 +608,14 @@ export default function Checkout({ onFinish }) {
                               placeholder="Últimos 6 dígitos de la referencia..."
                               value={referencia} 
                               onChange={e => {
-                                const val = e.target.value.replace(/\D/g, '').slice(-6);
-                                setReferencia(val);
+                                const val = e.target.value.replace(/\D/g, '');
+                                if (val.length <= 6) {
+                                  setReferencia(val);
+                                }
                               }}
                               onPaste={e => {
                                 e.preventDefault();
-                                const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(-6);
+                                const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
                                 setReferencia(pasteData);
                               }}
                               style={{ border: '1px solid var(--accent-success)', borderRadius: '12px', height: '48px', padding: '0 16px' }}
