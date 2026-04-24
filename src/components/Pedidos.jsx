@@ -1351,6 +1351,52 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
               </div>
             )}
 
+            {/* Capturas de Entrega (Visible para Admin y Cliente) */}
+            {(() => {
+              const images = selectedPedido.imagenes_adjuntas ? JSON.parse(selectedPedido.imagenes_adjuntas) : []
+              if (images.length === 0) return null
+              return (
+                <div style={{ 
+                  marginTop: '16px', padding: '16px', borderRadius: '12px', 
+                  backgroundColor: 'rgba(0, 210, 255, 0.04)', 
+                  border: '1px solid rgba(0, 210, 255, 0.2)',
+                  animation: 'fadeIn 0.5s ease'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                    <span style={{ fontSize: '18px' }}>🖼️</span>
+                    <span style={{ fontWeight: 800, textTransform: 'uppercase', fontSize: '12px', letterSpacing: '1px', color: 'var(--accent-primary)' }}>Capturas de Entrega</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    {images.map((url, idx) => (
+                      <div key={idx} style={{ position: 'relative', width: 'calc(50% - 5px)', minWidth: '100px' }}>
+                        <div 
+                          style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-color)', cursor: 'pointer', backgroundColor: 'rgba(0,0,0,0.2)' }}
+                          onClick={() => window.open(url, '_blank')}
+                        >
+                          <img 
+                            src={url} 
+                            alt={`Entrega ${idx + 1}`} 
+                            style={{ width: '100%', height: '90px', objectFit: 'cover', display: 'block', transition: 'transform 0.3s' }} 
+                            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                          />
+                          <div style={{ padding: '4px', textAlign: 'center', fontSize: '10px', color: 'var(--accent-primary)', backgroundColor: 'rgba(0,210,255,0.05)', fontWeight: 600 }}>Ampliar ↗</div>
+                        </div>
+                        {isAdmin && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleRemoveImage(url); }} 
+                            style={{ position: 'absolute', top: -6, right: -6, width: 22, height: 22, borderRadius: '50%', backgroundColor: '#ef4444', color: '#fff', border: 'none', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.4)', zIndex: 10 }}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
+
             {/* Panel de Gestión (Unificado) */}
             {isAdmin && (
               <div style={{ marginTop: '10px', borderTop: '1px solid var(--border-color)', paddingTop: '8px' }}>
@@ -1389,21 +1435,6 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                   <div onPaste={handlePaste} tabIndex={0} style={{ display: 'none' }} /> {/* Hook para pegar activado globalmente */}
                 </div>
 
-                {/* Listado de Capturas */}
-                {(() => {
-                  const images = selectedPedido.imagenes_adjuntas ? JSON.parse(selectedPedido.imagenes_adjuntas) : []
-                  if (images.length === 0) return null
-                  return (
-                    <div style={{ display: 'flex', gap: '6px', marginTop: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
-                      {images.map((url, idx) => (
-                        <div key={idx} style={{ position: 'relative', minWidth: '60px' }}>
-                          <img src={url} alt="Captura" style={{ width: '60px', height: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border-color)', cursor: 'pointer' }} onClick={() => window.open(url, '_blank')} />
-                          <button onClick={() => handleRemoveImage(url)} style={{ position: 'absolute', top: -4, right: -4, width: 14, height: 14, borderRadius: '50%', backgroundColor: '#ef4444', color: '#fff', border: 'none', fontSize: '10px', padding: 0 }}>×</button>
-                        </div>
-                      ))}
-                    </div>
-                  )
-                })()}
 
                 {/* Status Ocupado */}
                 {selectedPedido.atendido_por_id && selectedPedido.atendido_por_id !== user.id && (
