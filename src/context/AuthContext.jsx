@@ -87,10 +87,21 @@ export function AuthProvider({ children }) {
           supabase.from('billeteras').select('*').eq('auth_user_id', userId).maybeSingle()
         ])
         
-        const perfilData = resP.data
+        let perfilData = resP.data
         let clienteData = resC.data
         const walletData = resB.data
         
+        // Auto-creación de perfil si no existe
+        if (!perfilData && u) {
+          const { data: nuevoPerfil } = await supabase.from('perfiles').insert({
+            id: userId,
+            rol: 'cliente',
+            estado: 'aprobado'
+          }).select().maybeSingle()
+          // No sobreescribir perfilData si falló el insert, pero si funcionó usarlo
+          if (nuevoPerfil) perfilData = nuevoPerfil
+        }
+
         // Auto-creación de cliente si no existe (PARA TODOS LOS USUARIOS, INCLUYENDO ADMINS)
         if (!clienteData && u) {
           const { data: nuevoCliente } = await supabase.from('clientes').insert({
