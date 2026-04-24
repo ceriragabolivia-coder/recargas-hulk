@@ -163,7 +163,9 @@ export function AuthProvider({ children }) {
       if (u && u.id !== lastUserIdRef.current) {
         lastUserIdRef.current = u.id
         setUser(u)
-        setLoading(true)
+        // Solo marcar loading si no estamos ya en proceso de inicialización
+        if (!isInitializedRef.current) setLoading(true)
+        
         const pData = await fetchPerfilData(u.id, u)
         
         // Actualización atómica

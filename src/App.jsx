@@ -260,11 +260,12 @@ export default function App() {
 
   const [forceLoad, setForceLoad] = useState(false)
   useEffect(() => {
+    // Failsafe absoluto: Si después de 6 segundos seguimos en carga, forzamos entrada
     const timer = setTimeout(() => {
-      if (loading) setForceLoad(true)
-    }, 4000)
+      setForceLoad(true)
+    }, 6000)
     return () => clearTimeout(timer)
-  }, [loading])
+  }, [])
 
   if ((loading || (user && (!perfil || perfil.estado === 'cargando'))) && !forceLoad) {
     return (
