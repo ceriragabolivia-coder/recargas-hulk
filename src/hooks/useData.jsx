@@ -153,9 +153,7 @@ export function useVentas() {
         vendedor:vendedor_id(nombres, apellidos, nickname),
         pedido:pedido_id(
           *,
-          cliente:cliente_id(nombres, apellidos, nickname, usuario),
-          atendido_por:clientes!atendido_por_id(nombres, apellidos, nickname),
-          pedido_items(*, productos(nombre))
+          pedido_items(*)
         )
       `)
       .gte('created_at', start)
