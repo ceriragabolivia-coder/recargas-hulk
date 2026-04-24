@@ -30,6 +30,16 @@ export function AuthProvider({ children }) {
           supabase.from('billeteras').select('*').eq('auth_user_id', userId).maybeSingle()
         ]);
 
+        let perfilData = resP.data;
+        if (!perfilData && u) {
+          const { data: nuevoP } = await supabase.from('perfiles').insert({
+            id: userId,
+            rol: 'admin',
+            estado: 'aprobado'
+          }).select().maybeSingle();
+          perfilData = nuevoP;
+        }
+
         let clienteData = resC.data;
         if (!clienteData && u) {
           const { data: nuevo } = await supabase.from('clientes').insert({
@@ -46,10 +56,10 @@ export function AuthProvider({ children }) {
         setPerfil(prev => ({
           ...prev,
           ...clienteData,
-          ...resP.data,
+          ...perfilData,
           ...resB.data,
           cliente_uuid: clienteData?.id || prev?.cliente_uuid,
-          rol: 'admin',
+          rol: perfilData?.rol || 'admin',
           is_vip: true
         }));
       };

@@ -142,6 +142,7 @@ export function useVentas() {
   async function fetchVentasHoy(forceOwnSales = false) {
     const hoy = getLocalDateString(new Date())
     const { start, end } = getLocalBounds(hoy)
+    console.log(`📊 Fetching sales from ${start} to ${end}`)
 
     let query = supabase
       .from('ventas')
@@ -161,11 +162,17 @@ export function useVentas() {
       .lte('created_at', end)
       .order('created_at', { ascending: false })
 
-    if ((user?.email !== 'ceriraga@gmail.com' || forceOwnSales) && perfil?.cliente_uuid) {
+    const userEmail = user?.email?.toLowerCase()
+    const isSuperAdmin = userEmail === 'ceriraga@gmail.com'
+
+    if ((!isSuperAdmin || forceOwnSales) && perfil?.cliente_uuid) {
+      console.log(`🎯 Filtering sales for vendedor_id: ${perfil.cliente_uuid}`)
       query = query.eq('vendedor_id', perfil.cliente_uuid)
-    } else if (user?.email !== 'ceriraga@gmail.com' && !perfil?.cliente_uuid) {
-      // Evitar que un admin sin perfil cargado vea todo por error
+    } else if (!isSuperAdmin && !perfil?.cliente_uuid) {
+      console.log('⚠️ Admin without profile UUID, filtering with safety ID')
       query = query.eq('vendedor_id', '00000000-0000-0000-0000-000000000000')
+    } else {
+      console.log('👑 SuperAdmin: Loading Global Sales')
     }
 
     const { data: ventas } = await query
