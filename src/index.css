@@ -2571,11 +2571,53 @@ tr:last-child td { border-bottom: none; }
 }
 
 
+/* ============ PRODUCT CARDS PREMIUM ============ */
+.product-card-premium {
+  background: linear-gradient(135deg, rgba(0, 210, 255, 0.1) 0%, rgba(123, 47, 247, 0.1) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  will-change: transform;
+}
+
+.product-card-premium:hover {
+  transform: translateY(-4px);
+  background: linear-gradient(135deg, rgba(0, 210, 255, 0.15) 0%, rgba(123, 47, 247, 0.15) 100%);
+  border-color: rgba(0, 210, 255, 0.3);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
 /* ============ PERFORMANCE OPTIMIZATIONS FOR MOBILE ============ */
 @media (max-width: 768px) {
   * {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
+  }
+
+  .product-card-premium {
+    padding: 16px 12px !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: var(--bg-card) !important;
+    box-shadow: var(--shadow-sm) !important;
+    will-change: auto;
+  }
+
+  .product-card-premium:hover {
+    transform: none !important;
   }
 
   .card, .kpi-card, .sidebar, .glass-morphism, .notification-item {

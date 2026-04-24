@@ -216,7 +216,9 @@ export default function Catalogo() {
           .card-recharge-info { padding: 12px !important; }
           .product-grid-mobile { 
             grid-template-columns: repeat(2, 1fr) !important; 
-            gap: 10px !important; 
+            gap: 10px !important;
+            content-visibility: auto;
+            contain-intrinsic-size: 1px 1000px;
           }
         }
       `}</style>
@@ -754,26 +756,6 @@ export default function Catalogo() {
                     <div 
                       key={p.id}
                       className="product-card-premium"
-                      style={{
-                        background: 'linear-gradient(135deg, rgba(0, 210, 255, 0.1) 0%, rgba(123, 47, 247, 0.1) 100%)',
-                        backdropFilter: 'blur(10px)',
-                        borderRadius: '20px',
-                        padding: '24px 16px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        textAlign: 'center',
-                        cursor: 'pointer',
-                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                        color: 'var(--text-primary)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        position: 'relative',
-                        overflow: 'hidden'
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
-                      onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
                       onClick={() => {
                         if (selectedJuego.metodo_recarga === 'cuenta_completa') {
                           if (!localRechargeData.account_email.trim() || !localRechargeData.account_password.trim()) {
@@ -805,7 +787,7 @@ export default function Catalogo() {
                       }}
                     >
                       {p.icono_url ? (
-                        <img src={p.icono_url} alt="" style={{ width: 96, height: 96, objectFit: 'contain', marginBottom: '16px', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }} />
+                        <img loading="lazy" src={p.icono_url} alt="" style={{ width: 96, height: 96, objectFit: 'contain', marginBottom: '16px', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }} />
                       ) : (
                         <div style={{ fontSize: '56px', marginBottom: '12px' }}>💎</div>
                       )}
