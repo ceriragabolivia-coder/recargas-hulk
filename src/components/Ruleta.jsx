@@ -162,55 +162,10 @@ export default function Ruleta() {
         {config.ruleta_descripcion && <p style={{ color: 'var(--text-muted)', fontSize: 16, margin: 0 }}>{config.ruleta_descripcion}</p>}
       </div>
 
-      <div style={{ display: 'flex', gap: '40px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '40px', alignItems: 'center' }}>
         
-        {/* COLUMNA IZQUIERDA: LISTA DE PREMIOS */}
-        <div style={{ flex: '1 1 400px', minWidth: 320 }}>
-          <div className="card" style={{ padding: '24px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 900, marginBottom: 20, display: 'flex', alignItems: 'center', gap: '10px' }}>
-              📜 Inventario de Premios
-            </h2>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {premios.map(p => (
-                <div 
-                  key={p.id}
-                  className="prize-item"
-                  onClick={() => setSelectedPrize(p)}
-                  style={{ 
-                    padding: '12px 16px', borderRadius: '14px', background: 'rgba(255,255,255,0.03)', 
-                    border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'all 0.2s ease',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontSize: '24px' }}>{p.emoji || '🎁'}</span>
-                    <span style={{ fontWeight: 700, fontSize: '15px' }}>{p.nombre}</span>
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--accent-primary)', fontWeight: 800 }}>VER INFO</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Historial rápido */}
-          {historial.length > 0 && (
-            <div className="card" style={{ marginTop: '20px', padding: '20px', borderRadius: '24px' }}>
-              <h3 style={{ fontSize: 16, fontWeight: 800, marginBottom: 12 }}>🏆 Mis últimos premios</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {historial.map((h, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.06)' }}>
-                    <span style={{ fontWeight: 600, fontSize: 14 }}>{h.premio_nombre}</span>
-                    <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>{new Date(h.created_at).toLocaleDateString('es-VE')}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* COLUMNA DERECHA: RULETA */}
-        <div style={{ flex: '1 1 500px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        {/* RULETA (PRIMERO) */}
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           
           <div style={{ 
             display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 30, 
@@ -299,6 +254,55 @@ export default function Ruleta() {
             </button>
           </div>
         </div>
+
+        {/* LISTA DE PREMIOS (SEGUNDO) */}
+        <div style={{ width: '100%', maxWidth: '600px' }}>
+          <div className="card" style={{ padding: '24px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 900, marginBottom: 20, display: 'flex', alignItems: 'center', gap: '10px' }}>
+              📜 Inventario de Premios
+            </h2>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {premios.map(p => (
+                <div 
+                  key={p.id}
+                  className="prize-item"
+                  onClick={() => setSelectedPrize(p)}
+                  style={{ 
+                    padding: '12px 16px', borderRadius: '14px', background: 'rgba(255,255,255,0.03)', 
+                    border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'all 0.2s ease',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '24px' }}>{p.emoji || '🎁'}</span>
+                    <span style={{ fontWeight: 700, fontSize: '15px' }}>{p.nombre}</span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--accent-primary)', fontWeight: 800 }}>VER INFO</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* HISTORIAL (TERCERO) */}
+        {historial.length > 0 && (
+          <div style={{ width: '100%', maxWidth: '600px' }}>
+            <div className="card" style={{ padding: '24px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
+              <h3 style={{ fontSize: 20, fontWeight: 900, marginBottom: 20, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                🏆 Mis últimos premios
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {historial.map((h, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderRadius: 14, background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.06)' }}>
+                    <span style={{ fontWeight: 600, fontSize: 15 }}>{h.premio_nombre}</span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>{new Date(h.created_at).toLocaleDateString('es-VE')}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
 
