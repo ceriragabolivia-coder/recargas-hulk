@@ -154,7 +154,7 @@ export function AuthProvider({ children }) {
 
       try {
         const sessionPromise = supabase.auth.getSession()
-        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('LOCK')), 3000))
+        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('LOCK')), 8000))
         
         const { data: { session } } = await Promise.race([sessionPromise, timeout])
         const u = session?.user ?? null

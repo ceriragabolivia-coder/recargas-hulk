@@ -375,8 +375,13 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
     setShowOrderSelector(false) // Asegurar que el selector se cierre al iniciar ticket
 
     // 1. Enviar mensaje de sistema con el motivo
-    const { data: adminData } = await supabase.from('clientes').select('id').ilike('rol', 'admin').limit(1).single()
-    const senderId = adminData?.id || currentClienteId
+    // Buscar un admin para que sea el remitente del sistema (o usar el propio cliente como fallback)
+    const { data: adminProfile } = await supabase.from('perfiles').select('id').eq('rol', 'admin').limit(1).maybeSingle()
+    let senderId = currentClienteId
+    if (adminProfile) {
+      const { data: adminCliente } = await supabase.from('clientes').select('id').eq('auth_user_id', adminProfile.id).maybeSingle()
+      if (adminCliente) senderId = adminCliente.id
+    }
     
     if (senderId) {
       const ticketMsg = `🎫 TICKET INICIADO: ${category.toUpperCase()}`
@@ -469,11 +474,17 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       
       // 4. Auto-respuesta admin si aplica
       if (!isAdmin) {
-        const { data: adminData } = await supabase.from('clientes').select('id').ilike('rol', 'admin').limit(1).single()
-        if (adminData) {
+        const { data: adminProfile } = await supabase.from('perfiles').select('id').eq('rol', 'admin').limit(1).maybeSingle()
+        let adminSenderId = null
+        if (adminProfile) {
+          const { data: adminCliente } = await supabase.from('clientes').select('id').eq('auth_user_id', adminProfile.id).maybeSingle()
+          adminSenderId = adminCliente?.id
+        }
+
+        if (adminSenderId) {
           await supabase.from('soporte_mensajes').insert({
             cliente_id: activeChatId,
-            remitente_id: adminData.id,
+            remitente_id: adminSenderId,
             mensaje: "Su mensaje ha sido recibido por la administración, por favor espere.",
             es_sistema: true
           })
