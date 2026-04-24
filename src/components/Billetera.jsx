@@ -707,29 +707,44 @@ export default function Billetera({ onNavigate }) {
 
                     {/* Datos del pago divididos por línea con copiado individual */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {selected.datos.split('\n').filter(l => l.trim()).map((line, i) => (
-                        <div key={i} style={{ 
-                          display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
-                          padding: '14px 16px', backgroundColor: 'var(--bg-card)', borderRadius: '14px', 
-                          border: '1px solid var(--border-color)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
-                        }}>
-                          <span style={{ fontSize: '14px', fontWeight: 600 }}>{line}</span>
-                          <button 
-                            type="button"
-                            onClick={() => {
-                              const val = line.split(':').slice(1).join(':').trim() || line;
-                              navigator.clipboard.writeText(val);
-                            }} 
-                            style={{ 
-                              padding: '8px', borderRadius: '10px', background: 'rgba(0, 210, 255, 0.05)', 
-                              border: '1px solid rgba(0, 210, 255, 0.1)', color: 'var(--accent-primary)', 
-                              cursor: 'pointer', transition: 'all 0.2s'
-                            }}
-                            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.9)'}
-                            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                          >📋</button>
-                        </div>
-                      ))}
+                      {selected.datos.split('\n').filter(l => l.trim()).map((line, i) => {
+                        const [label, ...valParts] = line.split(':');
+                        const value = valParts.join(':').trim();
+
+                        return (
+                          <div key={i} style={{ 
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+                            padding: '12px 16px', backgroundColor: 'var(--bg-card)', borderRadius: '14px', 
+                            border: '1px solid var(--border-color)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                            gap: '12px'
+                          }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
+                              {label && value ? (
+                                <>
+                                  <span style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>{label.trim()}</span>
+                                  <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', wordBreak: 'break-word' }}>{value}</span>
+                                </>
+                              ) : (
+                                <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', wordBreak: 'break-word' }}>{line}</span>
+                              )}
+                            </div>
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(value || line);
+                              }} 
+                              style={{ 
+                                padding: '10px', borderRadius: '12px', background: 'rgba(0, 210, 255, 0.1)', 
+                                border: '1px solid rgba(0, 210, 255, 0.2)', color: 'var(--accent-primary)', 
+                                cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                              }}
+                              onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.9)'}
+                              onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                            >📋</button>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )
