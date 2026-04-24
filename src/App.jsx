@@ -10,7 +10,7 @@ import { WalletProvider } from './context/WalletContext'
 import SupportChat from './components/SupportChat'
 import Cart from './components/Cart'
 import FloatingBackground from './components/FloatingBackground'
-import kidsGamingImg from './assets/kids_gaming_loading.png'
+import kidsGamingImg from './assets/venezuelan_kids_loading.png'
 
 // Componentes cargados dinámicamente (Lazy Load) para optimizar la velocidad inicial
 const Dashboard = lazy(() => import('./components/Dashboard'))
