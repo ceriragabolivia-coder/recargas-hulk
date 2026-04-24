@@ -162,10 +162,10 @@ export default function Ruleta() {
         {config.ruleta_descripcion && <p style={{ color: 'var(--text-muted)', fontSize: 16, margin: 0 }}>{config.ruleta_descripcion}</p>}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '40px', alignItems: 'center' }}>
+      <div className="responsive-flex-ruleta" style={{ display: 'flex', gap: '40px', alignItems: 'flex-start', justifyContent: 'center', flexWrap: 'wrap' }}>
         
-        {/* RULETA (PRIMERO) */}
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        {/* COLUMNA IZQUIERDA: RULETA */}
+        <div style={{ flex: '1 1 500px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           
           <div style={{ 
             display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 30, 
@@ -255,8 +255,9 @@ export default function Ruleta() {
           </div>
         </div>
 
-        {/* LISTA DE PREMIOS (SEGUNDO) */}
-        <div style={{ width: '100%', maxWidth: '600px' }}>
+        {/* COLUMNA DERECHA: LISTA + HISTORIAL */}
+        <div style={{ flex: '1 1 400px', maxWidth: '500px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* LISTA DE PREMIOS */}
           <div className="card" style={{ padding: '24px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
             <h2 style={{ fontSize: 20, fontWeight: 900, marginBottom: 20, display: 'flex', alignItems: 'center', gap: '10px' }}>
               📜 Inventario de Premios
@@ -283,11 +284,9 @@ export default function Ruleta() {
               ))}
             </div>
           </div>
-        </div>
 
-        {/* HISTORIAL (TERCERO) */}
-        {historial.length > 0 && (
-          <div style={{ width: '100%', maxWidth: '600px' }}>
+          {/* HISTORIAL */}
+          {historial.length > 0 && (
             <div className="card" style={{ padding: '24px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
               <h3 style={{ fontSize: 20, fontWeight: 900, marginBottom: 20, display: 'flex', alignItems: 'center', gap: '10px' }}>
                 🏆 Mis últimos premios
@@ -301,8 +300,8 @@ export default function Ruleta() {
                 ))}
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
       </div>
 
