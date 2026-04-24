@@ -140,10 +140,6 @@ export function useVentas() {
   }
 
   async function fetchVentasHoy(forceOwnSales = false) {
-    if (!perfil?.cliente_uuid) {
-       setLoading(false)
-       return 
-    }
     const hoy = getLocalDateString(new Date())
     const { start, end } = getLocalBounds(hoy)
 
@@ -165,8 +161,11 @@ export function useVentas() {
       .lte('created_at', end)
       .order('created_at', { ascending: false })
 
-    if (user?.email !== 'ceriraga@gmail.com' || forceOwnSales) {
+    if ((user?.email !== 'ceriraga@gmail.com' || forceOwnSales) && perfil?.cliente_uuid) {
       query = query.eq('vendedor_id', perfil.cliente_uuid)
+    } else if (user?.email !== 'ceriraga@gmail.com' && !perfil?.cliente_uuid) {
+      // Evitar que un admin sin perfil cargado vea todo por error
+      query = query.eq('vendedor_id', '00000000-0000-0000-0000-000000000000')
     }
 
     const { data: ventas } = await query
@@ -257,7 +256,6 @@ export function useVentas() {
   }
 
   async function fetchHistorial(fechaDesde, fechaHasta, forceOwnSales = false) {
-    if (!perfil?.cliente_uuid) return []
     const startISO = getLocalBounds(fechaDesde).start
     const endISO = getLocalBounds(fechaHasta).end
 
@@ -279,8 +277,10 @@ export function useVentas() {
       .lte('created_at', endISO)
       .order('created_at', { ascending: false })
 
-    if (user?.email !== 'ceriraga@gmail.com' || forceOwnSales) {
+    if ((user?.email !== 'ceriraga@gmail.com' || forceOwnSales) && perfil?.cliente_uuid) {
       query = query.eq('vendedor_id', perfil.cliente_uuid)
+    } else if (user?.email !== 'ceriraga@gmail.com' && !perfil?.cliente_uuid) {
+      query = query.eq('vendedor_id', '00000000-0000-0000-0000-000000000000')
     }
 
     const { data } = await query

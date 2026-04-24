@@ -421,7 +421,7 @@ export default function Checkout({ onFinish }) {
         </div>
       </div>
 
-      <div className="responsive-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '8px' }}>
+      <div className="responsive-grid-2col" style={{ display: 'grid', gap: '8px' }}>
         <div className="card">
           {currentStep === 1 ? (
             <>

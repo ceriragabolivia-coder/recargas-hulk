@@ -270,8 +270,10 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
     // 2. Si el nuevo estado es COMPLETADO y no se ha registrado la venta aún, registrarla
     if (nuevoEstado === 'completado' && !pedidoActual.venta_registrada) {
       try {
+        console.log(`📦 Registrando ventas para pedido #${pedidoActual.numero_pedido}...`)
         for (const item of (pedidoActual.pedido_items || [])) {
-          const { error: rpcError } = await supabase.rpc('registrar_venta_rpc', {
+          console.log(`🔹 Item: ${item.productos?.nombre || 'Producto'} | Vendedor: ${perfil?.cliente_uuid || 'NULL!'}`)
+          const { data, error: rpcError } = await supabase.rpc('registrar_venta_rpc', {
             p_producto_id: item.producto_id,
             p_cantidad: item.cantidad,
             p_notas: `Pedido #${pedidoActual.numero_pedido}`,
@@ -284,8 +286,13 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
             p_vendedor_id: perfil?.cliente_uuid,
             p_pedido_id: pedidoActual.id
           })
-          if (rpcError) throw rpcError
+          if (rpcError) {
+            console.error('❌ Error RPC:', rpcError)
+            throw rpcError
+          }
+          console.log('✅ Venta registrada:', data?.id)
         }
+        console.log('🏁 Registro de ventas completado.')
         updateData.venta_registrada = true
       } catch (err) {
         console.error('Error al registrar venta:', err)

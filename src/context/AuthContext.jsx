@@ -15,35 +15,46 @@ export function AuthProvider({ children }) {
   async function fetchPerfilData(userId, authUser = null) {
     if (!userId) return null
     
-    // 1. MODO VIP: Acceso instantáneo para el administrador principal
     const u = authUser || (await supabase.auth.getUser()).data?.user
-    if (u?.email === 'ceriraga@gmail.com') {
+    const isSuperAdmin = u?.email === 'ceriraga@gmail.com'
+    
+    // 1. MODO VELOZ: Retorno rápido para evitar esperas en la UI
+    // Si es SuperAdmin, retornamos admin instantáneo. Si no, esperamos un poco.
+    if (isSuperAdmin) {
       console.log('👑 Auth: Modo VIP activado para admin primario');
       
-      // Async lookup without blocking return
-      Promise.all([
-        supabase.from('perfiles').select('*').eq('id', userId).maybeSingle(),
-        supabase.from('clientes').select('*').eq('auth_user_id', userId).maybeSingle(),
-        supabase.from('billeteras').select('*').eq('auth_user_id', userId).maybeSingle()
-      ]).then(([resP, resC, resB]) => {
-        setTimeout(() => {
-          setPerfil(prev => {
-            if (!prev) return prev;
-            const clienteData = resC.data || {};
-            const perfilData = resP.data || {};
-            const walletData = resB.data || {};
-            return {
-              ...prev,
-              ...clienteData,
-              ...perfilData,
-              ...walletData,
-              cliente_uuid: clienteData.id || prev.cliente_uuid
-            }
-          });
-        }, 500); // Dar tiempo a que el setPerfil síncrono ocurra
-      }).catch(err => {
-        console.warn('⚠️ Error leve en Modo VIP asíncrono:', err);
-      });
+      const fetchFullDetails = async () => {
+        const [resP, resC, resB] = await Promise.all([
+          supabase.from('perfiles').select('*').eq('id', userId).maybeSingle(),
+          supabase.from('clientes').select('*').eq('auth_user_id', userId).maybeSingle(),
+          supabase.from('billeteras').select('*').eq('auth_user_id', userId).maybeSingle()
+        ]);
+
+        let clienteData = resC.data;
+        if (!clienteData && u) {
+          const { data: nuevo } = await supabase.from('clientes').insert({
+            auth_user_id: userId,
+            nombres: u.user_metadata?.nombres || 'Administrador',
+            apellidos: u.user_metadata?.apellidos || 'Ceriraga',
+            usuario: u.email,
+            nickname: 'Admin',
+            estado: 'aprobado'
+          }).select().maybeSingle();
+          clienteData = nuevo;
+        }
+
+        setPerfil(prev => ({
+          ...prev,
+          ...clienteData,
+          ...resP.data,
+          ...resB.data,
+          cliente_uuid: clienteData?.id || prev?.cliente_uuid,
+          rol: 'admin',
+          is_vip: true
+        }));
+      };
+
+      fetchFullDetails();
 
       return { 
         id: userId, 
@@ -56,8 +67,8 @@ export function AuthProvider({ children }) {
     }
 
     try {
-      // 2. Consulta paralela con Timeout de 2.5 segundos (Failsafe)
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 2500))
+      // 2. Consulta paralela con Timeout (Failsafe)
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 3000))
       
       const fetchPromise = (async () => {
         const [resP, resC, resB] = await Promise.all([
@@ -70,7 +81,7 @@ export function AuthProvider({ children }) {
         let clienteData = resC.data
         const walletData = resB.data
         
-        // Auto-creación de cliente si no existe
+        // Auto-creación de cliente si no existe (PARA TODOS LOS USUARIOS, INCLUYENDO ADMINS)
         if (!clienteData && u) {
           const { data: nuevoCliente } = await supabase.from('clientes').insert({
             auth_user_id: userId,
@@ -79,7 +90,7 @@ export function AuthProvider({ children }) {
             usuario: u.email || userId,
             nickname: u.user_metadata?.nickname || 'Usuario',
             whatsapp: u.user_metadata?.whatsapp || '',
-            estado: 'aprobado'
+            estado: 'aprobado' // Por defecto aprobado para que puedan operar
           }).select().maybeSingle()
           clienteData = nuevoCliente
         }
@@ -87,7 +98,7 @@ export function AuthProvider({ children }) {
         return { 
           ...clienteData, 
           ...perfilData, 
-          ...walletData, // Restauramos saldo, saldo_bs, etc.
+          ...walletData,
           id: userId, 
           cliente_uuid: clienteData?.id || null,
           rol: (perfilData?.rol || clienteData?.rol || 'cliente').toLowerCase(),
@@ -98,7 +109,7 @@ export function AuthProvider({ children }) {
 
       return await Promise.race([fetchPromise, timeoutPromise])
     } catch (err) {
-      console.warn('⚠️ Auth: Usando perfil de emergencia debido a lentitud/error');
+      console.warn('⚠️ Auth: Error o Timeout en carga de perfil');
       return { id: userId, rol: 'cliente', estado: 'cargando', is_fallback: true }
     }
   }
