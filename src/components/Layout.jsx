@@ -927,7 +927,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
           ) : perfil?.rol === 'negocio' ? (
             <>
               <div className="nav-section-label">Panel de Negocio</div>
-              {NAV_ITEMS.filter(item => (perfil.config_modulos || []).includes(item.key)).map(renderNavItem)}
+              {NAV_ITEMS.filter(item => (perfil.config_modulos || []).includes(item.key) || item.key === 'config').map(renderNavItem)}
               <div className="nav-section-label">Cuenta</div>
               {NAV_ITEMS.filter(i => ['perfil'].includes(i.key)).map(renderNavItem)}
             </>

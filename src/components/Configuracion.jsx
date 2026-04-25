@@ -11,7 +11,7 @@ export default function Configuracion() {
   const { enviarNotificacion } = useNotificacionesPush()
   const { perfil } = useAuth()
   const isNegocio = perfil?.rol === 'negocio'
-  const [activeTab, setActiveTab] = useState(isNegocio ? 'general' : 'pagos')
+  const [activeTab, setActiveTab] = useState(isNegocio ? 'efectos' : 'pagos')
   
   // Estado para el formulario de edición/creación
   const [isEditing, setIsEditing] = useState(false)
@@ -338,41 +338,47 @@ export default function Configuracion() {
               💳 Métodos de Pago
             </button>
           )}
-          <button 
-            className={`btn ${activeTab === 'general' ? 'btn-primary' : 'btn-ghost'}`}
-            style={{ justifyContent: 'flex-start', textAlign: 'left' }}
-            onClick={() => setActiveTab('general')}
-          >
-            ⚙️ General
-          </button>
-          <button 
-            className={`btn ${activeTab === 'taskbar' ? 'btn-primary' : 'btn-ghost'}`}
-            style={{ justifyContent: 'flex-start', textAlign: 'left' }}
-            onClick={() => setActiveTab('taskbar')}
-          >
-            🔔 Barra de Tareas
-          </button>
-          <button 
-            className={`btn ${activeTab === 'mensajes' ? 'btn-primary' : 'btn-ghost'}`}
-            style={{ justifyContent: 'flex-start', textAlign: 'left' }}
-            onClick={() => setActiveTab('mensajes')}
-          >
-            📢 Mensajes Pop-up
-          </button>
-          <button 
-            className={`btn ${activeTab === 'notificaciones' ? 'btn-primary' : 'btn-ghost'}`}
-            style={{ justifyContent: 'flex-start', textAlign: 'left' }}
-            onClick={() => setActiveTab('notificaciones')}
-          >
-            🔔 Notificaciones Push
-          </button>
-          <button 
-            className={`btn ${activeTab === 'cashback' ? 'btn-primary' : 'btn-ghost'}`}
-            style={{ justifyContent: 'flex-start', textAlign: 'left' }}
-            onClick={() => setActiveTab('cashback')}
-          >
-            💸 Cash Back
-          </button>
+          {!isNegocio && (
+            <button 
+              className={`btn ${activeTab === 'general' ? 'btn-primary' : 'btn-ghost'}`}
+              style={{ justifyContent: 'flex-start', textAlign: 'left' }}
+              onClick={() => setActiveTab('general')}
+            >
+              ⚙️ General
+            </button>
+          )}
+          {!isNegocio && (
+            <>
+              <button 
+                className={`btn ${activeTab === 'taskbar' ? 'btn-primary' : 'btn-ghost'}`}
+                style={{ justifyContent: 'flex-start', textAlign: 'left' }}
+                onClick={() => setActiveTab('taskbar')}
+              >
+                🔔 Barra de Tareas
+              </button>
+              <button 
+                className={`btn ${activeTab === 'mensajes' ? 'btn-primary' : 'btn-ghost'}`}
+                style={{ justifyContent: 'flex-start', textAlign: 'left' }}
+                onClick={() => setActiveTab('mensajes')}
+              >
+                📢 Mensajes Pop-up
+              </button>
+              <button 
+                className={`btn ${activeTab === 'notificaciones' ? 'btn-primary' : 'btn-ghost'}`}
+                style={{ justifyContent: 'flex-start', textAlign: 'left' }}
+                onClick={() => setActiveTab('notificaciones')}
+              >
+                🔔 Notificaciones Push
+              </button>
+              <button 
+                className={`btn ${activeTab === 'cashback' ? 'btn-primary' : 'btn-ghost'}`}
+                style={{ justifyContent: 'flex-start', textAlign: 'left' }}
+                onClick={() => setActiveTab('cashback')}
+              >
+                💸 Cash Back
+              </button>
+            </>
+          )}
           <button 
             className={`btn ${activeTab === 'efectos' ? 'btn-primary' : 'btn-ghost'}`}
             style={{ justifyContent: 'flex-start', textAlign: 'left' }}
