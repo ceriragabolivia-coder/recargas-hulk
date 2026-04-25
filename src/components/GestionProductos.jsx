@@ -116,6 +116,7 @@ export default function GestionProductos() {
     else {
       setNewCategoryName('')
       setAlertModal({ type: 'success', message: 'Categoría creada con éxito' })
+      setIsCategoryModalOpen(false)
     }
     setSaving(false)
   }
