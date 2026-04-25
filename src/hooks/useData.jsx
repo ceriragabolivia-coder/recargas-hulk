@@ -139,7 +139,9 @@ export function useVentas() {
     return { start: startObj.toISOString(), end: endObj.toISOString() }
   }
 
-  async function fetchVentasHoy(forceOwnSales = false) {
+  const lastForceOwnSalesRef = useRef(false)
+  const fetchVentasHoy = async (forceOwnSales = false) => {
+    lastForceOwnSalesRef.current = forceOwnSales
     const hoy = getLocalDateString(new Date())
     const { start, end } = getLocalBounds(hoy)
     console.log(`📊 Fetching sales from ${start} to ${end}`)
@@ -332,6 +334,27 @@ export function useVentas() {
     }
     return { data, error }
   }
+
+  useEffect(() => {
+    if (!perfil?.id) return
+
+    // Suscripción Realtime para la tabla ventas
+    const channel = supabase
+      .channel('ventas_realtime_hook')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'ventas' 
+      }, (payload) => {
+        console.log('🔄 Venta detectada (Realtime), actualizando resumen...', payload)
+        fetchVentasHoy(lastForceOwnSalesRef.current)
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [perfil?.id])
 
   useEffect(() => { 
     if (perfil?.id) fetchVentasHoy() 

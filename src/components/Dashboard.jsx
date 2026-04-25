@@ -455,6 +455,20 @@ export default function Dashboard() {
     refetchVentas(viewMode === 'own')
   }, [viewMode])
 
+  // Suscripción Realtime para actualizar gráficas cuando haya ventas
+  React.useEffect(() => {
+    const channel = supabase
+      .channel('dashboard_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ventas' }, () => {
+        setRefreshKey(k => k + 1)
+      })
+      .subscribe()
+    
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
   // Limpieza automática de comprobantes antiguos (> 20 días)
   React.useEffect(() => {
     if (isAdmin && limpiarComprobantes) {
