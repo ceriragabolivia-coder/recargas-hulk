@@ -179,7 +179,7 @@ const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
 
         {/* Rutas Administrativas */}
         <Route path="/Dashboard" element={isAdmin ? <Dashboard /> : <Navigate to="/Lista-De-Precios" replace />} />
-        <Route path="/Registro-Ventas" element={isAdmin ? <RegistroVentas /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Registro-Ventas" element={isAdmin ? <RegistroVentas onNavigate={handleNavigate} /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Gestion-Productos" element={isAdmin ? <GestionProductos /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Configuracion" element={isAdmin ? <Configuracion /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Usuarios" element={isAdmin ? <Usuarios onNavigate={handleNavigate} /> : <Navigate to="/Lista-De-Precios" replace />} />

@@ -3,16 +3,18 @@ import {
   useJuegos,
   useProductos,
   useConfiguracion,
-  useVentas,
-  useTodosLosProductos
+   useVentas,
+  useTodosLosProductos,
+  useUsuarios
 } from '../hooks/useData'
 import { calcularPrecioVenta, formatUSD, formatBs, playCashRegisterSound } from '../utils/helpers'
 import AlertModal from './AlertModal'
 
-export default function RegistroVentas() {
+export default function RegistroVentas({ onNavigate }) {
   const { juegos, categorias, loading: loadingJuegos } = useJuegos()
   const { config, loading: loadingConfig } = useConfiguracion()
   const { ventasHoy, resumen, registrarVenta, deleteVenta, loading: loadingVentas } = useVentas()
+  const { clientes: allClients } = useUsuarios()
 
   const [selectedCategoria, setSelectedCategoria] = useState('Todas')
   const [search, setSearch] = useState('')
@@ -102,6 +104,13 @@ export default function RegistroVentas() {
   const getTasaDelDiaLabel = () => {
     if (!config || Object.keys(config).length === 0) return 'Cargando...'
     return `Tasa Oficial: Bs ${config.tasa_dolar}`
+  }
+
+  const getClienteName = (authUserId) => {
+    if (!authUserId || !allClients) return '-'
+    const c = allClients.find(cl => cl.auth_user_id === authUserId)
+    if (!c) return 'Sistema'
+    return c.nickname || `${c.nombres} ${c.apellidos || ''}`
   }
 
   if (loadingJuegos || loadingConfig || loadingVentas) {
@@ -437,10 +446,29 @@ export default function RegistroVentas() {
 
               {selectedVentaDetalle.pedido ? (
                 <div style={{ padding: '10px', backgroundColor: 'rgba(0,210,255,0.05)', borderRadius: '8px', border: '1px solid rgba(0,210,255,0.1)' }}>
-                  <div style={{ fontWeight: 'bold', color: 'var(--accent-primary)', marginBottom: '8px' }}>DATOS DEL PEDIDO #{selectedVentaDetalle.pedido.numero_pedido}</div>
-                  <div style={{ marginBottom: '4px' }}><strong>Cliente:</strong> {selectedVentaDetalle.pedido.cliente?.nombres} {selectedVentaDetalle.pedido.cliente?.apellidos}</div>
+                  <div style={{ fontWeight: 'bold', color: 'var(--accent-primary)', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div 
+                      style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                      onClick={() => onNavigate('pedidos', { orderId: selectedVentaDetalle.pedido.id })}
+                      title="Ver resumen del pedido"
+                    >
+                      DATOS DEL PEDIDO #{selectedVentaDetalle.pedido.numero_pedido}
+                    </div>
+                    <button 
+                      className="btn btn-sm btn-ghost" 
+                      style={{ fontSize: '10px', padding: '2px 8px', height: 'auto', border: '1px solid var(--accent-primary)' }}
+                      onClick={() => onNavigate('pedidos', { orderId: selectedVentaDetalle.pedido.id })}
+                    >
+                      👁️ Ver Detalles
+                    </button>
+                  </div>
+                  <div style={{ marginBottom: '4px' }}>
+                    <strong>Cliente:</strong> {getClienteName(selectedVentaDetalle.pedido.cliente_id)}
+                  </div>
                   <div style={{ marginBottom: '4px' }}><strong>Referencia:</strong> {selectedVentaDetalle.pedido.referencia_pago}</div>
-                  <div style={{ marginBottom: '4px' }}><strong>Procesado por:</strong> {selectedVentaDetalle.pedido.atendido_por?.nickname || selectedVentaDetalle.pedido.atendido_por?.nombres || '-'}</div>
+                  <div style={{ marginBottom: '4px' }}>
+                    <strong>Procesado por:</strong> {getClienteName(selectedVentaDetalle.pedido.atendido_por_id)}
+                  </div>
                   <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                     <strong>Items:</strong>
                     <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
