@@ -5,13 +5,13 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-async function checkIcon() {
-  const { error } = await supabase.from('categorias').select('icono').limit(1);
+async function checkConfigModulos() {
+  const { error } = await supabase.from('perfiles').select('config_modulos').limit(1);
   if (error) {
-    console.log(`Column icono in categorias MISSING (${error.message})`);
+    console.log(`Column config_modulos in perfiles MISSING (${error.message})`);
   } else {
-    console.log(`Column icono in categorias EXISTS`);
+    console.log(`Column config_modulos in perfiles EXISTS`);
   }
 }
 
-checkIcon();
+checkConfigModulos();
