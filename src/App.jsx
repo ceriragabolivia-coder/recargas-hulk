@@ -177,20 +177,20 @@ const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
         <Route path="/Mis-Pedidos" element={<Pedidos params={currentParams} onNavigate={handleNavigate} />} />
         <Route path="/Gestion-Pedidos" element={<Pedidos params={currentParams} onNavigate={handleNavigate} />} />
 
-        {/* Rutas Administrativas */}
-        <Route path="/Dashboard" element={isAdmin ? <Dashboard /> : <Navigate to="/Lista-De-Precios" replace />} />
-        <Route path="/Registro-Ventas" element={isAdmin ? <RegistroVentas onNavigate={handleNavigate} /> : <Navigate to="/Lista-De-Precios" replace />} />
-        <Route path="/Gestion-Productos" element={isAdmin ? <GestionProductos /> : <Navigate to="/Lista-De-Precios" replace />} />
-        <Route path="/Configuracion" element={isAdmin ? <Configuracion /> : <Navigate to="/Lista-De-Precios" replace />} />
+        {/* Rutas Administrativas (Admin y Negocio) */}
+        <Route path="/Dashboard" element={(isAdmin || isNegocio) ? <Dashboard /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Registro-Ventas" element={(isAdmin || isNegocio) ? <RegistroVentas onNavigate={handleNavigate} /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Gestion-Productos" element={(isAdmin || isNegocio) ? <GestionProductos /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Configuracion" element={(isAdmin || isNegocio) ? <Configuracion /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Usuarios" element={isAdmin ? <Usuarios onNavigate={handleNavigate} /> : <Navigate to="/Lista-De-Precios" replace />} />
-        <Route path="/Reportes" element={isAdmin ? <Reportes /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Reportes" element={(isAdmin || isNegocio) ? <Reportes /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Pagos-Admins" element={isAdmin ? <PagosAdmins /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Revendedores" element={isAdmin ? <Revendedores onNavigate={handleNavigate} /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Gestion-Ruleta" element={isAdmin ? <GestionRuleta /> : <Navigate to="/Lista-De-Precios" replace />} />
 
         {/* Redirección por defecto */}
-        <Route path="/" element={<Navigate to={isAdmin ? "/Dashboard" : "/Lista-De-Precios"} replace />} />
-        <Route path="*" element={<Navigate to={isAdmin ? "/Dashboard" : "/Lista-De-Precios"} replace />} />
+        <Route path="/" element={<Navigate to={(isAdmin || isNegocio) ? "/Dashboard" : "/Lista-De-Precios"} replace />} />
+        <Route path="*" element={<Navigate to={(isAdmin || isNegocio) ? "/Dashboard" : "/Lista-De-Precios"} replace />} />
       </Routes>
     </Suspense>
   )
@@ -249,14 +249,17 @@ export default function App() {
     localStorage.setItem('lastPage', currentPage)
   }, [currentPage])
 
+  const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
+  const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
+
   // Solo redirigimos automáticamente la PRIMERA vez que cargamos el perfil
   const hasRedirectedRef = React.useRef(false)
   React.useEffect(() => {
     if (perfil && !hasRedirectedRef.current && location.pathname === '/') {
-      navigate(perfil.rol === 'admin' ? '/Dashboard' : '/Lista-De-Precios', { replace: true })
+      navigate((isAdmin || isNegocio) ? '/Dashboard' : '/Lista-De-Precios', { replace: true })
       hasRedirectedRef.current = true
     }
-  }, [perfil, location.pathname])
+  }, [perfil, location.pathname, isAdmin, isNegocio])
 
   const [forceLoad, setForceLoad] = useState(false)
   useEffect(() => {
@@ -286,8 +289,6 @@ export default function App() {
   if (perfil?.estado === 'rechazado') return <RejectedView onLogout={logout} onRefresh={refetch} />
   if (perfil?.estado === 'suspendido') return <SuspendedView onLogout={logout} onRefresh={refetch} type="suspendido" />
   if (perfil?.estado === 'baneado') return <SuspendedView onLogout={logout} onRefresh={refetch} type="baneado" />
-
-  const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
 
   return (
     <WalletProvider>
