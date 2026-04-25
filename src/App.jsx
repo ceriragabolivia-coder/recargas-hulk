@@ -142,6 +142,7 @@ const SuspendedView = ({ onLogout, onRefresh, type = 'suspendido' }) => (
 
 // Componente de rutas separado para evitar re-montado al cambiar estado de App
 const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
+  const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
   const fallback = (
     <div className="loading-screen">
       <div className="spinner"></div>
