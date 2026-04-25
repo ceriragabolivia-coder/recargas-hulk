@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { useMetodosPago, useConfiguracion, useMensajesSistema, useNotificacionesPush } from '../hooks/useData'
+import { useMetodosPago, useConfiguracion, useMensajesSistema, useNotificacionesPush, useAuth } from '../hooks/useData'
 import { supabase } from '../lib/supabase'
 import { removeWhiteBackground } from '../utils/helpers'
 import AlertModal from './AlertModal'
@@ -9,7 +9,9 @@ export default function Configuracion() {
   const { config, updateConfig, refetch: refetchConfig, loading: configLoading } = useConfiguracion()
   const { mensajes, loading: mensajesLoading, createMensaje, updateMensaje, deleteMensaje } = useMensajesSistema()
   const { enviarNotificacion } = useNotificacionesPush()
-  const [activeTab, setActiveTab] = useState('pagos')
+  const { perfil } = useAuth()
+  const isNegocio = perfil?.rol === 'negocio'
+  const [activeTab, setActiveTab] = useState(isNegocio ? 'general' : 'pagos')
   
   // Estado para el formulario de edición/creación
   const [isEditing, setIsEditing] = useState(false)
@@ -327,13 +329,15 @@ export default function Configuracion() {
       <div className="responsive-grid-2col" style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '32px' }}>
         {/* Sidebar de Configuración */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <button 
-            className={`btn ${activeTab === 'pagos' ? 'btn-primary' : 'btn-ghost'}`}
-            style={{ justifyContent: 'flex-start', textAlign: 'left' }}
-            onClick={() => setActiveTab('pagos')}
-          >
-            💳 Métodos de Pago
-          </button>
+          {!isNegocio && (
+            <button 
+              className={`btn ${activeTab === 'pagos' ? 'btn-primary' : 'btn-ghost'}`}
+              style={{ justifyContent: 'flex-start', textAlign: 'left' }}
+              onClick={() => setActiveTab('pagos')}
+            >
+              💳 Métodos de Pago
+            </button>
+          )}
           <button 
             className={`btn ${activeTab === 'general' ? 'btn-primary' : 'btn-ghost'}`}
             style={{ justifyContent: 'flex-start', textAlign: 'left' }}
