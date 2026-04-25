@@ -930,14 +930,8 @@ export default function GestionProductos() {
             </button>
           </div>
         </form>
-      </div>
-    </div>
-  )
-}
-
-{/* MODAL CREAR JUEGO */ }
-{
-  isGameModalOpen && (
+{/* MODAL CREAR JUEGO */}
+{isGameModalOpen && (
     <div className="modal-overlay">
       <div className="modal">
         <h2 className="modal-title">Añadir Nuevo Servicio</h2>
@@ -961,6 +955,7 @@ export default function GestionProductos() {
               onChange={e => setFormGame({ ...formGame, categoria_id: e.target.value })}
               required
             >
+              <option value="">Selecciona una categoría</option>
               {categorias.map(c => (
                 <option key={c.id} value={c.id}>{c.nombre}</option>
               ))}
@@ -1109,11 +1104,10 @@ export default function GestionProductos() {
         </form>
       </div>
     </div>
-  )
-}
+)}
 
 {/* MODAL GESTIÓN DE CATEGORÍAS */}
-  {isCategoryModalOpen && (
+{isCategoryModalOpen && (
     <div className="modal-overlay">
       <div className="modal" style={{ maxWidth: '400px' }}>
         <h2 className="modal-title">Gestión de Categorías</h2>
@@ -1153,7 +1147,7 @@ export default function GestionProductos() {
         </div>
       </div>
     </div>
-  )}
+)}
 
   <AlertModal
     isOpen={!!alertModal}
@@ -1164,8 +1158,5 @@ export default function GestionProductos() {
     onCancel={() => setAlertModal(null)}
   />
 </div>
-  )
-}
-    </div >
   )
 }
