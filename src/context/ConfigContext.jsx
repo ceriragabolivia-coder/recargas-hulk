@@ -62,10 +62,17 @@ export function ConfigProvider({ children }) {
     const payload = isText ? { clave, valor_texto: String(valor), valor: 0 } : { clave, valor: Number(valor) }
     if (isNegocio) payload.owner_id = user.id
 
-    // Usar upsert con clave y owner_id
-    const { error } = await supabase
-      .from('configuracion')
-      .upsert(payload, { onConflict: isNegocio ? 'clave,owner_id' : 'clave' })
+    // Usar la función RPC para evitar problemas con upsert y constraints nulos
+    const { error } = await supabase.rpc('update_config_rpc', {
+      p_clave: clave,
+      p_valor: isText ? null : Number(valor),
+      p_valor_texto: isText ? String(valor) : null,
+      p_owner_id: isNegocio ? user.id : null
+    })
+    
+    if (error) {
+      console.error("Error al actualizar configuración:", error)
+    }
     
     return { error }
   }
