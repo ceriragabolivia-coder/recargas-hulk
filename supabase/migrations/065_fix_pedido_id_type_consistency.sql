@@ -4,7 +4,7 @@
 -- 1. Fix reembolsar_pedido_rpc
 DROP FUNCTION IF EXISTS public.reembolsar_pedido_rpc(uuid, uuid, text, text);
 CREATE OR REPLACE FUNCTION public.reembolsar_pedido_rpc(
-    p_pedido_id INT,
+    p_pedido_id UUID,
     p_admin_id UUID,
     p_notas TEXT DEFAULT NULL,
     p_moneda TEXT DEFAULT 'usd',
@@ -80,7 +80,7 @@ DROP FUNCTION IF EXISTS public.pagar_con_billetera_rpc(uuid, numeric, uuid, text
 CREATE OR REPLACE FUNCTION public.pagar_con_billetera_rpc(
     p_user_id UUID,
     p_amount NUMERIC,
-    p_pedido_id INT,
+    p_pedido_id UUID,
     p_description TEXT
 ) RETURNS BOOLEAN AS $$
 DECLARE
@@ -115,7 +115,7 @@ DROP FUNCTION IF EXISTS public.pagar_con_billetera_bs_rpc(uuid, numeric, uuid, t
 CREATE OR REPLACE FUNCTION public.pagar_con_billetera_bs_rpc(
     p_user_id UUID,
     p_amount NUMERIC,
-    p_pedido_id INT,
+    p_pedido_id UUID,
     p_description TEXT
 ) RETURNS BOOLEAN AS $$
 DECLARE

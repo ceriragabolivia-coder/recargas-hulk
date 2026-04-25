@@ -19,7 +19,7 @@ CREATE OR REPLACE FUNCTION public.registrar_venta_rpc(
     p_player_id TEXT DEFAULT NULL,
     p_account_email TEXT DEFAULT NULL,
     p_account_password TEXT DEFAULT NULL,
-    p_pedido_id INT DEFAULT NULL
+    p_pedido_id UUID DEFAULT NULL
 ) RETURNS JSON AS $$
 DECLARE
     v_producto RECORD;
