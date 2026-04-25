@@ -10,10 +10,12 @@ export default function GestionProductos() {
   const { config, loading: loadingConfig } = useConfiguracion()
   const [selectedJuego, setSelectedJuego] = useState(null)
   const [searchJuego, setSearchJuego] = useState('')
-  const { productos, loading: loadingProductos, createProducto, updateProducto, deleteProducto, toggleProducto, reorderProductos } = useProductos(selectedJuego?.id)
+  const { productos, loading: loadingProductos, createProducto, updateProducto, deleteProducto, toggleProducto, reorderProductos, createCategoria } = useProductos(selectedJuego?.id)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isGameModalOpen, setIsGameModalOpen] = useState(false)
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
   const [saving, setSaving] = useState(false)
   const [alertModal, setAlertModal] = useState(null) // { type, title, message, onConfirm }
 
@@ -103,6 +105,19 @@ export default function GestionProductos() {
     if (res.error) setAlertModal({ type: 'error', message: "Error: " + res.error.message })
     setSaving(false)
     setIsGameModalOpen(false)
+  }
+
+  const handleCreateCategory = async (e) => {
+    e.preventDefault()
+    if (!newCategoryName.trim()) return
+    setSaving(true)
+    const { error } = await createCategoria({ nombre: newCategoryName, activa: true, orden: categorias.length })
+    if (error) setAlertModal({ type: 'error', message: "Error: " + error.message })
+    else {
+      setNewCategoryName('')
+      setAlertModal({ type: 'success', message: 'Categoría creada con éxito' })
+    }
+    setSaving(false)
   }
 
   const handleDeleteJuego = async () => {
@@ -428,7 +443,10 @@ export default function GestionProductos() {
         <div className="card juegos-column" style={{ width: '280px', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
           <div className="section-header" style={{ marginBottom: '16px' }}>
             <h2 className="card-title" style={{ margin: 0 }}>Juegos</h2>
-            <button className="btn btn-ghost btn-sm" onClick={handleOpenGameModal} title="Añadir Juego">+</button>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => setIsCategoryModalOpen(true)} title="Gestionar Categorías">📁</button>
+              <button className="btn btn-ghost btn-sm" onClick={handleOpenGameModal} title="Añadir Juego">+</button>
+            </div>
           </div>
           <div className="search-box" style={{ width: '100%', marginBottom: '4px' }}>
             <span className="search-icon">🔍</span>
@@ -1094,16 +1112,58 @@ export default function GestionProductos() {
   )
 }
 
-{
-  alertModal && (
-    <AlertModal
-      isOpen={!!alertModal}
-      type={alertModal.type}
-      title={alertModal.title}
-      message={alertModal.message}
-      onConfirm={alertModal.onConfirm}
-      onCancel={() => setAlertModal(null)}
-    />
+{/* MODAL GESTIÓN DE CATEGORÍAS */}
+  {isCategoryModalOpen && (
+    <div className="modal-overlay">
+      <div className="modal" style={{ maxWidth: '400px' }}>
+        <h2 className="modal-title">Gestión de Categorías</h2>
+        <div style={{ marginBottom: '20px' }}>
+          <form onSubmit={handleCreateCategory} style={{ display: 'flex', gap: '8px' }}>
+            <input 
+              type="text" 
+              className="form-input" 
+              placeholder="Nueva categoría..." 
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              required
+            />
+            <button className="btn btn-primary" type="submit" disabled={saving}>
+              {saving ? '...' : '+'}
+            </button>
+          </form>
+        </div>
+        
+        <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+          {categorias.length === 0 ? (
+            <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+              No hay categorías creadas.
+            </div>
+          ) : (
+            categorias.map(cat => (
+              <div key={cat.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid var(--border-color)' }}>
+                <span style={{ fontSize: '14px' }}>{cat.nombre}</span>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>#{cat.orden}</span>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="modal-actions" style={{ marginTop: '24px' }}>
+          <button className="btn btn-ghost" onClick={() => setIsCategoryModalOpen(false)}>Cerrar</button>
+        </div>
+      </div>
+    </div>
+  )}
+
+  <AlertModal
+    isOpen={!!alertModal}
+    type={alertModal?.type}
+    title={alertModal?.title}
+    message={alertModal?.message}
+    onConfirm={alertModal?.onConfirm}
+    onCancel={() => setAlertModal(null)}
+  />
+</div>
   )
 }
     </div >

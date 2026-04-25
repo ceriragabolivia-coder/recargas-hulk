@@ -5,7 +5,7 @@ import {
   useConfiguracion,
    useVentas,
   useTodosLosProductos,
-  useUsuarios
+  useClientes
 } from '../hooks/useData'
 import { calcularPrecioVenta, formatUSD, formatBs, playCashRegisterSound } from '../utils/helpers'
 import AlertModal from './AlertModal'
@@ -14,7 +14,7 @@ export default function RegistroVentas({ onNavigate }) {
   const { juegos, categorias, loading: loadingJuegos } = useJuegos()
   const { config, loading: loadingConfig } = useConfiguracion()
   const { ventasHoy, resumen, registrarVenta, deleteVenta, loading: loadingVentas } = useVentas()
-  const { clientes: allClients } = useUsuarios()
+  const { clientes: allClients } = useClientes()
 
   const [selectedCategoria, setSelectedCategoria] = useState('Todas')
   const [search, setSearch] = useState('')

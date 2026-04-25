@@ -20,18 +20,34 @@ export function useJuegos() {
   const [categorias, setCategorias] = useState([])
   const [loading, setLoading] = useState(true)
 
+  const { perfil, user } = useAuth()
+  const isNegocio = perfil?.rol === 'negocio'
+
   async function fetchJuegos() {
+    let jSelect = supabase.from('juegos').select('*, descuento_revendedor').eq('activo', true)
+    let cSelect = supabase.from('categorias').select('*').eq('activa', true)
+
+    if (isNegocio) {
+      jSelect = jSelect.eq('owner_id', user.id)
+      cSelect = cSelect.eq('owner_id', user.id)
+    } else {
+      jSelect = jSelect.is('owner_id', null)
+      cSelect = cSelect.is('owner_id', null)
+    }
+
     const [jRes, cRes] = await Promise.all([
-      supabase.from('juegos').select('*, descuento_revendedor').eq('activo', true).order('nombre'),
-      supabase.from('categorias').select('*').eq('activa', true).order('orden')
+      jSelect.order('nombre'),
+      cSelect.order('orden')
     ])
+    
     if (jRes.data) setJuegos(jRes.data)
     if (cRes.data) setCategorias(cRes.data)
     setLoading(false)
   }
 
   async function createJuego(data) {
-    const { data: nuevo, error } = await supabase.from('juegos').insert(data).select().single()
+    const payload = isNegocio ? { ...data, owner_id: user.id } : data
+    const { data: nuevo, error } = await supabase.from('juegos').insert(payload).select().single()
     if (!error && nuevo) setJuegos(prev => [...prev, nuevo].sort((a, b) => a.nombre.localeCompare(b.nombre)))
     return { data: nuevo, error }
   }
@@ -60,13 +76,23 @@ export function useProductos(juegoId) {
   const [productos, setProductos] = useState([])
   const [loading, setLoading] = useState(true)
 
+  const { perfil, user } = useAuth()
+  const isNegocio = perfil?.rol === 'negocio'
+
   async function fetchProductos() {
     if (!juegoId) { setProductos([]); setLoading(false); return }
-    const { data } = await supabase
+    let query = supabase
       .from('productos')
       .select('*, descuento_revendedor')
       .eq('juego_id', juegoId)
-      .order('orden')
+
+    if (isNegocio) {
+      query = query.eq('owner_id', user.id)
+    } else {
+      query = query.is('owner_id', null)
+    }
+
+    const { data } = await query.order('orden')
     if (data) setProductos(data)
     setLoading(false)
   }
@@ -78,8 +104,28 @@ export function useProductos(juegoId) {
     return { error }
   }
 
+  async function fetchCategorias() {
+    let query = supabase.from('categorias').select('*')
+    if (isNegocio) {
+      query = query.eq('owner_id', user.id)
+    } else {
+      query = query.is('owner_id', null)
+    }
+    const { data } = await query.order('orden')
+    if (data) setCategorias(data)
+    setLoading(false)
+  }
+
+  async function createCategoria(data) {
+    const payload = isNegocio ? { ...data, owner_id: user.id } : data
+    const { data: nuevo, error } = await supabase.from('categorias').insert(payload).select().single()
+    if (!error && nuevo) setCategorias(prev => [...prev, nuevo])
+    return { data: nuevo, error }
+  }
+
   async function createProducto(data) {
     const payload = { ...data, juego_id: juegoId }
+    if (isNegocio) payload.owner_id = user.id
     const { data: nuevo, error } = await supabase.from('productos').insert(payload).select().single()
     if (!error && nuevo) setProductos(prev => [...prev, nuevo])
     return { data: nuevo, error }
@@ -119,9 +165,9 @@ export function useProductos(juegoId) {
     })
   }
 
-  useEffect(() => { fetchProductos() }, [juegoId])
+  useEffect(() => { fetchProductos(); fetchCategorias() }, [juegoId])
 
-  return { productos, loading, createProducto, updateProducto, deleteProducto, toggleProducto, reorderProductos, refetch: fetchProductos }
+  return { productos, categorias, loading, createProducto, updateProducto, deleteProducto, toggleProducto, reorderProductos, createCategoria, refetch: fetchProductos }
 }
 
 // ========================
@@ -132,6 +178,7 @@ export function useVentas() {
   const [ventasHoy, setVentasHoy] = useState([])
   const [resumen, setResumen] = useState(null)
   const [loading, setLoading] = useState(true)
+  const lastForceOwnSalesRef = useRef(false)
 
   function getLocalBounds(dateStr) {
     const startObj = new Date(dateStr + 'T00:00:00-04:00');
@@ -139,8 +186,9 @@ export function useVentas() {
     return { start: startObj.toISOString(), end: endObj.toISOString() }
   }
 
-  const lastForceOwnSalesRef = useRef(false)
-  const fetchVentasHoy = async (forceOwnSales = false) => {
+  const isNegocio = perfil?.rol === 'negocio'
+
+  async function fetchVentasHoy(forceOwnSales = false) {
     lastForceOwnSalesRef.current = forceOwnSales
     const hoy = getLocalDateString(new Date())
     const { start, end } = getLocalBounds(hoy)
@@ -162,7 +210,14 @@ export function useVentas() {
       `)
       .gte('created_at', start)
       .lte('created_at', end)
-      .order('created_at', { ascending: false })
+
+    if (isNegocio) {
+      query = query.eq('owner_id', user.id)
+    } else {
+      query = query.is('owner_id', null)
+    }
+
+    query = query.order('created_at', { ascending: false })
 
     const userEmail = user?.email?.toLowerCase()
     const isSuperAdmin = userEmail === 'ceriraga@gmail.com'
@@ -207,7 +262,8 @@ export function useVentas() {
       p_player_id: player_id,
       p_account_email: account_email,
       p_account_password: account_password,
-      p_vendedor_id: perfil?.cliente_uuid
+      p_vendedor_id: perfil?.cliente_uuid,
+      p_owner_id: isNegocio ? user.id : null
     })
     if (!error) {
       await fetchVentasHoy()
@@ -284,6 +340,12 @@ export function useVentas() {
       .lte('created_at', endISO)
       .order('created_at', { ascending: false })
 
+    if (isNegocio) {
+      query = query.eq('owner_id', user.id)
+    } else {
+      query = query.is('owner_id', null)
+    }
+
     if ((user?.email !== 'ceriraga@gmail.com' || forceOwnSales) && perfil?.cliente_uuid) {
       query = query.eq('vendedor_id', perfil.cliente_uuid)
     } else if (user?.email !== 'ceriraga@gmail.com' && !perfil?.cliente_uuid) {
@@ -317,7 +379,7 @@ export function useVentas() {
     const gananciaNumber = Number(gananciaUsd) || 0;
     const ventaBs = gananciaNumber * tasa;
     
-    const { data, error } = await supabase.from('ventas').insert({
+    const insertPayload = {
       tasa_dolar_momento: tasa,
       real_dolar_momento: appConfig?.real_dolar || tasa,
       tasa_binance_momento: appConfig?.tasa_binance || tasa,
@@ -328,8 +390,11 @@ export function useVentas() {
       ganancia_usd: gananciaNumber,
       notas: concepto,
       cantidad: 1,
-      vendedor_id: perfil?.cliente_uuid
-    }).select().single()
+      vendedor_id: perfil?.cliente_uuid,
+      owner_id: isNegocio ? user.id : null
+    }
+
+    const { data, error } = await supabase.from('ventas').insert(insertPayload).select().single()
 
     if (!error) {
       await fetchVentasHoy()
@@ -384,15 +449,24 @@ export function useVentas() {
 export function useTodosLosProductos() {
   const [productos, setProductos] = useState([])
   const [loading, setLoading] = useState(true)
+  const { perfil, user } = useAuth()
+  const isNegocio = perfil?.rol === 'negocio'
 
   async function fetchProductos() {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('productos')
         .select('*, juegos!inner(*, categorias(icono))')
         .eq('activo', true)
         .eq('juegos.activo', true)
-        .order('nombre')
+
+      if (isNegocio) {
+        query = query.eq('owner_id', user.id)
+      } else {
+        query = query.is('owner_id', null)
+      }
+
+      const { data, error } = await query.order('nombre')
       
       if (error) {
         console.error('Error fetching products:', error)
@@ -406,7 +480,9 @@ export function useTodosLosProductos() {
     }
   }
 
-  useEffect(() => { fetchProductos() }, [])
+  useEffect(() => {
+    fetchProductos()
+  }, [])
 
   return { productos, loading, refetch: fetchProductos }
 }
@@ -423,7 +499,7 @@ export function useClientes() {
     const [clientesRes, billeterasRes] = await Promise.all([
       supabase
         .from('clientes')
-        .select('*, perfiles:auth_user_id(rol, estado, porcentaje_descuento)')
+        .select('*, perfiles:auth_user_id(rol, estado, porcentaje_descuento, config_modulos)')
         .order('fecha_registro', { ascending: false }),
       supabase
         .from('billeteras')
@@ -437,6 +513,7 @@ export function useClientes() {
         rol: c.perfiles?.rol || 'cliente',
         estado: c.perfiles?.estado || c.estado || 'pendiente',
         porcentaje_descuento: c.perfiles?.porcentaje_descuento || 0,
+        config_modulos: c.perfiles?.config_modulos || [],
         billetera_saldo: billeterasMap.get(c.auth_user_id)?.saldo || 0,
         billetera_saldo_bs: billeterasMap.get(c.auth_user_id)?.saldo_bs || 0
       }))
@@ -813,3 +890,5 @@ export function useCuentasGuardadas(juegoId) {
 
   return { cuentas, loading, guardarCuenta, eliminarCuenta, refetch: fetchCuentas }
 }
+
+export { useClientes as useUsuarios }

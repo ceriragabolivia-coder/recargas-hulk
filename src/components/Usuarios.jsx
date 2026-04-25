@@ -35,6 +35,19 @@ export default function Usuarios({ onNavigate }) {
   const [newPassword, setNewPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
+  // Estados para Configuración de Módulos (Negocio)
+  const [configurandoModulos, setConfigurandoModulos] = useState(null)
+  const [modulosSeleccionados, setModulosSeleccionados] = useState([])
+
+  const MODULOS_DISPONIBLES = [
+    { key: 'dashboard', label: '📊 Dashboard', desc: 'Vista general de estadísticas' },
+    { key: 'ventas', label: '🛒 Registro de Ventas', desc: 'Punto de venta y caja' },
+    { key: 'productos', label: '📦 Gestión de Productos', desc: 'Inventario y precios' },
+    { key: 'reportes', label: '📈 Reportes', desc: 'Análisis de ventas' },
+    { key: 'chats', label: '💬 Soporte', desc: 'Atención al cliente' },
+    { key: 'pedidos', label: '📋 Gestión de Pedidos', desc: 'Cola de pedidos entrantes' }
+  ]
+
   const formatFecha = (iso) => {
     if (!iso) return '-'
     const d = new Date(iso)
@@ -49,7 +62,8 @@ export default function Usuarios({ onNavigate }) {
       rol: cliente.rol || 'cliente',
       porcentaje_descuento: cliente.porcentaje_descuento || 0,
       whatsapp: cliente.whatsapp || '',
-      estado: cliente.estado || 'pendiente'
+      estado: cliente.estado || 'pendiente',
+      config_modulos: cliente.config_modulos || []
     })
   }
 
@@ -79,7 +93,8 @@ export default function Usuarios({ onNavigate }) {
         await updateProfileRoleAndDiscount(cliente.auth_user_id, {
           rol: editingData.rol,
           porcentaje_descuento: editingData.rol === 'revendedor' ? parseFloat(editingData.porcentaje_descuento || 0) : 0,
-          estado: editingData.estado
+          estado: editingData.estado,
+          config_modulos: editingData.rol === 'negocio' ? editingData.config_modulos : []
         })
       }
 
@@ -386,8 +401,22 @@ export default function Usuarios({ onNavigate }) {
                             >
                               <option value="cliente">👤 Cliente</option>
                               <option value="revendedor">⭐ Revendedor</option>
+                              <option value="negocio">🏢 Negocio (Punto de Venta)</option>
                               <option value="admin">👑 Administrador</option>
                             </select>
+
+                            {editingData.rol === 'negocio' && (
+                              <button 
+                                className="btn btn-sm"
+                                style={{ width: '100%', fontSize: '11px', backgroundColor: 'rgba(0, 210, 255, 0.1)', color: 'var(--accent-primary)', border: '1px solid rgba(0,210,255,0.2)' }}
+                                onClick={() => {
+                                  setConfigurandoModulos(cliente)
+                                  setModulosSeleccionados(editingData.config_modulos || [])
+                                }}
+                              >
+                                ⚙️ Configurar Módulos
+                              </button>
+                            )}
 
                             {editingData.rol === 'revendedor' && (
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -416,12 +445,15 @@ export default function Usuarios({ onNavigate }) {
                               fontSize: '12px', 
                               fontWeight: 600,
                               backgroundColor: cliente.rol === 'admin' ? 'rgba(156, 39, 176, 0.15)' : 
-                                               cliente.rol === 'revendedor' ? 'rgba(255, 152, 0, 0.15)' : 'rgba(52, 152, 219, 0.15)',
+                                               cliente.rol === 'revendedor' ? 'rgba(255, 152, 0, 0.15)' : 
+                                               cliente.rol === 'negocio' ? 'rgba(0, 210, 255, 0.15)' : 'rgba(52, 152, 219, 0.15)',
                               color: cliente.rol === 'admin' ? '#ce93d8' : 
-                                     cliente.rol === 'revendedor' ? '#ffb74d' : 'var(--accent-primary)'
+                                     cliente.rol === 'revendedor' ? '#ffb74d' : 
+                                     cliente.rol === 'negocio' ? 'var(--accent-primary)' : 'var(--accent-primary)'
                             }}>
                               {cliente.rol === 'admin' ? '👑 Administrador' : 
-                               cliente.rol === 'revendedor' ? '⭐ Revendedor' : '👤 Cliente'}
+                               cliente.rol === 'revendedor' ? '⭐ Revendedor' : 
+                               cliente.rol === 'negocio' ? '🏢 Negocio' : '👤 Cliente'}
                             </span>
                             
                             {cliente.rol === 'revendedor' && cliente.porcentaje_descuento > 0 && (
@@ -770,6 +802,71 @@ export default function Usuarios({ onNavigate }) {
           onConfirm={() => setAlertModal(null)}
           onCancel={() => setAlertModal(null)}
         />
+      )}
+
+      {/* Modal Configuración de Módulos para Negocio */}
+      {configurandoModulos && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 10000, animation: 'fadeIn 0.2s ease'
+        }}>
+          <div style={{ backgroundColor: '#1a1d21', borderRadius: '24px', width: '100%', maxWidth: '500px', padding: '32px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <h3 style={{ fontSize: '20px', marginBottom: '8px' }}>Configurar Accesos del Negocio</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '24px' }}>
+              Selecciona qué módulos tendrá activos <strong style={{color: '#fff'}}>{configurandoModulos.nombres}</strong>
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
+              {MODULOS_DISPONIBLES.map(mod => {
+                const isActive = modulosSeleccionados.includes(mod.key)
+                return (
+                  <div 
+                    key={mod.key}
+                    onClick={() => {
+                      if (isActive) setModulosSeleccionados(modulosSeleccionados.filter(k => k !== mod.key))
+                      else setModulosSeleccionados([...modulosSeleccionados, mod.key])
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', borderRadius: '16px',
+                      backgroundColor: isActive ? 'rgba(0, 210, 255, 0.05)' : 'var(--bg-panel)',
+                      border: `1px solid ${isActive ? 'var(--accent-primary)' : 'var(--border-color)'}`,
+                      cursor: 'pointer', transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ 
+                      width: '20px', height: '20px', borderRadius: '6px', 
+                      border: `2px solid ${isActive ? 'var(--accent-primary)' : 'var(--text-muted)'}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      backgroundColor: isActive ? 'var(--accent-primary)' : 'transparent',
+                      transition: 'all 0.2s'
+                    }}>
+                      {isActive && <span style={{ color: '#000', fontWeight: 'bold', fontSize: '12px' }}>✓</span>}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: isActive ? '#fff' : 'var(--text-muted)' }}>{mod.label}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{mod.desc}</div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => setConfigurandoModulos(null)}>Cancelar</button>
+              <button 
+                className="btn btn-primary" 
+                style={{ flex: 1 }} 
+                onClick={() => {
+                  setEditingData({ ...editingData, config_modulos: modulosSeleccionados })
+                  setConfigurandoModulos(null)
+                }}
+              >
+                Confirmar Selección
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

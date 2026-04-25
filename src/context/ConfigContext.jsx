@@ -10,16 +10,40 @@ export function ConfigProvider({ children }) {
 
   const fetchConfig = useCallback(async () => {
     try {
-      const { data, error } = await supabase.from('configuracion').select('*')
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: perfil } = await supabase.from('perfiles').select('rol').eq('id', user.id).single()
+      const isNegocio = perfil?.rol === 'negocio'
+
+      let query = supabase.from('configuracion').select('*')
+      if (isNegocio) {
+        query = query.eq('owner_id', user.id)
+      } else {
+        query = query.is('owner_id', null)
+      }
+
+      const { data, error } = await query
       if (error) throw error
-      if (data) {
+      
+      if (data && data.length > 0) {
         const obj = {}
         data.forEach(r => {
-          // Si valor_texto no es null, lo usamos; si no, usamos valor (numérico)
           const val = r.valor_texto !== null && r.valor_texto !== undefined ? r.valor_texto : String(r.valor)
           obj[r.clave] = val
         })
         setConfig(obj)
+      } else if (isNegocio) {
+        // Fallback to global config if business hasn't set its own yet
+        const { data: globalData } = await supabase.from('configuracion').select('*').is('owner_id', null)
+        if (globalData) {
+          const obj = {}
+          globalData.forEach(r => {
+            const val = r.valor_texto !== null && r.valor_texto !== undefined ? r.valor_texto : String(r.valor)
+            obj[r.clave] = val
+          })
+          setConfig(obj)
+        }
       }
     } catch (err) {
       console.error('Error fetching config:', err)
@@ -29,10 +53,19 @@ export function ConfigProvider({ children }) {
   }, [])
 
   const updateConfig = async (clave, valor, isText = false) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: new Error('No user logged in') }
+
+    const { data: perfil } = await supabase.from('perfiles').select('rol').eq('id', user.id).single()
+    const isNegocio = perfil?.rol === 'negocio'
+
     const payload = isText ? { clave, valor_texto: String(valor), valor: 0 } : { clave, valor: Number(valor) }
+    if (isNegocio) payload.owner_id = user.id
+
+    // Usar upsert con clave y owner_id
     const { error } = await supabase
       .from('configuracion')
-      .upsert(payload, { onConflict: 'clave' })
+      .upsert(payload, { onConflict: isNegocio ? 'clave,owner_id' : 'clave' })
     
     return { error }
   }

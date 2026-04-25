@@ -440,6 +440,8 @@ export default function Dashboard() {
   const { config, loading: loadingConfig, updateConfig } = useConfiguracion()
   const { user, perfil } = useAuth()
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
+  const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
+  const isAuthorized = isAdmin || isNegocio
   const isSuperAdmin = user?.email === 'ceriraga@gmail.com'
   
   const [viewMode, setViewMode] = useState('global') // 'global' | 'own'
@@ -544,7 +546,7 @@ export default function Dashboard() {
           <pre style={{ background: '#111', color: '#0f0', padding: '10px', borderRadius: '8px', maxHeight: '200px', overflow: 'auto' }}>
             {JSON.stringify({
               perfil,
-              isAdmin,
+              isAuthorized,
               loadingVentas,
               loadingConfig,
               loadingCharts,

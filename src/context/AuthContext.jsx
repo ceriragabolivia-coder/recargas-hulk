@@ -124,6 +124,7 @@ export function AuthProvider({ children }) {
           cliente_uuid: clienteData?.id || null,
           rol: (perfilData?.rol || clienteData?.rol || 'cliente').toLowerCase(),
           estado: (perfilData?.estado || clienteData?.estado || 'pendiente').toLowerCase(),
+          config_modulos: perfilData?.config_modulos || (perfilData?.rol === 'negocio' ? ['dashboard', 'productos', 'ventas', 'reportes'] : []),
           is_vip: false
         }
       })()
