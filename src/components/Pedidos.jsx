@@ -1434,12 +1434,27 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                 <div style={{ marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <label style={{
                     padding: '6px 12px', borderRadius: '6px', border: '1px dashed var(--border-color)',
-                    backgroundColor: 'var(--bg-card)', fontSize: '11px', cursor: 'pointer', flex: 1, textAlign: 'center'
+                    backgroundColor: 'var(--bg-card)', fontSize: '11px', cursor: 'pointer', flex: 1, textAlign: 'center', color: '#fff', whiteSpace: 'nowrap'
                   }}>
-                    📎 Subir/Pegar Captura
+                    📎 Explorar Archivo
                     <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { if (e.target.files[0]) handleUploadImage(e.target.files[0]); e.target.value = '' }} />
                   </label>
-                  <div onPaste={handlePaste} tabIndex={0} style={{ display: 'none' }} /> {/* Hook para pegar activado globalmente */}
+                  <input 
+                    type="text" 
+                    value=""
+                    onChange={() => {}}
+                    placeholder="Click aquí y Ctrl+V para pegar imagen" 
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      handlePaste(e);
+                    }} 
+                    style={{
+                      padding: '6px 12px', borderRadius: '6px', border: '1px dashed var(--border-color)',
+                      backgroundColor: 'rgba(0, 0, 0, 0.2)', fontSize: '11px', flex: 2, textAlign: 'center', color: '#fff', outline: 'none', cursor: 'text', transition: 'border-color 0.2s'
+                    }}
+                    onFocus={(e) => { e.target.placeholder = "Presiona Ctrl+V ahora..."; e.target.style.borderColor = "var(--accent-primary)"; }}
+                    onBlur={(e) => { e.target.placeholder = "Click aquí y Ctrl+V para pegar imagen"; e.target.style.borderColor = "var(--border-color)"; }}
+                  />
                 </div>
 
 
