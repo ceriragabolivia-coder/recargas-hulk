@@ -910,6 +910,201 @@ export default function GestionProductos() {
                   <div className="font-bold" style={{ fontSize: 20, color: 'var(--text-primary)' }}>{formatUSD(calculoRealTime.venta_usd)}</div>
                 </div>
                 <div>
+{
+  isModalOpen && (
+    <div className="modal-overlay">
+      <div className="modal">
+        <h2 className="modal-title">{formData.id ? `Editar paquete en ${selectedJuego?.nombre}` : `Añadir a ${selectedJuego?.nombre}`}</h2>
+        <form onSubmit={handleSubmit}>
+          {/* SECTOR DE ÍCONO */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24 }}>
+            <div
+              onClick={() => document.getElementById('modal-icon-upload').click()}
+              style={{
+                width: 80, height: 80, borderRadius: 16, backgroundColor: 'var(--bg-panel)',
+                border: '2px dashed var(--accent-primary)', cursor: 'pointer',
+                display: 'flex', justifyContent: 'center', alignItems: 'center',
+                overflow: 'hidden', position: 'relative', transition: 'all 0.2s'
+              }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              {iconPreview ? (
+                <img src={iconPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              ) : (
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 24 }}>📥</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>Ícono</div>
+                </div>
+              )}
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', color: 'white', fontSize: 9, padding: '2px 0', textAlign: 'center' }}>
+                Click para cambiar
+              </div>
+            </div>
+            <input
+              type="file"
+              id="modal-icon-upload"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const file = e.target.files[0]
+                if (file) {
+                  setNewIconFile(file)
+                  setIconPreview(URL.createObjectURL(file))
+                }
+              }}
+            />
+            <div style={{ width: '100%', marginTop: 16 }}>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="URL de la imagen (Copia esta URL o pega otra existente)"
+                value={(!newIconFile && formData.icono_url) ? formData.icono_url : ''}
+                onChange={(e) => {
+                  const url = e.target.value;
+                  setNewIconFile(null);
+                  setIconPreview(url);
+                  setFormData(prev => ({ ...prev, icono_url: url }));
+                }}
+                style={{ fontSize: 11, padding: '8px', textAlign: 'center', backgroundColor: 'rgba(0,0,0,0.2)' }}
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Nombre del Paquete</label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Ej: 110 Diamantes"
+              value={formData.nombre}
+              onChange={e => setFormData({ ...formData, nombre: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="flex gap-16">
+            <div className="form-group" style={{ flex: 1 }}>
+              <label className="form-label">Costo tu proveedor ($)</label>
+              <input
+                type="number"
+                step="0.01"
+                className="form-input"
+                placeholder="0.00"
+                value={formData.costo_base}
+                onChange={e => setFormData({ ...formData, costo_base: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label className="form-label">Margen a ganar (%)</label>
+              <input
+                type="number"
+                className="form-input"
+                placeholder="30"
+                value={formData.margen_ganancia}
+                onChange={e => setFormData({ ...formData, margen_ganancia: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+
+          {/* DESCUENTO PARA REVENDEDORES */}
+          <div className="form-group">
+            <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+              Descuento Revendedor (%)
+              <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>(Opcional - Prevalece sobre el global)</span>
+            </label>
+            <input
+              type="number"
+              step="0.5"
+              min="0"
+              max="100"
+              className="form-input"
+              placeholder="Dejar vacío para usar el descuento global del juego"
+              value={formData.descuento_revendedor}
+              onChange={e => setFormData({ ...formData, descuento_revendedor: e.target.value })}
+            />
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+              Si se establece, este descuento será exclusivo para este paquete y NO se sumará al global del servicio.
+            </p>
+          </div>
+
+          <hr style={{ borderColor: 'var(--border-color)', margin: '20px 0' }} />
+          <h4 style={{ fontSize: '13px', color: 'var(--accent-primary)', marginBottom: '12px' }}>Información Adicional (Modal ⓘ)</h4>
+          
+          <div className="form-group">
+            <label className="form-label">Texto Informativo (Opcional)</label>
+            <textarea
+              className="form-input"
+              placeholder="Detalla qué incluye el paquete..."
+              rows="3"
+              style={{ resize: 'vertical' }}
+              value={formData.info_adicional_texto}
+              onChange={e => setFormData({ ...formData, info_adicional_texto: e.target.value })}
+            />
+          </div>
+
+          <div className="form-group" style={{ marginBottom: '24px' }}>
+            <label className="form-label">Imagen Adjunta (Opcional)</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <div style={{ width: 60, height: 60, borderRadius: 8, backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                  {newInfoFile ? (
+                    <img src={URL.createObjectURL(newInfoFile)} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : formData.info_adicional_imagen_url ? (
+                    <img src={formData.info_adicional_imagen_url} alt="info" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <span style={{ fontSize: 24, opacity: 0.3 }}>🖼️</span>
+                  )}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <input
+                    type="file"
+                    id="info-file-upload"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files[0]
+                      if (file) setNewInfoFile(file)
+                    }}
+                  />
+                  <label htmlFor="info-file-upload" className="btn btn-ghost btn-sm">
+                    📤 Subir Imagen
+                  </label>
+                  {(newInfoFile || formData.info_adicional_imagen_url) && (
+                    <button type="button" className="btn btn-ghost btn-sm text-danger" style={{ marginLeft: '8px', color: '#ff5252' }} onClick={() => { setNewInfoFile(null); setFormData(prev => ({...prev, info_adicional_imagen_url: null})) }}>🗑️ Quitar</button>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ marginTop: 4 }}>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="URL de la imagen adjunta (Copia esta URL o pega otra existente)"
+                  value={(!newInfoFile && formData.info_adicional_imagen_url) ? formData.info_adicional_imagen_url : ''}
+                  onChange={(e) => {
+                    const url = e.target.value;
+                    setNewInfoFile(null);
+                    setFormData(prev => ({ ...prev, info_adicional_imagen_url: url }));
+                  }}
+                  style={{ fontSize: 11, padding: '8px', backgroundColor: 'rgba(0,0,0,0.2)' }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* VISTA PREVIA DEL CÁLCULO EN TIEMPO REAL */}
+          <div style={{ background: 'var(--bg-primary)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--border-active)', marginBottom: 20 }}>
+            <h4 style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--accent-primary)', marginBottom: 12 }}>Proyección del precio final al cliente</h4>
+            {calculoRealTime ? (
+              <div className="flex justify-between items-center text-center">
+                <div>
+                  <div className="form-label" style={{ marginBottom: 4 }}>Precio Venta USD</div>
+                  <div className="font-bold" style={{ fontSize: 20, color: 'var(--text-primary)' }}>{formatUSD(calculoRealTime.venta_usd)}</div>
+                </div>
+                <div>
                   <div className="form-label" style={{ marginBottom: 4 }}>Precio Final Bs</div>
                   <div className="font-bold" style={{ fontSize: 20, color: 'var(--accent-success)' }}>{formatBs(calculoRealTime.venta_bs)}</div>
                 </div>
@@ -930,6 +1125,10 @@ export default function GestionProductos() {
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  )}
+
 {/* MODAL CREAR JUEGO */}
 {isGameModalOpen && (
     <div className="modal-overlay">
