@@ -74,6 +74,7 @@ export function useJuegos() {
 // ========================
 export function useProductos(juegoId) {
   const [productos, setProductos] = useState([])
+  const [categorias, setCategorias] = useState([])
   const [loading, setLoading] = useState(true)
 
   const { perfil, user } = useAuth()
