@@ -65,7 +65,7 @@ export function ConfigProvider({ children }) {
     // Usar la función RPC para evitar problemas con upsert y constraints nulos
     const { error } = await supabase.rpc('update_config_rpc', {
       p_clave: clave,
-      p_valor: isText ? null : Number(valor),
+      p_valor: isText ? 0 : Number(valor),
       p_valor_texto: isText ? String(valor) : null,
       p_owner_id: isNegocio ? user.id : null
     })
