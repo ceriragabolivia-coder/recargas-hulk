@@ -1691,7 +1691,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                   left: 0,
                   right: 0,
                   marginTop: '8px',
-                  backgroundColor: 'var(--bg-panel)',
+                  backgroundColor: 'var(--bg-secondary)',
                   border: '1px solid var(--border-color)',
                   borderRadius: '12px',
                   boxShadow: '0 10px 25px rgba(0,0,0,0.5)',

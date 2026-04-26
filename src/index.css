@@ -1227,29 +1227,30 @@ tr:last-child td { border-bottom: none; }
   /* Responsive Tables as Cards */
   .table-cards-mobile { display: block; width: 100%; max-width: 100%; border: none; box-sizing: border-box; }
   .table-cards-mobile thead { display: none; }
-  .table-cards-mobile tbody { display: flex; flex-direction: column; gap: 6px; max-width: 100%; box-sizing: border-box; overflow: hidden; }
+  .table-cards-mobile tbody { display: flex; flex-direction: column; gap: 4px; max-width: 100%; box-sizing: border-box; overflow: hidden; }
   .table-cards-mobile tr {
-    display: flex; flex-direction: column; padding: 8px; max-width: 100%; box-sizing: border-box;
+    display: flex; flex-direction: column; padding: 6px 8px; max-width: 100%; box-sizing: border-box;
     background: rgba(255,255,255,0.03); border: 1px solid var(--border-color);
     border-radius: var(--radius-md); gap: 2px;
   }
   .table-cards-mobile td {
     display: grid; 
-    grid-template-columns: 110px 1fr; 
+    grid-template-columns: 100px 1fr; 
     align-items: center;
     padding: 0 !important; 
     border: none !important; 
     width: 100%;
-    gap: 4px;
+    gap: 2px;
   }
   .table-cards-mobile td > * {
     min-width: 0;
     justify-self: end;
     text-align: right;
     word-break: break-word; /* Allows long text/URLs to wrap */
+    font-size: 11px !important;
   }
   .table-cards-mobile td::before {
-    content: attr(data-label); color: var(--text-muted); font-size: 11px;
+    content: attr(data-label); color: var(--text-muted); font-size: 10px;
     font-weight: 700; text-transform: uppercase; text-align: left;
     white-space: nowrap;
     justify-self: start;
