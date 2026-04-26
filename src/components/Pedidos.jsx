@@ -1777,13 +1777,13 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                   <thead>
                     <tr>
                       <th>N° Pedido</th>
-                      <th>Fecha / Hora</th>
+                      <th className="desktop-only">Fecha / Hora</th>
                       <th style={{ textAlign: 'left' }}>Cliente</th>
-                      <th>Juego(s)</th>
-                      <th>Paquetes</th>
-                      <th>Referencia</th>
+                      <th className="desktop-only">Juego(s)</th>
+                      <th className="desktop-only">Paquetes</th>
+                      <th className="desktop-only">Referencia</th>
                       <th style={{ textAlign: 'center' }}>Total</th>
-                      <th style={{ textAlign: 'center' }}>Responsable</th>
+                      <th className="desktop-only" style={{ textAlign: 'center' }}>Responsable</th>
                       <th style={{ textAlign: 'center' }}>Pago</th>
                       <th style={{ textAlign: 'center' }}>Estado</th>
                       <th></th>
@@ -1801,7 +1801,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                           <td style={{ fontWeight: 700, color: 'var(--accent-primary)', fontSize: '15px' }} data-label="N° Pedido">
                             #{pedido.numero_pedido}
                           </td>
-                          <td style={{ fontSize: '13px', color: 'var(--text-muted)' }} data-label="Fecha / Hora">
+                          <td className="desktop-only" style={{ fontSize: '13px', color: 'var(--text-muted)' }} data-label="Fecha / Hora">
                             {formatFecha(pedido.created_at)}
                           </td>
                           <td style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }} data-label="Cliente">
@@ -1810,21 +1810,21 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                               '-'
                             }
                           </td>
-                          <td style={{ fontSize: '13px' }} data-label="Juego(s)">
+                          <td className="desktop-only" style={{ fontSize: '13px' }} data-label="Juego(s)">
                             {juegos.join(', ')}
                           </td>
-                          <td style={{ fontSize: '13px', maxWidth: '200px' }} data-label="Paquetes">
+                          <td className="desktop-only" style={{ fontSize: '13px', maxWidth: '200px' }} data-label="Paquetes">
                             <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {paquetes.join(', ')}
                             </div>
                           </td>
-                          <td style={{ fontSize: '13px', color: 'var(--text-muted)' }} data-label="Referencia">
+                          <td className="desktop-only" style={{ fontSize: '13px', color: 'var(--text-muted)' }} data-label="Referencia">
                             {pedido.referencia_pago || '-'}
                           </td>
                           <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--accent-success)' }} data-label="Total">
                             {formatBs(pedido.total_bs)}
                           </td>
-                          <td style={{ textAlign: 'center', fontSize: '12px', color: pedido.atendido_por_id ? 'var(--text-primary)' : 'var(--text-muted)' }} data-label="Responsable">
+                          <td className="desktop-only" style={{ textAlign: 'center', fontSize: '12px', color: pedido.atendido_por_id ? 'var(--text-primary)' : 'var(--text-muted)' }} data-label="Responsable">
                             {pedido.atendido_por ?
                               `${pedido.atendido_por.nombres} ${pedido.atendido_por.apellidos?.toLowerCase() === 'pendiente' ? '' : (pedido.atendido_por.apellidos || '')}`.trim() :
                               '-'
