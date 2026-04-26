@@ -36,6 +36,8 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
   const [rechazandoItem, setRechazandoItem] = useState(null) // ID del item si se está rechazando
   const [motivoRechazo, setMotivoRechazo] = useState('')
   const [cancelacionMensaje, setCancelacionMensaje] = useState("")
+  const [busqueda, setBusqueda] = useState("")
+
 
   // Paginación
   const [currentPage, setCurrentPage] = useState(1)
@@ -238,6 +240,22 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
     pedidosFiltrados = pedidos.filter(p => p.pago_verificado === true && p.estado !== 'completado' && p.estado !== 'cancelado')
   } else if (filtroEstado !== 'todos') {
     pedidosFiltrados = pedidos.filter(p => p.estado === filtroEstado)
+  }
+
+  if (busqueda.trim() !== '') {
+    const q = busqueda.toLowerCase()
+    pedidosFiltrados = pedidosFiltrados.filter(p => {
+      const matchPedido = String(p.numero_pedido).toLowerCase().includes(q)
+      const matchCliente = String(p.cliente?.usuario || '').toLowerCase().includes(q) || String(p.cliente?.whatsapp || '').toLowerCase().includes(q)
+      const matchRef = String(p.referencia_pago || '').toLowerCase().includes(q)
+      const matchItems = (p.pedido_items || []).some(item => 
+        String(item.player_id || '').toLowerCase().includes(q) ||
+        String(item.account_email || '').toLowerCase().includes(q) ||
+        String(item.account_password || '').toLowerCase().includes(q) ||
+        String(item.datos_extra || '').toLowerCase().includes(q)
+      )
+      return matchPedido || matchCliente || matchRef || matchItems
+    })
   }
 
   // Cálculos de Paginación
@@ -1655,6 +1673,27 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                 </button>
               )
             })}
+          </div>
+
+          {/* BUSCADOR */}
+          <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', backgroundColor: 'var(--bg-card)', borderRadius: '12px', padding: '8px 16px', border: '1px solid var(--border-color)' }}>
+            <span style={{ fontSize: '18px', marginRight: '10px', color: 'var(--text-muted)' }}>🔍</span>
+            <input 
+              type="text" 
+              placeholder="Buscar por n° de pedido, cliente, ref. de pago, ID de jugador o cuenta..."
+              value={busqueda}
+              onChange={(e) => { setBusqueda(e.target.value); setCurrentPage(1); }}
+              style={{ flex: 1, backgroundColor: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none', fontSize: '14px' }}
+            />
+            {busqueda && (
+              <button 
+                onClick={() => { setBusqueda(''); setCurrentPage(1); }} 
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '16px', padding: '4px' }}
+                title="Limpiar búsqueda"
+              >
+                ✖
+              </button>
+            )}
           </div>
 
           {pedidosFiltrados.length === 0 ? (
