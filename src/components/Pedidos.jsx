@@ -1646,33 +1646,36 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
       ) : (
         <>
           {/* FILTROS POR ESTADO */}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
-            {FILTROS.map(f => {
-              const count = f.key === 'todos' ? pedidos.length : pedidos.filter(p => p.estado === f.key).length
-              const isActive = filtroEstado === f.key
-              const style = f.key !== 'todos' ? getEstadoStyle(f.key) : { bg: 'var(--bg-panel)', color: 'var(--text-primary)' }
-              return (
-                <button
-                  key={f.key}
-                  onClick={() => { setFiltroEstado(f.key); setCurrentPage(1); }}
-                  style={{
-                    padding: '10px 18px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-                    fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px',
-                    backgroundColor: isActive ? style.bg : 'var(--bg-card)',
-                    color: isActive ? style.color : 'var(--text-muted)',
-                    outline: isActive ? `2px solid ${style.color}` : '1px solid var(--border-color)',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {f.icon} {f.label}
-                  <span style={{
-                    backgroundColor: isActive ? style.color : 'var(--bg-panel)',
-                    color: isActive ? '#111' : 'var(--text-muted)',
-                    padding: '2px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 700
-                  }}>{count}</span>
-                </button>
-              )
-            })}
+          <div style={{ marginBottom: '20px', position: 'relative' }}>
+            <select
+              value={filtroEstado}
+              onChange={(e) => { setFiltroEstado(e.target.value); setCurrentPage(1); }}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--bg-card)',
+                color: 'var(--text-primary)',
+                fontSize: '15px',
+                fontWeight: 600,
+                outline: 'none',
+                cursor: 'pointer',
+                appearance: 'none'
+              }}
+            >
+              {FILTROS.map(f => {
+                const count = f.key === 'todos' ? pedidos.length : pedidos.filter(p => p.estado === f.key).length
+                return (
+                  <option key={f.key} value={f.key}>
+                    {f.icon} {f.label} ({count})
+                  </option>
+                )
+              })}
+            </select>
+            <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)', fontSize: '12px' }}>
+              ▼
+            </div>
           </div>
 
           {/* BUSCADOR */}
@@ -1705,7 +1708,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
           ) : (
             <div className="card">
               <div className="table-container">
-                <table className="table">
+                <table className="table table-cards-mobile">
                   <thead>
                     <tr>
                       <th>N° Pedido</th>
@@ -1730,39 +1733,39 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
 
                       return (
                         <tr key={pedido.id} style={{ cursor: 'pointer' }} onClick={() => handleOpenPedido(pedido)}>
-                          <td style={{ fontWeight: 700, color: 'var(--accent-primary)', fontSize: '15px' }}>
+                          <td style={{ fontWeight: 700, color: 'var(--accent-primary)', fontSize: '15px' }} data-label="N° Pedido">
                             #{pedido.numero_pedido}
                           </td>
-                          <td style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                          <td style={{ fontSize: '13px', color: 'var(--text-muted)' }} data-label="Fecha / Hora">
                             {formatFecha(pedido.created_at)}
                           </td>
-                          <td style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                          <td style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }} data-label="Cliente">
                             {pedido.cliente ?
                               `${pedido.cliente.nombres} ${pedido.cliente.apellidos?.toLowerCase() === 'pendiente' ? '' : (pedido.cliente.apellidos || '')}`.trim() :
                               '-'
                             }
                           </td>
-                          <td style={{ fontSize: '13px' }}>
+                          <td style={{ fontSize: '13px' }} data-label="Juego(s)">
                             {juegos.join(', ')}
                           </td>
-                          <td style={{ fontSize: '13px', maxWidth: '200px' }}>
+                          <td style={{ fontSize: '13px', maxWidth: '200px' }} data-label="Paquetes">
                             <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {paquetes.join(', ')}
                             </div>
                           </td>
-                          <td style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                          <td style={{ fontSize: '13px', color: 'var(--text-muted)' }} data-label="Referencia">
                             {pedido.referencia_pago || '-'}
                           </td>
-                          <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--accent-success)' }}>
+                          <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--accent-success)' }} data-label="Total">
                             {formatBs(pedido.total_bs)}
                           </td>
-                          <td style={{ textAlign: 'center', fontSize: '12px', color: pedido.atendido_por_id ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                          <td style={{ textAlign: 'center', fontSize: '12px', color: pedido.atendido_por_id ? 'var(--text-primary)' : 'var(--text-muted)' }} data-label="Responsable">
                             {pedido.atendido_por ?
                               `${pedido.atendido_por.nombres} ${pedido.atendido_por.apellidos?.toLowerCase() === 'pendiente' ? '' : (pedido.atendido_por.apellidos || '')}`.trim() :
                               '-'
                             }
                           </td>
-                          <td style={{ textAlign: 'center' }}>
+                          <td style={{ textAlign: 'center' }} data-label="Pago">
                             <span style={{
                               fontSize: '11px', padding: '4px 10px', borderRadius: '6px', fontWeight: 600, whiteSpace: 'nowrap',
                               backgroundColor: pedido.pago_verificado === true ? 'rgba(34, 197, 94, 0.15)' : pedido.pago_verificado === false ? 'rgba(239, 68, 68, 0.15)' : 'rgba(250, 204, 21, 0.15)',
@@ -1771,7 +1774,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                               {pedido.pago_verificado === true ? '✅ Verificado' : pedido.pago_verificado === false ? '❌ Rechazado' : '⏳ Pendiente'}
                             </span>
                           </td>
-                          <td style={{ textAlign: 'center' }}>
+                          <td style={{ textAlign: 'center' }} data-label="Estado">
                             <span style={{
                               fontSize: '12px', padding: '4px 10px', borderRadius: '6px',
                               backgroundColor: est.bg, color: est.color, fontWeight: 600
@@ -1791,7 +1794,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                               })()
                             )}
                           </td>
-                          <td>
+                          <td data-label="Acción">
                             <button className="btn btn-ghost btn-sm" style={{ fontSize: '13px' }}>
                               Ver →
                             </button>
