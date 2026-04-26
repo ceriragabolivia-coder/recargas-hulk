@@ -37,6 +37,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
   const [motivoRechazo, setMotivoRechazo] = useState('')
   const [cancelacionMensaje, setCancelacionMensaje] = useState("")
   const [busqueda, setBusqueda] = useState("")
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false)
 
 
   // Paginación
@@ -1647,9 +1648,9 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
         <>
           {/* FILTROS POR ESTADO */}
           <div style={{ marginBottom: '20px', position: 'relative' }}>
-            <select
-              value={filtroEstado}
-              onChange={(e) => { setFiltroEstado(e.target.value); setCurrentPage(1); }}
+            {/* Botón selector principal */}
+            <div 
+              onClick={() => setShowFilterDropdown(!showFilterDropdown)}
               style={{
                 width: '100%',
                 padding: '12px 16px',
@@ -1659,23 +1660,87 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                 color: 'var(--text-primary)',
                 fontSize: '15px',
                 fontWeight: 600,
-                outline: 'none',
                 cursor: 'pointer',
-                appearance: 'none'
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                transition: 'all 0.2s',
+                boxShadow: showFilterDropdown ? '0 0 0 2px var(--accent-primary)' : 'none'
               }}
             >
-              {FILTROS.map(f => {
-                const count = f.key === 'todos' ? pedidos.length : pedidos.filter(p => p.estado === f.key).length
-                return (
-                  <option key={f.key} value={f.key}>
-                    {f.icon} {f.label} ({count})
-                  </option>
-                )
-              })}
-            </select>
-            <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)', fontSize: '12px' }}>
-              ▼
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {FILTROS.find(f => f.key === filtroEstado)?.icon} 
+                {FILTROS.find(f => f.key === filtroEstado)?.label} 
+                ({filtroEstado === 'todos' ? pedidos.length : pedidos.filter(p => p.estado === filtroEstado).length})
+              </div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '12px', transition: 'transform 0.2s', transform: showFilterDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                ▼
+              </div>
             </div>
+
+            {/* Menú desplegable */}
+            {showFilterDropdown && (
+              <>
+                <div 
+                  style={{ position: 'fixed', inset: 0, zIndex: 90 }} 
+                  onClick={() => setShowFilterDropdown(false)} 
+                />
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  marginTop: '8px',
+                  backgroundColor: 'var(--bg-panel)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                  zIndex: 100,
+                  overflow: 'hidden',
+                  animation: 'fadeIn 0.2s ease'
+                }}>
+                  {FILTROS.map(f => {
+                    const count = f.key === 'todos' ? pedidos.length : pedidos.filter(p => p.estado === f.key).length
+                    const isActive = filtroEstado === f.key
+                    const style = f.key !== 'todos' ? getEstadoStyle(f.key) : { bg: 'transparent', color: 'var(--text-primary)' }
+                    
+                    return (
+                      <div
+                        key={f.key}
+                        onClick={() => { 
+                          setFiltroEstado(f.key); 
+                          setCurrentPage(1); 
+                          setShowFilterDropdown(false); 
+                        }}
+                        style={{
+                          padding: '12px 16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          cursor: 'pointer',
+                          backgroundColor: isActive ? 'rgba(255,255,255,0.05)' : 'transparent',
+                          borderBottom: '1px solid rgba(255,255,255,0.05)',
+                          transition: 'background 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isActive ? 'rgba(255,255,255,0.05)' : 'transparent'}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: isActive ? 700 : 500, color: isActive ? style.color : 'var(--text-primary)' }}>
+                          {f.icon} {f.label}
+                        </div>
+                        <span style={{
+                          backgroundColor: isActive ? style.color : 'rgba(255,255,255,0.1)',
+                          color: isActive ? '#000' : 'var(--text-secondary)',
+                          padding: '2px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 700
+                        }}>
+                          {count}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
+            )}
           </div>
 
           {/* BUSCADOR */}

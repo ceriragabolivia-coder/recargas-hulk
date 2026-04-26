@@ -1227,11 +1227,11 @@ tr:last-child td { border-bottom: none; }
   /* Responsive Tables as Cards */
   .table-cards-mobile { display: block; width: 100%; max-width: 100%; border: none; box-sizing: border-box; }
   .table-cards-mobile thead { display: none; }
-  .table-cards-mobile tbody { display: flex; flex-direction: column; gap: 8px; max-width: 100%; box-sizing: border-box; overflow: hidden; }
+  .table-cards-mobile tbody { display: flex; flex-direction: column; gap: 6px; max-width: 100%; box-sizing: border-box; overflow: hidden; }
   .table-cards-mobile tr {
-    display: flex; flex-direction: column; padding: 12px; max-width: 100%; box-sizing: border-box;
+    display: flex; flex-direction: column; padding: 8px; max-width: 100%; box-sizing: border-box;
     background: rgba(255,255,255,0.03); border: 1px solid var(--border-color);
-    border-radius: var(--radius-md); gap: 4px;
+    border-radius: var(--radius-md); gap: 2px;
   }
   .table-cards-mobile td {
     display: grid; 
@@ -1240,7 +1240,7 @@ tr:last-child td { border-bottom: none; }
     padding: 0 !important; 
     border: none !important; 
     width: 100%;
-    gap: 8px;
+    gap: 4px;
   }
   .table-cards-mobile td > * {
     min-width: 0;
