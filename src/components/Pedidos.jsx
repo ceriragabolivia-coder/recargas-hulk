@@ -1886,7 +1886,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                       <th style={{ width: '90px' }}>Total</th>
                       <th className="desktop-only" style={{ width: '100px' }}>Admin</th>
                       <th style={{ width: '120px' }}>Pago</th>
-                      <th style={{ width: '140px' }}>Estado</th>
+                      <th style={{ width: '150px' }}>Estado</th>
                       <th style={{ width: '110px' }}>Acción</th>
                     </tr>
                   </thead>
@@ -1933,14 +1933,43 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                             {pedido.atendido_por ? pedido.atendido_por.nombres : '-'}
                           </td>
                           <td>
-                            <span style={{
-                              fontSize: '9px', padding: '4px 8px', borderRadius: '6px', fontWeight: 800,
-                              backgroundColor: pedido.pago_verificado === true ? 'rgba(34, 197, 94, 0.1)' : pedido.pago_verificado === false ? 'rgba(239, 68, 68, 0.1)' : 'rgba(250, 204, 21, 0.1)',
-                              color: pedido.pago_verificado === true ? '#22c55e' : pedido.pago_verificado === false ? '#ef4444' : '#facc15',
-                              border: `1px solid ${pedido.pago_verificado === true ? 'rgba(34, 197, 94, 0.2)' : pedido.pago_verificado === false ? 'rgba(239, 68, 68, 0.2)' : 'rgba(250, 204, 21, 0.2)'}`
-                            }}>
-                              {pedido.pago_verificado === true ? 'SI' : pedido.pago_verificado === false ? 'NO' : 'PEND'}
-                            </span>
+                            {(() => {
+                              let text = 'PENDIENTE';
+                              let color = '#facc15';
+                              let bg = 'rgba(250, 204, 21, 0.1)';
+                              let border = 'rgba(250, 204, 21, 0.2)';
+
+                              if (pedido.pago_verificado === true) {
+                                text = 'VERIFICADO';
+                                color = '#22c55e';
+                                bg = 'rgba(34, 197, 94, 0.1)';
+                                border = 'rgba(34, 197, 94, 0.2)';
+                              } else if (pedido.estado === 'pago_no_encontrado') {
+                                text = 'NO ENCONTRADO';
+                                color = '#ef4444';
+                                bg = 'rgba(239, 68, 68, 0.1)';
+                                border = 'rgba(239, 68, 68, 0.2)';
+                              } else if (pedido.estado === 'pago_duplicado') {
+                                text = 'DUPLICADO';
+                                color = '#ffb74d';
+                                bg = 'rgba(255, 183, 77, 0.1)';
+                                border = 'rgba(255, 183, 77, 0.2)';
+                              } else if (pedido.pago_verificado === false) {
+                                text = 'RECHAZADO';
+                                color = '#ef4444';
+                                bg = 'rgba(239, 68, 68, 0.1)';
+                                border = 'rgba(239, 68, 68, 0.2)';
+                              }
+
+                              return (
+                                <span style={{
+                                  fontSize: '9px', padding: '4px 8px', borderRadius: '6px', fontWeight: 800,
+                                  backgroundColor: bg, color: color, border: `1px solid ${border}`
+                                }}>
+                                  {text}
+                                </span>
+                              );
+                            })()}
                           </td>
                           <td>
                             <span style={{
