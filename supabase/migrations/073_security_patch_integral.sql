@@ -136,5 +136,74 @@ ALTER TABLE public.cuentas_fortnite ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Fortnite: solo admin" ON public.cuentas_fortnite
     FOR ALL USING (public.is_admin());
 
--- 9. RECARGAR ESQUEMA
+-- 9. BLINDAJE DE FUNCIONES FINANCIERAS (Wallet RPCs)
+CREATE OR REPLACE FUNCTION public.aprobar_recarga_rpc(
+    p_recarga_id UUID,
+    p_admin_id UUID,
+    p_notas TEXT DEFAULT NULL
+) RETURNS BOOLEAN AS $$
+DECLARE
+    v_user_id UUID;
+    v_amount NUMERIC;
+BEGIN
+    -- SEGURIDAD: Solo un ADMIN real puede aprobar
+    IF NOT public.is_admin() THEN
+        RAISE EXCEPTION 'No tienes permisos de administrador para realizar esta acción.';
+    END IF;
+
+    SELECT auth_user_id, monto INTO v_user_id, v_amount
+    FROM public.billetera_recargas
+    WHERE id = p_recarga_id AND estado = 'pendiente';
+
+    IF NOT FOUND THEN RETURN FALSE; END IF;
+
+    UPDATE public.billetera_recargas
+    SET estado = 'aprobado', atendido_por_id = auth.uid(), -- Usamos auth.uid() real, no el parámetro
+        notas_admin = p_notas, updated_at = now()
+    WHERE id = p_recarga_id;
+
+    INSERT INTO public.billeteras (auth_user_id, saldo)
+    VALUES (v_user_id, v_amount)
+    ON CONFLICT (auth_user_id) 
+    DO UPDATE SET saldo = public.billeteras.saldo + v_amount, updated_at = now();
+
+    INSERT INTO public.billetera_transacciones (auth_user_id, monto, tipo, descripcion, referencia_id)
+    VALUES (v_user_id, v_amount, 'recarga', 'Recarga de billetera aprobada', p_recarga_id);
+
+    RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION public.pagar_con_billetera_rpc(
+    p_user_id UUID,
+    p_amount NUMERIC,
+    p_pedido_id UUID,
+    p_description TEXT
+) RETURNS BOOLEAN AS $$
+DECLARE
+    v_current_balance NUMERIC;
+BEGIN
+    -- SEGURIDAD: Solo el dueño de la billetera puede pagar
+    IF NOT (auth.uid() = p_user_id) THEN
+        RAISE EXCEPTION 'No puedes pagar con la billetera de otro usuario.';
+    END IF;
+
+    SELECT saldo INTO v_current_balance FROM public.billeteras
+    WHERE auth_user_id = p_user_id FOR UPDATE;
+
+    IF v_current_balance IS NULL OR v_current_balance < p_amount THEN
+        RETURN FALSE;
+    END IF;
+
+    UPDATE public.billeteras SET saldo = saldo - p_amount, updated_at = now()
+    WHERE auth_user_id = p_user_id;
+
+    INSERT INTO public.billetera_transacciones (auth_user_id, monto, tipo, descripcion, referencia_id)
+    VALUES (p_user_id, -p_amount, 'pago_pedido', p_description, p_pedido_id);
+
+    RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 10. RECARGAR ESQUEMA
 NOTIFY pgrst, 'reload schema';
