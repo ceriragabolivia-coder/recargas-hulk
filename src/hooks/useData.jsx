@@ -73,31 +73,35 @@ export function useProductos(juegoId) {
   const [productos, setProductos] = useState([])
   const [categorias, setCategorias] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   const { perfil, user } = useAuth()
   const isNegocio = perfil?.rol === 'negocio'
 
   async function fetchProductos() {
+    console.log('🔍 fetchProductos called for juegoId:', juegoId, 'isNegocio:', isNegocio, 'userId:', user?.id)
     if (!juegoId) { setProductos([]); setLoading(false); return }
     let query = supabase
       .from('productos')
-      .select('*, descuento_revendedor, entrega_automatica')
+      .select('*')
       .eq('juego_id', juegoId)
 
     if (isNegocio) {
       query = query.eq('owner_id', user.id)
     }
 
-    const { data } = await query.order('orden')
+    const { data, error: dbError } = await query.order('orden')
+    console.log('📦 fetchProductos result:', { count: data?.length, error: dbError })
+    if (dbError) setError(dbError)
     if (data) setProductos(data)
     setLoading(false)
   }
 
   async function toggleProducto(id, currentActivo) {
     const nuevoEstado = !currentActivo
-    const { error } = await supabase.from('productos').update({ activo: nuevoEstado }).eq('id', id)
-    if (!error) setProductos(prev => prev.map(p => p.id === id ? { ...p, activo: nuevoEstado } : p))
-    return { error }
+    const { error: dbError } = await supabase.from('productos').update({ activo: nuevoEstado }).eq('id', id)
+    if (!dbError) setProductos(prev => prev.map(p => p.id === id ? { ...p, activo: nuevoEstado } : p))
+    return { error: dbError }
   }
 
   async function fetchCategorias() {
@@ -105,40 +109,41 @@ export function useProductos(juegoId) {
     if (isNegocio) {
       query = query.eq('owner_id', user.id)
     }
-    const { data } = await query.order('orden')
+    const { data, error: dbError } = await query.order('orden')
+    if (dbError) setError(dbError)
     if (data) setCategorias(data)
     setLoading(false)
   }
 
   async function createCategoria(data) {
     const payload = isNegocio ? { ...data, owner_id: user.id } : data
-    const { data: nuevo, error } = await supabase.from('categorias').insert(payload).select().single()
-    if (!error && nuevo) setCategorias(prev => [...prev, nuevo])
-    return { data: nuevo, error }
+    const { data: nuevo, error: dbError } = await supabase.from('categorias').insert(payload).select().single()
+    if (!dbError && nuevo) setCategorias(prev => [...prev, nuevo])
+    return { data: nuevo, error: dbError }
   }
 
   async function createProducto(data) {
     const payload = { ...data, juego_id: juegoId }
     if (isNegocio) payload.owner_id = user.id
-    const { data: nuevo, error } = await supabase.from('productos').insert(payload).select().single()
-    if (!error && nuevo) setProductos(prev => [...prev, nuevo])
-    return { data: nuevo, error }
+    const { data: nuevo, error: dbError } = await supabase.from('productos').insert(payload).select().single()
+    if (!dbError && nuevo) setProductos(prev => [...prev, nuevo])
+    return { data: nuevo, error: dbError }
   }
 
   async function updateProducto(id, data) {
-    const { error } = await supabase.from('productos').update(data).eq('id', id)
-    if (!error) setProductos(prev => prev.map(p => p.id === id ? { ...p, ...data } : p))
-    return { error }
+    const { error: dbError } = await supabase.from('productos').update(data).eq('id', id)
+    if (!dbError) setProductos(prev => prev.map(p => p.id === id ? { ...p, ...data } : p))
+    return { error: dbError }
   }
 
   async function deleteProducto(id) {
-    const { error } = await supabase.from('productos').delete().eq('id', id)
+    const { error: dbError } = await supabase.from('productos').delete().eq('id', id)
     
-    if (error) {
-      if (error.code === '23503') {
+    if (dbError) {
+      if (dbError.code === '23503') {
         return { error: new Error('Este paquete tiene historial de ventas o pedidos asociados y no puede borrarse definitivamente para proteger tus registros financieros. Por favor, utiliza el botón (OFF) para deshabilitarlo.') }
       }
-      return { error }
+      return { error: dbError }
     }
     
     setProductos(prev => prev.filter(p => p.id !== id))
@@ -161,7 +166,7 @@ export function useProductos(juegoId) {
 
   useEffect(() => { fetchProductos(); fetchCategorias() }, [juegoId])
 
-  return { productos, categorias, loading, createProducto, updateProducto, deleteProducto, toggleProducto, reorderProductos, createCategoria, refetch: fetchProductos }
+  return { productos, categorias, loading, error, createProducto, updateProducto, deleteProducto, toggleProducto, reorderProductos, createCategoria, refetch: fetchProductos }
 }
 
 // ========================
@@ -446,7 +451,7 @@ export function useTodosLosProductos() {
     try {
       let query = supabase
         .from('productos')
-        .select('*, juegos!inner(*, categorias(icono))')
+        .select('*, juegos!inner(*, categorias(*))')
         .eq('activo', true)
         .eq('juegos.activo', true)
 
@@ -455,6 +460,7 @@ export function useTodosLosProductos() {
       }
 
       const { data, error } = await query.order('nombre')
+      console.log('🌍 useTodosLosProductos result:', { count: data?.length, error, isNegocio, userId: user?.id })
       
       if (error) {
         console.error('Error fetching products:', error)

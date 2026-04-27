@@ -10,7 +10,7 @@ export default function GestionProductos() {
   const { config, loading: loadingConfig } = useConfiguracion()
   const [selectedJuego, setSelectedJuego] = useState(null)
   const [searchJuego, setSearchJuego] = useState('')
-  const { productos, loading: loadingProductos, createProducto, updateProducto, deleteProducto, toggleProducto, reorderProductos, createCategoria } = useProductos(selectedJuego?.id)
+  const { productos, loading: loadingProductos, error: errorProductos, createProducto, updateProducto, deleteProducto, toggleProducto, reorderProductos, createCategoria } = useProductos(selectedJuego?.id)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isGameModalOpen, setIsGameModalOpen] = useState(false)
@@ -440,6 +440,11 @@ export default function GestionProductos() {
       <div className="page-header">
         <h1 className="page-title">Gestión de Productos</h1>
         <p className="page-subtitle">Añade o elimina los paquetes de cada juego y establece su rentabilidad.</p>
+        
+        {/* DEBUG OVERLAY - REMOVE AFTER FIXING */}
+        <div style={{ backgroundColor: 'rgba(0,0,0,0.8)', color: '#0f0', padding: '10px', fontSize: '10px', borderRadius: '8px', marginTop: '10px', fontFamily: 'monospace' }}>
+          DEBUG: {productos.length} productos | juego {selectedJuego?.id} | Rol: {perfil?.rol} | ERROR: {errorProductos ? JSON.stringify(errorProductos) : 'None'}
+        </div>
       </div>
 
       <div className="content-grid" style={{ flex: 1, display: 'flex', gap: '24px', overflow: 'hidden' }}>
