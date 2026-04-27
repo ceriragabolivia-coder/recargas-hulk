@@ -79,7 +79,6 @@ export function useProductos(juegoId) {
   const isNegocio = perfil?.rol === 'negocio'
 
   async function fetchProductos() {
-    console.log('🔍 fetchProductos called for juegoId:', juegoId, 'isNegocio:', isNegocio, 'userId:', user?.id)
     if (!juegoId) { setProductos([]); setLoading(false); return }
     let query = supabase
       .from('productos')
@@ -91,7 +90,6 @@ export function useProductos(juegoId) {
     }
 
     const { data, error: dbError } = await query.order('orden')
-    console.log('📦 fetchProductos result:', { count: data?.length, error: dbError })
     if (dbError) setError(dbError)
     if (data) setProductos(data)
     setLoading(false)
@@ -460,7 +458,6 @@ export function useTodosLosProductos() {
       }
 
       const { data, error } = await query.order('nombre')
-      console.log('🌍 useTodosLosProductos result:', { count: data?.length, error, isNegocio, userId: user?.id })
       
       if (error) {
         console.error('Error fetching products:', error)
