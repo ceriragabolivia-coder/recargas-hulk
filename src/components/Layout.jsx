@@ -942,6 +942,33 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
             </>
           )}
         </nav>
+
+        {/* Botón Descargar App (Visible para todos) */}
+        {config?.apk_url && (
+          <div style={{ padding: '0 12px 12px' }}>
+             <a 
+               href={config.apk_url} 
+               download="Ceriraga.apk"
+               className="nav-item nav-item-promo"
+               style={{ 
+                 textDecoration: 'none', 
+                 display: 'flex', 
+                 justifyContent: 'center',
+                 background: 'linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%)',
+                 color: '#000',
+                 fontWeight: 900,
+                 fontSize: '13px',
+                 borderRadius: '12px',
+                 border: 'none',
+                 padding: '10px'
+               }}
+             >
+               <span style={{ fontSize: '18px', marginRight: '8px' }}>📲</span>
+               DESCARGAR APP
+             </a>
+          </div>
+        )}
+
         <div style={{ padding: 12, borderTop: '1px solid var(--border-color)' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '4px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

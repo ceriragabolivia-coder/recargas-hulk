@@ -386,6 +386,15 @@ export default function Configuracion() {
           >
             ✨ Efectos Visuales
           </button>
+          {!isNegocio && (
+            <button 
+              className={`btn ${activeTab === 'mobile' ? 'btn-primary' : 'btn-ghost'}`}
+              style={{ justifyContent: 'flex-start', textAlign: 'left' }}
+              onClick={() => setActiveTab('mobile')}
+            >
+              📲 App Móvil
+            </button>
+          )}
         </div>
 
         {/* Contenido Principal */}
@@ -1513,6 +1522,88 @@ export default function Configuracion() {
                     <p style={{ marginTop: '8px', fontSize: '11px', color: 'var(--accent-warning)', backgroundColor: 'rgba(255, 209, 102, 0.05)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255, 209, 102, 0.1)' }}>
                       ⚠️ <strong>Rendimiento:</strong> Una densidad muy alta (&gt;25) puede causar lentitud en dispositivos móviles. Se recomienda mantener un equilibrio para asegurar una navegación fluida.
                     </p>
+                  </div>
+
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'mobile' && (
+            <>
+              <div className="card-header">
+                <h2 className="card-title">Gestión de App Android (APK)</h2>
+              </div>
+              <div style={{ padding: '24px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', maxWidth: '600px' }}>
+                  
+                  <div style={{ padding: '24px', backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
+                      <div style={{ fontSize: '32px' }}>📲</div>
+                      <div>
+                        <h3 style={{ fontSize: '18px', fontWeight: 'bold' }}>Instalador APK</h3>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Sube la última versión de tu aplicación para que los usuarios la descarguen.</p>
+                      </div>
+                    </div>
+
+                    <div style={{ backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border-color)', marginBottom: '20px' }}>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>URL Actual del APK:</div>
+                      <div style={{ 
+                        fontSize: '13px', color: 'var(--accent-primary)', wordBreak: 'break-all', 
+                        backgroundColor: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '8px',
+                        border: '1px solid rgba(255,255,255,0.05)'
+                      }}>
+                        {config?.apk_url || 'No se ha subido ningún APK aún.'}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <div className="form-group">
+                        <label className="form-label">Subir Nuevo APK</label>
+                        <input 
+                          type="file" 
+                          accept=".apk"
+                          onChange={async (e) => {
+                            const file = e.target.files[0]
+                            if (!file) return
+                            if (!file.name.toLowerCase().endsWith('.apk')) {
+                              setAlertModal({ type: 'error', message: 'Por favor selecciona un archivo .apk válido' })
+                              return
+                            }
+                            
+                            setUploadingImage(true)
+                            try {
+                              const fileName = `apps/ceriraga-v${Date.now()}.apk`
+                              const { error: uploadError } = await supabase.storage
+                                .from('logos')
+                                .upload(fileName, file)
+
+                              if (uploadError) throw uploadError
+
+                              const { data: { publicUrl } } = supabase.storage
+                                .from('logos')
+                                .getPublicUrl(fileName)
+
+                              await updateConfig('apk_url', publicUrl, true)
+                              refetchConfig()
+                              setAlertModal({ type: 'success', message: '¡APK actualizado con éxito! El botón de descarga ya está disponible para todos.' })
+                            } catch (err) {
+                              setAlertModal({ type: 'error', message: 'Error al subir el APK: ' + err.message })
+                            } finally {
+                              setUploadingImage(false)
+                              e.target.value = null
+                            }
+                          }}
+                          disabled={uploadingImage}
+                          className="form-input"
+                          style={{ padding: '10px' }}
+                        />
+                      </div>
+                      
+                      <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                        Nota: Al subir un nuevo archivo, el botón "Descargar App" se actualizará automáticamente con la nueva versión para todos los clientes.
+                      </p>
+                    </div>
                   </div>
 
                 </div>
