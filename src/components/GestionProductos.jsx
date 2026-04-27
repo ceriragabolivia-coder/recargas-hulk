@@ -898,6 +898,10 @@ export default function GestionProductos() {
                     setNewInfoFile(null);
                     setFormData(prev => ({ ...prev, info_adicional_imagen_url: url }));
                   }}
+                  style={{ fontSize: 11, padding: '8px', backgroundColor: 'rgba(0,0,0,0.2)' }}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="form-group" style={{ marginBottom: '24px', padding: '16px', backgroundColor: 'rgba(0, 210, 255, 0.05)', borderRadius: '12px', border: '1px solid rgba(0, 210, 255, 0.1)' }}>
