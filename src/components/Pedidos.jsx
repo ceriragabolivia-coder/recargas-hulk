@@ -1678,58 +1678,77 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
           overflow-x: auto !important;
           border-radius: 16px;
         }
-        .orders-table {
-          width: 100% !important;
-          min-width: 950px !important;
-          border-collapse: collapse !important;
-          table-layout: fixed !important;
-          background-color: #1a1d21 !important;
-          border: 1px solid rgba(255,255,255,0.1) !important;
+        /* Desktop Styles */
+        @media (min-width: 769px) {
+          .orders-table {
+            width: 100% !important;
+            min-width: 950px !important;
+            border-collapse: collapse !important;
+            table-layout: fixed !important;
+            background-color: #1a1d21 !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+          }
+          .orders-table thead tr {
+            background-color: #2a2f36 !important;
+            height: 38px !important;
+          }
+          .orders-table th {
+            padding: 0 10px !important;
+            color: rgba(255,255,255,0.7) !important;
+            font-size: 10px !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            white-space: nowrap !important;
+            text-align: center !important;
+            font-weight: 700 !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            vertical-align: middle !important;
+          }
+          .orders-table th:first-child, .orders-table td:first-child { text-align: center !important; }
+          
+          .pedido-row-modern {
+            background-color: transparent !important;
+            transition: background-color 0.2s ease !important;
+            border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+          }
+          .pedido-row-modern:hover {
+            background-color: rgba(255,255,255,0.03) !important;
+          }
+          .orders-table td {
+            padding: 8px 10px !important;
+            color: #fff !important;
+            font-size: 12px !important;
+            border: 1px solid rgba(255,255,255,0.08) !important;
+            white-space: nowrap !important;
+            vertical-align: middle !important;
+            text-align: center !important;
+          }
+          .orders-table td:nth-child(3) { text-align: left !important; } /* Cliente alineado a la izquierda */
+          .orders-table .desktop-only { display: table-cell !important; }
         }
-        .orders-table thead tr {
-          background-color: #2a2f36 !important;
-          height: 38px !important;
-        }
-        .orders-table th {
-          padding: 0 10px !important;
-          color: rgba(255,255,255,0.7) !important;
-          font-size: 10px !important;
-          text-transform: uppercase !important;
-          letter-spacing: 0.5px !important;
-          white-space: nowrap !important;
-          text-align: center !important;
-          font-weight: 700 !important;
-          border: 1px solid rgba(255,255,255,0.1) !important;
-          vertical-align: middle !important;
-        }
-        .orders-table th:first-child, .orders-table td:first-child { text-align: center !important; }
-        
-        .pedido-row-modern {
-          background-color: transparent !important;
-          transition: background-color 0.2s ease !important;
-          border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-        }
-        .pedido-row-modern:hover {
-          background-color: rgba(255,255,255,0.03) !important;
-        }
-        .orders-table td {
-          padding: 8px 10px !important;
-          color: #fff !important;
-          font-size: 12px !important;
-          border: 1px solid rgba(255,255,255,0.08) !important;
-          white-space: nowrap !important;
-          vertical-align: middle !important;
-          text-align: center !important;
-        }
-        .orders-table td:nth-child(3) { text-align: left !important; } /* Cliente alineado a la izquierda */
 
-        /* Sincronización de visibilidad */
-        .orders-table .desktop-only {
-          display: table-cell !important;
-        }
-        @media (max-width: 1100px) {
+        /* Sincronización de visibilidad para tablets medianas */
+        @media (min-width: 769px) and (max-width: 1100px) {
           .orders-table .desktop-only {
             display: none !important;
+          }
+        }
+
+        /* Mobile Specific Adjustment */
+        @media (max-width: 768px) {
+          .orders-table-wrapper {
+            overflow: visible !important;
+          }
+          .orders-table {
+            border: none !important;
+            background: transparent !important;
+          }
+          .pedido-row-modern {
+            margin-bottom: 12px !important;
+            border: 1px solid var(--border-color) !important;
+            background: var(--bg-card) !important;
+            border-radius: 12px !important;
+            padding: 10px !important;
           }
         }
       `}</style>
@@ -1874,7 +1893,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
           ) : (
             <>
               <div className="orders-table-wrapper">
-                <table className="orders-table">
+                <table className="orders-table table-cards-mobile">
                   <thead>
                     <tr>
                       <th style={{ width: '70px' }}>ID</th>
@@ -1903,36 +1922,36 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                           onClick={() => handleOpenPedido(pedido)}
                           className="pedido-row-modern"
                         >
-                          <td style={{ fontWeight: 800, color: 'var(--accent-primary)' }}>
+                          <td data-label="ID" style={{ fontWeight: 800, color: 'var(--accent-primary)' }}>
                             #{pedido.numero_pedido}
                           </td>
-                          <td className="desktop-only" style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px' }}>
+                          <td data-label="Fecha" className="desktop-only" style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px' }}>
                             {formatFecha(pedido.created_at)}
                           </td>
-                          <td style={{ fontWeight: 600, fontSize: '12px' }}>
+                          <td data-label="Cliente" style={{ fontWeight: 600, fontSize: '12px' }}>
                             {pedido.cliente ?
                               `${pedido.cliente.nombres} ${pedido.cliente.apellidos?.toLowerCase() === 'pendiente' ? '' : (pedido.cliente.apellidos || '')}`.trim() :
                               '-'
                             }
                           </td>
-                          <td className="desktop-only" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px' }}>
+                          <td data-label="Juego" className="desktop-only" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px' }}>
                             {juegos[0] || '-'}
                           </td>
-                          <td className="desktop-only" style={{ maxWidth: '160px' }}>
+                          <td data-label="Paquete" className="desktop-only" style={{ maxWidth: '160px' }}>
                             <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', color: 'rgba(255,255,255,0.7)', fontSize: '11px' }}>
                               {paquetes[0] || '-'}
                             </div>
                           </td>
-                          <td className="desktop-only" style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px' }}>
+                          <td data-label="Ref" className="desktop-only" style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px' }}>
                             {pedido.referencia_pago || '-'}
                           </td>
-                          <td style={{ fontWeight: 800, color: '#22c55e', fontSize: '13px' }}>
+                          <td data-label="Total" style={{ fontWeight: 800, color: '#22c55e', fontSize: '13px' }}>
                             {formatBs(pedido.total_bs)}
                           </td>
-                          <td className="desktop-only" style={{ color: pedido.atendido_por_id ? '#fff' : 'rgba(255,255,255,0.3)', fontSize: '11px' }}>
+                          <td data-label="Admin" className="desktop-only" style={{ color: pedido.atendido_por_id ? '#fff' : 'rgba(255,255,255,0.3)', fontSize: '11px' }}>
                             {pedido.atendido_por ? pedido.atendido_por.nombres : '-'}
                           </td>
-                          <td>
+                          <td data-label="Pago">
                             {(() => {
                               let text = 'PENDIENTE';
                               let color = '#facc15';
@@ -1971,7 +1990,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                               );
                             })()}
                           </td>
-                          <td>
+                          <td data-label="Estado">
                             <span style={{
                               fontSize: '9px', padding: '4px 8px', borderRadius: '6px',
                               backgroundColor: est.bg, color: est.color, fontWeight: 800,
@@ -1980,7 +1999,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                               {est.label.length > 12 ? est.label.substring(0, 10) + '..' : est.label}
                             </span>
                           </td>
-                          <td>
+                          <td data-label="Acción">
                             <button className="btn btn-primary btn-sm" style={{ padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 700 }}>
                               Ver
                             </button>
