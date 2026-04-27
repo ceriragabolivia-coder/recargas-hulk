@@ -265,12 +265,18 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
   const currentPedidos = pedidosFiltrados.slice(startIndex, startIndex + itemsPerPage)
 
   const updateEstado = async (pedidoId, nuevoEstado) => {
-    // 1. Obtener el pedido actual
-    const { data: pedidoActual } = await supabase
+    // 1. Obtener el pedido actual con manejo de errores
+    const { data: pedidoActual, error: fetchError } = await supabase
       .from('pedidos')
       .select('*, pedido_items(*, productos(entrega_automatica))')
       .eq('id', pedidoId)
-      .single()
+      .maybeSingle()
+
+    if (fetchError || !pedidoActual) {
+      console.error("❌ Error al obtener detalles del pedido:", fetchError);
+      showAlert("No se pudieron obtener los detalles del pedido para completar la operación. " + (fetchError?.message || ''), 'error');
+      return;
+    }
 
     const updateData = { estado: nuevoEstado, updated_at: new Date().toISOString() }
 
