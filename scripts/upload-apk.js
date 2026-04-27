@@ -37,7 +37,27 @@ async function uploadAPK() {
     process.exit(1)
   }
 
-  console.log('✅ APK uploaded successfully:', data.path)
+  console.log('✅ APK uploaded successfully to storage.')
+
+  // 2. Obtener la URL pública
+  const { data: { publicUrl } } = supabase.storage
+    .from('logos')
+    .getPublicUrl(fileName)
+
+  console.log(`🔗 Public URL: ${publicUrl}`)
+
+  // 3. Actualizar la tabla de configuración para que el botón de la web cambie solo
+  console.log('🔄 Updating database configuration...')
+  const { error: dbError } = await supabase
+    .from('configuracion')
+    .upsert({ clave: 'apk_url', valor: publicUrl }, { onConflict: 'clave' })
+
+  if (dbError) {
+    console.error('❌ Error updating database:', dbError.message)
+    process.exit(1)
+  }
+
+  console.log('🚀 All done! The download button on your website is now updated.')
 }
 
 uploadAPK()
