@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useJuegos, useProductos, useConfiguracion, useProductoCodigos } from '../hooks/useData'
+import { useAuth } from '../context/AuthContext'
 import { calcularPrecioVenta, formatUSD, formatBs, removeWhiteBackground } from '../utils/helpers'
 import { supabase } from '../lib/supabase'
 import AlertModal from './AlertModal'
@@ -7,6 +8,7 @@ import AlertModal from './AlertModal'
 
 export default function GestionProductos() {
   const { juegos, categorias, loading: loadingJuegos, createJuego, updateJuego, deleteJuego } = useJuegos()
+  const { perfil } = useAuth()
   const { config, loading: loadingConfig } = useConfiguracion()
   const [selectedJuego, setSelectedJuego] = useState(null)
   const [searchJuego, setSearchJuego] = useState('')
