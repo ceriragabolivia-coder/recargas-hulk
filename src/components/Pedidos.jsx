@@ -1680,16 +1680,17 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
         }
         .orders-table {
           width: 100% !important;
-          min-width: 1300px !important;
+          min-width: 1000px !important;
           border-collapse: separate !important;
-          border-spacing: 0 12px !important;
-          table-layout: auto !important;
+          border-spacing: 0 8px !important;
+          table-layout: fixed !important;
         }
         .orders-table thead tr {
           background-color: rgba(255,255,255,0.03) !important;
+          height: 48px !important;
         }
         .orders-table th {
-          padding: 16px !important;
+          padding: 0 16px !important;
           color: var(--text-muted) !important;
           font-size: 11px !important;
           text-transform: uppercase !important;
@@ -1698,6 +1699,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
           text-align: center !important;
           font-weight: 700 !important;
           border: none !important;
+          vertical-align: middle !important;
         }
         .orders-table th:first-child, .orders-table td:first-child { text-align: left !important; padding-left: 24px !important; }
         
@@ -1707,21 +1709,22 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
         }
         .pedido-row-modern:hover {
           background-color: #2a2f36 !important;
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(0,0,0,0.4) !important;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
         }
         .orders-table td {
-          padding: 16px !important;
+          padding: 12px 16px !important;
           color: #fff !important;
-          font-size: 14px !important;
+          font-size: 13px !important;
           border: none !important;
           white-space: nowrap !important;
           vertical-align: middle !important;
         }
-        .orders-table td.desktop-only {
+        /* Sincronización de visibilidad */
+        .orders-table .desktop-only {
           display: table-cell !important;
         }
-        @media (max-width: 1024px) {
+        @media (max-width: 1100px) {
           .orders-table .desktop-only {
             display: none !important;
           }
@@ -1871,17 +1874,17 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                 <table className="orders-table">
                   <thead>
                     <tr>
-                      <th style={{ width: '120px' }}>N° Pedido</th>
-                      <th className="desktop-only" style={{ width: '180px' }}>Fecha / Hora</th>
-                      <th style={{ textAlign: 'left', width: '220px' }}>Cliente</th>
-                      <th className="desktop-only" style={{ width: '150px' }}>Juego(s)</th>
-                      <th className="desktop-only" style={{ width: '250px' }}>Paquetes</th>
-                      <th className="desktop-only" style={{ width: '150px' }}>Referencia</th>
-                      <th style={{ width: '130px' }}>Total</th>
-                      <th className="desktop-only" style={{ width: '150px' }}>Responsable</th>
-                      <th style={{ width: '160px' }}>Pago</th>
-                      <th style={{ width: '180px' }}>Estado</th>
-                      <th style={{ width: '120px' }}>Acción</th>
+                      <th style={{ width: '90px' }}>N° Pedido</th>
+                      <th className="desktop-only" style={{ width: '160px' }}>Fecha / Hora</th>
+                      <th style={{ textAlign: 'left', width: '180px' }}>Cliente</th>
+                      <th className="desktop-only" style={{ width: '120px' }}>Juego(s)</th>
+                      <th className="desktop-only" style={{ width: '180px' }}>Paquetes</th>
+                      <th className="desktop-only" style={{ width: '120px' }}>Referencia</th>
+                      <th style={{ width: '110px' }}>Total</th>
+                      <th className="desktop-only" style={{ width: '120px' }}>Responsable</th>
+                      <th style={{ width: '130px' }}>Pago</th>
+                      <th style={{ width: '150px' }}>Estado</th>
+                      <th style={{ width: '110px' }}>Acción</th>
                     </tr>
                   </thead>
                   <tbody>
