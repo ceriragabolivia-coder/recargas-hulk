@@ -1680,46 +1680,49 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
         }
         .orders-table {
           width: 100% !important;
-          min-width: 1000px !important;
-          border-collapse: separate !important;
-          border-spacing: 0 8px !important;
+          min-width: 950px !important;
+          border-collapse: collapse !important;
           table-layout: fixed !important;
+          background-color: #1a1d21 !important;
+          border: 1px solid rgba(255,255,255,0.1) !important;
         }
         .orders-table thead tr {
-          background-color: rgba(255,255,255,0.03) !important;
-          height: 48px !important;
+          background-color: #2a2f36 !important;
+          height: 38px !important;
         }
         .orders-table th {
-          padding: 0 16px !important;
-          color: var(--text-muted) !important;
-          font-size: 11px !important;
+          padding: 0 10px !important;
+          color: rgba(255,255,255,0.7) !important;
+          font-size: 10px !important;
           text-transform: uppercase !important;
-          letter-spacing: 1px !important;
+          letter-spacing: 0.5px !important;
           white-space: nowrap !important;
           text-align: center !important;
           font-weight: 700 !important;
-          border: none !important;
+          border: 1px solid rgba(255,255,255,0.1) !important;
           vertical-align: middle !important;
         }
-        .orders-table th:first-child, .orders-table td:first-child { text-align: left !important; padding-left: 24px !important; }
+        .orders-table th:first-child, .orders-table td:first-child { text-align: center !important; }
         
         .pedido-row-modern {
-          background-color: #1e2227 !important;
-          transition: all 0.2s ease !important;
+          background-color: transparent !important;
+          transition: background-color 0.2s ease !important;
+          border-bottom: 1px solid rgba(255,255,255,0.05) !important;
         }
         .pedido-row-modern:hover {
-          background-color: #2a2f36 !important;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+          background-color: rgba(255,255,255,0.03) !important;
         }
         .orders-table td {
-          padding: 12px 16px !important;
+          padding: 8px 10px !important;
           color: #fff !important;
-          font-size: 13px !important;
-          border: none !important;
+          font-size: 12px !important;
+          border: 1px solid rgba(255,255,255,0.08) !important;
           white-space: nowrap !important;
           vertical-align: middle !important;
+          text-align: center !important;
         }
+        .orders-table td:nth-child(3) { text-align: left !important; } /* Cliente alineado a la izquierda */
+
         /* Sincronización de visibilidad */
         .orders-table .desktop-only {
           display: table-cell !important;
@@ -1874,16 +1877,16 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                 <table className="orders-table">
                   <thead>
                     <tr>
-                      <th style={{ width: '90px' }}>N° Pedido</th>
-                      <th className="desktop-only" style={{ width: '160px' }}>Fecha / Hora</th>
-                      <th style={{ textAlign: 'left', width: '180px' }}>Cliente</th>
-                      <th className="desktop-only" style={{ width: '120px' }}>Juego(s)</th>
-                      <th className="desktop-only" style={{ width: '180px' }}>Paquetes</th>
-                      <th className="desktop-only" style={{ width: '120px' }}>Referencia</th>
-                      <th style={{ width: '110px' }}>Total</th>
-                      <th className="desktop-only" style={{ width: '120px' }}>Responsable</th>
-                      <th style={{ width: '130px' }}>Pago</th>
-                      <th style={{ width: '150px' }}>Estado</th>
+                      <th style={{ width: '70px' }}>ID</th>
+                      <th className="desktop-only" style={{ width: '140px' }}>Fecha</th>
+                      <th style={{ textAlign: 'left', width: '160px', paddingLeft: '15px !important' }}>Cliente</th>
+                      <th className="desktop-only" style={{ width: '100px' }}>Juego</th>
+                      <th className="desktop-only" style={{ width: '160px' }}>Paquete</th>
+                      <th className="desktop-only" style={{ width: '100px' }}>Ref</th>
+                      <th style={{ width: '90px' }}>Total</th>
+                      <th className="desktop-only" style={{ width: '100px' }}>Admin</th>
+                      <th style={{ width: '120px' }}>Pago</th>
+                      <th style={{ width: '140px' }}>Estado</th>
                       <th style={{ width: '110px' }}>Acción</th>
                     </tr>
                   </thead>
@@ -1900,60 +1903,57 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                           onClick={() => handleOpenPedido(pedido)}
                           className="pedido-row-modern"
                         >
-                          <td style={{ fontWeight: 800, color: 'var(--accent-primary)', borderTopLeftRadius: '16px', borderBottomLeftRadius: '16px' }}>
+                          <td style={{ fontWeight: 800, color: 'var(--accent-primary)' }}>
                             #{pedido.numero_pedido}
                           </td>
-                          <td className="desktop-only" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                          <td className="desktop-only" style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px' }}>
                             {formatFecha(pedido.created_at)}
                           </td>
-                          <td style={{ fontWeight: 600 }}>
+                          <td style={{ fontWeight: 600, fontSize: '12px' }}>
                             {pedido.cliente ?
                               `${pedido.cliente.nombres} ${pedido.cliente.apellidos?.toLowerCase() === 'pendiente' ? '' : (pedido.cliente.apellidos || '')}`.trim() :
                               '-'
                             }
                           </td>
-                          <td className="desktop-only" style={{ color: 'rgba(255,255,255,0.8)' }}>
-                            {juegos.join(', ')}
+                          <td className="desktop-only" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px' }}>
+                            {juegos[0] || '-'}
                           </td>
-                          <td className="desktop-only" style={{ maxWidth: '250px' }}>
-                            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', color: 'rgba(255,255,255,0.8)' }}>
-                              {paquetes.join(', ')}
+                          <td className="desktop-only" style={{ maxWidth: '160px' }}>
+                            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', color: 'rgba(255,255,255,0.7)', fontSize: '11px' }}>
+                              {paquetes[0] || '-'}
                             </div>
                           </td>
-                          <td className="desktop-only" style={{ color: 'var(--text-muted)' }}>
+                          <td className="desktop-only" style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px' }}>
                             {pedido.referencia_pago || '-'}
                           </td>
-                          <td style={{ textAlign: 'center', fontWeight: 900, color: '#22c55e', fontSize: '16px' }}>
+                          <td style={{ fontWeight: 800, color: '#22c55e', fontSize: '13px' }}>
                             {formatBs(pedido.total_bs)}
                           </td>
-                          <td className="desktop-only" style={{ textAlign: 'center', color: pedido.atendido_por_id ? '#fff' : 'rgba(255,255,255,0.4)' }}>
-                            {pedido.atendido_por ?
-                              `${pedido.atendido_por.nombres} ${pedido.atendido_por.apellidos?.toLowerCase() === 'pendiente' ? '' : (pedido.atendido_por.apellidos || '')}`.trim() :
-                              'Sin asignar'
-                            }
+                          <td className="desktop-only" style={{ color: pedido.atendido_por_id ? '#fff' : 'rgba(255,255,255,0.3)', fontSize: '11px' }}>
+                            {pedido.atendido_por ? pedido.atendido_por.nombres : '-'}
                           </td>
-                          <td style={{ textAlign: 'center' }}>
+                          <td>
                             <span style={{
-                              fontSize: '11px', padding: '6px 12px', borderRadius: '10px', fontWeight: 800,
-                              backgroundColor: pedido.pago_verificado === true ? 'rgba(34, 197, 94, 0.15)' : pedido.pago_verificado === false ? 'rgba(239, 68, 68, 0.15)' : 'rgba(250, 204, 21, 0.15)',
+                              fontSize: '9px', padding: '4px 8px', borderRadius: '6px', fontWeight: 800,
+                              backgroundColor: pedido.pago_verificado === true ? 'rgba(34, 197, 94, 0.1)' : pedido.pago_verificado === false ? 'rgba(239, 68, 68, 0.1)' : 'rgba(250, 204, 21, 0.1)',
                               color: pedido.pago_verificado === true ? '#22c55e' : pedido.pago_verificado === false ? '#ef4444' : '#facc15',
-                              border: `1px solid ${pedido.pago_verificado === true ? 'rgba(34, 197, 94, 0.3)' : pedido.pago_verificado === false ? 'rgba(239, 68, 68, 0.3)' : 'rgba(250, 204, 21, 0.3)'}`
+                              border: `1px solid ${pedido.pago_verificado === true ? 'rgba(34, 197, 94, 0.2)' : pedido.pago_verificado === false ? 'rgba(239, 68, 68, 0.2)' : 'rgba(250, 204, 21, 0.2)'}`
                             }}>
-                              {pedido.pago_verificado === true ? 'VERIFICADO' : pedido.pago_verificado === false ? 'RECHAZADO' : 'PENDIENTE'}
+                              {pedido.pago_verificado === true ? 'SI' : pedido.pago_verificado === false ? 'NO' : 'PEND'}
                             </span>
                           </td>
-                          <td style={{ textAlign: 'center' }}>
+                          <td>
                             <span style={{
-                              fontSize: '11px', padding: '6px 12px', borderRadius: '10px',
+                              fontSize: '9px', padding: '4px 8px', borderRadius: '6px',
                               backgroundColor: est.bg, color: est.color, fontWeight: 800,
-                              border: `1px solid ${est.color}44`
+                              border: `1px solid ${est.color}33`, textTransform: 'uppercase'
                             }}>
-                              {est.label}
+                              {est.label.length > 12 ? est.label.substring(0, 10) + '..' : est.label}
                             </span>
                           </td>
-                          <td style={{ borderTopRightRadius: '16px', borderBottomRightRadius: '16px', textAlign: 'right', paddingRight: '24px !important' }}>
-                            <button className="btn btn-primary btn-sm" style={{ padding: '8px 16px', borderRadius: '10px', fontSize: '13px', fontWeight: 700 }}>
-                              Ver Detalles
+                          <td>
+                            <button className="btn btn-primary btn-sm" style={{ padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 700 }}>
+                              Ver
                             </button>
                           </td>
                         </tr>
