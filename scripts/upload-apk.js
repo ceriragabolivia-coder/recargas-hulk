@@ -48,17 +48,19 @@ async function uploadAPK() {
 
   console.log(`🔗 Public URL: ${publicUrl}`)
 
-  // 3. Llamar a la función especial que creamos en Supabase
-  console.log('🔄 Calling secure RPC to update APK URL...')
-  const { error: rpcError } = await supabase
-    .rpc('actualizar_apk_url', { nueva_url: publicUrl })
+  // 3. Intento final: Usamos la columna 'valor_texto' que es la correcta para URLs
+  console.log('🔄 Updating valor_texto column...')
+  const { error: finalError } = await supabase
+    .from('configuracion')
+    .update({ valor_texto: publicUrl })
+    .match({ clave: 'apk_url' })
 
-  if (rpcError) {
-    console.error('❌ Error calling RPC:', rpcError.message)
+  if (finalError) {
+    console.error('❌ Update failed:', finalError.message)
     process.exit(1)
   }
 
-  console.log('🚀 SUCCESS! The download button is now updated using the secure RPC.')
+  console.log('🚀 SUCCESS! The APK URL is now saved in the correct text column.')
 }
 
 uploadAPK()
