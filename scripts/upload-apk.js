@@ -48,19 +48,17 @@ async function uploadAPK() {
 
   console.log(`🔗 Public URL: ${publicUrl}`)
 
-  // 3. Actualizar la tabla de configuración para que el botón de la web cambie solo
-  console.log('🔄 Updating database configuration...')
-  const { error: dbError } = await supabase
-    .from('configuracion')
-    .update({ valor: publicUrl })
-    .eq('clave', 'apk_url')
+  // 3. Llamar a la función especial que creamos en Supabase
+  console.log('🔄 Calling secure RPC to update APK URL...')
+  const { error: rpcError } = await supabase
+    .rpc('actualizar_apk_url', { nueva_url: publicUrl })
 
-  if (dbError) {
-    console.error('❌ Error updating database:', dbError.message)
+  if (rpcError) {
+    console.error('❌ Error calling RPC:', rpcError.message)
     process.exit(1)
   }
 
-  console.log('🚀 All done! The download button on your website is now updated.')
+  console.log('🚀 SUCCESS! The download button is now updated using the secure RPC.')
 }
 
 uploadAPK()
