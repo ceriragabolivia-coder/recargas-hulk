@@ -1866,7 +1866,8 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
               <p style={{ color: 'var(--text-muted)' }}>Selecciona otra categoría o espera a que se registren nuevos pedidos.</p>
             </div>
           ) : (
-            <div className="orders-table-wrapper">
+            <>
+              <div className="orders-table-wrapper">
                 <table className="orders-table">
                   <thead>
                     <tr>
@@ -2004,7 +2005,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                   </div>
                 </div>
               )}
-            </div>
+            </>
           )}
         </>
       )}
