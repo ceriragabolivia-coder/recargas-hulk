@@ -15,12 +15,23 @@ if (!supabaseUrl || !supabaseServiceKey) {
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 async function uploadAPK() {
-  const apkPath = path.resolve('android/app/build/outputs/apk/release/app-release-unsigned.apk')
+  const releasePath = path.resolve('android/app/build/outputs/apk/release/app-release.apk')
+  const debugPath = path.resolve('android/app/build/outputs/apk/debug/app-debug.apk')
+  
+  let apkPath = releasePath
   
   if (!fs.existsSync(apkPath)) {
-    console.error(`❌ Error: APK not found at ${apkPath}`)
+    console.log('ℹ️ Release APK not found, checking for Debug APK...')
+    apkPath = debugPath
+  }
+
+  if (!fs.existsSync(apkPath)) {
+    console.error(`❌ Error: No APK found at ${releasePath} or ${debugPath}`)
+    console.log('💡 Tip: Run "./gradlew assembleDebug" in the android folder first.')
     process.exit(1)
   }
+
+  console.log(`✅ Using APK: ${apkPath}`)
 
   const fileBuffer = fs.readFileSync(apkPath)
   const fileName = 'apps/latest-release.apk'

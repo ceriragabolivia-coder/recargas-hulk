@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "mobile:sync": "vite build && npx cap sync android",
-    "mobile:open": "npx cap open android"
+    "mobile:open": "npx cap open android",
+    "mobile:build": "npm run mobile:sync && cd android && ./gradlew assembleDebug",
+    "mobile:upload": "node scripts/upload-apk.js"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",
