@@ -1673,6 +1673,60 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
   // Vista de lista
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '0 32px 32px' }}>
+      <style>{`
+        .orders-table-wrapper {
+          overflow-x: auto !important;
+          border-radius: 16px;
+        }
+        .orders-table {
+          width: 100% !important;
+          min-width: 1300px !important;
+          border-collapse: separate !important;
+          border-spacing: 0 12px !important;
+          table-layout: auto !important;
+        }
+        .orders-table thead tr {
+          background-color: rgba(255,255,255,0.03) !important;
+        }
+        .orders-table th {
+          padding: 16px !important;
+          color: var(--text-muted) !important;
+          font-size: 11px !important;
+          text-transform: uppercase !important;
+          letter-spacing: 1px !important;
+          white-space: nowrap !important;
+          text-align: center !important;
+          font-weight: 700 !important;
+          border: none !important;
+        }
+        .orders-table th:first-child, .orders-table td:first-child { text-align: left !important; padding-left: 24px !important; }
+        
+        .pedido-row-modern {
+          background-color: #1e2227 !important;
+          transition: all 0.2s ease !important;
+        }
+        .pedido-row-modern:hover {
+          background-color: #2a2f36 !important;
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(0,0,0,0.4) !important;
+        }
+        .orders-table td {
+          padding: 16px !important;
+          color: #fff !important;
+          font-size: 14px !important;
+          border: none !important;
+          white-space: nowrap !important;
+          vertical-align: middle !important;
+        }
+        .orders-table td.desktop-only {
+          display: table-cell !important;
+        }
+        @media (max-width: 1024px) {
+          .orders-table .desktop-only {
+            display: none !important;
+          }
+        }
+      `}</style>
       <div className="page-header mb-24">
         <h1 className="page-title">📋 Pedidos</h1>
         <p className="page-subtitle">Gestiona los pedidos realizados por los clientes</p>
@@ -1812,25 +1866,24 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
               <p style={{ color: 'var(--text-muted)' }}>Selecciona otra categoría o espera a que se registren nuevos pedidos.</p>
             </div>
           ) : (
-            <div className="card" style={{ padding: '0', background: 'transparent', border: 'none', boxShadow: 'none' }}>
-              <div className="table-container" style={{ borderRadius: '16px', overflowX: 'auto' }}>
-                <table className="table" style={{ borderCollapse: 'separate !important', borderSpacing: '0 12px', width: '100%', minWidth: '1200px' }}>
+            <div className="orders-table-wrapper">
+                <table className="orders-table">
                   <thead>
-                    <tr style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
-                      <th style={{ minWidth: '110px', padding: '16px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>N° Pedido</th>
-                      <th className="desktop-only" style={{ minWidth: '160px', padding: '16px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Fecha / Hora</th>
-                      <th style={{ minWidth: '200px', padding: '16px', textAlign: 'left', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Cliente</th>
-                      <th className="desktop-only" style={{ minWidth: '140px', padding: '16px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Juego(s)</th>
-                      <th className="desktop-only" style={{ minWidth: '220px', padding: '16px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Paquetes</th>
-                      <th className="desktop-only" style={{ minWidth: '140px', padding: '16px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Referencia</th>
-                      <th style={{ minWidth: '120px', padding: '16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Total</th>
-                      <th className="desktop-only" style={{ minWidth: '140px', padding: '16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Responsable</th>
-                      <th style={{ minWidth: '140px', padding: '16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Pago</th>
-                      <th style={{ minWidth: '160px', padding: '16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Estado</th>
-                      <th style={{ width: '100px', padding: '16px' }}></th>
+                    <tr>
+                      <th style={{ width: '120px' }}>N° Pedido</th>
+                      <th className="desktop-only" style={{ width: '180px' }}>Fecha / Hora</th>
+                      <th style={{ textAlign: 'left', width: '220px' }}>Cliente</th>
+                      <th className="desktop-only" style={{ width: '150px' }}>Juego(s)</th>
+                      <th className="desktop-only" style={{ width: '250px' }}>Paquetes</th>
+                      <th className="desktop-only" style={{ width: '150px' }}>Referencia</th>
+                      <th style={{ width: '130px' }}>Total</th>
+                      <th className="desktop-only" style={{ width: '150px' }}>Responsable</th>
+                      <th style={{ width: '160px' }}>Pago</th>
+                      <th style={{ width: '180px' }}>Estado</th>
+                      <th style={{ width: '120px' }}>Acción</th>
                     </tr>
                   </thead>
-                  <tbody style={{ backgroundColor: 'transparent' }}>
+                  <tbody>
                     {currentPedidos.map(pedido => {
                       const est = getEstadoStyle(pedido.estado)
                       const items = pedido.pedido_items || []
@@ -1842,66 +1895,59 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                           key={pedido.id} 
                           onClick={() => handleOpenPedido(pedido)}
                           className="pedido-row-modern"
-                          style={{ 
-                            cursor: 'pointer',
-                            backgroundColor: '#1e2227',
-                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1)',
-                            borderRadius: '16px'
-                          }}
                         >
-                          <td style={{ fontWeight: 800, color: 'var(--accent-primary)', fontSize: '15px', padding: '20px 16px', borderTopLeftRadius: '16px', borderBottomLeftRadius: '16px', whiteSpace: 'nowrap' }}>
+                          <td style={{ fontWeight: 800, color: 'var(--accent-primary)', borderTopLeftRadius: '16px', borderBottomLeftRadius: '16px' }}>
                             #{pedido.numero_pedido}
                           </td>
-                          <td className="desktop-only" style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', padding: '20px 16px', whiteSpace: 'nowrap' }}>
+                          <td className="desktop-only" style={{ color: 'rgba(255,255,255,0.6)' }}>
                             {formatFecha(pedido.created_at)}
                           </td>
-                          <td style={{ fontSize: '14px', fontWeight: 600, color: '#fff', padding: '20px 16px', whiteSpace: 'nowrap' }}>
+                          <td style={{ fontWeight: 600 }}>
                             {pedido.cliente ?
                               `${pedido.cliente.nombres} ${pedido.cliente.apellidos?.toLowerCase() === 'pendiente' ? '' : (pedido.cliente.apellidos || '')}`.trim() :
                               '-'
                             }
                           </td>
-                          <td className="desktop-only" style={{ fontSize: '13px', color: 'rgba(255,255,255,0.8)', padding: '20px 16px', whiteSpace: 'nowrap' }}>
+                          <td className="desktop-only" style={{ color: 'rgba(255,255,255,0.8)' }}>
                             {juegos.join(', ')}
                           </td>
-                          <td className="desktop-only" style={{ fontSize: '13px', maxWidth: '240px', padding: '20px 16px' }}>
-                            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'rgba(255,255,255,0.8)' }}>
+                          <td className="desktop-only" style={{ maxWidth: '250px' }}>
+                            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', color: 'rgba(255,255,255,0.8)' }}>
                               {paquetes.join(', ')}
                             </div>
                           </td>
-                          <td className="desktop-only" style={{ fontSize: '13px', color: 'var(--text-muted)', padding: '20px 16px', whiteSpace: 'nowrap' }}>
+                          <td className="desktop-only" style={{ color: 'var(--text-muted)' }}>
                             {pedido.referencia_pago || '-'}
                           </td>
-                          <td style={{ textAlign: 'center', fontWeight: 900, color: '#22c55e', padding: '20px 16px', fontSize: '16px', whiteSpace: 'nowrap' }}>
+                          <td style={{ textAlign: 'center', fontWeight: 900, color: '#22c55e', fontSize: '16px' }}>
                             {formatBs(pedido.total_bs)}
                           </td>
-                          <td className="desktop-only" style={{ textAlign: 'center', fontSize: '13px', color: pedido.atendido_por_id ? '#fff' : 'rgba(255,255,255,0.4)', padding: '20px 16px', whiteSpace: 'nowrap' }}>
+                          <td className="desktop-only" style={{ textAlign: 'center', color: pedido.atendido_por_id ? '#fff' : 'rgba(255,255,255,0.4)' }}>
                             {pedido.atendido_por ?
                               `${pedido.atendido_por.nombres} ${pedido.atendido_por.apellidos?.toLowerCase() === 'pendiente' ? '' : (pedido.atendido_por.apellidos || '')}`.trim() :
                               'Sin asignar'
                             }
                           </td>
-                          <td style={{ textAlign: 'center', padding: '20px 16px' }}>
+                          <td style={{ textAlign: 'center' }}>
                             <span style={{
-                              fontSize: '11px', padding: '6px 12px', borderRadius: '10px', fontWeight: 800, whiteSpace: 'nowrap',
+                              fontSize: '11px', padding: '6px 12px', borderRadius: '10px', fontWeight: 800,
                               backgroundColor: pedido.pago_verificado === true ? 'rgba(34, 197, 94, 0.15)' : pedido.pago_verificado === false ? 'rgba(239, 68, 68, 0.15)' : 'rgba(250, 204, 21, 0.15)',
                               color: pedido.pago_verificado === true ? '#22c55e' : pedido.pago_verificado === false ? '#ef4444' : '#facc15',
                               border: `1px solid ${pedido.pago_verificado === true ? 'rgba(34, 197, 94, 0.3)' : pedido.pago_verificado === false ? 'rgba(239, 68, 68, 0.3)' : 'rgba(250, 204, 21, 0.3)'}`
                             }}>
-                              {pedido.pago_verificado === true ? 'PAGO VERIFICADO' : pedido.pago_verificado === false ? 'PAGO RECHAZADO' : 'POR VERIFICAR'}
+                              {pedido.pago_verificado === true ? 'VERIFICADO' : pedido.pago_verificado === false ? 'RECHAZADO' : 'PENDIENTE'}
                             </span>
                           </td>
-                          <td style={{ textAlign: 'center', padding: '20px 16px' }}>
+                          <td style={{ textAlign: 'center' }}>
                             <span style={{
                               fontSize: '11px', padding: '6px 12px', borderRadius: '10px',
                               backgroundColor: est.bg, color: est.color, fontWeight: 800,
-                              border: `1px solid ${est.color}44`, textTransform: 'uppercase'
+                              border: `1px solid ${est.color}44`
                             }}>
                               {est.label}
                             </span>
                           </td>
-                          <td style={{ padding: '20px 16px', borderTopRightRadius: '16px', borderBottomRightRadius: '16px', textAlign: 'right' }}>
+                          <td style={{ borderTopRightRadius: '16px', borderBottomRightRadius: '16px', textAlign: 'right', paddingRight: '24px !important' }}>
                             <button className="btn btn-primary btn-sm" style={{ padding: '8px 16px', borderRadius: '10px', fontSize: '13px', fontWeight: 700 }}>
                               Ver Detalles
                             </button>
