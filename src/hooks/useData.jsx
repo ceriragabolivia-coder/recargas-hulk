@@ -84,7 +84,7 @@ export function useProductos(juegoId) {
     if (!juegoId) { setProductos([]); setLoading(false); return }
     let query = supabase
       .from('productos')
-      .select('*, descuento_revendedor')
+      .select('*, descuento_revendedor, entrega_automatica')
       .eq('juego_id', juegoId)
 
     if (isNegocio) {
@@ -888,6 +888,68 @@ export function useCuentasGuardadas(juegoId) {
   }, [user?.id, juegoId])
 
   return { cuentas, loading, guardarCuenta, eliminarCuenta, refetch: fetchCuentas }
+}
+
+// ========================
+// HOOK: Baúl de Códigos
+// ========================
+export function useProductoCodigos(productoId) {
+  const [codigos, setCodigos] = useState([])
+  const [loading, setLoading] = useState(true)
+  const { perfil, user } = useAuth()
+  const isNegocio = perfil?.rol === 'negocio'
+
+  async function fetchCodigos() {
+    if (!productoId) { setCodigos([]); setLoading(false); return }
+    setLoading(true)
+    let query = supabase
+      .from('producto_codigos')
+      .select('*')
+      .eq('producto_id', productoId)
+      .order('created_at', { ascending: false })
+
+    if (isNegocio) {
+      query = query.eq('owner_id', user.id)
+    } else {
+      query = query.is('owner_id', null)
+    }
+
+    const { data, error } = await query
+    if (data) setCodigos(data)
+    setLoading(false)
+  }
+
+  async function addCodigos(codigosList) {
+    if (!productoId) return { error: 'No product selected' }
+    
+    const payload = codigosList.map(c => ({
+      producto_id: productoId,
+      codigo: c.trim(),
+      owner_id: isNegocio ? user.id : null
+    })).filter(c => c.codigo.length > 0)
+
+    if (payload.length === 0) return { error: 'No codes to add' }
+
+    const { data, error } = await supabase.from('producto_codigos').insert(payload).select()
+    if (!error && data) {
+      setCodigos(prev => [...data, ...prev])
+    }
+    return { data, error }
+  }
+
+  async function deleteCodigo(id) {
+    const { error } = await supabase.from('producto_codigos').delete().eq('id', id).eq('usado', false)
+    if (!error) {
+      setCodigos(prev => prev.filter(c => c.id !== id))
+    }
+    return { error }
+  }
+
+  useEffect(() => {
+    fetchCodigos()
+  }, [productoId])
+
+  return { codigos, loading, addCodigos, deleteCodigo, refetch: fetchCodigos }
 }
 
 export { useClientes as useUsuarios }

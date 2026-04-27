@@ -268,7 +268,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
     // 1. Obtener el pedido actual
     const { data: pedidoActual } = await supabase
       .from('pedidos')
-      .select('*, pedido_items(*)')
+      .select('*, pedido_items(*, productos(entrega_automatica))')
       .eq('id', pedidoId)
       .single()
 
@@ -310,6 +310,17 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
             throw rpcError
           }
           console.log('✅ Venta registrada:', data?.id)
+
+          // 2.1 Entrega Automática de Código (Baúl)
+          if (item.productos?.entrega_automatica) {
+            console.log(`🎁 Asignando código del baúl para item ${item.id}...`)
+            const { data: codeData, error: codeError } = await supabase.rpc('asignar_codigo_pedido_item_rpc', {
+              p_pedido_item_id: item.id
+            })
+            if (codeError) console.error('❌ Error al asignar código:', codeError)
+            else if (codeData) console.log('✅ Código asignado:', codeData)
+            else console.warn('⚠️ No hay códigos disponibles en el baúl para este producto.')
+          }
         }
         console.log('🏁 Registro de ventas completado.')
         updateData.venta_registrada = true
@@ -399,7 +410,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
     if (selectedPedido?.id === pedidoId) {
       const { data: updatedPedido } = await supabase
         .from('pedidos')
-        .select('*, pedido_items(*, productos(icono_url))')
+        .select('*, pedido_items(*, productos(icono_url, entrega_automatica))')
         .eq('id', pedidoId)
         .single()
       if (updatedPedido) {
@@ -1586,7 +1597,43 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
                         <div style={{ color: 'var(--accent-primary)', marginTop: '4px', fontFamily: 'monospace' }}>🔑 {item.account_password}</div>
                       </div>
                     ) : item.metodo_recarga === 'id_zone' ? (
-                      <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)', color: 'var(--accent-primary)', fontWeight: 'bold' }}>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '20px', color: 'var(--accent-primary)', fontWeight: 800 }}>
+                        🆔 {item.player_id}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* CÓDIGO ENTREGADO (BAÚL) */}
+                  {item.codigo_entregado && (
+                    <div style={{ 
+                      marginTop: '12px', 
+                      padding: '16px', 
+                      backgroundColor: 'rgba(34, 197, 94, 0.1)', 
+                      borderRadius: '12px', 
+                      border: '2px solid rgba(34, 197, 94, 0.4)',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{ fontSize: '11px', color: '#22c55e', fontWeight: 800, textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '1px' }}>🎁 Código de Gift Card</div>
+                      <div style={{ 
+                        fontSize: '22px', 
+                        fontFamily: 'monospace', 
+                        fontWeight: 900, 
+                        color: '#fff', 
+                        letterSpacing: '2px',
+                        textShadow: '0 0 10px rgba(34, 197, 94, 0.5)'
+                      }}>
+                        {item.codigo_entregado}
+                      </div>
+                      <button 
+                        onClick={() => { navigator.clipboard.writeText(item.codigo_entregado); alert('Código copiado al portapapeles'); }}
+                        style={{ marginTop: '12px', padding: '6px 12px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', fontSize: '11px', cursor: 'pointer', fontWeight: 600 }}
+                      >
+                        📋 Copiar Código
+                      </button>
+                    </div>
+                  )}
                         🆔 ID: {item.player_id} | 🌐 ZONE ID: {item.zone_id}
                       </div>
                     ) : item.player_id && (

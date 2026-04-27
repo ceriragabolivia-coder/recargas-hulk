@@ -433,7 +433,16 @@ export default function Catalogo() {
           
 
           <div className="card card-recharge-info" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderLeft: '4px solid var(--accent-primary)', padding: '10px' }}>
-            {selectedJuego.metodo_recarga === 'cuenta_completa' ? (
+            {selectedJuego.metodo_recarga === 'sin_datos' ? (
+              <div style={{ textAlign: 'center', padding: '10px' }}>
+                <p style={{ fontSize: '15px', color: 'var(--text-primary)', fontWeight: 600, margin: 0 }}>
+                  ⚡ Este servicio tiene entrega inmediata. 
+                </p>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                  No necesitas ingresar ningún dato. Recibirás tu código automáticamente después del pago.
+                </p>
+              </div>
+            ) : selectedJuego.metodo_recarga === 'cuenta_completa' ? (
               <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
                 <div style={{ flex: '1 1 200px' }}>
                   <label className="form-label" style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -757,7 +766,9 @@ export default function Catalogo() {
                       key={p.id}
                       className="product-card-premium"
                       onClick={() => {
-                        if (selectedJuego.metodo_recarga === 'cuenta_completa') {
+                        if (selectedJuego.metodo_recarga === 'sin_datos') {
+                          // No validation needed
+                        } else if (selectedJuego.metodo_recarga === 'cuenta_completa') {
                           if (!localRechargeData.account_email.trim() || !localRechargeData.account_password.trim()) {
                             alert('Por favor introduce el correo y clave primero.')
                             return

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { useJuegos, useProductos, useConfiguracion } from '../hooks/useData'
+import { useJuegos, useProductos, useConfiguracion, useProductoCodigos } from '../hooks/useData'
 import { calcularPrecioVenta, formatUSD, formatBs, removeWhiteBackground } from '../utils/helpers'
 import { supabase } from '../lib/supabase'
 import AlertModal from './AlertModal'
@@ -145,7 +145,8 @@ export default function GestionProductos() {
     icono_url: null,
     descuento_revendedor: '',
     info_adicional_texto: '',
-    info_adicional_imagen_url: ''
+    info_adicional_imagen_url: '',
+    entrega_automatica: false
   })
   const [newIconFile, setNewIconFile] = useState(null)
   const [iconPreview, setIconPreview] = useState(null)
@@ -171,7 +172,7 @@ export default function GestionProductos() {
   }
 
   const handleOpenModal = () => {
-    setFormData({ id: null, nombre: '', costo_base: '', margen_ganancia: '30', icono_url: null, descuento_revendedor: '', info_adicional_texto: '', info_adicional_imagen_url: null })
+    setFormData({ id: null, nombre: '', costo_base: '', margen_ganancia: '30', icono_url: null, descuento_revendedor: '', info_adicional_texto: '', info_adicional_imagen_url: null, entrega_automatica: false })
     setNewIconFile(null)
     setIconPreview(null)
     setNewInfoFile(null)
@@ -187,7 +188,8 @@ export default function GestionProductos() {
       icono_url: prod.icono_url,
       descuento_revendedor: prod.descuento_revendedor || '',
       info_adicional_texto: prod.info_adicional_texto || '',
-      info_adicional_imagen_url: prod.info_adicional_imagen_url || null
+      info_adicional_imagen_url: prod.info_adicional_imagen_url || null,
+      entrega_automatica: prod.entrega_automatica || false
     })
     setNewIconFile(null)
     setIconPreview(prod.icono_url)
@@ -238,7 +240,8 @@ export default function GestionProductos() {
         icono_url: finalIconUrl,
         descuento_revendedor: descRevendedor,
         info_adicional_texto: formData.info_adicional_texto || null,
-        info_adicional_imagen_url: finalInfoUrl
+        info_adicional_imagen_url: finalInfoUrl,
+        entrega_automatica: formData.entrega_automatica
       }
 
       if (formData.id) {
@@ -895,11 +898,26 @@ export default function GestionProductos() {
                     setNewInfoFile(null);
                     setFormData(prev => ({ ...prev, info_adicional_imagen_url: url }));
                   }}
-                  style={{ fontSize: 11, padding: '8px', backgroundColor: 'rgba(0,0,0,0.2)' }}
-                />
-              </div>
-            </div>
           </div>
+
+          <div className="form-group" style={{ marginBottom: '24px', padding: '16px', backgroundColor: 'rgba(0, 210, 255, 0.05)', borderRadius: '12px', border: '1px solid rgba(0, 210, 255, 0.1)' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+              <input 
+                type="checkbox" 
+                checked={formData.entrega_automatica}
+                onChange={e => setFormData({ ...formData, entrega_automatica: e.target.checked })}
+                style={{ width: '20px', height: '20px', accentColor: 'var(--accent-primary)' }}
+              />
+              <div>
+                <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>📦 Activar Entrega Automática (Baúl)</span>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Si se activa, el sistema entregará un código del baúl automáticamente al completar el pedido.</p>
+              </div>
+            </label>
+          </div>
+
+          {formData.id && formData.entrega_automatica && (
+            <ProductVault productoId={formData.id} />
+          )}
 
           {/* VISTA PREVIA DEL CÁLCULO EN TIEMPO REAL */}
           <div style={{ background: 'var(--bg-primary)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--border-active)', marginBottom: 20 }}>
@@ -993,6 +1011,7 @@ export default function GestionProductos() {
               <option value="id_zone">🆔 ID + Zone ID</option>
               <option value="cuenta_completa">🔐 Correo y Clave</option>
               <option value="usuario_clave">👤 Usuario y Clave</option>
+              <option value="sin_datos">📥 Sin Datos (Entrega Automática)</option>
             </select>
             <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
               {formGame.metodo_recarga === 'id_jugador'
@@ -1001,7 +1020,9 @@ export default function GestionProductos() {
                   ? 'Se le pedirá al cliente su ID del jugador y su ID de zona (ej. Mobile Legends).'
                   : formGame.metodo_recarga === 'cuenta_completa'
                     ? 'Se le pedirá al cliente su correo electrónico y contraseña del juego.'
-                    : 'Se le pedirá al cliente su nombre de usuario y contraseña del juego.'}
+                    : formGame.metodo_recarga === 'usuario_clave'
+                      ? 'Se le pedirá al cliente su nombre de usuario y contraseña del juego.'
+                      : 'No se le pedirá ningún dato al cliente. Ideal para Gift Cards en Baúl.'}
             </p>
           </div>
 
@@ -1163,5 +1184,100 @@ export default function GestionProductos() {
     onCancel={() => setAlertModal(null)}
   />
 </div>
+  )
+}
+
+function ProductVault({ productoId }) {
+  const { codigos, loading, addCodigos, deleteCodigo } = useProductoCodigos(productoId)
+  const [newCodesText, setNewCodesText] = useState('')
+  const [adding, setAdding] = useState(false)
+
+  const available = codigos.filter(c => !c.usado).length
+  const total = codigos.length
+
+  const handleAdd = async () => {
+    if (!newCodesText.trim()) return
+    setAdding(true)
+    const list = newCodesText.split('\n').filter(c => c.trim().length > 0)
+    await addCodigos(list)
+    setNewCodesText('')
+    setAdding(false)
+  }
+
+  return (
+    <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <h4 style={{ fontSize: '13px', color: 'var(--accent-primary)', margin: 0 }}>🗄️ Gestión del Baúl</h4>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <span className="badge badge-info" style={{ fontSize: '10px' }}>Total: {total}</span>
+          <span className="badge badge-success" style={{ fontSize: '10px' }}>Disponibles: {available}</span>
+        </div>
+      </div>
+
+      <div className="form-group">
+        <label className="form-label" style={{ fontSize: '11px' }}>Añadir códigos (uno por línea)</label>
+        <textarea
+          className="form-input"
+          placeholder="Código 1&#10;Código 2&#10;Código 3..."
+          rows="4"
+          value={newCodesText}
+          onChange={e => setNewCodesText(e.target.value)}
+          style={{ fontSize: '12px', fontFamily: 'monospace' }}
+        />
+        <button 
+          type="button" 
+          className="btn btn-primary btn-sm" 
+          style={{ marginTop: '8px', width: '100%' }}
+          onClick={handleAdd}
+          disabled={adding || !newCodesText.trim()}
+        >
+          {adding ? 'Añadiendo...' : '➕ Añadir Códigos al Baúl'}
+        </button>
+      </div>
+
+      <div style={{ marginTop: '16px', maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+        {loading ? (
+          <div style={{ padding: '20px', textAlign: 'center' }}><div className="spinner-small"></div></div>
+        ) : codigos.length === 0 ? (
+          <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>El baúl está vacío</div>
+        ) : (
+          <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse' }}>
+            <thead style={{ position: 'sticky', top: 0, backgroundColor: 'var(--bg-panel)', borderBottom: '1px solid var(--border-color)' }}>
+              <tr>
+                <th style={{ padding: '8px', textAlign: 'left' }}>Código</th>
+                <th style={{ padding: '8px', textAlign: 'center' }}>Estado</th>
+                <th style={{ padding: '8px', textAlign: 'center' }}>Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              {codigos.map(c => (
+                <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                  <td style={{ padding: '8px', fontFamily: 'monospace' }}>{c.codigo}</td>
+                  <td style={{ padding: '8px', textAlign: 'center' }}>
+                    {c.usado ? (
+                      <span style={{ color: 'var(--text-muted)' }}>Utilizado</span>
+                    ) : (
+                      <span style={{ color: 'var(--accent-success)' }}>Disponible</span>
+                    )}
+                  </td>
+                  <td style={{ padding: '8px', textAlign: 'center' }}>
+                    {!c.usado && (
+                      <button 
+                        type="button" 
+                        className="btn btn-ghost btn-sm text-danger" 
+                        onClick={() => deleteCodigo(c.id)}
+                        style={{ padding: '2px 4px', fontSize: '10px' }}
+                      >
+                        🗑️
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
   )
 }
