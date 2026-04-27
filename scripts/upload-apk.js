@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
+// v1.0.1 - Triggering build
+
 import fs from 'fs'
 import path from 'path'
 
