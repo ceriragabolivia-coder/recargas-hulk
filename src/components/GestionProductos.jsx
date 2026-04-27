@@ -444,7 +444,7 @@ export default function GestionProductos() {
         <p className="page-subtitle">Añade o elimina los paquetes de cada juego y establece su rentabilidad.</p>
       </div>
 
-      <div className="content-grid" style={{ flex: 1, display: 'flex', gap: '24px', overflow: 'hidden' }}>
+      <div className="content-grid" style={{ flex: 1, display: 'flex', gap: '24px', overflow: 'hidden', padding: '24px 32px 32px' }}>
         {/* COLUMNA DE JUEGOS */}
         <div className="card juegos-column" style={{ width: '280px', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
           <div className="section-header" style={{ marginBottom: '16px' }}>
