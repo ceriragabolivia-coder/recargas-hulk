@@ -52,7 +52,8 @@ async function uploadAPK() {
   console.log('🔄 Updating database configuration...')
   const { error: dbError } = await supabase
     .from('configuracion')
-    .upsert({ clave: 'apk_url', valor: publicUrl }, { onConflict: 'clave' })
+    .update({ valor: publicUrl })
+    .eq('clave', 'apk_url')
 
   if (dbError) {
     console.error('❌ Error updating database:', dbError.message)
