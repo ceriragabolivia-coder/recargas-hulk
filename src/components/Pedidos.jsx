@@ -303,11 +303,16 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
             p_account_email: item.account_email,
             p_account_password: item.account_password,
             p_vendedor_id: perfil?.cliente_uuid,
-            p_pedido_id: pedidoActual.id
+            p_pedido_id: pedidoActual.id,
+            p_owner_id: perfil?.owner_id // Agregado para aislamiento de negocios
           })
           if (rpcError) {
-            console.error('❌ Error RPC:', rpcError)
-            throw rpcError
+            console.error('❌ Error RPC registrando venta:', rpcError)
+            throw new Error(rpcError.message || 'Error desconocido en el servidor de ventas')
+          }
+          if (data?.error) {
+            console.error('❌ Error lógico en venta:', data.error)
+            throw new Error(data.error)
           }
           console.log('✅ Venta registrada:', data?.id)
 
@@ -326,7 +331,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
         updateData.venta_registrada = true
       } catch (err) {
         console.error('Error al registrar venta:', err)
-        showAlert('Error al registrar la venta: ' + err.message, 'error')
+        showAlert('No se pudo completar el pedido porque falló el registro contable: ' + err.message, 'error')
         return // No procedemos con el update del estado si falló el registro de venta
       }
 

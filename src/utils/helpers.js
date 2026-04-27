@@ -4,9 +4,9 @@
 export function calcularPrecioVenta(producto, juego, config, perfilUsuario = null) {
   const { costo_base, margen_ganancia, precio_venta_fijo } = producto
   const { tipo_calculo, descuento_particular = 0 } = juego
-  const { tasa_dolar, descuentos = 0, porcentaje_paypal = 0.08 } = config || {}
+  const { tasa_binance, tasa_dolar, descuentos = 0, porcentaje_paypal = 0.08 } = config || {}
   
-  let tasa = Number(tasa_dolar) || 1
+  let tasa = Number(tasa_binance || tasa_dolar || 1)
   if (tasa <= 0) tasa = 1
 
   const aplicarDescuentoRevendedor = (precio) => {
