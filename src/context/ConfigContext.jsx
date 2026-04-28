@@ -62,15 +62,38 @@ export function ConfigProvider({ children }) {
     const safeValor = isText ? 0 : (Number(valor) || 0)
     const safeValorTexto = isText ? String(valor) : null
 
-    // Usar la función RPC para evitar problemas con upsert y constraints nulos
-    const { error } = await supabase.rpc('save_config_json', {
-      p_payload: {
-        p_clave: clave,
-        p_valor: safeValor,
-        p_texto: safeValorTexto,
-        p_owner: isNegocio ? user.id : null
+    // RECONSTRUCCIÓN: Operación directa a la tabla para máxima fiabilidad
+    let error;
+    if (isNegocio) {
+      // Para negocios, usamos upsert con owner_id
+      const { error: upsertError } = await supabase
+        .from('configuracion')
+        .upsert({ 
+          clave: clave, 
+          valor: safeValor, 
+          valor_texto: safeValorTexto, 
+          owner_id: user.id 
+        }, { onConflict: 'clave,owner_id' })
+      error = upsertError;
+    } else {
+      // Para admin (global), intentamos update primero
+      const { error: updateError, data } = await supabase
+        .from('configuracion')
+        .update({ valor: safeValor, valor_texto: safeValorTexto, updated_at: new Date().toISOString() })
+        .eq('clave', clave)
+        .is('owner_id', null)
+        .select()
+
+      error = updateError;
+      
+      // Si no existe (no devolvió data), insertamos
+      if (!error && (!data || data.length === 0)) {
+        const { error: insertError } = await supabase
+          .from('configuracion')
+          .insert({ clave: clave, valor: safeValor, valor_texto: safeValorTexto, owner_id: null })
+        error = insertError;
       }
-    })
+    }
     
     if (error) {
       console.error("Error al actualizar configuración:", error)
