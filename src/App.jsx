@@ -256,22 +256,24 @@ export default function App() {
 
   // Sistema de Estadísticas: Latido y Actividad
   React.useEffect(() => {
-    if (user && perfil && perfil.estado === 'activo') {
+    if (user?.id) {
       const sessionId = Math.random().toString(36).substring(7);
       
-      // Registrar login inicial (silencioso)
-      supabase.rpc('registrar_actividad_usuario', { p_tipo: 'login', p_session_id: sessionId })
-        .catch(() => {});
+      const sendHeartbeat = (tipo) => {
+        supabase.rpc('registrar_actividad_usuario', { 
+          p_tipo: tipo, 
+          p_session_id: sessionId 
+        }).catch(e => console.debug('HB Error:', e));
+      };
 
-      // Intervalo de latido (cada minuto)
-      const interval = setInterval(() => {
-        supabase.rpc('registrar_actividad_usuario', { p_tipo: 'heartbeat', p_session_id: sessionId })
-          .catch(() => {});
-      }, 60000);
+      // Registrar inicio
+      sendHeartbeat('login');
 
+      // Latido cada 60s
+      const interval = setInterval(() => sendHeartbeat('heartbeat'), 60000);
       return () => clearInterval(interval);
     }
-  }, [user?.id, perfil?.id])
+  }, [user?.id]);
 
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
   const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
