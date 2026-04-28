@@ -921,7 +921,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
               <div className="nav-section-label">Gestión</div>
               {NAV_ITEMS.filter(i => ['productos', 'pedidos', 'usuarios', 'revendedores', 'chats', 'pagos_admins', 'config'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Análisis</div>
-              {NAV_ITEMS.filter(i => ['reportes', 'gestion_ruleta'].includes(i.key)).map(renderNavItem)}
+              {NAV_ITEMS.filter(i => ['reportes', 'estadisticas', 'gestion_ruleta'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Cuenta</div>
               {NAV_ITEMS.filter(i => ['perfil'].includes(i.key)).map(renderNavItem)}
             </>
