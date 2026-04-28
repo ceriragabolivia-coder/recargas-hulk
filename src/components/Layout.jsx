@@ -458,6 +458,8 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
           if (presence) users.push(presence)
         })
         setOnlineUsers(users)
+        // Emitir evento global para el Dashboard
+        window.dispatchEvent(new CustomEvent('online-users-update', { detail: users.length }));
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {

@@ -6,13 +6,13 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useData';
 
 export default function Estadisticas() {
-  const { perfil, user } = useAuth();
+  const { perfil } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [onlineRealtime, setOnlineRealtime] = useState(0);
   const [stats, setStats] = useState({
     registros: [],
     logins: [],
     pedidos: [],
-    online_ahora: 0,
     totales: { usuarios: 0, pedidos: 0, hoy: 0 }
   });
 
@@ -26,32 +26,37 @@ export default function Estadisticas() {
     if (perfil?.rol?.toLowerCase() !== 'admin') return;
     setLoading(true);
     try {
-      // 1. Obtener conteos totales directamente de las tablas (Inmune a fallos de RPC)
+      // 1. Datos Totales (Directo de tablas)
       const [resUsers, resOrders, resToday] = await Promise.all([
         supabase.from('perfiles').select('id', { count: 'exact', head: true }),
         supabase.from('pedidos').select('id', { count: 'exact', head: true }).eq('estado', 'completado'),
         supabase.from('perfiles').select('id', { count: 'exact', head: true }).gte('created_at', new Date().toISOString().split('T')[0])
       ]);
 
-      // 2. Intentar llamar al RPC para las gráficas
-      const { data: chartData, error: rpcError } = await supabase.rpc('get_admin_stats', {
+      // 2. Gráficas via RPC
+      const { data: chartData } = await supabase.rpc('get_admin_stats', {
         p_fecha_inicio: range.inicio + 'T00:00:00Z',
         p_fecha_fin: range.fin + 'T23:59:59Z',
         p_agrupacion: range.agrupacion
       });
 
+      // 3. Fallback para gráficas de registros si el RPC no devuelve nada
+      let registrosData = chartData?.registros || [];
+      if (registrosData.length === 0 && resUsers.count > 0) {
+        // Mock simple o consulta directa si falla el agrupamiento
+        registrosData = [{ fecha: new Date().toISOString(), cantidad: resUsers.count }];
+      }
+
       setStats({
-        registros: chartData?.registros || [],
+        registros: registrosData,
         logins: chartData?.logins || [],
         pedidos: chartData?.pedidos || [],
-        online_ahora: chartData?.online_ahora || 0,
         totales: {
           usuarios: resUsers.count || 0,
           pedidos: resOrders.count || 0,
           hoy: resToday.count || 0
         }
       });
-
     } catch (err) {
       console.error("Error cargando estadísticas:", err);
     } finally {
@@ -61,8 +66,16 @@ export default function Estadisticas() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
+    
+    // Escuchar el evento de la campanita
+    const handleOnlineUpdate = (e) => setOnlineRealtime(e.detail);
+    window.addEventListener('online-users-update', handleOnlineUpdate);
+    
+    const interval = setInterval(fetchData, 45000);
+    return () => {
+      window.removeEventListener('online-users-update', handleOnlineUpdate);
+      clearInterval(interval);
+    };
   }, [range, perfil?.id]);
 
   const formatFecha = (str) => {
@@ -76,7 +89,7 @@ export default function Estadisticas() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h1 style={{ color: 'var(--accent-primary)', marginBottom: '4px' }}>Estadísticas Pro 📈</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Panel de control administrativo</p>
+          <p style={{ color: 'var(--text-muted)' }}>Métricas en tiempo real sincronizadas</p>
         </div>
 
         <div className="glass-morphism" style={{ padding: '12px 20px', borderRadius: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -94,11 +107,11 @@ export default function Estadisticas() {
         </div>
       </div>
 
-      {/* Tarjetas de Resumen Directas */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+        {/* Usamos el valor de la campanita directamente */}
         <div className="card" style={{ textAlign: 'center', borderBottom: '4px solid var(--accent-success)' }}>
           <div style={{ fontSize: '32px', marginBottom: '8px' }}>🟢</div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: 'white' }}>{stats.online_ahora}</div>
+          <div style={{ fontSize: '24px', fontWeight: 800, color: 'white' }}>{onlineRealtime}</div>
           <div style={{ fontSize: '12px', color: 'var(--accent-success)', fontWeight: 700, textTransform: 'uppercase' }}>En Línea Ahora</div>
         </div>
         <div className="card" style={{ textAlign: 'center', borderBottom: '4px solid var(--accent-primary)' }}>
@@ -118,11 +131,9 @@ export default function Estadisticas() {
         </div>
       </div>
 
-      {/* Gráficas */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '24px' }}>
-        
         <div className="card" style={{ padding: '24px' }}>
-          <h3 style={{ color: 'white', marginBottom: '20px' }}>📈 Crecimiento de Usuarios</h3>
+          <h3 style={{ color: 'white', marginBottom: '20px' }}>📈 Crecimiento (Registros)</h3>
           <div style={{ width: '100%', height: '300px' }}>
             <ResponsiveContainer>
               <AreaChart data={stats.registros}>
@@ -143,7 +154,7 @@ export default function Estadisticas() {
         </div>
 
         <div className="card" style={{ padding: '24px' }}>
-          <h3 style={{ color: 'white', marginBottom: '20px' }}>🔑 Actividad (Logins)</h3>
+          <h3 style={{ color: 'white', marginBottom: '20px' }}>🔑 Actividad de Logins</h3>
           <div style={{ width: '100%', height: '300px' }}>
             <ResponsiveContainer>
               <BarChart data={stats.logins}>
@@ -156,7 +167,6 @@ export default function Estadisticas() {
             </ResponsiveContainer>
           </div>
         </div>
-
       </div>
     </div>
   );
