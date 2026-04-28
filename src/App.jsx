@@ -5,6 +5,7 @@ import Login from './components/Login'
 import Register from './components/Register'
 import { useAuth, useConfiguracion } from './hooks/useData'
 import { WalletProvider } from './context/WalletContext'
+import { supabase } from './lib/supabase'
 
 // Componentes estáticos (carga inmediata)
 import SupportChat from './components/SupportChat'
