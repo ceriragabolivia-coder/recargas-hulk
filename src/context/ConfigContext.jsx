@@ -63,11 +63,13 @@ export function ConfigProvider({ children }) {
     const safeValorTexto = isText ? String(valor) : null
 
     // Usar la función RPC para evitar problemas con upsert y constraints nulos
-    const { error } = await supabase.rpc('set_config', {
-      p_clave: clave,
-      p_valor: safeValor,
-      p_texto: safeValorTexto,
-      p_owner: isNegocio ? user.id : null
+    const { error } = await supabase.rpc('save_config_json', {
+      p_payload: {
+        p_clave: clave,
+        p_valor: safeValor,
+        p_texto: safeValorTexto,
+        p_owner: isNegocio ? user.id : null
+      }
     })
     
     if (error) {
