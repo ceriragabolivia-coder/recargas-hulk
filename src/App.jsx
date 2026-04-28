@@ -259,11 +259,15 @@ export default function App() {
     if (user?.id) {
       const sessionId = Math.random().toString(36).substring(7);
       
-      const sendHeartbeat = (tipo) => {
-        supabase.rpc('registrar_actividad_usuario', { 
-          p_tipo: tipo, 
-          p_session_id: sessionId 
-        }).catch(e => console.debug('HB Error:', e));
+      const sendHeartbeat = async (tipo) => {
+        try {
+          await supabase.rpc('registrar_actividad_usuario', { 
+            p_tipo: tipo, 
+            p_session_id: sessionId 
+          });
+        } catch (e) {
+          console.debug('HB Error:', e);
+        }
       };
 
       // Registrar inicio
