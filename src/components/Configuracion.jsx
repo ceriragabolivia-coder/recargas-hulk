@@ -10,7 +10,7 @@ export default function Configuracion() {
   const { mensajes, loading: mensajesLoading, createMensaje, updateMensaje, deleteMensaje } = useMensajesSistema()
   const { enviarNotificacion } = useNotificacionesPush()
   const { perfil } = useAuth()
-  const isNegocio = perfil?.rol === 'negocio'
+  const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
   const [activeTab, setActiveTab] = useState(isNegocio ? 'efectos' : 'pagos')
   
   // Estado para el formulario de edición/creación

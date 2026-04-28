@@ -482,9 +482,13 @@ export default function Dashboard() {
   const handleSaveTasa = async () => {
     if (!nuevaTasa) return
     setSavingTasa(true)
-    await updateConfig('tasa_dolar', nuevaTasa)
+    const { error } = await updateConfig('tasa_dolar', nuevaTasa)
     setSavingTasa(false)
-    setIsEditingTasa(false)
+    if (error) {
+      alert('Error al guardar la tasa: ' + error.message)
+    } else {
+      setIsEditingTasa(false)
+    }
   }
 
   React.useEffect(() => {
@@ -602,7 +606,7 @@ export default function Dashboard() {
           <div className="kpi-card" style={{ display: 'flex', flexDirection: 'column' }}>
             <div className="flex justify-between items-center mb-8">
               <div className="kpi-label" style={{ margin: 0 }}>Tasa Oficial Actual</div>
-              {!isEditingTasa ? (
+              {isAuthorized && !isEditingTasa && (
                 <button 
                   className="btn btn-ghost btn-sm" 
                   style={{ padding: '2px 8px', fontSize: 11 }} 
@@ -610,7 +614,8 @@ export default function Dashboard() {
                 >
                   ✎ Editar
                 </button>
-              ) : (
+              )}
+              {isAuthorized && isEditingTasa && (
                 <button 
                   className="btn btn-primary btn-sm" 
                   style={{ padding: '2px 8px', fontSize: 11 }} 

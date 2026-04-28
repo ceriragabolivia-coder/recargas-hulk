@@ -14,7 +14,7 @@ export function ConfigProvider({ children }) {
       if (!user) return
 
       const { data: perfil } = await supabase.from('perfiles').select('rol').eq('id', user.id).single()
-      const isNegocio = perfil?.rol === 'negocio'
+      const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
 
       let query = supabase.from('configuracion').select('*')
       if (isNegocio) {
@@ -57,7 +57,7 @@ export function ConfigProvider({ children }) {
     if (!user) return { error: new Error('No user logged in') }
 
     const { data: perfil } = await supabase.from('perfiles').select('rol').eq('id', user.id).single()
-    const isNegocio = perfil?.rol === 'negocio'
+    const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
 
     const payload = isText ? { clave, valor_texto: String(valor), valor: 0 } : { clave, valor: Number(valor) }
     if (isNegocio) payload.owner_id = user.id
