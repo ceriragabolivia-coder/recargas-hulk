@@ -558,7 +558,7 @@ export function useClientes() {
   async function updateProfileStatus(cliente, newStatus) {
     if (!cliente.auth_user_id) return { error: new Error('El cliente no tiene un ID de autenticación vinculado.') }
 
-    const { data, error } = await supabase.rpc('admin_approve_user', {
+    const { data, error } = await supabase.rpc('rpc_aprobar_usuario', {
       p_user_id: cliente.auth_user_id,
       p_status: newStatus
     })
