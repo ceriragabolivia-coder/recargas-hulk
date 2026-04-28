@@ -59,14 +59,14 @@ export function ConfigProvider({ children }) {
     const { data: perfil } = await supabase.from('perfiles').select('rol').eq('id', user.id).single()
     const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
 
-    const payload = isText ? { clave, valor_texto: String(valor), valor: 0 } : { clave, valor: Number(valor) }
-    if (isNegocio) payload.owner_id = user.id
+    const safeValor = isText ? 0 : (Number(valor) || 0)
+    const safeValorTexto = isText ? String(valor) : null
 
     // Usar la función RPC para evitar problemas con upsert y constraints nulos
     const { error } = await supabase.rpc('update_config_rpc', {
       p_clave: clave,
-      p_valor: isText ? 0 : Number(valor),
-      p_valor_texto: isText ? String(valor) : null,
+      p_valor: safeValor,
+      p_valor_texto: safeValorTexto,
       p_owner_id: isNegocio ? user.id : null
     })
     
