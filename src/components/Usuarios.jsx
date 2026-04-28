@@ -70,7 +70,8 @@ export default function Usuarios({ onNavigate }) {
   const handleQuickStatus = async (cliente, newStatus) => {
     setSaving(true)
     try {
-      await updateProfileStatus(cliente, newStatus)
+      const { error } = await updateProfileStatus(cliente, newStatus)
+      if (error) throw error
       await refetch()
     } catch (error) {
       setAlertModal({ type: 'error', message: "Error: " + error.message })

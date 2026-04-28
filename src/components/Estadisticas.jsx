@@ -16,6 +16,7 @@ export default function Estadisticas() {
     totales: { usuarios: 0, pedidos: 0, hoy: 0 }
   });
 
+  const [timeRange, setTimeRange] = useState('30d');
   const [range, setRange] = useState({
     inicio: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     fin: new Date().toISOString().split('T')[0],
@@ -26,33 +27,33 @@ export default function Estadisticas() {
     if (perfil?.rol?.toLowerCase() !== 'admin') return;
     setLoading(true);
     try {
-      // 1. Datos Totales (Directo de tablas)
-      const [resUsers, resOrders, resToday] = await Promise.all([
-        supabase.from('perfiles').select('id', { count: 'exact', head: true }),
+      let inicioDate = null;
+      if (timeRange === '7d') inicioDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      else if (timeRange === '30d') inicioDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      else if (timeRange === '90d') inicioDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+      // else if 'all' then inicioDate = null
+
+      const finDate = new Date().toISOString();
+
+      // 1. Datos Totales (Directo de tablas para máxima precisión)
+      const [resOrders, resToday] = await Promise.all([
         supabase.from('pedidos').select('id', { count: 'exact', head: true }).eq('estado', 'completado'),
-        supabase.from('perfiles').select('id', { count: 'exact', head: true }).gte('created_at', new Date().toISOString().split('T')[0])
+        supabase.from('clientes').select('id', { count: 'exact', head: true }).gte('fecha_registro', new Date().toISOString().split('T')[0])
       ]);
 
       // 2. Gráficas via RPC
       const { data: chartData } = await supabase.rpc('get_admin_stats', {
-        p_fecha_inicio: range.inicio + 'T00:00:00Z',
-        p_fecha_fin: range.fin + 'T23:59:59Z',
+        p_fecha_inicio: inicioDate,
+        p_fecha_fin: finDate,
         p_agrupacion: range.agrupacion
       });
 
-      // 3. Fallback para gráficas de registros si el RPC no devuelve nada
-      let registrosData = chartData?.registros || [];
-      if (registrosData.length === 0 && resUsers.count > 0) {
-        // Mock simple o consulta directa si falla el agrupamiento
-        registrosData = [{ fecha: new Date().toISOString(), cantidad: resUsers.count }];
-      }
-
       setStats({
-        registros: registrosData,
+        registros: chartData?.registros || [],
         logins: chartData?.logins || [],
         pedidos: chartData?.pedidos || [],
         totales: {
-          usuarios: resUsers.count || 0,
+          usuarios: chartData?.total_usuarios || 0, // Ahora viene del RPC sincronizado
           pedidos: resOrders.count || 0,
           hoy: resToday.count || 0
         }
@@ -67,7 +68,6 @@ export default function Estadisticas() {
   useEffect(() => {
     fetchData();
     
-    // Escuchar el evento de la campanita
     const handleOnlineUpdate = (e) => setOnlineRealtime(e.detail);
     window.addEventListener('online-users-update', handleOnlineUpdate);
     
@@ -76,12 +76,28 @@ export default function Estadisticas() {
       window.removeEventListener('online-users-update', handleOnlineUpdate);
       clearInterval(interval);
     };
-  }, [range, perfil?.id]);
+  }, [timeRange, range.agrupacion, perfil?.id]);
 
   const formatFecha = (str) => {
     if (!str) return '';
     const d = new Date(str);
+    if (range.agrupacion === 'month') {
+      return d.toLocaleDateString('es-VE', { month: 'short', year: '2-digit' });
+    }
+    if (range.agrupacion === 'week') {
+      // Obtener el número de semana aproximado
+      const firstDayOfYear = new Date(d.getFullYear(), 0, 1);
+      const pastDaysOfYear = (d - firstDayOfYear) / 86400000;
+      const weekNum = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+      return `Sem ${weekNum}`;
+    }
     return d.toLocaleDateString('es-VE', { day: '2-digit', month: 'short' });
+  };
+
+  const formatFechaFull = (str) => {
+    if (!str) return '';
+    const d = new Date(str);
+    return d.toLocaleDateString('es-VE', { day: '2-digit', month: 'long', year: 'numeric' });
   };
 
   return (
@@ -92,17 +108,35 @@ export default function Estadisticas() {
           <p style={{ color: 'var(--text-muted)' }}>Métricas en tiempo real sincronizadas</p>
         </div>
 
-        <div className="glass-morphism" style={{ padding: '12px 20px', borderRadius: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <select 
-            value={range.agrupacion} 
-            onChange={e => setRange(prev => ({...prev, agrupacion: e.target.value}))}
-            className="input-search"
-            style={{ width: '120px', background: 'rgba(0,0,0,0.2)' }}
-          >
-            <option value="day">Diario</option>
-            <option value="week">Semanal</option>
-            <option value="month">Mensual</option>
-          </select>
+        <div className="glass-morphism" style={{ padding: '12px 20px', borderRadius: '16px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Rango:</span>
+            <select 
+              value={timeRange} 
+              onChange={e => setTimeRange(e.target.value)}
+              className="input-search"
+              style={{ width: '130px', background: 'rgba(0,0,0,0.2)' }}
+            >
+              <option value="7d">Últimos 7 días</option>
+              <option value="30d">Últimos 30 días</option>
+              <option value="90d">Últimos 90 días</option>
+              <option value="all">Todo el tiempo</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Vista:</span>
+            <select 
+              value={range.agrupacion} 
+              onChange={e => setRange(prev => ({...prev, agrupacion: e.target.value}))}
+              className="input-search"
+              style={{ width: '110px', background: 'rgba(0,0,0,0.2)' }}
+            >
+              <option value="day">Diario</option>
+              <option value="week">Semanal</option>
+              <option value="month">Mensual</option>
+            </select>
+          </div>
           <button onClick={fetchData} className="btn btn-primary" style={{ padding: '8px 16px' }}>🔄 Refrescar</button>
         </div>
       </div>
@@ -146,7 +180,7 @@ export default function Estadisticas() {
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                 <XAxis dataKey="fecha" tickFormatter={formatFecha} stroke="var(--text-muted)" fontSize={12} />
                 <YAxis stroke="var(--text-muted)" fontSize={12} />
-                <Tooltip contentStyle={{ backgroundColor: 'rgba(15, 23, 22, 0.95)', border: '1px solid var(--border-color)', borderRadius: '12px' }} labelFormatter={formatFecha} />
+                <Tooltip contentStyle={{ backgroundColor: 'rgba(15, 23, 22, 0.95)', border: '1px solid var(--border-color)', borderRadius: '12px' }} labelFormatter={formatFechaFull} />
                 <Area type="monotone" dataKey="cantidad" name="Registros" stroke="var(--accent-primary)" fill="url(#colorReg)" strokeWidth={3} />
               </AreaChart>
             </ResponsiveContainer>
@@ -161,7 +195,7 @@ export default function Estadisticas() {
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                 <XAxis dataKey="fecha" tickFormatter={formatFecha} stroke="var(--text-muted)" fontSize={12} />
                 <YAxis stroke="var(--text-muted)" fontSize={12} />
-                <Tooltip contentStyle={{ backgroundColor: 'rgba(15, 23, 22, 0.95)', border: '1px solid var(--border-color)', borderRadius: '12px' }} labelFormatter={formatFecha} />
+                <Tooltip contentStyle={{ backgroundColor: 'rgba(15, 23, 22, 0.95)', border: '1px solid var(--border-color)', borderRadius: '12px' }} labelFormatter={formatFechaFull} />
                 <Bar dataKey="cantidad" name="Logins" fill="#22c55e" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
