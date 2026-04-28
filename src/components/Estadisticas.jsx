@@ -36,8 +36,12 @@ export default function Estadisticas() {
   useEffect(() => {
     if (perfil?.rol?.toLowerCase() === 'admin') {
       fetchStats();
+      
+      // Auto-refresco cada 30 segundos para datos en vivo
+      const interval = setInterval(fetchStats, 30000);
+      return () => clearInterval(interval);
     }
-  }, [range]);
+  }, [range, perfil?.id]);
 
   if (!data && loading) {
     return (
