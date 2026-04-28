@@ -454,7 +454,6 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
         const state = channel.presenceState()
         const users = []
         Object.keys(state).forEach(key => {
-          // Cada key puede tener múltiples presencias (múltiples pestañas)
           const presence = state[key][0]
           if (presence) users.push(presence)
         })
@@ -465,9 +464,9 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
           await channel.track({
             user_id: user.id,
             email: user.email,
-            nickname: perfil.nickname || perfil.nombres || user.email.split('@')[0],
-            avatar_url: perfil.avatar_url,
-            role: perfil.rol,
+            nickname: perfil?.nickname || perfil?.nombres || user.email?.split('@')[0] || 'Usuario',
+            avatar_url: perfil?.avatar_url || null,
+            role: perfil?.rol || 'cliente',
             online_at: new Date().toISOString(),
           })
         }
