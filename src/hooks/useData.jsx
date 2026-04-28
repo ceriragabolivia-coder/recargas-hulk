@@ -556,21 +556,15 @@ export function useClientes() {
   }
 
   async function updateProfileStatus(cliente, newStatus) {
-    let finalError = null;
-    if (cliente.auth_user_id) {
-      const { error } = await supabase
-        .from('perfiles')
-        .upsert({ id: cliente.auth_user_id, estado: newStatus })
-      if (error) finalError = error;
-    }
+    if (!cliente.auth_user_id) return { error: new Error('El cliente no tiene un ID de autenticación vinculado.') }
 
-    const { error: errorCli } = await supabase
-      .from('clientes')
-      .update({ estado: newStatus })
-      .eq('id', cliente.id)
-    
-    if (errorCli) finalError = errorCli;
-    if (finalError) return { error: finalError }
+    const { data, error } = await supabase.rpc('admin_approve_user', {
+      p_user_id: cliente.auth_user_id,
+      p_status: newStatus
+    })
+
+    if (error) return { error }
+    if (data && !data.success) return { error: new Error(data.message) }
 
     setClientes(prev => prev.map(c => 
       c.id === cliente.id ? { ...c, estado: newStatus } : c
