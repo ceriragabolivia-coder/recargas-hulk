@@ -29,7 +29,7 @@ const Revendedores = lazy(() => import('./components/Revendedores'))
 const Ruleta = lazy(() => import('./components/Ruleta'))
 const GestionRuleta = lazy(() => import('./components/GestionRuleta'))
 const PagosAdmins = lazy(() => import('./components/PagosAdmins'))
-const Estadisticas = lazy(() => import('./components/Estadisticas'))
+const Estadisticas = lazy(() => import('./components/Estadisticas.jsx'))
 
 const Placeholder = ({ title }) => (
   <div className="page-content">
@@ -227,6 +227,7 @@ export default function App() {
       'gestion_ruleta': '/Gestion-Ruleta',
       'perfil': '/Mi-Perfil',
       'billetera': '/Billetera',
+      'estadisticas': '/Estadisticas',
       'checkout': '/Checkout'
     }
 
