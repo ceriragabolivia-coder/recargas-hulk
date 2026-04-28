@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { key: 'config', icon: '⚙️', label: 'Configuración', path: '/Configuracion' },
   { key: 'reportes', icon: '📈', label: 'Reportes', path: '/Reportes' },
   { key: 'pagos_admins', icon: '💸', label: 'Pagos Admins', path: '/Pagos-Admins' },
+  { key: 'estadisticas', icon: '📈', label: 'Estadísticas Pro', path: '/Estadisticas' },
   { key: 'gestion_ruleta', icon: '🎡', label: 'Gestión de Ruleta', path: '/Gestion-Ruleta' },
   { key: 'ruleta', icon: '🎡', label: 'Ruleta de Premios', path: '/Ruleta' },
   { key: 'perfil', icon: '👤', label: 'Mi Perfil', path: '/Mi-Perfil' },
