@@ -29,6 +29,7 @@ const Revendedores = lazy(() => import('./components/Revendedores'))
 const Ruleta = lazy(() => import('./components/Ruleta'))
 const GestionRuleta = lazy(() => import('./components/GestionRuleta'))
 const PagosAdmins = lazy(() => import('./components/PagosAdmins'))
+const Estadisticas = lazy(() => import('./components/Estadisticas'))
 
 const Placeholder = ({ title }) => (
   <div className="page-content">
@@ -188,6 +189,7 @@ const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
         <Route path="/Pagos-Admins" element={isAdmin ? <PagosAdmins /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Revendedores" element={isAdmin ? <Revendedores onNavigate={handleNavigate} /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Gestion-Ruleta" element={isAdmin ? <GestionRuleta /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Estadisticas" element={isAdmin ? <Estadisticas /> : <Navigate to="/Lista-De-Precios" replace />} />
 
         {/* Redirección por defecto */}
         <Route path="/" element={<Navigate to={(isAdmin || isNegocio) ? "/Dashboard" : "/Lista-De-Precios"} replace />} />
@@ -245,10 +247,29 @@ export default function App() {
     }
   }, [config?.favicon_url])
 
-  // Guardamos en localStorage cada vez que cambia la página
+   // Guardamos en localStorage cada vez que cambia la página
   React.useEffect(() => {
     localStorage.setItem('lastPage', currentPage)
   }, [currentPage])
+
+  // Sistema de Estadísticas: Latido y Actividad
+  React.useEffect(() => {
+    if (user && perfil && perfil.estado === 'activo') {
+      const sessionId = Math.random().toString(36).substring(7);
+      
+      // Registrar login inicial (silencioso)
+      supabase.rpc('registrar_actividad_usuario', { p_tipo: 'login', p_session_id: sessionId })
+        .catch(() => {});
+
+      // Intervalo de latido (cada minuto)
+      const interval = setInterval(() => {
+        supabase.rpc('registrar_actividad_usuario', { p_tipo: 'heartbeat', p_session_id: sessionId })
+          .catch(() => {});
+      }, 60000);
+
+      return () => clearInterval(interval);
+    }
+  }, [user?.id, perfil?.id])
 
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
   const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
