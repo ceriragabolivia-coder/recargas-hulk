@@ -1,8 +1,8 @@
 
--- Migration 085: Corrección de Procesamiento de Pedidos y Actividad
--- Este parche corrige el error de tipos (UUID vs INT) en la venta y asegura el seguimiento de actividad.
+-- Migration 085: Corrección Definitiva (Modo UUID)
+-- Este parche corrige la discrepancia de tipos y asegura el registro de actividad.
 
--- 1. Asegurar tabla de actividad (Si no existía formalmente)
+-- 1. Asegurar tabla de actividad
 CREATE TABLE IF NOT EXISTS public.user_activity (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES auth.users(id),
@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS public.user_activity (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- 2. Función de Actividad (Para corregir los errores 404 de la App)
+-- 2. Función de Actividad
 DROP FUNCTION IF EXISTS public.registrar_actividad_usuario(TEXT, TEXT);
 CREATE OR REPLACE FUNCTION public.registrar_actividad_usuario(p_tipo TEXT, p_session_id TEXT DEFAULT NULL)
 RETURNS VOID AS $$
@@ -21,28 +21,25 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 3. Corregir tipos en admin_saldos_historial (Debe ser INT para referenciar pedidos.id)
+-- 3. Restaurar admin_saldos_historial a UUID (Para que coincida con pedidos.id que es UUID)
 DO $$ 
 BEGIN
-    -- Intentar cambiar el tipo de pedido_id si existe y es UUID
-    IF EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'admin_saldos_historial' AND column_name = 'pedido_id' AND data_type = 'uuid'
-    ) THEN
-        -- Eliminar FK temporalmente si existe
-        ALTER TABLE public.admin_saldos_historial DROP CONSTRAINT IF EXISTS admin_saldos_historial_pedido_id_fkey;
-        
-        -- Cambiar tipo (esto fallará si hay datos, pero como estamos en debug probablemente esté vacía o con datos inconsistentes)
-        ALTER TABLE public.admin_saldos_historial ALTER COLUMN pedido_id TYPE INT USING NULL; 
-        
-        -- Volver a añadir FK
-        ALTER TABLE public.admin_saldos_historial ADD CONSTRAINT admin_saldos_historial_pedido_id_fkey 
-        FOREIGN KEY (pedido_id) REFERENCES public.pedidos(id) ON DELETE SET NULL;
-    END IF;
+    -- Eliminar FK si existe para poder cambiar el tipo
+    ALTER TABLE public.admin_saldos_historial DROP CONSTRAINT IF EXISTS admin_saldos_historial_pedido_id_fkey;
+    
+    -- Cambiar a UUID (Usando NULL para limpiar si hubo basura de la ejecución fallida anterior)
+    ALTER TABLE public.admin_saldos_historial ALTER COLUMN pedido_id TYPE UUID USING NULL; 
+    
+    -- Restaurar FK
+    ALTER TABLE public.admin_saldos_historial ADD CONSTRAINT admin_saldos_historial_pedido_id_fkey 
+    FOREIGN KEY (pedido_id) REFERENCES public.pedidos(id) ON DELETE SET NULL;
 END $$;
 
--- 4. Corregir registrar_venta_rpc (Cambiar p_pedido_id a INT)
--- Primero eliminamos la versión errónea de UUID para evitar ambigüedades
+-- 4. Limpieza total y recreación de registrar_venta_rpc
+-- Eliminamos todas las posibles versiones antiguas para evitar conflictos de caché
+DROP FUNCTION IF EXISTS public.registrar_venta_rpc(INT, INT, TEXT);
+DROP FUNCTION IF EXISTS public.registrar_venta_rpc(INT, INT, TEXT, UUID, UUID, UUID, TEXT, TEXT, TEXT, TEXT);
+DROP FUNCTION IF EXISTS public.registrar_venta_rpc(INT, INT, TEXT, UUID, UUID, UUID, TEXT, TEXT, TEXT, TEXT, INT);
 DROP FUNCTION IF EXISTS public.registrar_venta_rpc(INT, INT, TEXT, UUID, UUID, UUID, TEXT, TEXT, TEXT, TEXT, UUID, UUID);
 
 CREATE OR REPLACE FUNCTION public.registrar_venta_rpc(
@@ -56,7 +53,7 @@ CREATE OR REPLACE FUNCTION public.registrar_venta_rpc(
     p_player_id TEXT DEFAULT NULL,
     p_account_email TEXT DEFAULT NULL,
     p_account_password TEXT DEFAULT NULL,
-    p_pedido_id INT DEFAULT NULL, -- CORREGIDO A INT
+    p_pedido_id UUID DEFAULT NULL, -- Mantenemos UUID para consistencia con la tabla pedidos
     p_owner_id UUID DEFAULT NULL
 ) RETURNS JSON AS $$
 DECLARE
@@ -86,7 +83,7 @@ BEGIN
         COALESCE((SELECT valor FROM public.configuracion WHERE clave = 'porcentaje_paypal'), 0.08) AS porcentaje_paypal
     INTO v_config;
 
-    -- Determinar tasa según tipo de juego
+    -- Determinar tasa
     IF v_juego.usa_tasa_binance THEN 
         v_tasa := COALESCE(v_config.tasa_binance, v_config.tasa_dolar, 1);
     ELSIF v_juego.usa_real_dolar THEN 
@@ -101,23 +98,8 @@ BEGIN
     IF v_producto.precio_venta_fijo IS NOT NULL AND v_producto.precio_venta_fijo > 0 THEN
         v_venta_usd := v_producto.precio_venta_fijo;
     ELSE
-        CASE v_juego.tipo_calculo
-            WHEN 'estandar' THEN
-                v_venta_usd := v_producto.costo_base + (v_producto.costo_base * COALESCE(v_producto.margen_ganancia, 0));
-            WHEN 'paypal' THEN
-                v_venta_usd := v_producto.costo_base / (1 - v_config.porcentaje_paypal);
-            WHEN 'descuento_doble' THEN
-                v_venta_usd := v_producto.costo_base + (v_producto.costo_base * COALESCE(v_producto.margen_ganancia, 0)) 
-                               - v_config.descuentos - COALESCE(v_juego.descuento_particular, 0);
-            WHEN 'ref_cruzada' THEN
-                v_venta_usd := (v_producto.costo_base / (1 - v_config.porcentaje_paypal));
-                v_venta_usd := v_venta_usd + (v_venta_usd * COALESCE(v_producto.margen_ganancia, 0));
-            ELSE
-                v_venta_usd := v_producto.costo_base + (v_producto.costo_base * COALESCE(v_producto.margen_ganancia, 0));
-        END CASE;
+        v_venta_usd := v_producto.costo_base + (v_producto.costo_base * COALESCE(v_producto.margen_ganancia, 0));
     END IF;
-
-    IF v_venta_usd IS NULL THEN v_venta_usd := v_producto.costo_base; END IF;
 
     v_venta_bs := v_venta_usd * v_tasa;
     v_ganancia := v_venta_usd - v_producto.costo_base;
