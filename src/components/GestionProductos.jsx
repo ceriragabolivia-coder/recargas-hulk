@@ -1186,7 +1186,7 @@ export default function GestionProductos() {
     type={alertModal?.type}
     title={alertModal?.title}
     message={alertModal?.message}
-    onConfirm={alertModal?.onConfirm}
+    onConfirm={alertModal?.onConfirm || (() => setAlertModal(null))}
     onCancel={() => setAlertModal(null)}
   />
 </div>
