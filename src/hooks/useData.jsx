@@ -487,27 +487,35 @@ export function useClientes() {
 
   async function fetchClientes() {
     setLoading(true)
-    const [clientesRes, billeterasRes] = await Promise.all([
+    const [clientesRes, perfilesRes, billeterasRes] = await Promise.all([
       supabase
         .from('clientes')
-        .select('*, perfiles:auth_user_id(rol, estado, porcentaje_descuento, config_modulos)')
+        .select('*')
         .order('fecha_registro', { ascending: false }),
+      supabase
+        .from('perfiles')
+        .select('id, rol, estado, porcentaje_descuento, config_modulos'),
       supabase
         .from('billeteras')
         .select('auth_user_id, saldo, saldo_bs')
     ])
     
     if (clientesRes.data) {
+      const perfilesMap = new Map((perfilesRes.data || []).map(p => [p.id, p]))
       const billeterasMap = new Map((billeterasRes.data || []).map(b => [b.auth_user_id, { saldo: b.saldo, saldo_bs: b.saldo_bs }]))
-      const formatted = clientesRes.data.map(c => ({
-        ...c,
-        rol: c.perfiles?.rol || 'cliente',
-        estado: c.perfiles?.estado || c.estado || 'pendiente',
-        porcentaje_descuento: c.perfiles?.porcentaje_descuento || 0,
-        config_modulos: c.perfiles?.config_modulos || [],
-        billetera_saldo: billeterasMap.get(c.auth_user_id)?.saldo || 0,
-        billetera_saldo_bs: billeterasMap.get(c.auth_user_id)?.saldo_bs || 0
-      }))
+      
+      const formatted = clientesRes.data.map(c => {
+        const p = perfilesMap.get(c.auth_user_id)
+        return {
+          ...c,
+          rol: p?.rol || 'cliente',
+          estado: p?.estado || c.estado || 'pendiente',
+          porcentaje_descuento: p?.porcentaje_descuento || 0,
+          config_modulos: p?.config_modulos || [],
+          billetera_saldo: billeterasMap.get(c.auth_user_id)?.saldo || 0,
+          billetera_saldo_bs: billeterasMap.get(c.auth_user_id)?.saldo_bs || 0
+        }
+      })
       setClientes(formatted)
     }
     setLoading(false)

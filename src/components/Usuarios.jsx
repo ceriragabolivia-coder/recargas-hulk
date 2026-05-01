@@ -91,18 +91,20 @@ export default function Usuarios({ onNavigate }) {
     try {
       // Si cambia el rol o descuento (afecta a 'perfiles')
       if (cliente.auth_user_id) {
-        await updateProfileRoleAndDiscount(cliente.auth_user_id, {
+        const { error: errorProfile } = await updateProfileRoleAndDiscount(cliente.auth_user_id, {
           rol: editingData.rol,
           porcentaje_descuento: editingData.rol === 'revendedor' ? parseFloat(editingData.porcentaje_descuento || 0) : 0,
           estado: editingData.estado,
           config_modulos: editingData.rol === 'negocio' ? editingData.config_modulos : []
         })
+        if (errorProfile) throw errorProfile
       }
 
       // Si cambia el whatsapp (afecta a 'clientes')
       if (cliente.whatsapp !== editingData.whatsapp) {
         if (cliente.auth_user_id) {
-          await updateProfile(cliente.auth_user_id, { whatsapp: editingData.whatsapp })
+          const { error: errorCli } = await updateProfile(cliente.auth_user_id, { whatsapp: editingData.whatsapp })
+          if (errorCli) throw errorCli
         }
       }
 
