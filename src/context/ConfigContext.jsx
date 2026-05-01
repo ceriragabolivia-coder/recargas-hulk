@@ -1,19 +1,25 @@
-﻿import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from './AuthContext'
 
 const ConfigContext = createContext()
 
 export function ConfigProvider({ children }) {
-  console.log('âš™ï¸ ConfigContext: Inicializando ConfigProvider...');
+  const { user, perfil, loading: loadingAuth } = useAuth()
   const [config, setConfig] = useState({})
   const [loading, setLoading] = useState(true)
 
   const fetchConfig = useCallback(async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+    // Si estÃ¡ cargando el auth, no hacemos nada aÃºn
+    if (loadingAuth) return
+    
+    // Si no hay usuario, terminamos de cargar pero sin config (o podrÃ­amos cargar la global si fuera pÃºblica)
+    if (!user) {
+      setLoading(false)
+      return
+    }
 
-      const { data: perfil } = await supabase.from('perfiles').select('rol').eq('id', user.id).single()
+    try {
       const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
 
       let query = supabase.from('configuracion').select('*')
@@ -50,22 +56,18 @@ export function ConfigProvider({ children }) {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [user, perfil, loadingAuth])
 
   const updateConfig = async (clave, valor, isText = false) => {
-    const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: new Error('No user logged in') }
 
-    const { data: perfil } = await supabase.from('perfiles').select('rol').eq('id', user.id).single()
     const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
 
     const safeValor = isText ? 0 : (Number(valor) || 0)
     const safeValorTexto = isText ? String(valor) : null
 
-    // RECONSTRUCCIÃ“N: OperaciÃ³n directa a la tabla para mÃ¡xima fiabilidad
     let error;
     if (isNegocio) {
-      // Para negocios, usamos upsert con owner_id
       const { error: upsertError } = await supabase
         .from('configuracion')
         .upsert({ 
@@ -76,7 +78,6 @@ export function ConfigProvider({ children }) {
         }, { onConflict: 'clave,owner_id' })
       error = upsertError;
     } else {
-      // Para admin (global), intentamos update primero
       const { error: updateError, data } = await supabase
         .from('configuracion')
         .update({ valor: safeValor, valor_texto: safeValorTexto, updated_at: new Date().toISOString() })
@@ -86,7 +87,6 @@ export function ConfigProvider({ children }) {
 
       error = updateError;
       
-      // Si no existe (no devolviÃ³ data), insertamos
       if (!error && (!data || data.length === 0)) {
         const { error: insertError } = await supabase
           .from('configuracion')
@@ -103,10 +103,7 @@ export function ConfigProvider({ children }) {
   }
 
   useEffect(() => {
-    // Retrasar la carga de config para evitar conflictos con el bloqueo de sesiÃ³n de Auth
-    const timer = setTimeout(() => {
-      fetchConfig()
-    }, 200)
+    fetchConfig()
 
     const channel = supabase
       .channel('global-config-realtime')
@@ -118,14 +115,9 @@ export function ConfigProvider({ children }) {
         console.log('ðŸ”” GlobalContext: Sincronizando configuraciÃ³n...', payload.eventType)
         fetchConfig()
       })
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('âœ… ConexiÃ³n Realtime de ConfiguraciÃ³n establecida')
-        }
-      })
+      .subscribe()
 
     return () => {
-      clearTimeout(timer)
       supabase.removeChannel(channel)
     }
   }, [fetchConfig])

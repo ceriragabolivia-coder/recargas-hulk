@@ -45,15 +45,15 @@ if (!rootElement) {
   ReactDOM.createRoot(rootElement).render(
     <RootErrorBoundary>
       <BrowserRouter>
-        <ConfigProvider>
-          <AuthProvider>
+        <AuthProvider>
+          <ConfigProvider>
             <CartProvider>
               <App />
               <Analytics />
               <SpeedInsights />
             </CartProvider>
-          </AuthProvider>
-        </ConfigProvider>
+          </ConfigProvider>
+        </AuthProvider>
       </BrowserRouter>
     </RootErrorBoundary>
   )
