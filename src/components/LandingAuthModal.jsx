@@ -172,13 +172,6 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
                 />
               </div>
               <div className="form-group">
-                <label>Tipo de Cuenta</label>
-                <select value={regRole} onChange={(e) => setRegRole(e.target.value)} required>
-                  <option value="cliente">Cliente (Consumo Propio)</option>
-                  <option value="revendedor">Revendedor (Vender a Otros)</option>
-                </select>
-              </div>
-              <div className="form-group">
                 <label>Contraseña</label>
                 <input
                   type="password"
