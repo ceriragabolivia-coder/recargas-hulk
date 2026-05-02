@@ -14,16 +14,12 @@ export function ConfigProvider({ children }) {
     if (loadingAuth) return
     
     // Si no hay usuario, terminamos de cargar pero sin config (o podrÃ­amos cargar la global si fuera pÃºblica)
-    if (!user) {
-      setLoading(false)
-      return
-    }
-
     try {
       const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
 
       let query = supabase.from('configuracion').select('*')
-      if (isNegocio) {
+      
+      if (user && isNegocio) {
         query = query.eq('owner_id', user.id)
       } else {
         query = query.is('owner_id', null)
