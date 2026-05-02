@@ -74,6 +74,25 @@ export default function GestionLanding() {
     setJuegos(juegos.map(j => j.id === juegoId ? { ...j, mostrar_en_landing: !isVisible } : j))
   }
 
+  const handleDeleteGame = async (juegoId, nombre) => {
+    if (!window.confirm(`¿Estás SEGURO de eliminar definitivamente "${nombre}"?\nEsta acción borrará el servicio del sistema por completo y no se puede deshacer.`)) {
+      return
+    }
+
+    setSaving(true)
+    try {
+      const { error } = await supabase.from('juegos').delete().eq('id', juegoId)
+      if (error) throw error
+      
+      setJuegos(juegos.filter(j => j.id !== juegoId))
+      toast.success(`"${nombre}" eliminado definitivamente.`)
+    } catch (err) {
+      toast.error('Error al eliminar: ' + err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const saveCatalogOrder = async () => {
     setSaving(true)
     try {
@@ -360,22 +379,45 @@ export default function GestionLanding() {
                     {!isVisible && <span style={{ fontSize: '12px', color: '#ff4d4f' }}>Oculto en Landing</span>}
                   </div>
                   
-                  <button 
-                    type="button"
-                    onClick={() => toggleVisibility(j.id, isVisible)}
-                    style={{
-                      background: isVisible ? 'rgba(255, 77, 79, 0.1)' : 'rgba(82, 196, 26, 0.1)',
-                      color: isVisible ? '#ff4d4f' : '#52c41a',
-                      border: 'none',
-                      padding: '8px 16px',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontWeight: 'bold',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    {isVisible ? '✖ Ocultar' : '➕ Mostrar'}
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button 
+                      type="button"
+                      onClick={() => toggleVisibility(j.id, isVisible)}
+                      style={{
+                        background: isVisible ? 'rgba(255, 77, 79, 0.1)' : 'rgba(82, 196, 26, 0.1)',
+                        color: isVisible ? '#ff4d4f' : '#52c41a',
+                        border: 'none',
+                        padding: '8px 16px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {isVisible ? '✖ Ocultar' : '➕ Mostrar'}
+                    </button>
+                    
+                    <button 
+                      type="button"
+                      onClick={() => handleDeleteGame(j.id, j.nombre)}
+                      style={{
+                        background: 'rgba(255, 0, 0, 0.1)',
+                        color: '#ff0000',
+                        border: '1px solid #ff0000',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title="Eliminar juego definitivamente"
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </div>
               )
             })}
