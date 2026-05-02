@@ -30,6 +30,9 @@ export function useJuegos() {
     if (isNegocio) {
       jSelect = jSelect.eq('owner_id', user.id)
       cSelect = cSelect.eq('owner_id', user.id)
+    } else {
+      jSelect = jSelect.is('owner_id', null)
+      cSelect = cSelect.is('owner_id', null)
     }
 
     const [jRes, cRes] = await Promise.all([
@@ -87,6 +90,8 @@ export function useProductos(juegoId) {
 
     if (isNegocio) {
       query = query.eq('owner_id', user.id)
+    } else {
+      query = query.is('owner_id', null)
     }
 
     const { data, error: dbError } = await query.order('orden')
@@ -106,6 +111,8 @@ export function useProductos(juegoId) {
     let query = supabase.from('categorias').select('*')
     if (isNegocio) {
       query = query.eq('owner_id', user.id)
+    } else {
+      query = query.is('owner_id', null)
     }
     const { data, error: dbError } = await query.order('orden')
     if (dbError) setError(dbError)
