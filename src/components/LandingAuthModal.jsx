@@ -49,7 +49,7 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
     setSuccessMsg(null)
 
     try {
-      const formattedPhone = regTelefono.replace(/[^0-9+]/g, '')
+      const formattedPhone = '+58' + regTelefono.replace(/\D/g, '')
       if (formattedPhone.length < 10) {
         throw new Error('El número de teléfono debe tener al menos 10 dígitos')
       }
@@ -163,13 +163,17 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
               </div>
               <div className="form-group">
                 <label>Teléfono (WhatsApp)</label>
-                <input
-                  type="tel"
-                  placeholder="+584120000000"
-                  value={regTelefono}
-                  onChange={(e) => setRegTelefono(e.target.value)}
-                  required
-                />
+                <div className="phone-input-container">
+                  <span className="phone-prefix">🇻🇪 +58</span>
+                  <input
+                    type="tel"
+                    placeholder="4120000000"
+                    value={regTelefono}
+                    onChange={(e) => setRegTelefono(e.target.value.replace(/\D/g, ''))}
+                    required
+                    maxLength={10}
+                  />
+                </div>
               </div>
               <div className="form-group">
                 <label>Contraseña</label>
@@ -301,6 +305,38 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
         .landing-auth-form select:focus {
           border-color: var(--accent, #7b2ff7);
         }
+
+        .phone-input-container {
+          display: flex;
+          align-items: center;
+          border: 1px solid var(--border, #e2e8f0);
+          border-radius: 8px;
+          background: var(--bg-page, #f8fafc);
+          overflow: hidden;
+          transition: border-color 0.2s;
+        }
+        .phone-input-container:focus-within {
+          border-color: var(--accent, #7b2ff7);
+        }
+        .phone-prefix {
+          padding: 10px 12px;
+          background: rgba(0,0,0,0.04);
+          border-right: 1px solid var(--border, #e2e8f0);
+          color: var(--text-main, #0f172a);
+          font-weight: 600;
+          font-size: 14px;
+          white-space: nowrap;
+        }
+        .landing-auth-form .phone-input-container input {
+          border: none;
+          border-radius: 0;
+          background: transparent;
+          width: 100%;
+        }
+        .landing-auth-form .phone-input-container input:focus {
+          border-color: transparent;
+        }
+
         .w-full { width: 100%; }
         .mt-4 { margin-top: 16px; }
         
