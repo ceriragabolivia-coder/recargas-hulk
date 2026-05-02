@@ -91,7 +91,7 @@ export default function Landing() {
     return juegos.slice(0, 12)
   }, [juegos, config])
 
-  if (loading) {
+  if (loading || !config) {
     return (
       <div className="landing-loading">
         <div className="spinner"></div>
