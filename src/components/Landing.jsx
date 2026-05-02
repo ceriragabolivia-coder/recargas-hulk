@@ -104,7 +104,7 @@ export default function Landing() {
       {/* HEADER */}
       <header className="landing-header">
         <div className="landing-container flex items-center justify-between">
-          <div className="flex items-center gap-40">
+          <div className="flex items-center" style={{ gap: '40px' }}>
             <div className="landing-logo-container" onClick={() => { setSelectedJuego(null); navigate('/'); }}>
               <div className="landing-logo-icon">⚡</div>
               <span className="landing-logo-text">{config?.landing_titulo || 'Ceriraga'}</span>
@@ -125,7 +125,7 @@ export default function Landing() {
             </nav>
           </div>
 
-          <div className="flex items-center gap-16">
+          <div className="flex items-center" style={{ gap: '24px' }}>
             {!selectedJuego && (
               <div className="landing-search hidden-mobile">
                 <input 
@@ -563,7 +563,7 @@ export default function Landing() {
           min-height: 600px;
         }
         .hero-slider {
-          height: 450px;
+          height: 320px;
           border-radius: 24px;
           overflow: hidden;
           position: relative;
