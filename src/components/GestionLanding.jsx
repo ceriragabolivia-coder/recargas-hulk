@@ -15,9 +15,22 @@ export default function GestionLanding() {
   const [form, setForm] = useState({
     landing_titulo: config?.landing_titulo || '',
     landing_subtitulo: config?.landing_subtitulo || '',
+    landing_logo: config?.landing_logo || '',
     landing_banner_1: config?.landing_banner_1 || '',
+    landing_banner_1_title: config?.landing_banner_1_title || '',
+    landing_banner_1_text: config?.landing_banner_1_text || '',
+    landing_banner_1_btn_text: config?.landing_banner_1_btn_text || '',
+    landing_banner_1_url: config?.landing_banner_1_url || '',
     landing_banner_2: config?.landing_banner_2 || '',
+    landing_banner_2_title: config?.landing_banner_2_title || '',
+    landing_banner_2_text: config?.landing_banner_2_text || '',
+    landing_banner_2_btn_text: config?.landing_banner_2_btn_text || '',
+    landing_banner_2_url: config?.landing_banner_2_url || '',
     landing_banner_3: config?.landing_banner_3 || '',
+    landing_banner_3_title: config?.landing_banner_3_title || '',
+    landing_banner_3_text: config?.landing_banner_3_text || '',
+    landing_banner_3_btn_text: config?.landing_banner_3_btn_text || '',
+    landing_banner_3_url: config?.landing_banner_3_url || '',
     landing_featured_games: config?.landing_featured_games || '',
     landing_enabled: config?.landing_enabled === '1'
   })
@@ -29,9 +42,22 @@ export default function GestionLanding() {
       setForm({
         landing_titulo: config.landing_titulo || '',
         landing_subtitulo: config.landing_subtitulo || '',
+        landing_logo: config.landing_logo || '',
         landing_banner_1: config.landing_banner_1 || '',
+        landing_banner_1_title: config.landing_banner_1_title || '',
+        landing_banner_1_text: config.landing_banner_1_text || '',
+        landing_banner_1_btn_text: config.landing_banner_1_btn_text || '',
+        landing_banner_1_url: config.landing_banner_1_url || '',
         landing_banner_2: config.landing_banner_2 || '',
+        landing_banner_2_title: config.landing_banner_2_title || '',
+        landing_banner_2_text: config.landing_banner_2_text || '',
+        landing_banner_2_btn_text: config.landing_banner_2_btn_text || '',
+        landing_banner_2_url: config.landing_banner_2_url || '',
         landing_banner_3: config.landing_banner_3 || '',
+        landing_banner_3_title: config.landing_banner_3_title || '',
+        landing_banner_3_text: config.landing_banner_3_text || '',
+        landing_banner_3_btn_text: config.landing_banner_3_btn_text || '',
+        landing_banner_3_url: config.landing_banner_3_url || '',
         landing_featured_games: config.landing_featured_games || '',
         landing_enabled: config.landing_enabled === '1'
       })
@@ -162,8 +188,13 @@ export default function GestionLanding() {
       const { data } = supabase.storage.from('logos').getPublicUrl(fileName)
       
       if (data?.publicUrl) {
-        setForm(prev => ({ ...prev, [`landing_banner_${bannerNumber}`]: data.publicUrl }))
-        toast.success(`Banner ${bannerNumber} subido correctamente`)
+        if (bannerNumber === 'logo') {
+          setForm(prev => ({ ...prev, landing_logo: data.publicUrl }))
+          toast.success(`Logo subido correctamente`)
+        } else {
+          setForm(prev => ({ ...prev, [`landing_banner_${bannerNumber}`]: data.publicUrl }))
+          toast.success(`Banner ${bannerNumber} subido correctamente`)
+        }
       }
     } catch (err) {
       toast.error('Error al subir imagen: ' + err.message)
@@ -179,10 +210,23 @@ export default function GestionLanding() {
     try {
       const results = await Promise.all([
         updateConfig('landing_titulo', form.landing_titulo, true),
-        updateConfig('landing_subtitulo', form.landing_subtitulo, true),
+        updateConfig('landing_subtitulo', form.landing_subtitulo, true), // Legacy fallback
+        updateConfig('landing_logo', form.landing_logo, true),
         updateConfig('landing_banner_1', form.landing_banner_1, true),
+        updateConfig('landing_banner_1_title', form.landing_banner_1_title, true),
+        updateConfig('landing_banner_1_text', form.landing_banner_1_text, true),
+        updateConfig('landing_banner_1_btn_text', form.landing_banner_1_btn_text, true),
+        updateConfig('landing_banner_1_url', form.landing_banner_1_url, true),
         updateConfig('landing_banner_2', form.landing_banner_2, true),
+        updateConfig('landing_banner_2_title', form.landing_banner_2_title, true),
+        updateConfig('landing_banner_2_text', form.landing_banner_2_text, true),
+        updateConfig('landing_banner_2_btn_text', form.landing_banner_2_btn_text, true),
+        updateConfig('landing_banner_2_url', form.landing_banner_2_url, true),
         updateConfig('landing_banner_3', form.landing_banner_3, true),
+        updateConfig('landing_banner_3_title', form.landing_banner_3_title, true),
+        updateConfig('landing_banner_3_text', form.landing_banner_3_text, true),
+        updateConfig('landing_banner_3_btn_text', form.landing_banner_3_btn_text, true),
+        updateConfig('landing_banner_3_url', form.landing_banner_3_url, true),
         updateConfig('landing_featured_games', form.landing_featured_games, true),
         updateConfig('landing_enabled', form.landing_enabled ? '1' : '0', false)
       ])
@@ -241,68 +285,112 @@ export default function GestionLanding() {
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Subtítulo (Hero)</label>
-            <input 
-              type="text" 
-              className="form-input"
-              value={form.landing_subtitulo}
-              onChange={(e) => setForm({...form, landing_subtitulo: e.target.value})}
-              placeholder="Ej: Los mejores precios..."
-            />
-          </div>
-
           <div className="form-group full-width">
-            <label className="form-label">Banner 1 (Imagen de fondo principal)</label>
+            <label className="form-label">Logo de la Landing Page</label>
             <div className="flex gap-8" style={{ alignItems: 'center' }}>
+              {form.landing_logo && <img src={form.landing_logo} alt="Logo" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'contain', background: '#000' }} />}
               <input 
                 type="text" 
                 className="form-input"
-                value={form.landing_banner_1}
-                onChange={(e) => setForm({...form, landing_banner_1: e.target.value})}
-                placeholder="URL de la imagen..."
+                value={form.landing_logo}
+                onChange={(e) => setForm({...form, landing_logo: e.target.value})}
+                placeholder="URL de la imagen del logo..."
                 style={{ flex: 1 }}
               />
-              <input type="file" id="upload_banner_1" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleUploadBanner(e, 1)} />
-              <button type="button" className="btn btn-secondary" onClick={() => document.getElementById('upload_banner_1').click()} disabled={saving} style={{ whiteSpace: 'nowrap' }}>
-                📁 Subir Imagen
+              <input type="file" id="upload_logo" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleUploadBanner(e, 'logo')} />
+              <button type="button" className="btn btn-secondary" onClick={() => document.getElementById('upload_logo').click()} disabled={saving} style={{ whiteSpace: 'nowrap' }}>
+                📁 Subir Logo
               </button>
             </div>
           </div>
 
-          <div className="form-group full-width">
-            <label className="form-label">Banner 2</label>
-            <div className="flex gap-8" style={{ alignItems: 'center' }}>
-              <input 
-                type="text" 
-                className="form-input"
-                value={form.landing_banner_2}
-                onChange={(e) => setForm({...form, landing_banner_2: e.target.value})}
-                placeholder="URL de la imagen..."
-                style={{ flex: 1 }}
-              />
-              <input type="file" id="upload_banner_2" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleUploadBanner(e, 2)} />
-              <button type="button" className="btn btn-secondary" onClick={() => document.getElementById('upload_banner_2').click()} disabled={saving} style={{ whiteSpace: 'nowrap' }}>
-                📁 Subir Imagen
-              </button>
+          <div className="form-group full-width" style={{ marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
+            <h3 style={{ marginBottom: '16px' }}>Banner 1 (Principal)</h3>
+            <div className="form-grid">
+              <div className="form-group full-width">
+                <label className="form-label">Imagen de fondo</label>
+                <div className="flex gap-8" style={{ alignItems: 'center' }}>
+                  <input type="text" className="form-input" value={form.landing_banner_1} onChange={(e) => setForm({...form, landing_banner_1: e.target.value})} placeholder="URL de la imagen..." style={{ flex: 1 }} />
+                  <input type="file" id="upload_banner_1" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleUploadBanner(e, 1)} />
+                  <button type="button" className="btn btn-secondary" onClick={() => document.getElementById('upload_banner_1').click()} disabled={saving} style={{ whiteSpace: 'nowrap' }}>📁 Subir Imagen</button>
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Título</label>
+                <input type="text" className="form-input" value={form.landing_banner_1_title} onChange={(e) => setForm({...form, landing_banner_1_title: e.target.value})} placeholder="Ej: ¡Recargas al Instante!" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Texto Descriptivo</label>
+                <input type="text" className="form-input" value={form.landing_banner_1_text} onChange={(e) => setForm({...form, landing_banner_1_text: e.target.value})} placeholder="Seguridad y confianza en cada transacción" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Texto del Botón</label>
+                <input type="text" className="form-input" value={form.landing_banner_1_btn_text} onChange={(e) => setForm({...form, landing_banner_1_btn_text: e.target.value})} placeholder="Empieza ahora" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">URL de Redirección (Botón)</label>
+                <input type="text" className="form-input" value={form.landing_banner_1_url} onChange={(e) => setForm({...form, landing_banner_1_url: e.target.value})} placeholder="Ej: /register o https://..." />
+              </div>
             </div>
           </div>
 
-          <div className="form-group full-width">
-            <label className="form-label">Banner 3</label>
-            <div className="flex gap-8" style={{ alignItems: 'center' }}>
-              <input 
-                type="text" 
-                className="form-input"
-                value={form.landing_banner_3}
-                onChange={(e) => setForm({...form, landing_banner_3: e.target.value})}
-                placeholder="URL de la imagen..."
-                style={{ flex: 1 }}
-              />
-              <input type="file" id="upload_banner_3" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleUploadBanner(e, 3)} />
-              <button type="button" className="btn btn-secondary" onClick={() => document.getElementById('upload_banner_3').click()} disabled={saving} style={{ whiteSpace: 'nowrap' }}>
-                📁 Subir Imagen
-              </button>
+          <div className="form-group full-width" style={{ marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
+            <h3 style={{ marginBottom: '16px' }}>Banner 2</h3>
+            <div className="form-grid">
+              <div className="form-group full-width">
+                <label className="form-label">Imagen de fondo</label>
+                <div className="flex gap-8" style={{ alignItems: 'center' }}>
+                  <input type="text" className="form-input" value={form.landing_banner_2} onChange={(e) => setForm({...form, landing_banner_2: e.target.value})} placeholder="URL de la imagen..." style={{ flex: 1 }} />
+                  <input type="file" id="upload_banner_2" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleUploadBanner(e, 2)} />
+                  <button type="button" className="btn btn-secondary" onClick={() => document.getElementById('upload_banner_2').click()} disabled={saving} style={{ whiteSpace: 'nowrap' }}>📁 Subir Imagen</button>
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Título</label>
+                <input type="text" className="form-input" value={form.landing_banner_2_title} onChange={(e) => setForm({...form, landing_banner_2_title: e.target.value})} placeholder="Ej: Los mejores precios" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Texto Descriptivo</label>
+                <input type="text" className="form-input" value={form.landing_banner_2_text} onChange={(e) => setForm({...form, landing_banner_2_text: e.target.value})} placeholder="" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Texto del Botón</label>
+                <input type="text" className="form-input" value={form.landing_banner_2_btn_text} onChange={(e) => setForm({...form, landing_banner_2_btn_text: e.target.value})} placeholder="Empieza ahora" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">URL de Redirección (Botón)</label>
+                <input type="text" className="form-input" value={form.landing_banner_2_url} onChange={(e) => setForm({...form, landing_banner_2_url: e.target.value})} placeholder="Ej: /register o https://..." />
+              </div>
+            </div>
+          </div>
+
+          <div className="form-group full-width" style={{ marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '20px', paddingBottom: '20px' }}>
+            <h3 style={{ marginBottom: '16px' }}>Banner 3</h3>
+            <div className="form-grid">
+              <div className="form-group full-width">
+                <label className="form-label">Imagen de fondo</label>
+                <div className="flex gap-8" style={{ alignItems: 'center' }}>
+                  <input type="text" className="form-input" value={form.landing_banner_3} onChange={(e) => setForm({...form, landing_banner_3: e.target.value})} placeholder="URL de la imagen..." style={{ flex: 1 }} />
+                  <input type="file" id="upload_banner_3" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleUploadBanner(e, 3)} />
+                  <button type="button" className="btn btn-secondary" onClick={() => document.getElementById('upload_banner_3').click()} disabled={saving} style={{ whiteSpace: 'nowrap' }}>📁 Subir Imagen</button>
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Título</label>
+                <input type="text" className="form-input" value={form.landing_banner_3_title} onChange={(e) => setForm({...form, landing_banner_3_title: e.target.value})} placeholder="" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Texto Descriptivo</label>
+                <input type="text" className="form-input" value={form.landing_banner_3_text} onChange={(e) => setForm({...form, landing_banner_3_text: e.target.value})} placeholder="" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Texto del Botón</label>
+                <input type="text" className="form-input" value={form.landing_banner_3_btn_text} onChange={(e) => setForm({...form, landing_banner_3_btn_text: e.target.value})} placeholder="Empieza ahora" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">URL de Redirección (Botón)</label>
+                <input type="text" className="form-input" value={form.landing_banner_3_url} onChange={(e) => setForm({...form, landing_banner_3_url: e.target.value})} placeholder="Ej: /register o https://..." />
+              </div>
             </div>
           </div>
 

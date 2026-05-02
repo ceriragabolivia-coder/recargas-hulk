@@ -26,9 +26,27 @@ export default function Landing() {
   const [loadingProductos, setLoadingProductos] = useState(false)
 
   const banners = useMemo(() => [
-    config?.landing_banner_1 || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=2070',
-    config?.landing_banner_2 || 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=2071',
-    config?.landing_banner_3 || 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&q=80&w=2070'
+    {
+      image: config?.landing_banner_1 || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=2070',
+      title: config?.landing_banner_1_title || config?.landing_subtitulo || '¡Recargas al Instante!',
+      text: config?.landing_banner_1_text || 'Seguridad y confianza en cada transacción',
+      btnText: config?.landing_banner_1_btn_text || 'Empieza ahora',
+      url: config?.landing_banner_1_url || '/register'
+    },
+    {
+      image: config?.landing_banner_2 || 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=2071',
+      title: config?.landing_banner_2_title || 'Los mejores precios del mercado',
+      text: config?.landing_banner_2_text || 'Seguridad y confianza en cada transacción',
+      btnText: config?.landing_banner_2_btn_text || 'Empieza ahora',
+      url: config?.landing_banner_2_url || '/register'
+    },
+    {
+      image: config?.landing_banner_3 || 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&q=80&w=2070',
+      title: config?.landing_banner_3_title || 'Explora nuestro catálogo',
+      text: config?.landing_banner_3_text || 'Seguridad y confianza en cada transacción',
+      btnText: config?.landing_banner_3_btn_text || 'Empieza ahora',
+      url: config?.landing_banner_3_url || '/register'
+    }
   ], [config])
 
   useEffect(() => {
@@ -116,7 +134,11 @@ export default function Landing() {
         <div className="landing-container flex items-center justify-between" style={{ gap: '40px' }}>
           <div className="flex items-center" style={{ gap: '40px' }}>
             <div className="landing-logo-container" onClick={() => { setSelectedJuego(null); navigate('/'); }}>
-              <div className="landing-logo-icon">⚡</div>
+              {config?.landing_logo ? (
+                <img src={config.landing_logo} alt="Logo" style={{ width: '40px', height: '40px', borderRadius: '10px', objectFit: 'contain' }} />
+              ) : (
+                <div className="landing-logo-icon">⚡</div>
+              )}
               <span className="landing-logo-text">{config?.landing_titulo || 'Ceriraga'}</span>
             </div>
             
@@ -285,16 +307,27 @@ export default function Landing() {
             {!search.trim() && (
               <section className="landing-hero landing-container">
               <div className="hero-slider">
-                {banners.map((url, idx) => (
+                {banners.map((banner, idx) => (
                   <div 
                     key={idx} 
                     className={`hero-slide ${idx === currentBanner ? 'active' : ''}`}
-                    style={{ backgroundImage: `url(${url})` }}
+                    style={{ backgroundImage: `url(${banner.image})` }}
                   >
                     <div className="hero-content">
-                      <h2>{idx === 0 ? (config?.landing_subtitulo || '¡Recargas al Instante!') : 'Los mejores precios del mercado'}</h2>
-                      <p>Seguridad y confianza en cada transacción</p>
-                      <button className="btn-landing-primary" onClick={() => navigate('/register')}>Empieza ahora</button>
+                      <h2>{banner.title}</h2>
+                      <p>{banner.text}</p>
+                      <button 
+                        className="btn-landing-primary" 
+                        onClick={() => {
+                          if (banner.url.startsWith('http')) {
+                            window.location.href = banner.url
+                          } else {
+                            navigate(banner.url)
+                          }
+                        }}
+                      >
+                        {banner.btnText}
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -362,7 +395,11 @@ export default function Landing() {
         <div className="landing-container footer-content">
           <div className="footer-brand">
             <div className="landing-logo-container" onClick={() => setSelectedJuego(null)}>
-              <div className="landing-logo-icon">⚡</div>
+              {config?.landing_logo ? (
+                <img src={config.landing_logo} alt="Logo" style={{ width: '40px', height: '40px', borderRadius: '10px', objectFit: 'contain' }} />
+              ) : (
+                <div className="landing-logo-icon">⚡</div>
+              )}
               <span className="landing-logo-text">{config?.landing_titulo || 'Ceriraga'}</span>
             </div>
             <p>Tu plataforma líder en recargas y servicios digitales en Venezuela. Seguridad, rapidez y los mejores precios.</p>
@@ -456,6 +493,7 @@ export default function Landing() {
           background: linear-gradient(135deg, #00d2ff, var(--accent));
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
+          white-space: nowrap;
         }
         .landing-nav {
           display: flex;
