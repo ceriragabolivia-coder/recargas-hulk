@@ -191,15 +191,9 @@ export default function Landing() {
                             <div className="product-name">{prod.nombre}</div>
                             <div className="product-price">
                               {isRevendedor ? (
-                                <>
-                                  <span className="price-primary">{formatUSD(pricing.venta_usd)}</span>
-                                  <span className="price-secondary">{formatBs(pricing.venta_bs)}</span>
-                                </>
+                                <span className="price-primary">{formatUSD(pricing.venta_usd)}</span>
                               ) : (
-                                <>
-                                  <span className="price-primary">{formatBs(pricing.venta_bs)}</span>
-                                  <span className="price-secondary">{formatUSD(pricing.venta_usd)}</span>
-                                </>
+                                <span className="price-primary">{formatBs(pricing.venta_bs)}</span>
                               )}
                             </div>
                           </div>
