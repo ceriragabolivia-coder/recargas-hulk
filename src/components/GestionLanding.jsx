@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useConfiguracion } from '../hooks/useData'
 import { supabase } from '../lib/supabase'
 import AlertModal from './AlertModal'
+import { ToastContainer, toast } from 'react-toastify'
 
 export default function GestionLanding() {
   const { config, updateConfig, loading } = useConfiguracion()
@@ -43,10 +44,20 @@ export default function GestionLanding() {
     setLoadingJuegos(false)
   }
 
-  const handleUpdateDiscount = async (juegoId, label) => {
+  const handleUpdateDiscount = async (juegoId) => {
+    // Buscar el input por ID para obtener su valor actual de forma segura
+    const input = document.getElementById(`discount-input-${juegoId}`)
+    const label = input ? input.value : ''
+
+    setSaving(true)
     const { error } = await supabase.from('juegos').update({ etiqueta_descuento: label }).eq('id', juegoId)
+    setSaving(false)
+
     if (!error) {
       setJuegos(juegos.map(j => j.id === juegoId ? { ...j, etiqueta_descuento: label } : j))
+      toast.success('Etiqueta actualizada correctamente')
+    } else {
+      toast.error('Error al actualizar: ' + error.message)
     }
   }
 
@@ -217,18 +228,19 @@ export default function GestionLanding() {
                     </td>
                     <td>
                       <input 
+                        id={`discount-input-${j.id}`}
                         type="text" 
                         className="form-input" 
                         style={{ padding: '4px 8px', width: '100px' }}
                         defaultValue={j.etiqueta_descuento}
-                        onBlur={(e) => j._tempLabel = e.target.value}
                         placeholder="-20%"
                       />
                     </td>
                     <td>
                       <button 
                         className="btn btn-secondary btn-sm"
-                        onClick={() => handleUpdateDiscount(j.id, j._tempLabel || '')}
+                        onClick={() => handleUpdateDiscount(j.id)}
+                        disabled={saving}
                       >
                         Actualizar
                       </button>
@@ -249,6 +261,7 @@ export default function GestionLanding() {
           onClose={() => setAlert(null)} 
         />
       )}
+      <ToastContainer position="bottom-right" theme="dark" />
     </div>
   )
 }
