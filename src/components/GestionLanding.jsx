@@ -39,9 +39,68 @@ export default function GestionLanding() {
   }, [config])
 
   const fetchJuegos = async () => {
-    const { data } = await supabase.from('juegos').select('*').order('nombre')
+    const { data } = await supabase
+      .from('juegos')
+      .select('*')
+      .is('owner_id', null)
+      .order('orden_landing', { ascending: true })
+      .order('nombre')
     if (data) setJuegos(data)
     setLoadingJuegos(false)
+  }
+
+  const handleDragStart = (e, index) => {
+    e.dataTransfer.setData('juegoIndex', index)
+  }
+
+  const handleDragOver = (e) => {
+    e.preventDefault()
+  }
+
+  const handleDrop = (e, targetIndex) => {
+    e.preventDefault()
+    const sourceIndex = parseInt(e.dataTransfer.getData('juegoIndex'), 10)
+    if (isNaN(sourceIndex) || sourceIndex === targetIndex) return
+
+    const newJuegos = [...juegos]
+    const [movedItem] = newJuegos.splice(sourceIndex, 1)
+    newJuegos.splice(targetIndex, 0, movedItem)
+    setJuegos(newJuegos)
+  }
+
+  const toggleVisibility = (juegoId, currentState) => {
+    // Si mostrar_en_landing no está definido, asumimos que es true
+    const isVisible = currentState !== false
+    setJuegos(juegos.map(j => j.id === juegoId ? { ...j, mostrar_en_landing: !isVisible } : j))
+  }
+
+  const saveCatalogOrder = async () => {
+    setSaving(true)
+    try {
+      const updates = juegos.map((j, idx) => ({
+        id: j.id,
+        nombre: j.nombre, // Necesario en upsert si hay campos NOT NULL, depende del esquema.
+        activo: j.activo,
+        mostrar_en_landing: j.mostrar_en_landing !== false,
+        orden_landing: idx
+      }))
+
+      // Usamos update en un bucle si upsert requiere columnas que no tenemos. Para asegurar, iteramos.
+      // Ya que no queremos sobreescribir otros datos, Promise.all es mejor.
+      const promises = juegos.map((j, idx) => 
+        supabase.from('juegos').update({
+          mostrar_en_landing: j.mostrar_en_landing !== false,
+          orden_landing: idx
+        }).eq('id', j.id)
+      )
+      
+      await Promise.all(promises)
+      toast.success('Orden y visibilidad del catálogo guardados correctamente')
+    } catch (err) {
+      toast.error('Error al guardar organización: ' + err.message)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleUpdateDiscount = async (juegoId) => {
@@ -253,6 +312,75 @@ export default function GestionLanding() {
             </button>
           </div>
         </form>
+      </div>
+
+      <div className="section-header-modern" style={{ marginTop: '40px' }}>
+        <div className="section-title-group">
+          <h2 className="section-title">Organización del Catálogo</h2>
+          <p className="section-subtitle">Oculta juegos de la Landing Page y arrástralos (☰) para cambiar el orden en que aparecen al público.</p>
+        </div>
+        <div className="section-actions">
+          <button className="btn btn-primary" onClick={saveCatalogOrder} disabled={saving}>
+            {saving ? '⏳ Guardando...' : '💾 Guardar Orden y Visibilidad'}
+          </button>
+        </div>
+      </div>
+
+      <div className="card-modern shadow-md">
+        {loadingJuegos ? <p>Cargando catálogo...</p> : (
+          <div className="catalog-dnd-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {juegos.map((j, idx) => {
+              const isVisible = j.mostrar_en_landing !== false
+              return (
+                <div 
+                  key={j.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, idx)}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, idx)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px',
+                    padding: '12px 16px',
+                    background: isVisible ? 'var(--bg-card)' : 'var(--bg-page)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px',
+                    cursor: 'grab',
+                    opacity: isVisible ? 1 : 0.6,
+                    transition: 'opacity 0.2s, background 0.2s'
+                  }}
+                >
+                  <div style={{ color: 'var(--text-muted)', cursor: 'grab', fontSize: '20px' }}>
+                    ☰
+                  </div>
+                  <img src={j.icono_url} alt="" style={{ width: '40px', height: '40px', borderRadius: '10px' }} />
+                  <div style={{ flex: 1 }}>
+                    <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '600' }}>{j.nombre}</h4>
+                    {!isVisible && <span style={{ fontSize: '12px', color: '#ff4d4f' }}>Oculto en Landing</span>}
+                  </div>
+                  
+                  <button 
+                    type="button"
+                    onClick={() => toggleVisibility(j.id, isVisible)}
+                    style={{
+                      background: isVisible ? 'rgba(255, 77, 79, 0.1)' : 'rgba(82, 196, 26, 0.1)',
+                      color: isVisible ? '#ff4d4f' : '#52c41a',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {isVisible ? '✖ Ocultar' : '➕ Mostrar'}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       <div className="section-header-modern" style={{ marginTop: '40px' }}>
