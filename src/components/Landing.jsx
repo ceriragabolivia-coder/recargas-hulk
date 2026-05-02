@@ -1016,12 +1016,15 @@ export default function Landing() {
 }
 
 function GameCard({ juego, onSelect }) {
-  const discount = Math.random() > 0.5 ? Math.floor(Math.random() * 40) + 10 : null
-  const sold = useMemo(() => (Math.random() * 100).toFixed(1) + 'K', [])
+  // Generar un número de ventas estable basado en el ID para que no cambie al re-renderizar
+  const sold = useMemo(() => {
+    const seed = (juego.id || 0).toString().split('').reduce((a, b) => a + b.charCodeAt(0), 0)
+    return (10 + (seed % 190)).toFixed(1) + 'K'
+  }, [juego.id])
 
   return (
     <div className="game-card" onClick={onSelect}>
-      {discount && <div className="badge-discount">-{discount}%</div>}
+      {juego.etiqueta_descuento && <div className="badge-discount">{juego.etiqueta_descuento}</div>}
       <img 
         src={juego.icono_url || 'https://via.placeholder.com/200x250?text=' + juego.nombre} 
         alt={juego.nombre} 

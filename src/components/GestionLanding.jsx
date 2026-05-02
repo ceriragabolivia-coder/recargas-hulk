@@ -1,9 +1,12 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useConfiguracion } from '../hooks/useData'
+import { supabase } from '../lib/supabase'
 import AlertModal from './AlertModal'
 
 export default function GestionLanding() {
   const { config, updateConfig, loading } = useConfiguracion()
+  const [juegos, setJuegos] = useState([])
+  const [loadingJuegos, setLoadingJuegos] = useState(true)
   const [saving, setSaving] = useState(false)
   const [alert, setAlert] = useState(null)
 
@@ -20,6 +23,7 @@ export default function GestionLanding() {
 
   // Sincronizar cuando cargue la config real
   React.useEffect(() => {
+    fetchJuegos()
     if (config) {
       setForm({
         landing_titulo: config.landing_titulo || '',
@@ -32,6 +36,19 @@ export default function GestionLanding() {
       })
     }
   }, [config])
+
+  const fetchJuegos = async () => {
+    const { data } = await supabase.from('juegos').select('*').order('nombre')
+    if (data) setJuegos(data)
+    setLoadingJuegos(false)
+  }
+
+  const handleUpdateDiscount = async (juegoId, label) => {
+    const { error } = await supabase.from('juegos').update({ etiqueta_descuento: label }).eq('id', juegoId)
+    if (!error) {
+      setJuegos(juegos.map(j => j.id === juegoId ? { ...j, etiqueta_descuento: label } : j))
+    }
+  }
 
   const handleSave = async (e) => {
     e.preventDefault()
@@ -159,10 +176,69 @@ export default function GestionLanding() {
               style={{ minWidth: '180px' }}
               disabled={saving}
             >
-              {saving ? '⏳ Guardando...' : '💾 Guardar Cambios'}
+              {saving ? '⏳ Guardando...' : '💾 Guardar Cambios Generales'}
             </button>
           </div>
         </form>
+      </div>
+
+      <div className="section-header-modern" style={{ marginTop: '40px' }}>
+        <div className="section-title-group">
+          <h2 className="section-title">Etiquetas de Descuento (Ganchos Visuales)</h2>
+          <p className="section-subtitle">Configura los descuentos que se verán en la landing page para cada juego.</p>
+        </div>
+      </div>
+
+      <div className="card-modern shadow-md">
+        {loadingJuegos ? <p>Cargando juegos...</p> : (
+          <div className="table-responsive">
+            <table className="table-modern">
+              <thead>
+                <tr>
+                  <th>Juego</th>
+                  <th>Etiqueta Actual</th>
+                  <th>Nueva Etiqueta (Ej: -25%)</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {juegos.map(j => (
+                  <tr key={j.id}>
+                    <td>
+                      <div className="flex items-center gap-8">
+                        <img src={j.icono_url} alt="" style={{ width: '32px', height: '32px', borderRadius: '8px' }} />
+                        {j.nombre}
+                      </div>
+                    </td>
+                    <td>
+                      <span className="badge" style={{ backgroundColor: j.etiqueta_descuento ? '#ff6b6b' : '#666', color: 'white' }}>
+                        {j.etiqueta_descuento || 'Sin descuento'}
+                      </span>
+                    </td>
+                    <td>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        style={{ padding: '4px 8px', width: '100px' }}
+                        defaultValue={j.etiqueta_descuento}
+                        onBlur={(e) => j._tempLabel = e.target.value}
+                        placeholder="-20%"
+                      />
+                    </td>
+                    <td>
+                      <button 
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => handleUpdateDiscount(j.id, j._tempLabel || '')}
+                      >
+                        Actualizar
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {alert && (
