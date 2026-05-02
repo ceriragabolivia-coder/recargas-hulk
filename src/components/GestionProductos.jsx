@@ -20,6 +20,7 @@ export default function GestionProductos() {
   const [newCategoryName, setNewCategoryName] = useState('')
   const [saving, setSaving] = useState(false)
   const [alertModal, setAlertModal] = useState(null) // { type, title, message, onConfirm }
+  const [shouldRemoveBg, setShouldRemoveBg] = useState(true)
 
   // Formulario de nuevo/editar juego
   const [formGame, setFormGame] = useState({
@@ -178,6 +179,7 @@ export default function GestionProductos() {
     setNewIconFile(null)
     setIconPreview(null)
     setNewInfoFile(null)
+    setShouldRemoveBg(true) // Reset to default
     setIsModalOpen(true)
   }
 
@@ -209,11 +211,18 @@ export default function GestionProductos() {
 
       // Si hay un nuevo archivo seleccionado, procesarlo y subirlo
       if (newIconFile) {
-        const pngBlob = await removeWhiteBackground(newIconFile)
-        const fileName = `prod-new-${Date.now()}.png`
+        let finalFile = newIconFile
+        let contentType = newIconFile.type
+
+        if (shouldRemoveBg) {
+          finalFile = await removeWhiteBackground(newIconFile)
+          contentType = 'image/png'
+        }
+
+        const fileName = `prod-new-${Date.now()}${shouldRemoveBg ? '.png' : ''}`
         const { error: uploadError } = await supabase.storage
           .from('logos')
-          .upload(fileName, pngBlob, { contentType: 'image/png' })
+          .upload(fileName, finalFile, { contentType })
 
         if (uploadError) throw new Error('Error subiendo ícono: ' + uploadError.message)
 
@@ -341,12 +350,19 @@ export default function GestionProductos() {
         return
       }
       setSaving(true)
-      // Eliminar fondo blanco y convertir a PNG transparente
-      const pngBlob = await removeWhiteBackground(file)
-      const fileName = `prod-${prodId}-${Date.now()}.png`
+      
+      let finalFile = file
+      let contentType = file.type
+
+      if (shouldRemoveBg) {
+        finalFile = await removeWhiteBackground(file)
+        contentType = 'image/png'
+      }
+
+      const fileName = `prod-${prodId}-${Date.now()}${shouldRemoveBg ? '.png' : ''}`
       const { error: uploadError } = await supabase.storage
         .from('logos')
-        .upload(fileName, pngBlob, { contentType: 'image/png' })
+        .upload(fileName, finalFile, { contentType })
       if (uploadError) {
         setAlertModal({ type: 'error', message: 'Error subiendo imagen: ' + uploadError.message })
         setSaving(false)
@@ -390,15 +406,20 @@ export default function GestionProductos() {
 
       setSaving(true)
 
-      // Eliminar fondo blanco y convertir a PNG transparente
-      const pngBlob = await removeWhiteBackground(file)
+      let finalFile = file
+      let contentType = file.type
 
-      const fileName = `${selectedJuego.id}-${Date.now()}.png`
+      if (shouldRemoveBg) {
+        finalFile = await removeWhiteBackground(file)
+        contentType = 'image/png'
+      }
+
+      const fileName = `${selectedJuego.id}-${Date.now()}${shouldRemoveBg ? '.png' : ''}`
       const filePath = `${fileName}`
 
       const { error: uploadError } = await supabase.storage
         .from('logos')
-        .upload(filePath, pngBlob, { contentType: 'image/png' })
+        .upload(filePath, finalFile, { contentType })
 
       if (uploadError) {
         setAlertModal({ type: 'error', message: 'Error subiendo imagen al storage: ' + uploadError.message })
@@ -524,14 +545,16 @@ export default function GestionProductos() {
             </p>
           </div>
         </div>
-        <input
-          type="file"
-          id="game-logo-upload"
-          accept="image/png, image/jpeg, image/webp"
-          style={{ display: 'none' }}
-          onChange={handleUploadLogo}
-        />
-        <div className="flex gap-8">
+        <div className="flex gap-8" style={{ alignItems: 'center' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', cursor: 'pointer', opacity: 0.8, color: 'var(--text-muted)', marginRight: '8px' }}>
+            <input 
+              type="checkbox" 
+              checked={shouldRemoveBg} 
+              onChange={(e) => setShouldRemoveBg(e.target.checked)}
+              style={{ cursor: 'pointer' }}
+            />
+            Auto-PNG (Quitar Fondo)
+          </label>
           <button className="btn btn-ghost btn-icon btn-sm" onClick={handleEditJuego} title="Editar Configuración del Juego">
             ✏️
           </button>
@@ -543,6 +566,13 @@ export default function GestionProductos() {
           </button>
         </div>
       </div>
+      <input
+        type="file"
+        id="game-logo-upload"
+        accept="image/png, image/jpeg, image/webp"
+        style={{ display: 'none' }}
+        onChange={handleUploadLogo}
+      />
 
       {loadingProductos ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}><div className="spinner"></div></div>
@@ -752,6 +782,19 @@ export default function GestionProductos() {
                 Click para cambiar
               </div>
             </div>
+            
+            <div style={{ marginTop: 12 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <input 
+                  type="checkbox" 
+                  checked={shouldRemoveBg} 
+                  onChange={(e) => setShouldRemoveBg(e.target.checked)}
+                  style={{ cursor: 'pointer' }}
+                />
+                Auto-PNG (Quitar Fondo Blanco)
+              </label>
+            </div>
+
             <input
               type="file"
               id="modal-icon-upload"
