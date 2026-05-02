@@ -3,12 +3,17 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useConfiguracion, useAuth } from '../hooks/useData'
 import { formatUSD, formatBs, calcularPrecioVenta } from '../utils/helpers'
+import LandingAuthModal from './LandingAuthModal'
 
 export default function Landing() {
   const navigate = useNavigate()
   const { config } = useConfiguracion()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const isRevendedor = user?.role === 'revendedor'
+  
+  // Modal State
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const [authModalView, setAuthModalView] = useState('login')
   
   const [juegos, setJuegos] = useState([])
   const [categorias, setCategorias] = useState([])
@@ -179,8 +184,31 @@ export default function Landing() {
               {darkMode ? '☀️' : '🌙'}
             </button>
 
-            <button className="btn-landing-secondary" onClick={() => navigate('/login')}>Entrar</button>
-            <button className="btn-landing-primary" onClick={() => navigate('/register')}>Registrarse</button>
+            {user ? (
+              <div className="nav-dropdown">
+                <div className="flex items-center" style={{ gap: '8px', cursor: 'pointer' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>
+                    {user.email?.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="hidden-mobile" style={{ fontWeight: '600' }}>Mi Cuenta ▾</span>
+                </div>
+                <div className="dropdown-content" style={{ right: 0, left: 'auto' }}>
+                  <div style={{ padding: '10px 20px', borderBottom: '1px solid var(--border)', marginBottom: '4px' }}>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Conectado como</div>
+                    <div style={{ fontWeight: '600', fontSize: '14px' }}>{user.email}</div>
+                  </div>
+                  <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Mi-Perfil') }}>Mi Perfil</a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Mis-Pedidos') }}>Mis Pedidos</a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Billetera') }}>Billetera</a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); logout() }} style={{ color: '#ef4444' }}>Cerrar Sesión</a>
+                </div>
+              </div>
+            ) : (
+              <>
+                <button className="btn-landing-secondary" onClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}>Entrar</button>
+                <button className="btn-landing-primary" onClick={() => { setAuthModalView('register'); setIsAuthModalOpen(true); }}>Registrarse</button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -218,7 +246,7 @@ export default function Landing() {
                       {productosJuego.map(prod => {
                         const pricing = calcularPrecioVenta(prod, selectedJuego, config)
                         return (
-                          <div key={prod.id} className="product-card" onClick={() => navigate('/login')}>
+                          <div key={prod.id} className="product-card" onClick={() => user ? alert('Añadir al carrito / Comprar (Próximamente)') : (() => { setAuthModalView('login'); setIsAuthModalOpen(true); })()}>
                             {prod.icono_url && <img src={prod.icono_url} alt="" className="product-icon" />}
                             <div className="product-name">{prod.nombre}</div>
                             <div className="product-price">
@@ -264,14 +292,22 @@ export default function Landing() {
                   <h3>¿Listo para recargar?</h3>
                   <p>Inicia sesión o crea una cuenta para poder realizar compras y gestionar tus pedidos.</p>
                   
-                  <div className="sidebar-buttons">
-                    <button className="btn-landing-primary w-full mb-12" onClick={() => navigate('/login')}>
-                      🔐 Iniciar Sesión
-                    </button>
-                    <button className="btn-landing-secondary w-full" onClick={() => navigate('/register')}>
-                      📝 Registrarse
-                    </button>
-                  </div>
+                  {user ? (
+                    <div className="sidebar-buttons">
+                      <button className="btn-landing-primary w-full" onClick={() => navigate('/Checkout')}>
+                        🛒 Ir al Checkout
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="sidebar-buttons">
+                      <button className="btn-landing-primary w-full mb-12" onClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}>
+                        🔐 Iniciar Sesión
+                      </button>
+                      <button className="btn-landing-secondary w-full" onClick={() => { setAuthModalView('register'); setIsAuthModalOpen(true); }}>
+                        📝 Registrarse
+                      </button>
+                    </div>
+                  )}
 
                   <div className="sidebar-features">
                     <div className="feature-item">
@@ -421,6 +457,13 @@ export default function Landing() {
           <p>© 2024 Ceriraga. Todos los derechos reservados.</p>
         </div>
       </footer>
+
+      {/* AUTH MODAL */}
+      <LandingAuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+        initialView={authModalView} 
+      />
 
       <style dangerouslySetInnerHTML={{ __html: `
         :root {

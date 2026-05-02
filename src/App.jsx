@@ -196,8 +196,8 @@ const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
         <Route path="/Gestion-Landing" element={isAdmin ? <GestionLanding /> : <Navigate to="/Lista-De-Precios" replace />} />
 
         {/* Redirección por defecto */}
-        <Route path="/" element={<Navigate to={(isAdmin || isNegocio) ? "/Dashboard" : "/Lista-De-Precios"} replace />} />
-        <Route path="*" element={<Navigate to={(isAdmin || isNegocio) ? "/Dashboard" : "/Lista-De-Precios"} replace />} />
+        <Route path="/" element={<Navigate to={(isAdmin || isNegocio) ? "/Dashboard" : "/"} replace />} />
+        <Route path="*" element={<Navigate to={(isAdmin || isNegocio) ? "/Dashboard" : "/"} replace />} />
       </Routes>
     </Suspense>
   )
@@ -295,11 +295,15 @@ export default function App() {
   // Solo redirigimos automáticamente la PRIMERA vez que cargamos el perfil
   const hasRedirectedRef = React.useRef(false)
   React.useEffect(() => {
-    if (perfil && !hasRedirectedRef.current && location.pathname === '/') {
-      navigate((isAdmin || isNegocio) ? '/Dashboard' : '/Lista-De-Precios', { replace: true })
+    if (perfil && !hasRedirectedRef.current && (location.pathname === '/' || location.pathname === '/login' || location.pathname === '/register')) {
+      if (isAdmin || isNegocio) {
+        navigate('/Dashboard', { replace: true })
+      } else {
+        navigate('/', { replace: true })
+      }
       hasRedirectedRef.current = true
     }
-  }, [perfil, location.pathname, isAdmin, isNegocio])
+  }, [perfil, location.pathname, isAdmin, isNegocio, navigate])
 
   const [forceLoad, setForceLoad] = useState(false)
   useEffect(() => {
@@ -337,6 +341,17 @@ export default function App() {
   if (perfil?.estado === 'rechazado') return <RejectedView onLogout={logout} onRefresh={refetch} />
   if (perfil?.estado === 'suspendido') return <SuspendedView onLogout={logout} onRefresh={refetch} type="suspendido" />
   if (perfil?.estado === 'baneado') return <SuspendedView onLogout={logout} onRefresh={refetch} type="baneado" />
+
+  const isLandingUser = perfil?.rol?.toLowerCase() === 'cliente' || perfil?.rol?.toLowerCase() === 'revendedor'
+  const isLandingRoute = location.pathname === '/'
+
+  if (isLandingUser && isLandingRoute) {
+    return (
+      <WalletProvider>
+        <Landing />
+      </WalletProvider>
+    )
+  }
 
   return (
     <WalletProvider>
