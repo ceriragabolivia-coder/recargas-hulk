@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { useConfiguracion } from '../hooks/useData'
+import { useConfiguracion, useAuth } from '../hooks/useData'
 import { formatUSD, formatBs, calcularPrecioVenta } from '../utils/helpers'
 
 export default function Landing() {
   const navigate = useNavigate()
   const { config } = useConfiguracion()
+  const { user } = useAuth()
+  const isRevendedor = user?.role === 'revendedor'
+  
   const [juegos, setJuegos] = useState([])
   const [categorias, setCategorias] = useState([])
   const [loading, setLoading] = useState(true)
@@ -187,8 +190,17 @@ export default function Landing() {
                             {prod.icono_url && <img src={prod.icono_url} alt="" className="product-icon" />}
                             <div className="product-name">{prod.nombre}</div>
                             <div className="product-price">
-                              <span className="price-usd">{formatUSD(pricing.venta_usd)}</span>
-                              <span className="price-bs">{formatBs(pricing.venta_bs)}</span>
+                              {isRevendedor ? (
+                                <>
+                                  <span className="price-primary">{formatUSD(pricing.venta_usd)}</span>
+                                  <span className="price-secondary">{formatBs(pricing.venta_bs)}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="price-primary">{formatBs(pricing.venta_bs)}</span>
+                                  <span className="price-secondary">{formatUSD(pricing.venta_usd)}</span>
+                                </>
+                              )}
                             </div>
                           </div>
                         )
@@ -800,53 +812,67 @@ export default function Landing() {
         }
         .products-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 16px;
+          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+          gap: 20px;
         }
         .product-card {
-          border: 1px solid var(--border);
-          border-radius: 16px;
-          padding: 16px;
+          background: var(--bg-card);
+          border: 2px solid var(--border);
+          border-radius: 20px;
+          padding: 20px;
           display: flex;
           flex-direction: column;
           align-items: center;
           text-align: center;
-          transition: all 0.2s;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           cursor: pointer;
+          position: relative;
         }
         .product-card:hover {
           border-color: var(--accent);
-          background: var(--bg-hover);
-          transform: translateY(-4px);
-          box-shadow: 0 10px 20px rgba(123,47,247,0.1);
+          background: var(--accent-light);
+          transform: translateY(-8px) scale(1.02);
+          box-shadow: 0 15px 35px rgba(123,47,247,0.2);
         }
         .product-icon {
-          width: 48px;
-          height: 48px;
-          margin-bottom: 12px;
+          width: 64px;
+          height: 64px;
+          margin-bottom: 16px;
+          filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+          transition: transform 0.3s;
+        }
+        .product-card:hover .product-icon {
+          transform: scale(1.1) rotate(5deg);
         }
         .product-name {
-          font-weight: 600;
-          font-size: 14px;
-          margin-bottom: 8px;
-          height: 40px;
+          font-weight: 700;
+          font-size: 16px;
+          margin-bottom: 12px;
+          height: 48px;
           display: flex;
           align-items: center;
+          color: var(--text-main);
+          line-height: 1.3;
         }
         .product-price {
           display: flex;
           flex-direction: column;
-          gap: 2px;
+          gap: 4px;
+          width: 100%;
+          padding-top: 12px;
+          border-top: 1px solid var(--border);
         }
-        .price-usd {
-          font-weight: 800;
-          font-size: 18px;
+        .price-primary {
+          font-weight: 900;
+          font-size: 22px;
           color: var(--accent);
+          letter-spacing: -0.5px;
         }
-        .price-bs {
-          font-size: 12px;
+        .price-secondary {
+          font-size: 13px;
           color: var(--text-muted);
           font-weight: 600;
+          opacity: 0.8;
         }
 
         .info-content-section {
