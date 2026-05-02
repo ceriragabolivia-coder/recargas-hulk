@@ -38,8 +38,8 @@ export default function Landing() {
   useEffect(() => {
     async function fetchData() {
       const [jRes, cRes] = await Promise.all([
-        supabase.from('juegos').select('*, categorias(nombre)').eq('activo', true).order('nombre'),
-        supabase.from('categorias').select('*').eq('activa', true).order('orden')
+        supabase.from('juegos').select('*, categorias(nombre)').eq('activo', true).is('owner_id', null).order('nombre'),
+        supabase.from('categorias').select('*').eq('activa', true).is('owner_id', null).order('orden')
       ])
       
       if (jRes.data) setJuegos(jRes.data)

@@ -61,6 +61,40 @@ export default function GestionLanding() {
     }
   }
 
+  const handleUploadBanner = async (e, bannerNumber) => {
+    try {
+      const file = e.target.files[0]
+      if (!file) return
+      
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("La imagen no debe superar los 5MB")
+        return
+      }
+
+      setSaving(true)
+      
+      const fileName = `banner-${bannerNumber}-${Date.now()}.${file.name.split('.').pop()}`
+      
+      const { error: uploadError } = await supabase.storage
+        .from('logos') // Usamos el bucket público existente
+        .upload(fileName, file)
+
+      if (uploadError) throw uploadError
+
+      const { data } = supabase.storage.from('logos').getPublicUrl(fileName)
+      
+      if (data?.publicUrl) {
+        setForm(prev => ({ ...prev, [`landing_banner_${bannerNumber}`]: data.publicUrl }))
+        toast.success(`Banner ${bannerNumber} subido correctamente`)
+      }
+    } catch (err) {
+      toast.error('Error al subir imagen: ' + err.message)
+    } finally {
+      setSaving(false)
+      e.target.value = null
+    }
+  }
+
   const handleSave = async (e) => {
     e.preventDefault()
     setSaving(true)
@@ -134,36 +168,57 @@ export default function GestionLanding() {
           </div>
 
           <div className="form-group full-width">
-            <label className="form-label">URL del Banner 1 (Imagen de fondo)</label>
-            <input 
-              type="text" 
-              className="form-input"
-              value={form.landing_banner_1}
-              onChange={(e) => setForm({...form, landing_banner_1: e.target.value})}
-              placeholder="https://..."
-            />
+            <label className="form-label">Banner 1 (Imagen de fondo principal)</label>
+            <div className="flex gap-8" style={{ alignItems: 'center' }}>
+              <input 
+                type="text" 
+                className="form-input"
+                value={form.landing_banner_1}
+                onChange={(e) => setForm({...form, landing_banner_1: e.target.value})}
+                placeholder="URL de la imagen..."
+                style={{ flex: 1 }}
+              />
+              <input type="file" id="upload_banner_1" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleUploadBanner(e, 1)} />
+              <button type="button" className="btn btn-secondary" onClick={() => document.getElementById('upload_banner_1').click()} disabled={saving} style={{ whiteSpace: 'nowrap' }}>
+                📁 Subir Imagen
+              </button>
+            </div>
           </div>
 
           <div className="form-group full-width">
-            <label className="form-label">URL del Banner 2</label>
-            <input 
-              type="text" 
-              className="form-input"
-              value={form.landing_banner_2}
-              onChange={(e) => setForm({...form, landing_banner_2: e.target.value})}
-              placeholder="https://..."
-            />
+            <label className="form-label">Banner 2</label>
+            <div className="flex gap-8" style={{ alignItems: 'center' }}>
+              <input 
+                type="text" 
+                className="form-input"
+                value={form.landing_banner_2}
+                onChange={(e) => setForm({...form, landing_banner_2: e.target.value})}
+                placeholder="URL de la imagen..."
+                style={{ flex: 1 }}
+              />
+              <input type="file" id="upload_banner_2" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleUploadBanner(e, 2)} />
+              <button type="button" className="btn btn-secondary" onClick={() => document.getElementById('upload_banner_2').click()} disabled={saving} style={{ whiteSpace: 'nowrap' }}>
+                📁 Subir Imagen
+              </button>
+            </div>
           </div>
 
           <div className="form-group full-width">
-            <label className="form-label">URL del Banner 3</label>
-            <input 
-              type="text" 
-              className="form-input"
-              value={form.landing_banner_3}
-              onChange={(e) => setForm({...form, landing_banner_3: e.target.value})}
-              placeholder="https://..."
-            />
+            <label className="form-label">Banner 3</label>
+            <div className="flex gap-8" style={{ alignItems: 'center' }}>
+              <input 
+                type="text" 
+                className="form-input"
+                value={form.landing_banner_3}
+                onChange={(e) => setForm({...form, landing_banner_3: e.target.value})}
+                placeholder="URL de la imagen..."
+                style={{ flex: 1 }}
+              />
+              <input type="file" id="upload_banner_3" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleUploadBanner(e, 3)} />
+              <button type="button" className="btn btn-secondary" onClick={() => document.getElementById('upload_banner_3').click()} disabled={saving} style={{ whiteSpace: 'nowrap' }}>
+                📁 Subir Imagen
+              </button>
+            </div>
           </div>
 
           <div className="form-group full-width">
