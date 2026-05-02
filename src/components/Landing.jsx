@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useConfiguracion } from '../hooks/useData'
-import { formatUSD } from '../utils/helpers'
+import { formatUSD, formatBs, calcularPrecioVenta } from '../utils/helpers'
 
 export default function Landing() {
   const navigate = useNavigate()
@@ -13,6 +13,11 @@ export default function Landing() {
   const [activeCategory, setActiveCategory] = useState('Todos')
   const [search, setSearch] = useState('')
   const [currentBanner, setCurrentBanner] = useState(0)
+  
+  // Detalle de Juego
+  const [selectedJuego, setSelectedJuego] = useState(null)
+  const [productosJuego, setProductosJuego] = useState([])
+  const [loadingProductos, setLoadingProductos] = useState(false)
 
   const banners = useMemo(() => [
     config?.landing_banner_1 || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=2070',
@@ -35,11 +40,30 @@ export default function Landing() {
   }, [])
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentBanner(prev => (prev + 1) % banners.length)
-    }, 5000)
-    return () => clearInterval(timer)
-  }, [banners.length])
+    if (selectedJuego) {
+      const fetchProductos = async () => {
+        setLoadingProductos(true)
+        const { data } = await supabase
+          .from('productos')
+          .select('*')
+          .eq('juego_id', selectedJuego.id)
+          .eq('activo', true)
+          .order('orden')
+        if (data) setProductosJuego(data)
+        setLoadingProductos(false)
+      }
+      fetchProductos()
+    }
+  }, [selectedJuego])
+
+  useEffect(() => {
+    if (!selectedJuego) {
+      const timer = setInterval(() => {
+        setCurrentBanner(prev => (prev + 1) % banners.length)
+      }, 5000)
+      return () => clearInterval(timer)
+    }
+  }, [banners.length, selectedJuego])
 
   const filteredJuegos = useMemo(() => {
     return juegos.filter(j => {
@@ -50,7 +74,6 @@ export default function Landing() {
   }, [juegos, activeCategory, search])
 
   const bestsellers = useMemo(() => {
-    // Si hay IDs en config, usarlos. Si no, tomar los primeros 12.
     if (config?.landing_featured_games) {
       const ids = config.landing_featured_games.split(',').map(id => id.trim())
       return juegos.filter(j => ids.includes(String(j.id)))
@@ -72,18 +95,18 @@ export default function Landing() {
       <header className="landing-header">
         <div className="landing-container flex items-center justify-between">
           <div className="flex items-center gap-40">
-            <div className="landing-logo-container" onClick={() => navigate('/')}>
+            <div className="landing-logo-container" onClick={() => { setSelectedJuego(null); navigate('/'); }}>
               <div className="landing-logo-icon">⚡</div>
               <span className="landing-logo-text">{config?.landing_titulo || 'Ceriraga'}</span>
             </div>
             
             <nav className="landing-nav hidden-mobile">
-              <a href="#" className="nav-link active">Home</a>
+              <a href="#" className="nav-link active" onClick={() => setSelectedJuego(null)}>Home</a>
               <div className="nav-dropdown">
                 <span className="nav-link">Servicios ▾</span>
                 <div className="dropdown-content">
                   {categorias.map(cat => (
-                    <a key={cat.id} href="#" onClick={() => setActiveCategory(cat.nombre)}>{cat.nombre}</a>
+                    <a key={cat.id} href="#" onClick={() => { setActiveCategory(cat.nombre); setSelectedJuego(null); }}>{cat.nombre}</a>
                   ))}
                 </div>
               </div>
@@ -93,15 +116,17 @@ export default function Landing() {
           </div>
 
           <div className="flex items-center gap-16">
-            <div className="landing-search hidden-mobile">
-              <input 
-                type="text" 
-                placeholder="Buscar juegos o servicios..." 
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <span className="search-icon">🔍</span>
-            </div>
+            {!selectedJuego && (
+              <div className="landing-search hidden-mobile">
+                <input 
+                  type="text" 
+                  placeholder="Buscar juegos o servicios..." 
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                <span className="search-icon">🔍</span>
+              </div>
+            )}
             <button className="btn-landing-secondary" onClick={() => navigate('/login')}>Entrar</button>
             <button className="btn-landing-primary" onClick={() => navigate('/register')}>Registrarse</button>
           </div>
@@ -109,81 +134,197 @@ export default function Landing() {
       </header>
 
       <main className="landing-main">
-        {/* HERO SLIDER */}
-        <section className="landing-hero landing-container">
-          <div className="hero-slider">
-            {banners.map((url, idx) => (
-              <div 
-                key={idx} 
-                className={`hero-slide ${idx === currentBanner ? 'active' : ''}`}
-                style={{ backgroundImage: `url(${url})` }}
-              >
-                <div className="hero-content">
-                  <h2>{idx === 0 ? (config?.landing_subtitulo || '¡Recargas al Instante!') : 'Los mejores precios del mercado'}</h2>
-                  <p>Seguridad y confianza en cada transacción</p>
-                  <button className="btn-landing-primary" onClick={() => navigate('/register')}>Empieza ahora</button>
+        {selectedJuego ? (
+          /* VISTA DETALLE DEL JUEGO */
+          <div className="landing-container detail-view fade-in">
+            <div className="breadcrumb">
+              <span onClick={() => setSelectedJuego(null)}>Home</span> &gt; <span>{selectedJuego.nombre}</span>
+            </div>
+
+            <div className="detail-layout">
+              <div className="detail-main">
+                {/* Info superior */}
+                <div className="detail-header-card">
+                  <img src={selectedJuego.icono_url} alt="" className="detail-header-icon" />
+                  <div className="detail-header-info">
+                    <h1>{selectedJuego.nombre}</h1>
+                    <div className="detail-stats">
+                      <span className="rating">⭐ 5.0 (200+ Reviews)</span>
+                      <span className="sold">🔥 200K+ Sold</span>
+                      <span className="badge-secure">✅ Secure</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Lista de Precios */}
+                <div className="price-list-section">
+                  <h3>Selecciona un paquete</h3>
+                  {loadingProductos ? (
+                    <div className="spinner"></div>
+                  ) : (
+                    <div className="products-grid">
+                      {productosJuego.map(prod => {
+                        const pricing = calcularPrecioVenta(prod, selectedJuego, config)
+                        return (
+                          <div key={prod.id} className="product-card" onClick={() => navigate('/login')}>
+                            {prod.icono_url && <img src={prod.icono_url} alt="" className="product-icon" />}
+                            <div className="product-name">{prod.nombre}</div>
+                            <div className="product-price">
+                              <span className="price-usd">{formatUSD(pricing.venta_usd)}</span>
+                              <span className="price-bs">{formatBs(pricing.venta_bs)}</span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Información / Guías */}
+                <div className="info-content-section">
+                  <div className="info-tab-header">
+                    <h4>Información de {selectedJuego.nombre}</h4>
+                  </div>
+                  <div className="info-body">
+                    {selectedJuego.caracteristicas_nota ? (
+                      <div className="rich-text" dangerouslySetInnerHTML={{ __html: selectedJuego.caracteristicas_nota.replace(/\n/g, '<br/>') }} />
+                    ) : (
+                      <p>Para adquirir recargas de {selectedJuego.nombre}, solo necesitas proporcionar tu ID de jugador. La entrega es inmediata una vez verificado el pago.</p>
+                    )}
+                    
+                    <h5>¿Cómo recargar?</h5>
+                    <ul>
+                      <li>Selecciona el paquete que deseas adquirir.</li>
+                      <li>Inicia sesión o regístrate en nuestra plataforma.</li>
+                      <li>Completa el pago mediante tu método favorito (Pago Móvil, Binance, PayPal).</li>
+                      <li>¡Listo! Tu recarga llegará en minutos.</li>
+                    </ul>
+                  </div>
                 </div>
               </div>
-            ))}
-            <div className="slider-dots">
-              {banners.map((_, idx) => (
-                <span 
-                  key={idx} 
-                  className={`dot ${idx === currentBanner ? 'active' : ''}`}
-                  onClick={() => setCurrentBanner(idx)}
-                ></span>
-              ))}
+
+              {/* SIDEBAR DE COMPRA (RED BOX AREA) */}
+              <aside className="detail-sidebar">
+                <div className="purchase-card">
+                  <h3>¿Listo para recargar?</h3>
+                  <p>Inicia sesión o crea una cuenta para poder realizar compras y gestionar tus pedidos.</p>
+                  
+                  <div className="sidebar-buttons">
+                    <button className="btn-landing-primary w-full mb-12" onClick={() => navigate('/login')}>
+                      🔐 Iniciar Sesión
+                    </button>
+                    <button className="btn-landing-secondary w-full" onClick={() => navigate('/register')}>
+                      📝 Registrarse
+                    </button>
+                  </div>
+
+                  <div className="sidebar-features">
+                    <div className="feature-item">
+                      <span>⚡</span>
+                      <div>
+                        <strong>Entrega Rápida</strong>
+                        <small>Promedio de 5-10 minutos</small>
+                      </div>
+                    </div>
+                    <div className="feature-item">
+                      <span>🛡️</span>
+                      <div>
+                        <strong>Compra Segura</strong>
+                        <small>Tus datos están protegidos</small>
+                      </div>
+                    </div>
+                    <div className="feature-item">
+                      <span>💰</span>
+                      <div>
+                        <strong>Mejor Tasa</strong>
+                        <small>Precios competitivos</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </aside>
             </div>
           </div>
-        </section>
+        ) : (
+          /* VISTA CATALOGO PRINCIPAL */
+          <>
+            {/* HERO SLIDER */}
+            <section className="landing-hero landing-container">
+              <div className="hero-slider">
+                {banners.map((url, idx) => (
+                  <div 
+                    key={idx} 
+                    className={`hero-slide ${idx === currentBanner ? 'active' : ''}`}
+                    style={{ backgroundImage: `url(${url})` }}
+                  >
+                    <div className="hero-content">
+                      <h2>{idx === 0 ? (config?.landing_subtitulo || '¡Recargas al Instante!') : 'Los mejores precios del mercado'}</h2>
+                      <p>Seguridad y confianza en cada transacción</p>
+                      <button className="btn-landing-primary" onClick={() => navigate('/register')}>Empieza ahora</button>
+                    </div>
+                  </div>
+                ))}
+                <div className="slider-dots">
+                  {banners.map((_, idx) => (
+                    <span 
+                      key={idx} 
+                      className={`dot ${idx === currentBanner ? 'active' : ''}`}
+                      onClick={() => setCurrentBanner(idx)}
+                    ></span>
+                  ))}
+                </div>
+              </div>
+            </section>
 
-        {/* BESTSELLERS */}
-        <section className="landing-section landing-container">
-          <div className="section-header">
-            <h3>Bestsellers</h3>
-            <a href="#all-games" className="view-all">Ver todos &gt;</a>
-          </div>
-          <div className="games-grid">
-            {bestsellers.map(juego => (
-              <GameCard key={juego.id} juego={juego} onSelect={() => navigate('/login')} />
-            ))}
-          </div>
-        </section>
+            {/* BESTSELLERS */}
+            <section className="landing-section landing-container">
+              <div className="section-header">
+                <h3>Bestsellers</h3>
+                <a href="#all-games" className="view-all">Ver todos &gt;</a>
+              </div>
+              <div className="games-grid">
+                {bestsellers.map(juego => (
+                  <GameCard key={juego.id} juego={juego} onSelect={() => setSelectedJuego(juego)} />
+                ))}
+              </div>
+            </section>
 
-        {/* ALL GAMES / CATEGORIES */}
-        <section id="all-games" className="landing-section landing-container">
-          <div className="section-header">
-            <h3>Explorar Catálogo</h3>
-          </div>
-          <div className="category-pills">
-            <button 
-              className={`pill ${activeCategory === 'Todos' ? 'active' : ''}`}
-              onClick={() => setActiveCategory('Todos')}
-            >
-              Todos
-            </button>
-            {categorias.map(cat => (
-              <button 
-                key={cat.id} 
-                className={`pill ${activeCategory === cat.nombre ? 'active' : ''}`}
-                onClick={() => setActiveCategory(cat.nombre)}
-              >
-                {cat.nombre}
-              </button>
-            ))}
-          </div>
-          <div className="games-grid">
-            {filteredJuegos.map(juego => (
-              <GameCard key={juego.id} juego={juego} onSelect={() => navigate('/login')} />
-            ))}
-          </div>
-        </section>
+            {/* ALL GAMES / CATEGORIES */}
+            <section id="all-games" className="landing-section landing-container">
+              <div className="section-header">
+                <h3>Explorar Catálogo</h3>
+              </div>
+              <div className="category-pills">
+                <button 
+                  className={`pill ${activeCategory === 'Todos' ? 'active' : ''}`}
+                  onClick={() => setActiveCategory('Todos')}
+                >
+                  Todos
+                </button>
+                {categorias.map(cat => (
+                  <button 
+                    key={cat.id} 
+                    className={`pill ${activeCategory === cat.nombre ? 'active' : ''}`}
+                    onClick={() => setActiveCategory(cat.nombre)}
+                  >
+                    {cat.nombre}
+                  </button>
+                ))}
+              </div>
+              <div className="games-grid">
+                {filteredJuegos.map(juego => (
+                  <GameCard key={juego.id} juego={juego} onSelect={() => setSelectedJuego(juego)} />
+                ))}
+              </div>
+            </section>
+          </>
+        )}
       </main>
 
       <footer className="landing-footer">
         <div className="landing-container footer-content">
           <div className="footer-brand">
-            <div className="landing-logo-container">
+            <div className="landing-logo-container" onClick={() => setSelectedJuego(null)}>
               <div className="landing-logo-icon">⚡</div>
               <span className="landing-logo-text">{config?.landing_titulo || 'Ceriraga'}</span>
             </div>
@@ -352,6 +493,7 @@ export default function Landing() {
         
         .landing-main {
           padding: 40px 0;
+          min-height: 600px;
         }
         .hero-slider {
           height: 450px;
@@ -520,8 +662,217 @@ export default function Landing() {
           border-color: #7b2ff7;
         }
 
+        /* DETAIL VIEW STYLES */
+        .detail-view {
+          margin-top: 20px;
+        }
+        .breadcrumb {
+          font-size: 14px;
+          color: #718096;
+          margin-bottom: 24px;
+        }
+        .breadcrumb span {
+          cursor: pointer;
+        }
+        .breadcrumb span:hover {
+          color: #7b2ff7;
+        }
+        .detail-layout {
+          display: grid;
+          grid-template-columns: 1fr 350px;
+          gap: 30px;
+        }
+        .detail-header-card {
+          background: white;
+          padding: 24px;
+          border-radius: 20px;
+          display: flex;
+          gap: 24px;
+          align-items: center;
+          margin-bottom: 30px;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .detail-header-icon {
+          width: 100px;
+          height: 100px;
+          border-radius: 20px;
+          object-fit: cover;
+          box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+        .detail-header-info h1 {
+          font-size: 32px;
+          font-weight: 800;
+          margin-bottom: 10px;
+        }
+        .detail-stats {
+          display: flex;
+          gap: 16px;
+          font-size: 14px;
+          align-items: center;
+        }
+        .badge-secure {
+          background: #e6fffa;
+          color: #38b2ac;
+          padding: 4px 12px;
+          border-radius: 20px;
+          font-weight: 700;
+        }
+
+        .price-list-section {
+          background: white;
+          padding: 24px;
+          border-radius: 20px;
+          margin-bottom: 30px;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .price-list-section h3 {
+          font-size: 20px;
+          font-weight: 700;
+          margin-bottom: 20px;
+          padding-left: 10px;
+          border-left: 4px solid #7b2ff7;
+        }
+        .products-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 16px;
+        }
+        .product-card {
+          border: 1px solid #e2e8f0;
+          border-radius: 16px;
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          transition: all 0.2s;
+          cursor: pointer;
+        }
+        .product-card:hover {
+          border-color: #7b2ff7;
+          background: #f7fafc;
+          transform: translateY(-4px);
+          box-shadow: 0 10px 20px rgba(123,47,247,0.1);
+        }
+        .product-icon {
+          width: 48px;
+          height: 48px;
+          margin-bottom: 12px;
+        }
+        .product-name {
+          font-weight: 600;
+          font-size: 14px;
+          margin-bottom: 8px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+        }
+        .product-price {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+        .price-usd {
+          font-weight: 800;
+          font-size: 18px;
+          color: #2d3748;
+        }
+        .price-bs {
+          font-size: 12px;
+          color: #718096;
+          font-weight: 600;
+        }
+
+        .info-content-section {
+          background: white;
+          border-radius: 20px;
+          overflow: hidden;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+          margin-bottom: 60px;
+        }
+        .info-tab-header {
+          background: #f7fafc;
+          padding: 16px 24px;
+          border-bottom: 1px solid #e2e8f0;
+        }
+        .info-tab-header h4 {
+          margin: 0;
+          font-weight: 700;
+        }
+        .info-body {
+          padding: 24px;
+          line-height: 1.8;
+        }
+        .info-body h5 {
+          font-size: 18px;
+          font-weight: 700;
+          margin-top: 30px;
+          margin-bottom: 16px;
+        }
+        .info-body ul {
+          padding-left: 20px;
+        }
+
+        .detail-sidebar {
+          position: sticky;
+          top: 100px;
+          height: fit-content;
+        }
+        .purchase-card {
+          background: white;
+          padding: 24px;
+          border-radius: 24px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+          border: 1px solid #e2e8f0;
+        }
+        .purchase-card h3 {
+          font-size: 22px;
+          font-weight: 800;
+          margin-bottom: 12px;
+        }
+        .purchase-card p {
+          font-size: 14px;
+          color: #718096;
+          margin-bottom: 24px;
+          line-height: 1.5;
+        }
+        .w-full { width: 100%; }
+        .mb-12 { margin-bottom: 12px; }
+        .sidebar-features {
+          margin-top: 30px;
+          padding-top: 30px;
+          border-top: 1px solid #f7fafc;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .feature-item {
+          display: flex;
+          gap: 12px;
+          align-items: center;
+        }
+        .feature-item span {
+          width: 36px;
+          height: 36px;
+          background: #f7fafc;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 18px;
+        }
+        .feature-item strong {
+          display: block;
+          font-size: 14px;
+          color: #2d3748;
+        }
+        .feature-item small {
+          font-size: 12px;
+          color: #a0aec0;
+        }
+
         .landing-footer {
-          margin-top: 100px;
+          margin-top: 60px;
           background: #1a1d21;
           color: #a0aec0;
           padding: 80px 0 40px;
@@ -569,11 +920,27 @@ export default function Landing() {
           background: white;
         }
 
+        .fade-in {
+          animation: fadeIn 0.4s ease-out;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 1024px) {
+          .detail-layout { grid-template-columns: 1fr; }
+          .detail-sidebar { position: static; }
+        }
+
         @media (max-width: 768px) {
           .hidden-mobile { display: none; }
           .hero-slider { height: 300px; }
           .hero-content h2 { font-size: 32px; }
           .footer-content { grid-template-columns: 1fr; gap: 40px; }
+          .hero-slide { padding: 0 30px; }
+          .detail-header-card { flex-direction: column; text-align: center; }
+          .products-grid { grid-template-columns: 1fr 1fr; }
         }
       `}} />
     </div>
