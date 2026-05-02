@@ -103,7 +103,7 @@ export default function Landing() {
     <div className={`landing-page ${darkMode ? 'dark' : ''}`}>
       {/* HEADER */}
       <header className="landing-header">
-        <div className="landing-container flex items-center justify-between">
+        <div className="landing-container flex items-center justify-between" style={{ gap: '40px' }}>
           <div className="flex items-center" style={{ gap: '40px' }}>
             <div className="landing-logo-container" onClick={() => { setSelectedJuego(null); navigate('/'); }}>
               <div className="landing-logo-icon">⚡</div>
@@ -272,7 +272,8 @@ export default function Landing() {
           /* VISTA CATALOGO PRINCIPAL */
           <>
             {/* HERO SLIDER */}
-            <section className="landing-hero landing-container">
+            {!search.trim() && (
+              <section className="landing-hero landing-container">
               <div className="hero-slider">
                 {banners.map((url, idx) => (
                   <div 
@@ -298,22 +299,25 @@ export default function Landing() {
                 </div>
               </div>
             </section>
+            )}
 
             {/* BESTSELLERS */}
-            <section className="landing-section landing-container">
-              <div className="section-header">
-                <h3>Bestsellers</h3>
-                <a href="#all-games" className="view-all">Ver todos &gt;</a>
-              </div>
-              <div className="games-grid">
-                {bestsellers.map(juego => (
-                  <GameCard key={juego.id} juego={juego} onSelect={() => setSelectedJuego(juego)} />
-                ))}
-              </div>
-            </section>
+            {!search.trim() && (
+              <section className="landing-section landing-container">
+                <div className="section-header">
+                  <h3>Bestsellers</h3>
+                  <a href="#all-games" className="view-all">Ver todos &gt;</a>
+                </div>
+                <div className="games-grid">
+                  {bestsellers.map(juego => (
+                    <GameCard key={juego.id} juego={juego} onSelect={() => setSelectedJuego(juego)} />
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* ALL GAMES / CATEGORIES */}
-            <section id="all-games" className="landing-section landing-container">
+            <section id="all-games" className="landing-section landing-container" style={{ marginTop: search.trim() ? '20px' : undefined }}>
               <div className="section-header">
                 <h3>Explorar Catálogo</h3>
               </div>
@@ -559,7 +563,7 @@ export default function Landing() {
         }
         
         .landing-main {
-          padding: 40px 0;
+          padding: 20px 0;
           min-height: 600px;
         }
         .hero-slider {
@@ -630,7 +634,7 @@ export default function Landing() {
         }
 
         .landing-section {
-          margin-top: 60px;
+          margin-top: 30px;
         }
         .section-header {
           display: flex;
