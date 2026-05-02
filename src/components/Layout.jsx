@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { key: 'reportes', icon: '📈', label: 'Reportes', path: '/Reportes' },
   { key: 'pagos_admins', icon: '💸', label: 'Pagos Admins', path: '/Pagos-Admins' },
   { key: 'estadisticas', icon: '📈', label: 'Estadísticas Pro', path: '/Estadisticas' },
+  { key: 'gestion_landing', icon: '🏠', label: 'Gestión Landing', path: '/Gestion-Landing' },
   { key: 'gestion_ruleta', icon: '🎡', label: 'Gestión de Ruleta', path: '/Gestion-Ruleta' },
   { key: 'ruleta', icon: '🎡', label: 'Ruleta de Premios', path: '/Ruleta' },
   { key: 'perfil', icon: '👤', label: 'Mi Perfil', path: '/Mi-Perfil' },
@@ -920,7 +921,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
               <div className="nav-section-label">Principal</div>
               {NAV_ITEMS.filter(i => ['dashboard', 'billetera', 'catalogo', 'ventas'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Gestión</div>
-              {NAV_ITEMS.filter(i => ['productos', 'pedidos', 'usuarios', 'revendedores', 'chats', 'pagos_admins', 'config'].includes(i.key)).map(renderNavItem)}
+              {NAV_ITEMS.filter(i => ['productos', 'pedidos', 'usuarios', 'revendedores', 'chats', 'pagos_admins', 'config', 'gestion_landing'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Análisis</div>
               {NAV_ITEMS.filter(i => ['reportes', 'estadisticas', 'gestion_ruleta'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Cuenta</div>

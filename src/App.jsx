@@ -11,6 +11,7 @@ import { supabase } from './lib/supabase'
 import SupportChat from './components/SupportChat'
 import Cart from './components/Cart'
 import FloatingBackground from './components/FloatingBackground'
+import Landing from './components/Landing'
 import kidsGamingImg from './assets/venezuelan_kids_loading.png'
 
 // Componentes cargados dinámicamente (Lazy Load) para optimizar la velocidad inicial
@@ -31,6 +32,7 @@ const Ruleta = lazy(() => import('./components/Ruleta'))
 const GestionRuleta = lazy(() => import('./components/GestionRuleta'))
 const PagosAdmins = lazy(() => import('./components/PagosAdmins'))
 const Estadisticas = lazy(() => import('./components/Estadisticas.jsx'))
+const GestionLanding = lazy(() => import('./components/GestionLanding'))
 
 const Placeholder = ({ title }) => (
   <div className="page-content">
@@ -191,6 +193,7 @@ const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
         <Route path="/Revendedores" element={isAdmin ? <Revendedores onNavigate={handleNavigate} /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Gestion-Ruleta" element={isAdmin ? <GestionRuleta /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Estadisticas" element={isAdmin ? <Estadisticas /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Gestion-Landing" element={isAdmin ? <GestionLanding /> : <Navigate to="/Lista-De-Precios" replace />} />
 
         {/* Redirección por defecto */}
         <Route path="/" element={<Navigate to={(isAdmin || isNegocio) ? "/Dashboard" : "/Lista-De-Precios"} replace />} />
@@ -208,6 +211,12 @@ export default function App() {
   
   const [currentParams, setCurrentParams] = useState(null)
   const [isRegistering, setIsRegistering] = useState(false)
+  
+  // Sincronizar isRegistering con la ruta para compatibilidad
+  useEffect(() => {
+    if (location.pathname === '/register') setIsRegistering(true)
+    else if (location.pathname === '/login') setIsRegistering(false)
+  }, [location.pathname])
 
   const currentPage = location.pathname.split('/')[1]?.toLowerCase() || 'catalogo'
 
@@ -229,6 +238,7 @@ export default function App() {
       'perfil': '/Mi-Perfil',
       'billetera': '/Billetera',
       'estadisticas': '/Estadisticas',
+      'gestion_landing': '/Gestion-Landing',
       'checkout': '/Checkout'
     }
 
@@ -310,9 +320,17 @@ export default function App() {
   }
 
   if (!user) {
-    return isRegistering
-      ? <Register onBackToLogin={() => setIsRegistering(false)} />
-      : <Login onGoToRegister={() => setIsRegistering(true)} />
+    const isLandingEnabled = config?.landing_enabled !== '0' // Por defecto habilitada
+    
+    // Si no hay usuario, permitimos Landing, Login y Register
+    return (
+      <Routes>
+        <Route path="/" element={isLandingEnabled ? <Landing /> : <Login onGoToRegister={() => navigate('/register')} />} />
+        <Route path="/login" element={<Login onGoToRegister={() => navigate('/register')} />} />
+        <Route path="/register" element={<Register onBackToLogin={() => navigate('/login')} />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    )
   }
 
   if (perfil?.estado === 'pendiente') return <PendingView onLogout={logout} onRefresh={refetch} />

@@ -11,8 +11,8 @@ const fixedPart = `      <div className="content-grid" style={{ flex: 1, overflo
 c = c.replace(badPart, fixedPart);
 
 // Fix the closing divs
-c = c.replace(/          <\/div >\s*<div style={{ flex: 1, overflowY: 'auto' }}>/, `          </div>\n          <div style={{ flex: 1, overflowY: 'auto' }}>`);
-c = c.replace(/    <\/div>\s*<\/div >\s*{\/\* LISTA DE PAQUETES\/PRODUCTOS \*\/ }/g, `          </div>\n        </div>\n\n        {/* LISTA DE PAQUETES/PRODUCTOS */}`);
+c = c.replace(/ {10}<\/div >\s*<div style={{ flex: 1, overflowY: 'auto' }}>/, `          </div>\n          <div style={{ flex: 1, overflowY: 'auto' }}>`);
+c = c.replace(/ {4}<\/div>\s*<\/div >\s*{\/\* LISTA DE PAQUETES\/PRODUCTOS \*\/ }/g, `          </div>\n        </div>\n\n        {/* LISTA DE PAQUETES/PRODUCTOS */}`);
 
 // What about those spaces that were injected? Let's just strip them if they exist.
 // 200+ spaces.
