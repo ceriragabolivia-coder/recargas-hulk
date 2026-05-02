@@ -99,7 +99,7 @@ export default function GestionLanding() {
     e.preventDefault()
     setSaving(true)
     try {
-      await Promise.all([
+      const results = await Promise.all([
         updateConfig('landing_titulo', form.landing_titulo, true),
         updateConfig('landing_subtitulo', form.landing_subtitulo, true),
         updateConfig('landing_banner_1', form.landing_banner_1, true),
@@ -108,9 +108,16 @@ export default function GestionLanding() {
         updateConfig('landing_featured_games', form.landing_featured_games, true),
         updateConfig('landing_enabled', form.landing_enabled ? '1' : '0', false)
       ])
+
+      const errorResult = results.find(r => r && r.error)
+      if (errorResult) {
+        throw new Error(errorResult.error.message || 'Error guardando en la base de datos')
+      }
+
       setAlert({ type: 'success', title: '¡Éxito!', message: 'Configuración de la Landing Page actualizada correctamente.' })
     } catch (err) {
-      setAlert({ type: 'error', title: 'Error', message: 'No se pudo guardar la configuración.' })
+      console.error(err)
+      setAlert({ type: 'error', title: 'Error', message: 'No se pudo guardar la configuración: ' + err.message })
     } finally {
       setSaving(false)
     }
