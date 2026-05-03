@@ -59,8 +59,12 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
         password: regPassword,
         options: {
           data: {
-            nombre_completo: regNombre,
-            telefono: formattedPhone,
+            nombres: regNombre.split(' ')[0] || '',
+            apellidos: regNombre.split(' ').slice(1).join(' ') || '',
+            whatsapp: formattedPhone,
+            pais: 'Venezuela',
+            estado: '',
+            nickname: '',
             role_requested: regRole
           }
         }
