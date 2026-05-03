@@ -1,10 +1,18 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useData'
 import { supabase } from '../lib/supabase'
 
 export default function LandingAuthModal({ isOpen, onClose, initialView = 'login' }) {
   const [view, setView] = useState(initialView) // 'login' or 'register'
   const { login, loading: authLoading } = useAuth()
+
+  useEffect(() => {
+    if (isOpen) {
+      setView(initialView)
+      setError(null)
+      setSuccessMsg(null)
+    }
+  }, [isOpen, initialView])
   
   // Login State
   const [loginEmail, setLoginEmail] = useState('')
