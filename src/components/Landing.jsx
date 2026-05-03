@@ -43,11 +43,6 @@ export default function Landing() {
   // Modo Nocturno
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('landing_dark_mode') === 'true')
 
-  // Detalle de Juego
-  const [selectedJuego, setSelectedJuego] = useState(null)
-  const [productosJuego, setProductosJuego] = useState([])
-  const [loadingProductos, setLoadingProductos] = useState(false)
-
   const banners = useMemo(() => [
     {
       image: config?.landing_banner_1 || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=2070',
