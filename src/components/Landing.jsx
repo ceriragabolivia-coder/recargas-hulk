@@ -197,6 +197,9 @@ export default function Landing() {
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Conectado como</div>
                     <div style={{ fontWeight: '600', fontSize: '14px' }}>{user.email}</div>
                   </div>
+                  {(user?.role === 'admin' || user?.role === 'negocio' || perfil?.rol === 'admin' || perfil?.rol === 'negocio' || perfil?.rol === 'administrador') && (
+                    <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Dashboard') }} style={{ color: 'var(--accent)', fontWeight: 'bold' }}>Panel de Control</a>
+                  )}
                   <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Mi-Perfil') }}>Mi Perfil</a>
                   <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Mis-Pedidos') }}>Mis Pedidos</a>
                   <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Billetera') }}>Billetera</a>

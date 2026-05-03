@@ -295,12 +295,15 @@ export default function App() {
   // Solo redirigimos automáticamente la PRIMERA vez que cargamos el perfil
   const hasRedirectedRef = React.useRef(false)
   React.useEffect(() => {
-    if (perfil && !hasRedirectedRef.current && (location.pathname === '/' || location.pathname === '/login' || location.pathname === '/register')) {
+    if (perfil && !hasRedirectedRef.current && (location.pathname === '/login' || location.pathname === '/register')) {
       if (isAdmin || isNegocio) {
         navigate('/Dashboard', { replace: true })
       } else {
         navigate('/', { replace: true })
       }
+      hasRedirectedRef.current = true
+    } else if (perfil && !hasRedirectedRef.current && location.pathname === '/') {
+      // Si inician sesión desde la Landing, se quedan en la Landing.
       hasRedirectedRef.current = true
     }
   }, [perfil, location.pathname, isAdmin, isNegocio, navigate])
@@ -342,10 +345,9 @@ export default function App() {
   if (perfil?.estado === 'suspendido') return <SuspendedView onLogout={logout} onRefresh={refetch} type="suspendido" />
   if (perfil?.estado === 'baneado') return <SuspendedView onLogout={logout} onRefresh={refetch} type="baneado" />
 
-  const isLandingUser = perfil?.rol?.toLowerCase() === 'cliente' || perfil?.rol?.toLowerCase() === 'revendedor'
   const isLandingRoute = location.pathname === '/'
 
-  if (isLandingUser && isLandingRoute) {
+  if (isLandingRoute) {
     return (
       <WalletProvider>
         <Landing />
