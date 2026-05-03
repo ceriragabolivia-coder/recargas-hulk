@@ -8,7 +8,7 @@ import LandingAuthModal from './LandingAuthModal'
 export default function Landing() {
   const navigate = useNavigate()
   const { config } = useConfiguracion()
-  const { user, logout } = useAuth()
+  const { user, perfil, logout } = useAuth()
   const isRevendedor = user?.role === 'revendedor'
   
   // Modal State
