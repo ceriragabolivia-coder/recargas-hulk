@@ -345,7 +345,25 @@ export default function App() {
   if (perfil?.estado === 'suspendido') return <SuspendedView onLogout={logout} onRefresh={refetch} type="suspendido" />
   if (perfil?.estado === 'baneado') return <SuspendedView onLogout={logout} onRefresh={refetch} type="baneado" />
 
-  const isLandingRoute = ['/', '/index.html', '', '/login', '/register'].includes(location.pathname)
+  const normalizePath = (p) => p.toLowerCase().replace(/\/+$/, '') || '/'
+  const currentPath = normalizePath(location.pathname)
+  
+  // Rutas base
+  const coreLandingRoutes = ['/', '/index.html', '/login', '/register']
+  
+  // Rutas internas del sistema permitidas para clientes
+  const clientSystemRoutes = [
+    '/lista-de-precios', '/mi-perfil', '/billetera', '/ruleta', '/checkout', '/soporte', '/mis-pedidos'
+  ]
+
+  let isLandingRoute = false
+  if (isAdmin || isNegocio) {
+    // Admins/Negocio ven Landing solo en las rutas específicas
+    isLandingRoute = coreLandingRoutes.includes(currentPath)
+  } else {
+    // Clientes ven Landing por defecto, A MENOS que estén en una sección del sistema
+    isLandingRoute = !clientSystemRoutes.includes(currentPath)
+  }
 
   if (isLandingRoute) {
     return (
