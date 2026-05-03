@@ -345,7 +345,7 @@ export default function App() {
   if (perfil?.estado === 'suspendido') return <SuspendedView onLogout={logout} onRefresh={refetch} type="suspendido" />
   if (perfil?.estado === 'baneado') return <SuspendedView onLogout={logout} onRefresh={refetch} type="baneado" />
 
-  const isLandingRoute = location.pathname === '/'
+  const isLandingRoute = ['/', '/index.html', '', '/login', '/register'].includes(location.pathname)
 
   if (isLandingRoute) {
     return (
