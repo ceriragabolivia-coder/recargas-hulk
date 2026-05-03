@@ -351,9 +351,9 @@ export default function App() {
   // Rutas base
   const coreLandingRoutes = ['/', '/index.html', '/login', '/register']
   
-  // Rutas internas del sistema permitidas para clientes
+  // Rutas internas del sistema permitidas para clientes (excluimos checkout para renderizarlo full-screen)
   const clientSystemRoutes = [
-    '/lista-de-precios', '/mi-perfil', '/billetera', '/ruleta', '/checkout', '/soporte', '/mis-pedidos'
+    '/lista-de-precios', '/mi-perfil', '/billetera', '/ruleta', '/soporte', '/mis-pedidos'
   ]
 
   let isLandingRoute = false
@@ -366,6 +366,13 @@ export default function App() {
   }
 
   if (isLandingRoute) {
+    if (currentPath === '/checkout') {
+      return (
+        <WalletProvider>
+          <Checkout onFinish={() => navigate('/')} />
+        </WalletProvider>
+      )
+    }
     return (
       <WalletProvider>
         <Landing />

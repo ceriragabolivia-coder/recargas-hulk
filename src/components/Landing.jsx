@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { useConfiguracion, useAuth } from '../hooks/useData'
+import { useConfiguracion, useAuth, useCart, useCuentasGuardadas } from '../hooks/useData'
 import { formatUSD, formatBs, calcularPrecioVenta } from '../utils/helpers'
 import LandingAuthModal from './LandingAuthModal'
 
@@ -9,18 +9,36 @@ export default function Landing() {
   const navigate = useNavigate()
   const { config } = useConfiguracion()
   const { user, perfil, logout } = useAuth()
+  const { cart, addToCart, clearCart } = useCart()
   const isRevendedor = user?.role === 'revendedor'
   
   // Modal State
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [authModalView, setAuthModalView] = useState('login')
-  
+
   const [juegos, setJuegos] = useState([])
   const [categorias, setCategorias] = useState([])
   const [loading, setLoading] = useState(true)
+  const [selectedJuego, setSelectedJuego] = useState(null)
+  const [productosJuego, setProductosJuego] = useState([])
+  const [loadingProductos, setLoadingProductos] = useState(false)
+  const [currentBanner, setCurrentBanner] = useState(0)
+
+  // Estados de Compra y Carrito
+  const { cuentas, guardarCuenta, eliminarCuenta } = useCuentasGuardadas(selectedJuego?.id || null)
+  const [buyMode, setBuyMode] = useState('single')
+  const [localRechargeData, setLocalRechargeData] = useState({
+    player_id: '', zone_id: '', account_email: '', account_password: '', account_user: ''
+  })
+  const [shouldSaveData, setShouldSaveData] = useState(false)
+  const [showGuideModal, setShowGuideModal] = useState(false)
+  const [pendingItem, setPendingItem] = useState(null)
+  const [isVerificando, setIsVerificando] = useState(false)
+  const [verificacionResultado, setVerificacionResultado] = useState(null)
+  const [addedItem, setAddedItem] = useState(null)
+  
   const [activeCategory, setActiveCategory] = useState('Todos')
   const [search, setSearch] = useState('')
-  const [currentBanner, setCurrentBanner] = useState(0)
   
   // Modo Nocturno
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('landing_dark_mode') === 'true')
@@ -57,6 +75,124 @@ export default function Landing() {
   useEffect(() => {
     localStorage.setItem('landing_dark_mode', darkMode)
   }, [darkMode])
+
+  const handleSelectCuenta = (cuenta) => {
+    setLocalRechargeData({
+      player_id: cuenta.player_id || '',
+      zone_id: cuenta.zone_id || '',
+      account_email: cuenta.email || '',
+      account_password: cuenta.password || '',
+      account_user: cuenta.username || ''
+    })
+    if (cuenta.player_id !== localRechargeData.player_id) {
+      setVerificacionResultado(null)
+    }
+  }
+
+  const handleVerificarJugador = async () => {
+    if (!localRechargeData.player_id.trim()) {
+      alert('Por favor introduce primero el ID del jugador.')
+      return
+    }
+
+    setIsVerificando(true)
+    setVerificacionResultado(null)
+
+    const juegoNombreNormalizado = selectedJuego.nombre.toLowerCase().replace(/\s/g, '')
+    
+    try {
+      let url = ''
+      if (juegoNombreNormalizado.includes('freefire')) {
+        url = `https://tiendagiftven.net/conexion_api/api.php?action=ValidarParametros&id=${localRechargeData.player_id}`
+      } else if (juegoNombreNormalizado.includes('bloodstrike')) {
+        url = `/proxy/bloodstrike?roleid=${localRechargeData.player_id}&client_type=gameclub`
+      }
+
+      const response = await fetch(url)
+      const data = await response.json()
+      
+      if (juegoNombreNormalizado.includes('freefire')) {
+        if (data.alerta === 'green') {
+          setVerificacionResultado({
+            success: true,
+            nickname: data.nickname,
+            verified_id: localRechargeData.player_id,
+            mensaje: data.mensaje
+          })
+        } else {
+          setVerificacionResultado({
+            success: false,
+            mensaje: data.mensaje || 'Jugador no encontrado'
+          })
+        }
+      } else if (juegoNombreNormalizado.includes('bloodstrike')) {
+        if (data.code === "0000" || data.msg === 'success') {
+          setVerificacionResultado({
+            success: true,
+            nickname: data.data?.rolename || 'Jugador Encontrado',
+            verified_id: localRechargeData.player_id,
+            mensaje: 'ID Verificado exitosamente'
+          })
+        } else {
+          setVerificacionResultado({
+            success: false,
+            mensaje: data.msg || 'ID de BloodStrike no válido o no encontrado'
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Error verificando jugador:', error)
+      setVerificacionResultado({
+        success: false,
+        mensaje: 'Error al conectar con la API de verificación'
+      })
+    } finally {
+      setIsVerificando(false)
+    }
+  }
+
+  const confirmAddToCart = async () => {
+    if (!pendingItem) return
+    const { p, selectedJuego, finalPrice, localRechargeData } = pendingItem
+    
+    if (buyMode === 'single') {
+      clearCart() // Limpiar carrito antes de compra directa
+      addToCart(p, selectedJuego, finalPrice, localRechargeData)
+
+      if (shouldSaveData) {
+        await guardarCuenta({
+          tipo_dato: selectedJuego.metodo_recarga || 'id',
+          player_id: localRechargeData.player_id,
+          zone_id: localRechargeData.zone_id,
+          email: localRechargeData.account_email,
+          password: localRechargeData.account_password,
+          username: localRechargeData.account_user,
+          nombre_perfil: localRechargeData.player_id || localRechargeData.account_email || localRechargeData.account_user || 'Cuenta'
+        })
+      }
+
+      setPendingItem(null)
+      navigate('/checkout')
+    } else {
+      addToCart(p, selectedJuego, finalPrice, localRechargeData)
+      
+      if (shouldSaveData) {
+        await guardarCuenta({
+          tipo_dato: selectedJuego.metodo_recarga || 'id',
+          player_id: localRechargeData.player_id,
+          zone_id: localRechargeData.zone_id,
+          email: localRechargeData.account_email,
+          password: localRechargeData.account_password,
+          username: localRechargeData.account_user,
+          nombre_perfil: localRechargeData.player_id || localRechargeData.account_email || localRechargeData.account_user || 'Cuenta'
+        })
+      }
+
+      setAddedItem(p.id)
+      setTimeout(() => setAddedItem(null), 1000)
+      setPendingItem(null)
+    }
+  }
 
   useEffect(() => {
     async function fetchData() {
@@ -184,6 +320,21 @@ export default function Landing() {
               {darkMode ? '☀️' : '🌙'}
             </button>
 
+            {user && (
+              <div 
+                style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }} 
+                onClick={() => navigate('/checkout')}
+                title="Ver Carrito"
+              >
+                <span style={{ fontSize: '24px' }}>🛒</span>
+                {cart.length > 0 && (
+                  <div style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#ef4444', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
+                    {cart.length}
+                  </div>
+                )}
+              </div>
+            )}
+
             {user ? (
               <div className="nav-dropdown">
                 <div className="flex items-center" style={{ gap: '8px', cursor: 'pointer' }}>
@@ -249,7 +400,42 @@ export default function Landing() {
                       {productosJuego.map(prod => {
                         const pricing = calcularPrecioVenta(prod, selectedJuego, config)
                         return (
-                          <div key={prod.id} className="product-card" onClick={() => user ? alert('Añadir al carrito / Comprar (Próximamente)') : (() => { setAuthModalView('login'); setIsAuthModalOpen(true); })()}>
+                          <div key={prod.id} className="product-card" onClick={() => {
+                            if (!user) {
+                              setAuthModalView('login');
+                              setIsAuthModalOpen(true);
+                              return;
+                            }
+                            
+                            if (selectedJuego.metodo_recarga === 'sin_datos') {
+                              // OK
+                            } else if (selectedJuego.metodo_recarga === 'cuenta_completa') {
+                              if (!localRechargeData.account_email.trim() || !localRechargeData.account_password.trim()) {
+                                alert('Por favor introduce el correo y clave en el panel de la derecha primero.')
+                                return
+                              }
+                            } else if (selectedJuego.metodo_recarga === 'usuario_clave') {
+                              if (!localRechargeData.account_user?.trim() || !localRechargeData.account_password.trim()) {
+                                alert('Por favor introduce el usuario y clave en el panel de la derecha primero.')
+                                return
+                              }
+                            } else {
+                              if (!localRechargeData.player_id.trim()) {
+                                alert('Por favor introduce el ID en el panel de la derecha primero.')
+                                return
+                              }
+                              const juegoNormalizado = selectedJuego.nombre.toLowerCase().replace(/\s/g, '')
+                              if (juegoNormalizado.includes('freefire') || juegoNormalizado.includes('bloodstrike')) {
+                                if (!verificacionResultado?.success || verificacionResultado.verified_id !== localRechargeData.player_id) {
+                                  alert('Debes verificar el nombre del jugador en el panel de la derecha antes de seleccionar un paquete.')
+                                  return
+                                }
+                              }
+                            }
+                            
+                            const finalPrice = calcularPrecioVenta(prod, selectedJuego, config, perfil)
+                            setPendingItem({ p: prod, selectedJuego, finalPrice, localRechargeData })
+                          }}>
                             {prod.icono_url && <img src={prod.icono_url} alt="" className="product-icon" />}
                             <div className="product-name">{prod.nombre}</div>
                             <div className="product-price">
@@ -292,24 +478,189 @@ export default function Landing() {
               {/* SIDEBAR DE COMPRA */}
               <aside className="detail-sidebar">
                 <div className="purchase-card">
-                  <h3>¿Listo para recargar?</h3>
-                  <p>Inicia sesión o crea una cuenta para poder realizar compras y gestionar tus pedidos.</p>
                   
                   {user ? (
-                    <div className="sidebar-buttons">
-                      <button className="btn-landing-primary w-full" onClick={() => navigate('/Checkout')}>
-                        🛒 Ir al Checkout
-                      </button>
-                    </div>
+                    <>
+                      <h3 style={{ marginBottom: '16px' }}>Datos de Recarga</h3>
+                      
+                      <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '4px', border: '1px solid var(--border)', marginBottom: '20px', gap: '4px' }}>
+                        <button 
+                          onClick={() => setBuyMode('single')}
+                          style={{ flex: 1, padding: '10px', borderRadius: '8px', border: 'none', backgroundColor: buyMode === 'single' ? 'var(--accent)' : 'transparent', color: buyMode === 'single' ? '#000' : 'var(--text-muted)', fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.3s' }}
+                        >
+                          🛍️ Comprar un paquete
+                        </button>
+                        <button 
+                          onClick={() => setBuyMode('multiple')}
+                          style={{ flex: 1, padding: '10px', borderRadius: '8px', border: 'none', backgroundColor: buyMode === 'multiple' ? 'var(--accent)' : 'transparent', color: buyMode === 'multiple' ? '#000' : 'var(--text-muted)', fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.3s' }}
+                        >
+                          🛒 Comprar varios
+                        </button>
+                      </div>
+
+                      {/* FORMULARIO DE DATOS */}
+                      <div className="card-recharge-info" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
+                        {selectedJuego.metodo_recarga === 'sin_datos' ? (
+                          <div style={{ textAlign: 'center' }}>
+                            <p style={{ fontSize: '14px', color: 'var(--text)', fontWeight: 600, margin: 0 }}>⚡ Entrega inmediata</p>
+                            <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>No necesitas ingresar ningún dato.</p>
+                          </div>
+                        ) : selectedJuego.metodo_recarga === 'cuenta_completa' ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <div>
+                              <label className="form-label" style={{ fontSize: '12px', marginBottom: '8px' }}>📧 Correo</label>
+                              <input 
+                                type="email" 
+                                className="form-input" 
+                                placeholder="ejemplo@correo.com"
+                                value={localRechargeData.account_email}
+                                onChange={e => setLocalRechargeData({...localRechargeData, account_email: e.target.value})}
+                              />
+                            </div>
+                            <div>
+                              <label className="form-label" style={{ fontSize: '12px', marginBottom: '8px' }}>🔑 Contraseña</label>
+                              <input 
+                                type="password" 
+                                className="form-input" 
+                                placeholder="********"
+                                value={localRechargeData.account_password}
+                                onChange={e => setLocalRechargeData({...localRechargeData, account_password: e.target.value})}
+                              />
+                            </div>
+                          </div>
+                        ) : selectedJuego.metodo_recarga === 'usuario_clave' ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <div>
+                              <label className="form-label" style={{ fontSize: '12px', marginBottom: '8px' }}>👤 Usuario</label>
+                              <input 
+                                type="text" 
+                                className="form-input" 
+                                placeholder="Tu usuario"
+                                value={localRechargeData.account_user || ''}
+                                onChange={e => setLocalRechargeData({...localRechargeData, account_user: e.target.value})}
+                              />
+                            </div>
+                            <div>
+                              <label className="form-label" style={{ fontSize: '12px', marginBottom: '8px' }}>🔑 Contraseña</label>
+                              <input 
+                                type="password" 
+                                className="form-input" 
+                                placeholder="********"
+                                value={localRechargeData.account_password}
+                                onChange={e => setLocalRechargeData({...localRechargeData, account_password: e.target.value})}
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <div>
+                              <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '8px' }}>🆔 ID del Jugador</label>
+                              <input 
+                                type="text" 
+                                className="form-input" 
+                                placeholder="Introduce el ID"
+                                value={localRechargeData.player_id}
+                                onChange={e => {
+                                  const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 15);
+                                  setLocalRechargeData({...localRechargeData, player_id: val});
+                                  if (verificacionResultado) setVerificacionResultado(null);
+                                }}
+                                style={{ fontSize: '16px', fontWeight: 'bold', letterSpacing: '1px' }}
+                              />
+                            </div>
+                            
+                            {selectedJuego.metodo_recarga === 'id_zone' && (
+                              <div>
+                                <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '8px' }}>🆔 Zone ID</label>
+                                <input 
+                                  type="text" 
+                                  className="form-input" 
+                                  placeholder="Zone ID"
+                                  maxLength={4}
+                                  value={localRechargeData.zone_id}
+                                  onChange={e => {
+                                    const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
+                                    setLocalRechargeData({...localRechargeData, zone_id: val});
+                                  }}
+                                  style={{ fontSize: '16px', fontWeight: 'bold', letterSpacing: '1px' }}
+                                />
+                              </div>
+                            )}
+
+                            {(selectedJuego.nombre.toLowerCase().replace(/\s/g, '').includes('freefire') || selectedJuego.nombre.toLowerCase().replace(/\s/g, '').includes('bloodstrike')) && (
+                              <div>
+                                <button 
+                                  className="btn-landing-secondary"
+                                  onClick={handleVerificarJugador}
+                                  disabled={isVerificando}
+                                  style={{ width: '100%', fontSize: '13px', padding: '10px' }}
+                                >
+                                  {isVerificando ? 'Verificando...' : '👤 Verificar Jugador'}
+                                </button>
+
+                                {verificacionResultado && (
+                                  <div style={{ 
+                                    marginTop: '10px', padding: '10px', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold',
+                                    backgroundColor: verificacionResultado.success ? 'rgba(0, 200, 83, 0.1)' : 'rgba(255, 82, 82, 0.1)',
+                                    color: verificacionResultado.success ? '#00c853' : '#ff5252',
+                                    border: `1px solid ${verificacionResultado.success ? '#00c853' : '#ff5252'}`
+                                  }}>
+                                    {verificacionResultado.success ? `✅ ${verificacionResultado.nickname}` : `❌ ${verificacionResultado.mensaje}`}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Cuentas Guardadas */}
+                        {cuentas.length > 0 && (
+                          <div style={{ marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Cuentas Guardadas</div>
+                            <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+                              {cuentas.map(c => (
+                                <div 
+                                  key={c.id} onClick={() => handleSelectCuenta(c)}
+                                  style={{ padding: '6px 10px', backgroundColor: 'var(--bg-card)', borderRadius: '6px', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}
+                                >
+                                  <span>{c.player_id || c.email || c.username || 'Cuenta'}</span>
+                                  <span onClick={(e) => { e.stopPropagation(); if(window.confirm('¿Eliminar?')) eliminarCuenta(c.id); }} style={{ color: '#ff5252', padding: '0 4px' }}>✕</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <input 
+                            type="checkbox" 
+                            id="save-data-checkbox-landing"
+                            checked={shouldSaveData}
+                            onChange={(e) => setShouldSaveData(e.target.checked)}
+                          />
+                          <label htmlFor="save-data-checkbox-landing" style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Guardar datos</label>
+                        </div>
+                      </div>
+
+                      <div className="sidebar-buttons">
+                        <button className="btn-landing-primary w-full" onClick={() => navigate('/checkout')}>
+                          🛒 Ver Carrito / Pagar
+                        </button>
+                      </div>
+                    </>
                   ) : (
-                    <div className="sidebar-buttons">
-                      <button className="btn-landing-primary w-full mb-12" onClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}>
-                        🔐 Iniciar Sesión
-                      </button>
-                      <button className="btn-landing-secondary w-full" onClick={() => { setAuthModalView('register'); setIsAuthModalOpen(true); }}>
-                        📝 Registrarse
-                      </button>
-                    </div>
+                    <>
+                      <h3>¿Listo para recargar?</h3>
+                      <p>Inicia sesión o crea una cuenta para poder realizar compras y gestionar tus pedidos.</p>
+                      <div className="sidebar-buttons">
+                        <button className="btn-landing-primary w-full mb-12" onClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}>
+                          🔐 Iniciar Sesión
+                        </button>
+                        <button className="btn-landing-secondary w-full" onClick={() => { setAuthModalView('register'); setIsAuthModalOpen(true); }}>
+                          📝 Registrarse
+                        </button>
+                      </div>
+                    </>
                   )}
 
                   <div className="sidebar-features">
@@ -460,6 +811,105 @@ export default function Landing() {
           <p>© 2024 Ceriraga. Todos los derechos reservados.</p>
         </div>
       </footer>
+
+      {/* MODAL DE CONFIRMACIÓN DE COMPRA (pendingItem) */}
+      {pendingItem && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 10000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          animation: 'fadeIn 0.2s', padding: '16px', backdropFilter: 'blur(5px)'
+        }} onClick={() => setPendingItem(null)}>
+          <div style={{
+            backgroundColor: 'var(--bg-panel)', width: '100%', maxWidth: '420px',
+            borderRadius: '24px', position: 'relative',
+            boxShadow: '0 24px 48px rgba(0,0,0,0.8)', overflow: 'hidden',
+            border: '1px solid rgba(255,255,255,0.1)', animation: 'scaleUp 0.3s'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.1)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '20px' }}>🛒</span>
+                <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent)' }}>Confirmar {buyMode === 'single' ? 'Compra' : 'Paquete'}</span>
+              </div>
+              <button 
+                onClick={() => setPendingItem(null)}
+                style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', fontSize: '16px', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >✕</button>
+            </div>
+            
+            <div style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px', backgroundColor: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                {pendingItem.p.icono_url ? (
+                  <img src={pendingItem.p.icono_url} alt="" style={{ width: 64, height: 64, objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }} />
+                ) : (
+                  <div style={{ fontSize: '48px' }}>💎</div>
+                )}
+                <div>
+                  <div style={{ fontSize: '16px', fontWeight: 800, color: '#fff', marginBottom: '4px' }}>{pendingItem.p.nombre}</div>
+                  <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--accent)' }}>{formatBs(pendingItem.finalPrice.venta_bs)}</div>
+                </div>
+              </div>
+
+              <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Datos de Recarga</h4>
+                
+                {pendingItem.selectedJuego.metodo_recarga === 'sin_datos' ? (
+                  <div style={{ fontSize: '14px', color: '#fff', fontWeight: 600 }}>⚡ Entrega Inmediata (Sin Datos)</div>
+                ) : pendingItem.selectedJuego.metodo_recarga === 'cuenta_completa' ? (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Correo:</span> <strong style={{ color: '#fff' }}>{pendingItem.localRechargeData.account_email}</strong></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>Clave:</span> <strong style={{ color: '#fff' }}>••••••••</strong></div>
+                  </>
+                ) : pendingItem.selectedJuego.metodo_recarga === 'usuario_clave' ? (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Usuario:</span> <strong style={{ color: '#fff' }}>{pendingItem.localRechargeData.account_user}</strong></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>Clave:</span> <strong style={{ color: '#fff' }}>••••••••</strong></div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Player ID:</span> <strong style={{ color: '#fff' }}>{pendingItem.localRechargeData.player_id}</strong></div>
+                    {pendingItem.selectedJuego.metodo_recarga === 'id_zone' && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Zone ID:</span> <strong style={{ color: '#fff' }}>{pendingItem.localRechargeData.zone_id}</strong></div>
+                    )}
+                    {verificacionResultado?.success && verificacionResultado.verified_id === pendingItem.localRechargeData.player_id && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Nombre:</span> <strong style={{ color: '#00c853' }}>{verificacionResultado.nickname}</strong>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+            
+            <div style={{ padding: '20px', backgroundColor: 'var(--bg-card)', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '12px' }}>
+              <button 
+                onClick={() => setPendingItem(null)} 
+                style={{ flex: 1, padding: '14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'transparent', color: '#fff', fontSize: '15px', fontWeight: 600, cursor: 'pointer' }}
+              >Cancelar</button>
+              <button 
+                onClick={confirmAddToCart} 
+                style={{ flex: 2, padding: '14px', borderRadius: '12px', border: 'none', backgroundColor: 'var(--accent)', color: '#000', fontSize: '15px', fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 15px rgba(0, 210, 255, 0.3)' }}
+              >
+                {buyMode === 'single' ? 'Pagar Ahora 🚀' : 'Añadir al Carrito 🛒'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NOTIFICACIÓN DE ITEM AÑADIDO (addedItem) */}
+      {addedItem && (
+        <div style={{
+          position: 'fixed', bottom: '30px', left: '50%', transform: 'translateX(-50%)',
+          backgroundColor: '#00c853', color: '#fff', padding: '12px 24px',
+          borderRadius: '30px', fontWeight: 'bold', fontSize: '14px',
+          boxShadow: '0 10px 30px rgba(0,200,83,0.4)', zIndex: 10001,
+          animation: 'slideUpFade 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          display: 'flex', alignItems: 'center', gap: '8px'
+        }}>
+          <span style={{ fontSize: '18px' }}>✨</span> Paquete añadido al carrito
+        </div>
+      )}
 
       {/* AUTH MODAL */}
       <LandingAuthModal 
