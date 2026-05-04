@@ -245,7 +245,8 @@ export default function GestionLanding() {
         updateConfig('landing_auth_icon', form.landing_auth_icon, true),
         updateConfig('landing_auth_logo_size', form.landing_auth_logo_size, true),
         updateConfig('landing_auth_title_size', form.landing_auth_title_size, true),
-        updateConfig('landing_auth_text_size', form.landing_auth_text_size, true)
+        updateConfig('landing_auth_text_size', form.landing_auth_text_size, true),
+        updateConfig('landing_banner_interval', form.landing_banner_interval, true)
       ])
 
       const errorResult = results.find(r => r && r.error)
