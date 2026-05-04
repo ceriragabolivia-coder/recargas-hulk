@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useConfiguracion, useAuth, useCart, useCuentasGuardadas } from '../hooks/useData'
 import { formatUSD, formatBs, calcularPrecioVenta } from '../utils/helpers'
@@ -7,6 +7,7 @@ import LandingAuthModal from './LandingAuthModal'
 
 export default function Landing() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { config } = useConfiguracion()
   const { user, perfil, logout } = useAuth()
   const { cart, addToCart, clearCart } = useCart()
@@ -231,6 +232,28 @@ export default function Landing() {
   }, [selectedJuego])
 
   useEffect(() => {
+    const juegoIdQuery = searchParams.get('juego')
+    if (juegos.length > 0 && juegoIdQuery) {
+      const found = juegos.find(j => String(j.id) === juegoIdQuery || j.nombre.toLowerCase().replace(/\s+/g, '-') === juegoIdQuery)
+      if (found && (!selectedJuego || selectedJuego.id !== found.id)) {
+        setSelectedJuego(found)
+        window.scrollTo(0, 0)
+      }
+    } else if (!juegoIdQuery && selectedJuego) {
+      setSelectedJuego(null)
+    }
+  }, [searchParams, juegos, selectedJuego])
+
+  const handleSelectJuego = (juego) => {
+    if (juego) {
+      setSearchParams({ juego: juego.nombre.toLowerCase().replace(/\s+/g, '-') })
+    } else {
+      setSearchParams({})
+      setSelectedJuego(null)
+    }
+  }
+
+  useEffect(() => {
     if (!selectedJuego) {
       const timer = setInterval(() => {
         setCurrentBanner(prev => (prev + 1) % banners.length)
@@ -269,7 +292,7 @@ export default function Landing() {
       <header className="landing-header">
         <div className="landing-container flex items-center justify-between" style={{ gap: '40px' }}>
           <div className="flex items-center" style={{ gap: '40px' }}>
-            <div className="landing-logo-container" onClick={() => { setSelectedJuego(null); navigate('/'); }}>
+            <div className="landing-logo-container" onClick={() => { handleSelectJuego(null); navigate('/'); }}>
               {config?.landing_logo ? (
                 <img src={config.landing_logo} alt="Logo" style={{ width: '40px', height: '40px', borderRadius: '10px', objectFit: 'contain' }} />
               ) : (
@@ -279,12 +302,12 @@ export default function Landing() {
             </div>
             
             <nav className="landing-nav hidden-mobile">
-              <a href="#" className="nav-link active" onClick={() => setSelectedJuego(null)}>Home</a>
+              <a href="#" className="nav-link active" onClick={(e) => { e.preventDefault(); handleSelectJuego(null); }}>Home</a>
               <div className="nav-dropdown">
                 <span className="nav-link">Servicios ▾</span>
                 <div className="dropdown-content">
                   {categorias.map(cat => (
-                    <a key={cat.id} href="#" onClick={() => { setActiveCategory(cat.nombre); setSelectedJuego(null); }}>{cat.nombre}</a>
+                    <a key={cat.id} href="#" onClick={(e) => { e.preventDefault(); setActiveCategory(cat.nombre); handleSelectJuego(null); }}>{cat.nombre}</a>
                   ))}
                 </div>
               </div>
@@ -367,7 +390,7 @@ export default function Landing() {
           /* VISTA DETALLE DEL JUEGO */
           <div className="landing-container detail-view fade-in">
             <div className="breadcrumb">
-              <span onClick={() => setSelectedJuego(null)}>Home</span> &gt; <span>{selectedJuego.nombre}</span>
+              <span onClick={() => handleSelectJuego(null)} style={{ cursor: 'pointer' }}>Home</span> &gt; <span>{selectedJuego.nombre}</span>
             </div>
 
             <div className="detail-layout">
@@ -738,7 +761,7 @@ export default function Landing() {
                 </div>
                 <div className="games-grid">
                   {bestsellers.map(juego => (
-                    <GameCard key={juego.id} juego={juego} onSelect={() => setSelectedJuego(juego)} />
+                    <GameCard key={juego.id} juego={juego} onSelect={() => handleSelectJuego(juego)} />
                   ))}
                 </div>
               </section>
@@ -768,7 +791,7 @@ export default function Landing() {
               </div>
               <div className="games-grid">
                 {filteredJuegos.map(juego => (
-                  <GameCard key={juego.id} juego={juego} onSelect={() => setSelectedJuego(juego)} />
+                  <GameCard key={juego.id} juego={juego} onSelect={() => handleSelectJuego(juego)} />
                 ))}
               </div>
             </section>
@@ -779,7 +802,7 @@ export default function Landing() {
       <footer className="landing-footer">
         <div className="landing-container footer-content">
           <div className="footer-brand">
-            <div className="landing-logo-container" onClick={() => setSelectedJuego(null)}>
+            <div className="landing-logo-container" onClick={() => handleSelectJuego(null)}>
               {config?.landing_logo ? (
                 <img src={config.landing_logo} alt="Logo" style={{ width: '40px', height: '40px', borderRadius: '10px', objectFit: 'contain' }} />
               ) : (
