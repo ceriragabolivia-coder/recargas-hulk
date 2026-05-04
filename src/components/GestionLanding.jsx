@@ -10,6 +10,7 @@ export default function GestionLanding() {
   const [loadingJuegos, setLoadingJuegos] = useState(true)
   const [saving, setSaving] = useState(false)
   const [alert, setAlert] = useState(null)
+  const [activeTab, setActiveTab] = useState('general')
 
   // Local state for form fields to avoid constant context updates during typing
   const [form, setForm] = useState({
@@ -274,8 +275,18 @@ export default function GestionLanding() {
         </div>
       </div>
 
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', borderBottom: '1px solid var(--border)', paddingBottom: '16px', overflowX: 'auto', whiteSpace: 'nowrap' }}>
+        <button type="button" className={`btn ${activeTab === 'general' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('general')}>General</button>
+        <button type="button" className={`btn ${activeTab === 'banners' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('banners')}>Banners Promocionales</button>
+        <button type="button" className={`btn ${activeTab === 'auth' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('auth')}>Acceso y Login</button>
+        <button type="button" className={`btn ${activeTab === 'catalogo' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('catalogo')}>Catálogo y Descuentos</button>
+      </div>
+
+      {activeTab !== 'catalogo' && (
       <div className="card-modern shadow-md" style={{ maxWidth: '800px' }}>
         <form onSubmit={handleSave} className="form-grid">
+          {activeTab === 'general' && (
+            <>
           <div className="form-group full-width">
             <label className="form-label">Estado de la Landing Page</label>
             <div className="flex items-center gap-12" style={{ marginTop: '8px' }}>
@@ -323,6 +334,24 @@ export default function GestionLanding() {
           </div>
 
           <div className="form-group full-width" style={{ marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
+            <label className="form-label">IDs de Juegos Destacados (Bestsellers)</label>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+              Ingresa los IDs de los juegos separados por comas (ej: 1, 15, 22). Si dejas vacío, se mostrarán los primeros 12.
+            </p>
+            <input 
+              type="text" 
+              className="form-input"
+              value={form.landing_featured_games}
+              onChange={(e) => setForm({...form, landing_featured_games: e.target.value})}
+              placeholder="1, 2, 5, 8"
+            />
+          </div>
+          </>
+          )}
+
+          {activeTab === 'banners' && (
+            <>
+          <div className="form-group full-width" style={{ marginTop: '0px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ margin: 0 }}>Banner 1 (Principal)</h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -424,22 +453,12 @@ export default function GestionLanding() {
               </div>
             </div>
           </div>
+          </>
+          )}
 
-          <div className="form-group full-width">
-            <label className="form-label">IDs de Juegos Destacados (Bestsellers)</label>
-            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-              Ingresa los IDs de los juegos separados por comas (ej: 1, 15, 22). Si dejas vacío, se mostrarán los primeros 12.
-            </p>
-            <input 
-              type="text" 
-              className="form-input"
-              value={form.landing_featured_games}
-              onChange={(e) => setForm({...form, landing_featured_games: e.target.value})}
-              placeholder="1, 2, 5, 8"
-            />
-          </div>
-
-          <div className="form-group full-width" style={{ marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
+          {activeTab === 'auth' && (
+            <>
+          <div className="form-group full-width" style={{ marginTop: '0px' }}>
             <h3 style={{ marginBottom: '16px' }}>Modal de Acceso (Login / Registro)</h3>
             <div className="form-grid">
               <div className="form-group full-width">
@@ -469,6 +488,8 @@ export default function GestionLanding() {
               </div>
             </div>
           </div>
+          </>
+          )}
 
           <div className="flex justify-end full-width" style={{ marginTop: '20px' }}>
             <button 
@@ -477,13 +498,16 @@ export default function GestionLanding() {
               style={{ minWidth: '180px' }}
               disabled={saving}
             >
-              {saving ? '⏳ Guardando...' : '💾 Guardar Cambios Generales'}
+              {saving ? '⏳ Guardando...' : '💾 Guardar Cambios'}
             </button>
           </div>
         </form>
       </div>
+      )}
 
-      <div className="section-header-modern" style={{ marginTop: '40px' }}>
+      {activeTab === 'catalogo' && (
+      <>
+      <div className="section-header-modern" style={{ marginTop: '20px' }}>
         <div className="section-title-group">
           <h2 className="section-title">Organización del Catálogo</h2>
           <p className="section-subtitle">Oculta juegos de la Landing Page y arrástralos (☰) para cambiar el orden en que aparecen al público.</p>
@@ -634,6 +658,8 @@ export default function GestionLanding() {
           </div>
         )}
       </div>
+      </>
+      )}
 
       {alert && (
         <AlertModal 
