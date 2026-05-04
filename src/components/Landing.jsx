@@ -1155,7 +1155,7 @@ export default function Landing() {
           content: '';
           position: absolute;
           top: 0; left: 0; width: 100%; height: 100%;
-          background: linear-gradient(90deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 60%);
+          /* background: linear-gradient(90deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 60%); Removed overlay to show original image */
           z-index: 1;
         }
         .hero-content {
