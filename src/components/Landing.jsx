@@ -1145,8 +1145,8 @@ export default function Landing() {
           opacity: 0;
           transition: opacity 0.8s ease;
           display: flex;
-          align-items: center;
-          padding: 0 60px;
+          align-items: flex-end;
+          padding: 40px 60px;
         }
         .hero-slide.active {
           opacity: 1;
@@ -1594,7 +1594,7 @@ export default function Landing() {
           .hero-slider { height: 300px; }
           .hero-content h2 { font-size: 32px; }
           .footer-content { grid-template-columns: 1fr; gap: 40px; }
-          .hero-slide { padding: 0 30px; }
+          .hero-slide { padding: 40px 30px; }
           .detail-header-card { flex-direction: column; text-align: center; }
           .products-grid { grid-template-columns: 1fr 1fr; }
         }
