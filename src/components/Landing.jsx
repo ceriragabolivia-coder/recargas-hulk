@@ -47,24 +47,24 @@ export default function Landing() {
   const banners = useMemo(() => [
     {
       image: config?.landing_banner_1 || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=2070',
-      title: config?.landing_banner_1_title || config?.landing_subtitulo || '¡Recargas al Instante!',
-      text: config?.landing_banner_1_text || 'Seguridad y confianza en cada transacción',
-      btnText: config?.landing_banner_1_btn_text || 'Empieza ahora',
-      url: config?.landing_banner_1_url || '/register'
+      title: config?.landing_banner_1_title ?? config?.landing_subtitulo ?? '¡Recargas al Instante!',
+      text: config?.landing_banner_1_text ?? 'Seguridad y confianza en cada transacción',
+      btnText: config?.landing_banner_1_btn_text ?? 'Empieza ahora',
+      url: config?.landing_banner_1_url ?? '/register'
     },
     {
       image: config?.landing_banner_2 || 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=2071',
-      title: config?.landing_banner_2_title || 'Los mejores precios del mercado',
-      text: config?.landing_banner_2_text || 'Seguridad y confianza en cada transacción',
-      btnText: config?.landing_banner_2_btn_text || 'Empieza ahora',
-      url: config?.landing_banner_2_url || '/register'
+      title: config?.landing_banner_2_title ?? 'Los mejores precios del mercado',
+      text: config?.landing_banner_2_text ?? '',
+      btnText: config?.landing_banner_2_btn_text ?? 'Empieza ahora',
+      url: config?.landing_banner_2_url ?? '/register'
     },
     {
       image: config?.landing_banner_3 || 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&q=80&w=2070',
-      title: config?.landing_banner_3_title || 'Explora nuestro catálogo',
-      text: config?.landing_banner_3_text || 'Seguridad y confianza en cada transacción',
-      btnText: config?.landing_banner_3_btn_text || 'Empieza ahora',
-      url: config?.landing_banner_3_url || '/register'
+      title: config?.landing_banner_3_title ?? 'Explora nuestro catálogo',
+      text: config?.landing_banner_3_text ?? '',
+      btnText: config?.landing_banner_3_btn_text ?? 'Empieza ahora',
+      url: config?.landing_banner_3_url ?? '/register'
     }
   ], [config])
 
@@ -722,20 +722,22 @@ export default function Landing() {
                     style={{ backgroundImage: `url(${banner.image})` }}
                   >
                     <div className="hero-content">
-                      <h2>{banner.title}</h2>
-                      <p>{banner.text}</p>
-                      <button 
-                        className="btn-landing-primary" 
-                        onClick={() => {
-                          if (banner.url.startsWith('http')) {
-                            window.location.href = banner.url
-                          } else {
-                            navigate(banner.url)
-                          }
-                        }}
-                      >
-                        {banner.btnText}
-                      </button>
+                      {banner.title && <h2>{banner.title}</h2>}
+                      {banner.text && <p>{banner.text}</p>}
+                      {banner.btnText && (
+                        <button 
+                          className="btn-landing-primary" 
+                          onClick={() => {
+                            if (banner.url && banner.url.startsWith('http')) {
+                              window.location.href = banner.url
+                            } else if (banner.url) {
+                              navigate(banner.url)
+                            }
+                          }}
+                        >
+                          {banner.btnText}
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
