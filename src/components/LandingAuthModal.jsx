@@ -8,6 +8,7 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
   const { config } = useConfiguracion()
 
   const authIcon = config?.landing_auth_icon || '⚡'
+  const logoSize = config?.landing_auth_logo_size || '100px'
   const titleSize = config?.landing_auth_title_size || '24px'
   const textSize = config?.landing_auth_text_size || '14px'
 
@@ -109,9 +110,9 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
         <div className="landing-auth-container">
           <div className="landing-auth-header">
             {authIcon.startsWith('http') ? (
-              <img src={authIcon} alt="Logo" style={{ height: '60px', objectFit: 'contain', marginBottom: '16px', display: 'inline-block' }} />
+              <img src={authIcon} alt="Logo" style={{ height: logoSize, objectFit: 'contain', marginBottom: '16px', display: 'inline-block' }} />
             ) : (
-              <div className="landing-auth-logo">{authIcon}</div>
+              <div className="landing-auth-logo" style={{ fontSize: logoSize }}>{authIcon}</div>
             )}
             <h2 style={{ fontSize: titleSize }}>{view === 'login' ? 'Bienvenido de nuevo' : 'Crea tu cuenta'}</h2>
             <p style={{ fontSize: textSize }}>{view === 'login' ? 'Ingresa tus credenciales para continuar' : 'Únete a la mejor plataforma de recargas'}</p>

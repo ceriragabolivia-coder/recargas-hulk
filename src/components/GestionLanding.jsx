@@ -34,6 +34,7 @@ export default function GestionLanding() {
     landing_featured_games: config?.landing_featured_games || '',
     landing_enabled: config?.landing_enabled === '1',
     landing_auth_icon: config?.landing_auth_icon || '⚡',
+    landing_auth_logo_size: config?.landing_auth_logo_size || '100px',
     landing_auth_title_size: config?.landing_auth_title_size || '24px',
     landing_auth_text_size: config?.landing_auth_text_size || '14px'
   })
@@ -64,6 +65,7 @@ export default function GestionLanding() {
         landing_featured_games: config.landing_featured_games || '',
         landing_enabled: config.landing_enabled === '1',
         landing_auth_icon: config.landing_auth_icon || '⚡',
+        landing_auth_logo_size: config.landing_auth_logo_size || '100px',
         landing_auth_title_size: config.landing_auth_title_size || '24px',
         landing_auth_text_size: config.landing_auth_text_size || '14px'
       })
@@ -239,6 +241,7 @@ export default function GestionLanding() {
         updateConfig('landing_featured_games', form.landing_featured_games, true),
         updateConfig('landing_enabled', form.landing_enabled ? '1' : '0', false),
         updateConfig('landing_auth_icon', form.landing_auth_icon, true),
+        updateConfig('landing_auth_logo_size', form.landing_auth_logo_size, true),
         updateConfig('landing_auth_title_size', form.landing_auth_title_size, true),
         updateConfig('landing_auth_text_size', form.landing_auth_text_size, true)
       ])
@@ -435,6 +438,10 @@ export default function GestionLanding() {
                   <input type="file" id="upload_auth_logo" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleUploadBanner(e, 'auth_logo')} />
                   <button type="button" className="btn btn-secondary" onClick={() => document.getElementById('upload_auth_logo').click()} disabled={saving} style={{ whiteSpace: 'nowrap' }}>📁 Subir Logo</button>
                 </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Tamaño del Logo (Ej: 100px)</label>
+                <input type="text" className="form-input" value={form.landing_auth_logo_size} onChange={(e) => setForm({...form, landing_auth_logo_size: e.target.value})} placeholder="100px" />
               </div>
               <div className="form-group">
                 <label className="form-label">Tamaño Letra Título (Ej: 24px)</label>
