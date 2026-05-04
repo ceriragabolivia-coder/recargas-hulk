@@ -255,12 +255,14 @@ export default function Landing() {
 
   useEffect(() => {
     if (!selectedJuego) {
+      const intervalSecs = parseInt(config?.landing_banner_interval || '5', 10)
+      const ms = isNaN(intervalSecs) || intervalSecs < 1 ? 5000 : intervalSecs * 1000
       const timer = setInterval(() => {
         setCurrentBanner(prev => (prev + 1) % banners.length)
-      }, 5000)
+      }, ms)
       return () => clearInterval(timer)
     }
-  }, [banners.length, selectedJuego])
+  }, [banners.length, selectedJuego, config?.landing_banner_interval])
 
   const filteredJuegos = useMemo(() => {
     return juegos.filter(j => {

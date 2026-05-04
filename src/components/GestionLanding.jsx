@@ -31,6 +31,7 @@ export default function GestionLanding() {
     landing_banner_3_text: config?.landing_banner_3_text || '',
     landing_banner_3_btn_text: config?.landing_banner_3_btn_text || '',
     landing_banner_3_url: config?.landing_banner_3_url || '',
+    landing_banner_interval: config?.landing_banner_interval || '5',
     landing_featured_games: config?.landing_featured_games || '',
     landing_enabled: config?.landing_enabled === '1',
     landing_auth_icon: config?.landing_auth_icon || '⚡',
@@ -62,6 +63,7 @@ export default function GestionLanding() {
         landing_banner_3_text: config.landing_banner_3_text || '',
         landing_banner_3_btn_text: config.landing_banner_3_btn_text || '',
         landing_banner_3_url: config.landing_banner_3_url || '',
+        landing_banner_interval: config.landing_banner_interval || '5',
         landing_featured_games: config.landing_featured_games || '',
         landing_enabled: config.landing_enabled === '1',
         landing_auth_icon: config.landing_auth_icon || '⚡',
@@ -320,7 +322,20 @@ export default function GestionLanding() {
           </div>
 
           <div className="form-group full-width" style={{ marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
-            <h3 style={{ marginBottom: '16px' }}>Banner 1 (Principal)</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0 }}>Banner 1 (Principal)</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <label className="form-label" style={{ margin: 0 }}>Tiempo de visualización (segundos):</label>
+                <input 
+                  type="number" 
+                  className="form-input" 
+                  value={form.landing_banner_interval} 
+                  onChange={(e) => setForm({...form, landing_banner_interval: e.target.value})} 
+                  min="1"
+                  style={{ width: '80px', padding: '6px 12px' }}
+                />
+              </div>
+            </div>
             <div className="form-grid">
               <div className="form-group full-width">
                 <label className="form-label">Imagen de fondo</label>
