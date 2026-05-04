@@ -32,7 +32,10 @@ export default function GestionLanding() {
     landing_banner_3_btn_text: config?.landing_banner_3_btn_text || '',
     landing_banner_3_url: config?.landing_banner_3_url || '',
     landing_featured_games: config?.landing_featured_games || '',
-    landing_enabled: config?.landing_enabled === '1'
+    landing_enabled: config?.landing_enabled === '1',
+    landing_auth_icon: config?.landing_auth_icon || '⚡',
+    landing_auth_title_size: config?.landing_auth_title_size || '24px',
+    landing_auth_text_size: config?.landing_auth_text_size || '14px'
   })
 
   // Sincronizar cuando cargue la config real
@@ -59,7 +62,10 @@ export default function GestionLanding() {
         landing_banner_3_btn_text: config.landing_banner_3_btn_text || '',
         landing_banner_3_url: config.landing_banner_3_url || '',
         landing_featured_games: config.landing_featured_games || '',
-        landing_enabled: config.landing_enabled === '1'
+        landing_enabled: config.landing_enabled === '1',
+        landing_auth_icon: config.landing_auth_icon || '⚡',
+        landing_auth_title_size: config.landing_auth_title_size || '24px',
+        landing_auth_text_size: config.landing_auth_text_size || '14px'
       })
     }
   }, [config])
@@ -191,6 +197,9 @@ export default function GestionLanding() {
         if (bannerNumber === 'logo') {
           setForm(prev => ({ ...prev, landing_logo: data.publicUrl }))
           toast.success(`Logo subido correctamente`)
+        } else if (bannerNumber === 'auth_logo') {
+          setForm(prev => ({ ...prev, landing_auth_icon: data.publicUrl }))
+          toast.success(`Icono de login subido correctamente`)
         } else {
           setForm(prev => ({ ...prev, [`landing_banner_${bannerNumber}`]: data.publicUrl }))
           toast.success(`Banner ${bannerNumber} subido correctamente`)
@@ -228,7 +237,10 @@ export default function GestionLanding() {
         updateConfig('landing_banner_3_btn_text', form.landing_banner_3_btn_text, true),
         updateConfig('landing_banner_3_url', form.landing_banner_3_url, true),
         updateConfig('landing_featured_games', form.landing_featured_games, true),
-        updateConfig('landing_enabled', form.landing_enabled ? '1' : '0', false)
+        updateConfig('landing_enabled', form.landing_enabled ? '1' : '0', false),
+        updateConfig('landing_auth_icon', form.landing_auth_icon, true),
+        updateConfig('landing_auth_title_size', form.landing_auth_title_size, true),
+        updateConfig('landing_auth_text_size', form.landing_auth_text_size, true)
       ])
 
       const errorResult = results.find(r => r && r.error)
@@ -406,6 +418,33 @@ export default function GestionLanding() {
               onChange={(e) => setForm({...form, landing_featured_games: e.target.value})}
               placeholder="1, 2, 5, 8"
             />
+          </div>
+
+          <div className="form-group full-width" style={{ marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
+            <h3 style={{ marginBottom: '16px' }}>Modal de Acceso (Login / Registro)</h3>
+            <div className="form-grid">
+              <div className="form-group full-width">
+                <label className="form-label">Ícono o Logo (Emoji o Imagen URL)</label>
+                <div className="flex gap-8" style={{ alignItems: 'center' }}>
+                  {form.landing_auth_icon && form.landing_auth_icon.startsWith('http') ? (
+                    <img src={form.landing_auth_icon} alt="Auth Icon" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'contain' }} />
+                  ) : (
+                    <span style={{ fontSize: '24px' }}>{form.landing_auth_icon || '⚡'}</span>
+                  )}
+                  <input type="text" className="form-input" value={form.landing_auth_icon} onChange={(e) => setForm({...form, landing_auth_icon: e.target.value})} placeholder="⚡ o URL de la imagen..." style={{ flex: 1 }} />
+                  <input type="file" id="upload_auth_logo" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleUploadBanner(e, 'auth_logo')} />
+                  <button type="button" className="btn btn-secondary" onClick={() => document.getElementById('upload_auth_logo').click()} disabled={saving} style={{ whiteSpace: 'nowrap' }}>📁 Subir Logo</button>
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Tamaño Letra Título (Ej: 24px)</label>
+                <input type="text" className="form-input" value={form.landing_auth_title_size} onChange={(e) => setForm({...form, landing_auth_title_size: e.target.value})} placeholder="24px" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Tamaño Letra Subtítulo (Ej: 14px)</label>
+                <input type="text" className="form-input" value={form.landing_auth_text_size} onChange={(e) => setForm({...form, landing_auth_text_size: e.target.value})} placeholder="14px" />
+              </div>
+            </div>
           </div>
 
           <div className="flex justify-end full-width" style={{ marginTop: '20px' }}>

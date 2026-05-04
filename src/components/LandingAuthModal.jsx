@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react'
-import { useAuth } from '../hooks/useData'
+import { useAuth, useConfiguracion } from '../hooks/useData'
 import { supabase } from '../lib/supabase'
 
 export default function LandingAuthModal({ isOpen, onClose, initialView = 'login' }) {
   const [view, setView] = useState(initialView) // 'login' or 'register'
   const { login, loading: authLoading } = useAuth()
+  const { config } = useConfiguracion()
+
+  const authIcon = config?.landing_auth_icon || '⚡'
+  const titleSize = config?.landing_auth_title_size || '24px'
+  const textSize = config?.landing_auth_text_size || '14px'
 
   useEffect(() => {
     if (isOpen) {
@@ -103,9 +108,13 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
 
         <div className="landing-auth-container">
           <div className="landing-auth-header">
-            <div className="landing-auth-logo">⚡</div>
-            <h2>{view === 'login' ? 'Bienvenido de nuevo' : 'Crea tu cuenta'}</h2>
-            <p>{view === 'login' ? 'Ingresa tus credenciales para continuar' : 'Únete a la mejor plataforma de recargas'}</p>
+            {authIcon.startsWith('http') ? (
+              <img src={authIcon} alt="Logo" style={{ height: '60px', objectFit: 'contain', marginBottom: '16px', display: 'inline-block' }} />
+            ) : (
+              <div className="landing-auth-logo">{authIcon}</div>
+            )}
+            <h2 style={{ fontSize: titleSize }}>{view === 'login' ? 'Bienvenido de nuevo' : 'Crea tu cuenta'}</h2>
+            <p style={{ fontSize: textSize }}>{view === 'login' ? 'Ingresa tus credenciales para continuar' : 'Únete a la mejor plataforma de recargas'}</p>
           </div>
 
           {error && (
