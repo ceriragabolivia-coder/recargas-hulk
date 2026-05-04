@@ -22,17 +22,19 @@ export default function GestionLanding() {
     landing_banner_1_text: config?.landing_banner_1_text || '',
     landing_banner_1_btn_text: config?.landing_banner_1_btn_text || '',
     landing_banner_1_url: config?.landing_banner_1_url || '',
+    landing_banner_1_interval: config?.landing_banner_1_interval || '5',
     landing_banner_2: config?.landing_banner_2 || '',
     landing_banner_2_title: config?.landing_banner_2_title || '',
     landing_banner_2_text: config?.landing_banner_2_text || '',
     landing_banner_2_btn_text: config?.landing_banner_2_btn_text || '',
     landing_banner_2_url: config?.landing_banner_2_url || '',
+    landing_banner_2_interval: config?.landing_banner_2_interval || '5',
     landing_banner_3: config?.landing_banner_3 || '',
     landing_banner_3_title: config?.landing_banner_3_title || '',
     landing_banner_3_text: config?.landing_banner_3_text || '',
     landing_banner_3_btn_text: config?.landing_banner_3_btn_text || '',
     landing_banner_3_url: config?.landing_banner_3_url || '',
-    landing_banner_interval: config?.landing_banner_interval || '5',
+    landing_banner_3_interval: config?.landing_banner_3_interval || '5',
     landing_featured_games: config?.landing_featured_games || '',
     landing_enabled: config?.landing_enabled === '1',
     landing_auth_icon: config?.landing_auth_icon || '⚡',
@@ -54,17 +56,19 @@ export default function GestionLanding() {
         landing_banner_1_text: config.landing_banner_1_text || '',
         landing_banner_1_btn_text: config.landing_banner_1_btn_text || '',
         landing_banner_1_url: config.landing_banner_1_url || '',
+        landing_banner_1_interval: config.landing_banner_1_interval || '5',
         landing_banner_2: config.landing_banner_2 || '',
         landing_banner_2_title: config.landing_banner_2_title || '',
         landing_banner_2_text: config.landing_banner_2_text || '',
         landing_banner_2_btn_text: config.landing_banner_2_btn_text || '',
         landing_banner_2_url: config.landing_banner_2_url || '',
+        landing_banner_2_interval: config.landing_banner_2_interval || '5',
         landing_banner_3: config.landing_banner_3 || '',
         landing_banner_3_title: config.landing_banner_3_title || '',
         landing_banner_3_text: config.landing_banner_3_text || '',
         landing_banner_3_btn_text: config.landing_banner_3_btn_text || '',
         landing_banner_3_url: config.landing_banner_3_url || '',
-        landing_banner_interval: config.landing_banner_interval || '5',
+        landing_banner_3_interval: config.landing_banner_3_interval || '5',
         landing_featured_games: config.landing_featured_games || '',
         landing_enabled: config.landing_enabled === '1',
         landing_auth_icon: config.landing_auth_icon || '⚡',
@@ -231,23 +235,25 @@ export default function GestionLanding() {
         updateConfig('landing_banner_1_text', form.landing_banner_1_text, true),
         updateConfig('landing_banner_1_btn_text', form.landing_banner_1_btn_text, true),
         updateConfig('landing_banner_1_url', form.landing_banner_1_url, true),
+        updateConfig('landing_banner_1_interval', form.landing_banner_1_interval, true),
         updateConfig('landing_banner_2', form.landing_banner_2, true),
         updateConfig('landing_banner_2_title', form.landing_banner_2_title, true),
         updateConfig('landing_banner_2_text', form.landing_banner_2_text, true),
         updateConfig('landing_banner_2_btn_text', form.landing_banner_2_btn_text, true),
         updateConfig('landing_banner_2_url', form.landing_banner_2_url, true),
+        updateConfig('landing_banner_2_interval', form.landing_banner_2_interval, true),
         updateConfig('landing_banner_3', form.landing_banner_3, true),
         updateConfig('landing_banner_3_title', form.landing_banner_3_title, true),
         updateConfig('landing_banner_3_text', form.landing_banner_3_text, true),
         updateConfig('landing_banner_3_btn_text', form.landing_banner_3_btn_text, true),
         updateConfig('landing_banner_3_url', form.landing_banner_3_url, true),
+        updateConfig('landing_banner_3_interval', form.landing_banner_3_interval, true),
         updateConfig('landing_featured_games', form.landing_featured_games, true),
         updateConfig('landing_enabled', form.landing_enabled ? '1' : '0', false),
         updateConfig('landing_auth_icon', form.landing_auth_icon, true),
         updateConfig('landing_auth_logo_size', form.landing_auth_logo_size, true),
         updateConfig('landing_auth_title_size', form.landing_auth_title_size, true),
-        updateConfig('landing_auth_text_size', form.landing_auth_text_size, true),
-        updateConfig('landing_banner_interval', form.landing_banner_interval, true)
+        updateConfig('landing_auth_text_size', form.landing_auth_text_size, true)
       ])
 
       const errorResult = results.find(r => r && r.error)
@@ -359,8 +365,8 @@ export default function GestionLanding() {
                 <input 
                   type="number" 
                   className="form-input" 
-                  value={form.landing_banner_interval} 
-                  onChange={(e) => setForm({...form, landing_banner_interval: e.target.value})} 
+                  value={form.landing_banner_1_interval} 
+                  onChange={(e) => setForm({...form, landing_banner_1_interval: e.target.value})} 
                   min="1"
                   style={{ width: '80px', padding: '6px 12px' }}
                 />
@@ -395,7 +401,20 @@ export default function GestionLanding() {
           </div>
 
           <div className="form-group full-width" style={{ marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
-            <h3 style={{ marginBottom: '16px' }}>Banner 2</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0 }}>Banner 2</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <label className="form-label" style={{ margin: 0 }}>Tiempo de visualización (segundos):</label>
+                <input 
+                  type="number" 
+                  className="form-input" 
+                  value={form.landing_banner_2_interval} 
+                  onChange={(e) => setForm({...form, landing_banner_2_interval: e.target.value})} 
+                  min="1"
+                  style={{ width: '80px', padding: '6px 12px' }}
+                />
+              </div>
+            </div>
             <div className="form-grid">
               <div className="form-group full-width">
                 <label className="form-label">Imagen de fondo</label>
@@ -425,7 +444,20 @@ export default function GestionLanding() {
           </div>
 
           <div className="form-group full-width" style={{ marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '20px', paddingBottom: '20px' }}>
-            <h3 style={{ marginBottom: '16px' }}>Banner 3</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0 }}>Banner 3</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <label className="form-label" style={{ margin: 0 }}>Tiempo de visualización (segundos):</label>
+                <input 
+                  type="number" 
+                  className="form-input" 
+                  value={form.landing_banner_3_interval} 
+                  onChange={(e) => setForm({...form, landing_banner_3_interval: e.target.value})} 
+                  min="1"
+                  style={{ width: '80px', padding: '6px 12px' }}
+                />
+              </div>
+            </div>
             <div className="form-grid">
               <div className="form-group full-width">
                 <label className="form-label">Imagen de fondo</label>
