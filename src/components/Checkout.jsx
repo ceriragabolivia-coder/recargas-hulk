@@ -74,6 +74,7 @@ export default function Checkout({ onFinish }) {
   const [createdPedidoId, setCreatedPedidoId] = useState(null)
   const [expiresAt, setExpiresAt] = useState(null)
   const [darkMode, setDarkMode] = useState(true)
+  const [currentBanner, setCurrentBanner] = useState(0)
   const orderPreparingRef = React.useRef(false)
   const [comprobanteUrl, setComprobanteUrl] = useState(null)
   const [uploadingComprobante, setUploadingComprobante] = useState(false)
@@ -81,6 +82,50 @@ export default function Checkout({ onFinish }) {
   const [createdPedidoData, setCreatedPedidoData] = useState(null)
   const [showTracking, setShowTracking] = useState(false)
   const [alertModal, setAlertModal] = useState(null)
+
+  // Banners (igual que Landing.jsx)
+  const banners = useMemo(() => {
+    if (config?.landing_banners_json) {
+      try {
+        const parsed = JSON.parse(config.landing_banners_json)
+        if (parsed && parsed.length > 0) {
+          const activeBanners = parsed.filter(b => b.active !== false)
+          return activeBanners.length > 0 ? activeBanners : parsed
+        }
+      } catch (e) {}
+    }
+    return [
+      {
+        id: 1,
+        image: config?.landing_banner_1 || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=2070',
+        title: config?.landing_banner_1_title ?? config?.landing_subtitulo ?? '¡Recargas al Instante!',
+        interval: config?.landing_banner_1_interval || '5'
+      },
+      {
+        id: 2,
+        image: config?.landing_banner_2 || 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=2071',
+        title: config?.landing_banner_2_title ?? 'Los mejores precios del mercado',
+        interval: config?.landing_banner_2_interval || '5'
+      },
+      {
+        id: 3,
+        image: config?.landing_banner_3 || 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&q=80&w=2070',
+        title: config?.landing_banner_3_title ?? 'Explora nuestro catálogo',
+        interval: config?.landing_banner_3_interval || '5'
+      }
+    ]
+  }, [config])
+
+  // Auto-rotación de banners
+  useEffect(() => {
+    if (!banners || banners.length <= 1) return
+    const interval = parseInt(banners[currentBanner]?.interval || '5') * 1000
+    const timer = setTimeout(() => {
+      setCurrentBanner(prev => (prev + 1) % banners.length)
+    }, interval)
+    return () => clearTimeout(timer)
+  }, [currentBanner, banners])
+
 
   // Efecto para asegurar que la página siempre aparezca al inicio al cargar o cambiar de paso
   useEffect(() => {
@@ -489,11 +534,11 @@ export default function Checkout({ onFinish }) {
 
             {user && (
               <div className="nav-dropdown">
-                <div className="flex items-center" style={{ gap: '8px', cursor: 'pointer' }}>
+                <div className="flex items-center" style={{ gap: '8px', cursor: 'pointer', padding: '8px 14px', borderRadius: '999px', backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', transition: 'all 0.2s' }}>
                   <div className="user-avatar-small">
                     {user.email?.charAt(0).toUpperCase()}
                   </div>
-                  <span className="hidden-mobile" style={{ fontWeight: '600' }}>Mi Cuenta ▾</span>
+                  <span className="hidden-mobile" style={{ fontWeight: '600', fontSize: '14px' }}>Mi Cuenta ▾</span>
                 </div>
                 <div className="dropdown-content" style={{ right: 0, left: 'auto' }}>
                   <a href="#" onClick={(e) => { e.preventDefault(); onFinish(); }}>Regresar a la Tienda</a>
@@ -505,7 +550,49 @@ export default function Checkout({ onFinish }) {
         </div>
       </header>
 
-      <div className="landing-container" style={{ paddingTop: '100px', paddingBottom: '60px', position: 'relative', zIndex: 10 }}>
+      {/* BANNER SLIDER (igual que Landing) */}
+      <section style={{ position: 'relative', width: '100%', overflow: 'hidden', height: '200px', marginTop: '0' }}>
+        {banners.map((banner, idx) => (
+          <div
+            key={idx}
+            style={{
+              position: 'absolute', inset: 0,
+              backgroundImage: `url(${banner.image})`,
+              backgroundSize: 'cover', backgroundPosition: 'center',
+              opacity: idx === currentBanner ? 1 : 0,
+              transition: 'opacity 0.8s ease-in-out',
+              zIndex: idx === currentBanner ? 1 : 0
+            }}
+          >
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)'
+            }} />
+            {banner.title && (
+              <div style={{ position: 'relative', zIndex: 2, padding: '0 32px', height: '100%', display: 'flex', alignItems: 'center' }}>
+                <h2 style={{ color: '#fff', fontSize: '22px', fontWeight: 800, textShadow: '0 2px 8px rgba(0,0,0,0.5)', margin: 0, maxWidth: '500px' }}>{banner.title}</h2>
+              </div>
+            )}
+          </div>
+        ))}
+        {/* Dots */}
+        <div style={{ position: 'absolute', bottom: '12px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', zIndex: 10 }}>
+          {banners.map((_, idx) => (
+            <span
+              key={idx}
+              onClick={() => setCurrentBanner(idx)}
+              style={{
+                width: idx === currentBanner ? '20px' : '8px',
+                height: '8px', borderRadius: '999px',
+                backgroundColor: idx === currentBanner ? '#00d2ff' : 'rgba(255,255,255,0.4)',
+                cursor: 'pointer', transition: 'all 0.3s'
+              }}
+            />
+          ))}
+        </div>
+      </section>
+
+      <div className="landing-container" style={{ paddingTop: '28px', paddingBottom: '60px', position: 'relative', zIndex: 10 }}>
         <div className="page-header mb-8" style={{ paddingBottom: 0, display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button 
             className="btn btn-ghost btn-icon" 
