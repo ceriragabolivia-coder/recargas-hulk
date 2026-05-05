@@ -422,28 +422,11 @@ export default function Checkout({ onFinish }) {
 
   if (orderFinished) {
     return (
-      <>
-        <div className={`landing-page ${darkMode ? 'dark' : ''}`} style={{ minHeight: '100vh', position: 'relative', overflowX: 'hidden' }}>
-          <style dangerouslySetInnerHTML={{ __html: `
-            :root { --bg-page: #f8f9fa; --bg-card: #ffffff; --bg-header: #ffffff; --text-main: #1a1d21; --text-muted: #4a5568; --border: #e2e8f0; --accent: #7b2ff7; }
-            .dark { --bg-page: #0f172a; --bg-card: #1e293b; --bg-header: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8; --border: #334155; }
-            .landing-page { background-color: var(--bg-page); color: var(--text-main); font-family: 'Inter', sans-serif; }
-            .landing-container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-            .landing-header { background: var(--bg-header); height: 80px; display: flex; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-bottom: 1px solid var(--border); }
-            .landing-header-inner { width: 100%; display: flex; justify-content: space-between; align-items: center; }
-            .landing-logo-container { display: flex; align-items: center; gap: 10px; }
-            .landing-logo-img { width: 40px !important; height: 40px !important; border-radius: 10px; object-fit: contain; }
-            .landing-logo-text { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #00d2ff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; white-space: nowrap; }
-            .landing-header-right { display: flex; align-items: center; gap: 20px; }
-            .btn-theme-toggle { background: var(--bg-hover); border: 1px solid var(--border); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; }
-            .responsive-grid-2col { display: grid; grid-template-columns: 1fr 400px; gap: 30px; }
-            @media (max-width: 1024px) { .responsive-grid-2col { grid-template-columns: 1fr; } }
-            @media (max-width: 768px) { .landing-header { height: 64px; } .landing-logo-img { width: 32px !important; height: 32px !important; } .landing-logo-text { font-size: 16px; } }
-          `}} />
-          <FloatingBackground />
-          
-          {/* HEADER */}
-          <header className="landing-header">
+      <div style={{ minHeight: '100vh', position: 'relative', overflowX: 'hidden', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+        <FloatingBackground />
+
+        {/* HEADER — idéntico a Landing */}
+        <header className="landing-header">
           <div className="landing-container flex items-center justify-between landing-header-inner">
             <div className="flex items-center landing-header-left">
               <div className="landing-logo-container" onClick={onFinish} style={{ cursor: 'pointer' }}>
@@ -481,8 +464,8 @@ export default function Checkout({ onFinish }) {
                     )}
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <button 
-                      className="btn btn-primary" 
+                    <button
+                      className="btn btn-primary"
                       onClick={() => setShowTracking(true)}
                       style={{ height: '56px', borderRadius: '14px', fontSize: '16px', fontWeight: 800, background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0088ff 100%)' }}
                     >
@@ -498,25 +481,8 @@ export default function Checkout({ onFinish }) {
               )}
             </div>
           </div>
-        <style dangerouslySetInnerHTML={{ __html: `
-          :root { --bg-page: #f8f9fa; --bg-card: #ffffff; --bg-header: #ffffff; --text-main: #1a1d21; --text-muted: #4a5568; --border: #e2e8f0; --accent: #7b2ff7; }
-          .dark { --bg-page: #0f172a; --bg-card: #1e293b; --bg-header: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8; --border: #334155; }
-          .landing-page { background-color: var(--bg-page); color: var(--text-main); font-family: 'Inter', sans-serif; }
-          .landing-container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-          .landing-header { background: var(--bg-header); height: 80px; display: flex; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-bottom: 1px solid var(--border); }
-          .landing-header-inner { width: 100%; display: flex; justify-content: space-between; align-items: center; }
-          .landing-logo-container { display: flex; align-items: center; gap: 10px; }
-          .landing-logo-img { width: 40px !important; height: 40px !important; border-radius: 10px; object-fit: contain; }
-          .landing-logo-text { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #00d2ff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; white-space: nowrap; }
-          .landing-header-right { display: flex; align-items: center; gap: 20px; }
-          .btn-theme-toggle { background: var(--bg-hover); border: 1px solid var(--border); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; }
-          .responsive-grid-2col { display: grid; grid-template-columns: 1fr 400px; gap: 30px; }
-          @media (max-width: 1024px) { .responsive-grid-2col { grid-template-columns: 1fr; } }
-          @media (max-width: 768px) { .landing-header { height: 64px; } .landing-logo-img { width: 32px !important; height: 32px !important; } .landing-logo-text { font-size: 16px; } }
-        `}} />
         </div>
-        </div>
-      </>
+      </div>
     )
   }
 
@@ -524,23 +490,7 @@ export default function Checkout({ onFinish }) {
 
   return (
     <>
-      <div className={`landing-page ${darkMode ? 'dark' : ''}`} style={{ minHeight: '100vh', position: 'relative', overflowX: 'hidden' }}>
-        <style dangerouslySetInnerHTML={{ __html: `
-          :root { --bg-page: #f8f9fa; --bg-card: #ffffff; --bg-header: #ffffff; --text-main: #1a1d21; --text-muted: #4a5568; --border: #e2e8f0; --accent: #7b2ff7; }
-          .dark { --bg-page: #0f172a; --bg-card: #1e293b; --bg-header: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8; --border: #334155; }
-          .landing-page { background-color: var(--bg-page); color: var(--text-main); font-family: 'Inter', sans-serif; }
-          .landing-container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-          .landing-header { background: var(--bg-header); height: 80px; display: flex; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-bottom: 1px solid var(--border); }
-          .landing-header-inner { width: 100%; display: flex; justify-content: space-between; align-items: center; }
-          .landing-logo-container { display: flex; align-items: center; gap: 10px; }
-          .landing-logo-img { width: 40px !important; height: 40px !important; border-radius: 10px; object-fit: contain; }
-          .landing-logo-text { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #00d2ff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; white-space: nowrap; }
-          .landing-header-right { display: flex; align-items: center; gap: 20px; }
-          .btn-theme-toggle { background: var(--bg-hover); border: 1px solid var(--border); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; }
-          .responsive-grid-2col { display: grid; grid-template-columns: 1fr 400px; gap: 30px; }
-          @media (max-width: 1024px) { .responsive-grid-2col { grid-template-columns: 1fr; } }
-          @media (max-width: 768px) { .landing-header { height: 64px; } .landing-logo-img { width: 32px !important; height: 32px !important; } .landing-logo-text { font-size: 16px; } }
-        `}} />
+      <div style={{ minHeight: '100vh', position: 'relative', overflowX: 'hidden', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
         <FloatingBackground />
         
         {/* HEADER — idéntico a Landing */}
@@ -1050,22 +1000,6 @@ export default function Checkout({ onFinish }) {
           onCancel={alertModal.onCancel || (() => setAlertModal(null))}
         />
       )}
-      <style dangerouslySetInnerHTML={{ __html: `
-        :root { --bg-page: #f8f9fa; --bg-card: #ffffff; --bg-header: #ffffff; --text-main: #1a1d21; --text-muted: #4a5568; --border: #e2e8f0; --accent: #7b2ff7; }
-        .dark { --bg-page: #0f172a; --bg-card: #1e293b; --bg-header: #1e293b; --text-main: #f8fafc; --text-muted: #94a3b8; --border: #334155; }
-        .landing-page { background-color: var(--bg-page); color: var(--text-main); font-family: 'Inter', sans-serif; }
-        .landing-container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-        .landing-header { background: var(--bg-header); height: 80px; display: flex; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-bottom: 1px solid var(--border); }
-        .landing-header-inner { width: 100%; display: flex; justify-content: space-between; align-items: center; }
-        .landing-logo-container { display: flex; align-items: center; gap: 10px; }
-        .landing-logo-img { width: 40px !important; height: 40px !important; border-radius: 10px; object-fit: contain; }
-        .landing-logo-text { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #00d2ff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; white-space: nowrap; }
-        .landing-header-right { display: flex; align-items: center; gap: 20px; }
-        .btn-theme-toggle { background: var(--bg-hover); border: 1px solid var(--border); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; }
-        .responsive-grid-2col { display: grid; grid-template-columns: 1fr 400px; gap: 30px; }
-        @media (max-width: 1024px) { .responsive-grid-2col { grid-template-columns: 1fr; } }
-        @media (max-width: 768px) { .landing-header { height: 64px; } .landing-logo-img { width: 32px !important; height: 32px !important; } .landing-logo-text { font-size: 16px; } }
-      `}} />
       </main>
     </div>
   </>
