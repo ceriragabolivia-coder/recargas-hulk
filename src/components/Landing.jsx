@@ -1661,23 +1661,49 @@ export default function Landing() {
           .detail-sidebar { position: static; }
         }
 
-        @media (max-width: 768px) {
-          .hidden-mobile { display: none; }
-          .visible-mobile { display: flex; }
-          .landing-header { height: 64px; }
-          .landing-header-inner { gap: 10px; }
-          .landing-header-left { gap: 10px; }
-          .landing-header-right { gap: 12px; }
-          .landing-logo-text { font-size: 16px; }
           .landing-logo-img { width: 32px; height: 32px; }
           .landing-logo-icon { width: 32px; height: 32px; font-size: 18px; }
           .user-avatar-small { width: 30px; height: 30px; font-size: 14px; }
-          .hero-slider { height: 280px; }
-          .hero-content h2 { font-size: 28px; }
-          .hero-content { left: 20px; bottom: 20px; }
+          .hero-slider { 
+            height: auto; 
+            aspect-ratio: 2.8 / 1; 
+            min-height: 120px;
+            border-radius: 12px;
+          }
+          .hero-slide {
+            background-size: 100% 100%;
+          }
+          .hero-content { 
+            left: 15px; 
+            bottom: 15px; 
+            max-width: 70%;
+          }
+          .hero-content h2 { font-size: 18px; margin-bottom: 8px; }
+          .hero-content p { font-size: 12px; margin-bottom: 12px; display: none; }
+          .hero-content .btn-landing-primary { padding: 6px 12px; font-size: 12px; }
+          .slider-dots { bottom: 10px; }
+          .dot { width: 6px; height: 6px; }
+          .dot.active { width: 15px; }
+
           .footer-content { grid-template-columns: 1fr; gap: 40px; }
           .detail-header-card { flex-direction: column; text-align: center; }
-          .products-grid { grid-template-columns: 1fr 1fr; }
+          .games-grid { 
+            grid-template-columns: 1fr 1fr; 
+            gap: 12px;
+            padding: 0 4px;
+          }
+          .game-card {
+            border-radius: 12px;
+          }
+          .game-info {
+            padding: 10px;
+          }
+          .game-name {
+            font-size: 13px;
+          }
+          .products-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+          .landing-section { margin-top: 20px; }
+          .section-header h3 { font-size: 20px; }
         }
       `}} />
     </div>
