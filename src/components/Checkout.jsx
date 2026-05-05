@@ -778,6 +778,7 @@ export default function Checkout({ onFinish }) {
                 <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Esperando confirmación del sistema.</p>
               </div>
             )}
+          </div>
 
             <div style={{ backgroundColor: 'var(--bg-panel)', padding: '12px', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '14px' }}>
@@ -839,6 +840,7 @@ export default function Checkout({ onFinish }) {
             </div>
           </div>
         </div>
+      </div>
 
       {alertModal && (
         <AlertModal
@@ -867,7 +869,7 @@ export default function Checkout({ onFinish }) {
           @media (max-width: 768px) { .landing-header { height: 64px; } .landing-logo-img { width: 32px !important; height: 32px !important; } .landing-logo-text { font-size: 16px; } }
         `}} />
       </div>
-    </>
+    </div>
   )
 }
 
