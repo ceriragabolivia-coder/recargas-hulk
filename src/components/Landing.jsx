@@ -569,47 +569,47 @@ export default function Landing() {
       </header>
 
       <main className="landing-main">
-        {/* HERO SLIDER (Global) */}
-        {!search.trim() && (
+        {/* HERO SLIDER (Solo en Home arriba) */}
+        {!selectedJuego && !showCheckout && !showOrders && !search.trim() && (
           <section className="landing-hero landing-container">
-          <div className="hero-slider">
-            {banners.map((banner, idx) => (
-              <div 
-                key={idx} 
-                className={`hero-slide ${idx === currentBanner ? 'active' : ''}`}
-                style={{ backgroundImage: `url(${banner.image})` }}
-              >
-                <div className="hero-content">
-                  {banner.title && <h2>{banner.title}</h2>}
-                  {banner.text && <p>{banner.text}</p>}
-                  {banner.btnText && (
-                    <button 
-                      className="btn-landing-primary" 
-                      onClick={() => {
-                        if (banner.url && banner.url.startsWith('http')) {
-                          window.location.href = banner.url
-                        } else if (banner.url) {
-                          navigate(banner.url)
-                        }
-                      }}
-                    >
-                      {banner.btnText}
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-            <div className="slider-dots">
-              {banners.map((_, idx) => (
-                <span 
+            <div className="hero-slider">
+              {banners.map((banner, idx) => (
+                <div 
                   key={idx} 
-                  className={`dot ${idx === currentBanner ? 'active' : ''}`}
-                  onClick={() => setCurrentBanner(idx)}
-                ></span>
+                  className={`hero-slide ${idx === currentBanner ? 'active' : ''}`}
+                  style={{ backgroundImage: `url(${banner.image})` }}
+                >
+                  <div className="hero-content">
+                    {banner.title && <h2>{banner.title}</h2>}
+                    {banner.text && <p>{banner.text}</p>}
+                    {banner.btnText && (
+                      <button 
+                        className="btn-landing-primary" 
+                        onClick={() => {
+                          if (banner.url && banner.url.startsWith('http')) {
+                            window.location.href = banner.url
+                          } else if (banner.url) {
+                            navigate(banner.url)
+                          }
+                        }}
+                      >
+                        {banner.btnText}
+                      </button>
+                    )}
+                  </div>
+                </div>
               ))}
+              <div className="slider-dots">
+                {banners.map((_, idx) => (
+                  <span 
+                    key={idx} 
+                    className={`dot ${idx === currentBanner ? 'active' : ''}`}
+                    onClick={() => setCurrentBanner(idx)}
+                  ></span>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
         )}
 
         {showCheckout ? (
@@ -946,6 +946,33 @@ export default function Landing() {
                 </div>
               </div>
             </div>
+
+            {/* HERO SLIDER (En Detalle abajo) */}
+            <section className="landing-hero" style={{ marginTop: '40px', padding: 0 }}>
+              <div className="hero-slider" style={{ height: '300px', borderRadius: '16px' }}>
+                {banners.map((banner, idx) => (
+                  <div 
+                    key={idx} 
+                    className={`hero-slide ${idx === currentBanner ? 'active' : ''}`}
+                    style={{ backgroundImage: `url(${banner.image})` }}
+                  >
+                    <div className="hero-content" style={{ bottom: '30px', left: '30px' }}>
+                      {banner.title && <h2 style={{ fontSize: '24px' }}>{banner.title}</h2>}
+                      {banner.text && <p style={{ fontSize: '14px' }}>{banner.text}</p>}
+                    </div>
+                  </div>
+                ))}
+                <div className="slider-dots">
+                  {banners.map((_, idx) => (
+                    <span 
+                      key={idx} 
+                      className={`dot ${idx === currentBanner ? 'active' : ''}`}
+                      onClick={() => setCurrentBanner(idx)}
+                    ></span>
+                  ))}
+                </div>
+              </div>
+            </section>
           </div>
         ) : (
           /* VISTA CATALOGO PRINCIPAL */
