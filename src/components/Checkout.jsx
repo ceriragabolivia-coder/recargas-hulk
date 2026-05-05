@@ -763,11 +763,33 @@ export default function Checkout({ onFinish }) {
 
                 <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginBottom: '12px' }}>
                   {isGratis ? (
-                    <div style={{ padding: '32px 24px', textAlign: 'center', backgroundColor: 'rgba(34, 197, 94, 0.1)', borderRadius: '24px', color: 'var(--accent-success)', border: '2px dashed var(--accent-success)' }}>
-                      <div style={{ fontSize: '48px', marginBottom: '12px' }}>🎉</div>
-                      <h3 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '8px' }}>¡Pedido Gratuito!</h3>
-                      <p style={{ fontSize: '14px', opacity: 0.8 }}>Tu cupón cubre el 100% del total.</p>
-                    </div>
+                    <>
+                      <div style={{ padding: '32px 24px', textAlign: 'center', backgroundColor: 'rgba(34, 197, 94, 0.1)', borderRadius: '24px', color: 'var(--accent-success)', border: '2px dashed var(--accent-success)', marginBottom: '16px' }}>
+                        <div style={{ fontSize: '48px', marginBottom: '12px' }}>🎉</div>
+                        <h3 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '8px' }}>¡Pedido Gratuito!</h3>
+                        <p style={{ fontSize: '14px', opacity: 0.8 }}>Tu cupón cubre el 100% del total.</p>
+                      </div>
+                      <button
+                        className="btn btn-primary btn-lg"
+                        style={{
+                          width: '100%', height: '52px', fontSize: '17px', fontWeight: 800,
+                          borderRadius: '18px', background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0088ff 100%)',
+                          boxShadow: '0 8px 24px rgba(0, 180, 255, 0.4)', border: 'none', color: 'white',
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: isProcessing ? 'default' : 'pointer'
+                        }}
+                        disabled={isProcessing}
+                        onClick={handleFinalizar}
+                        onMouseEnter={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(-2px)')}
+                        onMouseLeave={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(0)')}
+                      >
+                        {isProcessing ? (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                            <div className="spinner-border spinner-border-sm" role="status" />
+                            <span>PROCESANDO...</span>
+                          </div>
+                        ) : 'Confirmar y Pagar'}
+                      </button>
+                    </>
                   ) : ((!useWalletPartial && !useWalletBs) || (!hasEnoughBalance && useWalletPartial) || (!hasEnoughBalanceBs && useWalletBs)) ? (
                     <>
                       {selectedMetodoId && !isWalletOnly && !isWalletBsOnly ? (
@@ -789,6 +811,47 @@ export default function Checkout({ onFinish }) {
                             >
                               <span style={{ marginRight: '4px' }}>✕</span> Cambiar
                             </button>
+                          </div>
+
+                          {/* ── RESUMEN DE TOTALES ── */}
+                          <div style={{
+                            backgroundColor: 'rgba(0, 210, 255, 0.04)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '16px',
+                            padding: '14px 16px',
+                            marginBottom: '20px'
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
+                              <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Monto Total:</span>
+                              <span style={{ fontWeight: 700, textDecoration: activeRuletaDesc ? 'line-through' : 'none', opacity: activeRuletaDesc ? 0.5 : 1 }}>{formatUSD(totalUSD)}</span>
+                            </div>
+                            {activeRuletaDesc && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px', color: '#FFD700' }}>
+                                <span style={{ fontWeight: 600 }}>🎡 Descuento Ruleta:</span>
+                                <span style={{ fontWeight: 800 }}>-{formatUSD(totalUSD - discountedTotalUSD)}</span>
+                              </div>
+                            )}
+                            {useWalletPartial && walletAmountToUse > 0 && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px', color: 'var(--accent-success)' }}>
+                                <span style={{ fontWeight: 600 }}>💵 Billetera USD:</span>
+                                <span style={{ fontWeight: 800 }}>-{formatUSD(walletAmountToUse)}</span>
+                              </div>
+                            )}
+                            {useWalletBs && walletBsAmountToUse > 0 && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px', color: '#a855f7' }}>
+                                <span style={{ fontWeight: 600 }}>🏦 Billetera Bs:</span>
+                                <span style={{ fontWeight: 800 }}>-{formatBs(walletBsAmountToUse)}</span>
+                              </div>
+                            )}
+                            <div style={{ borderTop: '1px dashed var(--border-color)', marginTop: '10px', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontWeight: 800, fontSize: '15px' }}>Total Pagar:</span>
+                              <div style={{ textAlign: 'right' }}>
+                                <div style={{ color: 'var(--accent-success)', fontSize: '22px', fontWeight: 900 }}>
+                                  {useWalletBs && !hasEnoughBalanceBs ? formatBs(remainingBsFromWallet) : formatBs(remainingBs)}
+                                </div>
+                                <div style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: 600 }}>{formatUSD(remainingUSD)}</div>
+                              </div>
+                            </div>
                           </div>
 
                           {selectedMetodo?.datos && (
@@ -883,6 +946,28 @@ export default function Checkout({ onFinish }) {
                             />
                           </div>
 
+                          {/* ── BOTÓN CONFIRMAR justo bajo la referencia ── */}
+                          <button
+                            className="btn btn-primary btn-lg"
+                            style={{
+                              width: '100%', marginBottom: '16px', height: '52px', fontSize: '17px', fontWeight: 800,
+                              borderRadius: '18px', background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0088ff 100%)',
+                              boxShadow: '0 8px 24px rgba(0, 180, 255, 0.4)', border: 'none', color: 'white',
+                              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: isProcessing ? 'default' : 'pointer'
+                            }}
+                            disabled={isProcessing || (!isGratis && !isWalletOnly && !isWalletBsOnly && selectedMetodoId && !referencia.trim())}
+                            onClick={handleFinalizar}
+                            onMouseEnter={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(-2px)')}
+                            onMouseLeave={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(0)')}
+                          >
+                            {isProcessing ? (
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                                <div className="spinner-border spinner-border-sm" role="status" />
+                                <span>PROCESANDO...</span>
+                              </div>
+                            ) : 'Confirmar y Pagar'}
+                          </button>
+
                           <div className="form-group mb-0">
                             <label className="form-label" style={{ fontSize: '13px', fontWeight: 600 }}>Adjuntar Comprobante (Opcional)</label>
                             <div style={{ 
@@ -911,11 +996,45 @@ export default function Checkout({ onFinish }) {
                       )}
                     </>
                   ) : (
-                    <div style={{ padding: '24px', backgroundColor: 'rgba(34, 197, 94, 0.08)', borderRadius: '20px', border: '1px solid var(--accent-success)', color: 'var(--accent-success)', textAlign: 'center' }}>
-                      <div style={{ fontSize: '32px', marginBottom: '8px' }}>✅</div>
-                      <span style={{ fontWeight: 800, fontSize: '16px' }}>Pago Cubierto</span>
-                      <p style={{ fontSize: '12px', marginTop: '4px' }}>El monto se descontará de tu billetera.</p>
-                    </div>
+                    <>
+                      <div style={{ padding: '24px', backgroundColor: 'rgba(34, 197, 94, 0.08)', borderRadius: '20px', border: '1px solid var(--accent-success)', color: 'var(--accent-success)', textAlign: 'center', marginBottom: '16px' }}>
+                        <div style={{ fontSize: '32px', marginBottom: '8px' }}>✅</div>
+                        <span style={{ fontWeight: 800, fontSize: '16px' }}>Pago Cubierto</span>
+                        <p style={{ fontSize: '12px', marginTop: '4px' }}>El monto se descontará de tu billetera.</p>
+                      </div>
+                      {/* Total compacto para billetera */}
+                      <div style={{ backgroundColor: 'rgba(0, 245, 212, 0.06)', border: '1px solid var(--accent-success)', borderRadius: '16px', padding: '14px 16px', marginBottom: '16px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontWeight: 800, fontSize: '15px' }}>Total Pagar:</span>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ color: 'var(--accent-success)', fontSize: '22px', fontWeight: 900 }}>
+                              {useWalletBs && !hasEnoughBalanceBs ? formatBs(remainingBsFromWallet) : formatBs(remainingBs)}
+                            </div>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: 600 }}>{formatUSD(remainingUSD)}</div>
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        className="btn btn-primary btn-lg"
+                        style={{
+                          width: '100%', height: '52px', fontSize: '17px', fontWeight: 800,
+                          borderRadius: '18px', background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0088ff 100%)',
+                          boxShadow: '0 8px 24px rgba(0, 180, 255, 0.4)', border: 'none', color: 'white',
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: isProcessing ? 'default' : 'pointer'
+                        }}
+                        disabled={isProcessing}
+                        onClick={handleFinalizar}
+                        onMouseEnter={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(-2px)')}
+                        onMouseLeave={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(0)')}
+                      >
+                        {isProcessing ? (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                            <div className="spinner-border spinner-border-sm" role="status" />
+                            <span>PROCESANDO...</span>
+                          </div>
+                        ) : 'Confirmar y Pagar'}
+                      </button>
+                    </>
                   )}
                 </div>
               </>
@@ -928,64 +1047,7 @@ export default function Checkout({ onFinish }) {
             )}
           </div>
 
-            <div style={{ backgroundColor: 'var(--bg-panel)', padding: '12px', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '14px' }}>
-                <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Monto Total:</span>
-                <span style={{ fontWeight: 700, textDecoration: activeRuletaDesc ? 'line-through' : 'none', opacity: activeRuletaDesc ? 0.5 : 1 }}>{formatUSD(totalUSD)}</span>
-              </div>
-              
-              {activeRuletaDesc && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '14px', color: '#FFD700' }}>
-                  <span style={{ fontWeight: 600 }}>🎡 Descuento Ruleta:</span>
-                  <span style={{ fontWeight: 800 }}>-{formatUSD(totalUSD - discountedTotalUSD)}</span>
-                </div>
-              )}
 
-              {useWalletPartial && walletAmountToUse > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '14px', color: 'var(--accent-success)' }}>
-                  <span style={{ fontWeight: 600 }}>💵 Billetera USD:</span>
-                  <span style={{ fontWeight: 800 }}>-{formatUSD(walletAmountToUse)}</span>
-                </div>
-              )}
-
-              {useWalletBs && walletBsAmountToUse > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '14px', color: '#a855f7' }}>
-                  <span style={{ fontWeight: 600 }}>🏦 Billetera Bs:</span>
-                  <span style={{ fontWeight: 800 }}>-{formatBs(walletBsAmountToUse)}</span>
-                </div>
-              )}
-
-              <div style={{ borderTop: '2px dashed var(--border-color)', margin: '16px 0', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontWeight: 800, fontSize: '18px' }}>Total Pagar:</span>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ color: 'var(--accent-success)', fontSize: '24px', fontWeight: 900, textShadow: '0 0 12px rgba(34, 197, 94, 0.3)' }}>
-                    {useWalletBs && !hasEnoughBalanceBs ? formatBs(remainingBsFromWallet) : formatBs(remainingBs)}
-                  </div>
-                  <div style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: 600 }}>{formatUSD(remainingUSD)}</div>
-                </div>
-              </div>
-
-              <button 
-                className="btn btn-primary btn-lg" 
-                style={{ 
-                  width: '100%', marginTop: '8px', height: '52px', fontSize: '17px', fontWeight: 800,
-                  borderRadius: '18px', background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0088ff 100%)',
-                  boxShadow: '0 8px 24px rgba(0, 180, 255, 0.4)', border: 'none', color: 'white',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: isProcessing ? 'default' : 'pointer'
-                }}
-                disabled={isProcessing || (!isGratis && !isWalletOnly && !isWalletBsOnly && selectedMetodoId && !referencia.trim())}
-                onClick={handleFinalizar}
-                onMouseEnter={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(-2px)')}
-                onMouseLeave={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(0)')}
-              >
-                {isProcessing ? (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                    <div className="spinner-border spinner-border-sm" role="status" />
-                    <span>PROCESANDO...</span>
-                  </div>
-                ) : 'Confirmar y Pagar'}
-              </button>
-            </div>
           </div>
         </div>
       </div>
