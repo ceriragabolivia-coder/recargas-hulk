@@ -1929,16 +1929,16 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                   <thead>
                     <tr>
                       <th style={{ width: '70px' }}>ID</th>
-                      <th className="desktop-only" style={{ width: '140px' }}>Fecha</th>
-                      <th style={{ textAlign: 'left', width: '160px', paddingLeft: '15px !important' }}>Cliente</th>
-                      <th className="desktop-only" style={{ width: '100px' }}>Juego</th>
-                      <th className="desktop-only" style={{ width: '160px' }}>Paquete</th>
-                      <th className="desktop-only" style={{ width: '100px' }}>Ref</th>
-                      <th style={{ width: '90px' }}>Total</th>
-                      <th className="desktop-only" style={{ width: '100px' }}>Admin</th>
-                      <th style={{ width: '120px' }}>Pago</th>
-                      <th style={{ width: '150px' }}>Estado</th>
-                      <th style={{ width: '110px' }}>Acción</th>
+                      <th className="desktop-only" style={{ width: '120px' }}>Fecha</th>
+                      <th style={{ textAlign: 'left', width: '150px', paddingLeft: '15px !important' }}>Cliente</th>
+                      <th className="desktop-only" style={{ width: '90px' }}>Juego</th>
+                      <th className="desktop-only" style={{ width: '130px' }}>Paquete</th>
+                      <th className="desktop-only" style={{ width: '90px' }}>Ref</th>
+                      <th style={{ width: '80px' }}>Total</th>
+                      <th className="desktop-only" style={{ width: '90px' }}>Admin</th>
+                      <th style={{ width: '100px' }}>Pago</th>
+                      <th style={{ width: '130px' }}>Estado</th>
+                      <th style={{ width: '100px' }}>Acción</th>
                     </tr>
                   </thead>
                   <tbody>

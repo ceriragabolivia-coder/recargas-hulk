@@ -588,7 +588,7 @@ export default function Landing() {
         {showCheckout ? (
           <Checkout embedded={true} onFinish={() => setShowCheckout(false)} />
         ) : showOrders ? (
-          <div className="landing-container fade-in" style={{ padding: '20px 0' }}>
+          <div className="fade-in" style={{ width: '100%', maxWidth: '1400px', margin: '0 auto', padding: '20px' }}>
              <Pedidos embedded={true} />
           </div>
         ) : selectedJuego ? (
