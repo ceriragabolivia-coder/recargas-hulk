@@ -784,11 +784,10 @@ export default function Landing() {
             </section>
             )}
 
-            {/* BESTSELLERS */}
             {!search.trim() && (
               <section className="landing-section landing-container">
                 <div className="section-header">
-                  <h3>Bestsellers</h3>
+                  <h3>Recarga Aquí</h3>
                   <a href="#all-games" className="view-all">Ver todos &gt;</a>
                 </div>
                 <div className="games-grid">
@@ -1661,6 +1660,14 @@ export default function Landing() {
           .detail-sidebar { position: static; }
         }
 
+        @media (max-width: 768px) {
+          .hidden-mobile { display: none !important; }
+          .visible-mobile { display: flex !important; }
+          .landing-header { height: 64px; }
+          .landing-header-inner { gap: 10px; }
+          .landing-header-left { gap: 10px; }
+          .landing-header-right { gap: 12px; }
+          .landing-logo-text { font-size: 16px; }
           .landing-logo-img { width: 32px; height: 32px; }
           .landing-logo-icon { width: 32px; height: 32px; font-size: 18px; }
           .user-avatar-small { width: 30px; height: 30px; font-size: 14px; }
@@ -1669,6 +1676,8 @@ export default function Landing() {
             aspect-ratio: 2.8 / 1; 
             min-height: 120px;
             border-radius: 12px;
+            margin: 0 auto;
+            width: 95%;
           }
           .hero-slide {
             background-size: 100% 100%;
@@ -1678,19 +1687,19 @@ export default function Landing() {
             bottom: 15px; 
             max-width: 70%;
           }
-          .hero-content h2 { font-size: 18px; margin-bottom: 8px; }
-          .hero-content p { font-size: 12px; margin-bottom: 12px; display: none; }
-          .hero-content .btn-landing-primary { padding: 6px 12px; font-size: 12px; }
-          .slider-dots { bottom: 10px; }
-          .dot { width: 6px; height: 6px; }
-          .dot.active { width: 15px; }
+          .hero-content h2 { font-size: 16px; margin-bottom: 4px; }
+          .hero-content p { display: none; }
+          .hero-content .btn-landing-primary { padding: 4px 10px; font-size: 11px; border-radius: 6px; }
+          .slider-dots { bottom: 8px; }
+          .dot { width: 5px; height: 5px; }
+          .dot.active { width: 12px; }
 
           .footer-content { grid-template-columns: 1fr; gap: 40px; }
           .detail-header-card { flex-direction: column; text-align: center; }
           .games-grid { 
             grid-template-columns: 1fr 1fr; 
             gap: 12px;
-            padding: 0 4px;
+            padding: 0 10px;
           }
           .game-card {
             border-radius: 12px;
@@ -1727,7 +1736,7 @@ function GameCard({ juego, onSelect }) {
       />
       <div className="game-info">
         <div className="game-name">{juego.nombre}</div>
-        <div className="game-meta">
+        <div className="game-meta hidden-mobile">
           <span className="rating">⭐ 5.0</span>
           <span>•</span>
           <span>{sold} Sold</span>
