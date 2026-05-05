@@ -274,7 +274,7 @@ export default function Landing() {
   }
 
   useEffect(() => {
-    if (!selectedJuego && banners.length > 0) {
+    if (banners.length > 0) {
       const currentBannerData = banners[currentBanner];
       if (!currentBannerData) return;
       
@@ -287,7 +287,7 @@ export default function Landing() {
       
       return () => clearTimeout(timer);
     }
-  }, [banners, selectedJuego, currentBanner, config]);
+  }, [banners, currentBanner, config]);
 
   const filteredJuegos = useMemo(() => {
     return juegos.filter(j => {
