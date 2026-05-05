@@ -448,7 +448,7 @@ export default function Checkout({ onFinish }) {
   }
 
   // Modo Nocturno (consistente con la landing)
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('landing_dark_mode') === 'true')
+  const [darkMode, setDarkMode] = useState(true)
 
   return (
     <>
@@ -486,17 +486,6 @@ export default function Checkout({ onFinish }) {
           </div>
 
           <div className="flex items-center landing-header-right">
-            <button 
-              className="btn-theme-toggle" 
-              onClick={() => {
-                const newMode = !darkMode;
-                setDarkMode(newMode);
-                localStorage.setItem('landing_dark_mode', newMode);
-              }}
-              title={darkMode ? 'Modo Claro' : 'Modo Nocturno'}
-            >
-              {darkMode ? '☀️' : '🌙'}
-            </button>
 
             {user && (
               <div className="nav-dropdown">

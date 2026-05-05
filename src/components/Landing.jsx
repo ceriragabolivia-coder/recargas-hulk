@@ -47,7 +47,7 @@ export default function Landing() {
   const [showNotiDropdown, setShowNotiDropdown] = useState(false)
   
   // Modo Nocturno
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('landing_dark_mode') === 'true')
+  const [darkMode, setDarkMode] = useState(true)
 
   const banners = useMemo(() => {
     if (config?.landing_banners_json) {
@@ -427,14 +427,6 @@ export default function Landing() {
               </div>
             )}
             
-            {/* BOTON MODO NOCTURNO */}
-            <button 
-              className="btn-theme-toggle" 
-              onClick={() => setDarkMode(!darkMode)}
-              title={darkMode ? 'Modo Claro' : 'Modo Nocturno'}
-            >
-              {darkMode ? '☀️' : '🌙'}
-            </button>
             {user && (
               <div 
                 style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }} 
@@ -1445,7 +1437,7 @@ export default function Landing() {
           object-fit: cover;
         }
         .game-info {
-          padding: 12px;
+          padding: 10px 12px 6px;
         }
         .game-name {
           font-weight: 600;
@@ -1453,7 +1445,7 @@ export default function Landing() {
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          margin-bottom: 4px;
+          margin-bottom: 2px;
         }
         .game-meta {
           display: flex;
@@ -1963,7 +1955,7 @@ export default function Landing() {
             border-radius: 12px;
           }
           .game-info {
-            padding: 8px;
+            padding: 6px 8px 4px;
           }
           .game-name {
             font-size: 13px;
