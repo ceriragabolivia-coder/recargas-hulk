@@ -1673,8 +1673,8 @@ export default function Landing() {
           .user-avatar-small { width: 30px; height: 30px; font-size: 14px; }
           .hero-slider { 
             height: auto; 
-            aspect-ratio: 2.8 / 1; 
-            min-height: 120px;
+            aspect-ratio: 3.5 / 1; 
+            min-height: 90px;
             border-radius: 12px;
             margin: 0 auto;
             width: 95%;
