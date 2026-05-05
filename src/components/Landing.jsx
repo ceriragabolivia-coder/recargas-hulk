@@ -317,11 +317,11 @@ export default function Landing() {
     <div className={`landing-page ${darkMode ? 'dark' : ''}`}>
       {/* HEADER */}
       <header className="landing-header">
-        <div className="landing-container flex items-center justify-between" style={{ gap: '40px' }}>
-          <div className="flex items-center" style={{ gap: '40px' }}>
+        <div className="landing-container flex items-center justify-between landing-header-inner">
+          <div className="flex items-center landing-header-left">
             <div className="landing-logo-container" onClick={() => { handleSelectJuego(null); navigate('/'); }}>
               {config?.landing_logo ? (
-                <img src={config.landing_logo} alt="Logo" style={{ width: '40px', height: '40px', borderRadius: '10px', objectFit: 'contain' }} />
+                <img src={config.landing_logo} alt="Logo" className="landing-logo-img" />
               ) : (
                 <div className="landing-logo-icon">⚡</div>
               )}
@@ -343,7 +343,7 @@ export default function Landing() {
             </nav>
           </div>
 
-          <div className="flex items-center" style={{ gap: '24px' }}>
+          <div className="flex items-center landing-header-right">
             {!selectedJuego && (
               <div className="landing-search hidden-mobile">
                 <input 
@@ -383,7 +383,7 @@ export default function Landing() {
             {user ? (
               <div className="nav-dropdown">
                 <div className="flex items-center" style={{ gap: '8px', cursor: 'pointer' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>
+                  <div className="user-avatar-small">
                     {user.email?.charAt(0).toUpperCase()}
                   </div>
                   <span className="hidden-mobile" style={{ fontWeight: '600' }}>Mi Cuenta ▾</span>
@@ -403,10 +403,13 @@ export default function Landing() {
                 </div>
               </div>
             ) : (
-              <>
-                <button className="btn-landing-secondary" onClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}>Entrar</button>
-                <button className="btn-landing-primary" onClick={() => { setAuthModalView('register'); setIsAuthModalOpen(true); }}>Registrarse</button>
-              </>
+              <div className="flex items-center" style={{ gap: '10px' }}>
+                <button className="btn-landing-secondary hidden-mobile" onClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}>Entrar</button>
+                <button className="btn-landing-primary hidden-mobile" onClick={() => { setAuthModalView('register'); setIsAuthModalOpen(true); }}>Registrarse</button>
+                <button className="btn-mobile-auth-icon visible-mobile" onClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }} title="Entrar">
+                  👤
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -1037,6 +1040,49 @@ export default function Landing() {
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           white-space: nowrap;
+          transition: font-size 0.2s;
+        }
+        .landing-header-inner {
+          gap: 40px;
+        }
+        .landing-header-left {
+          gap: 40px;
+        }
+        .landing-header-right {
+          gap: 24px;
+        }
+        .landing-logo-img {
+          width: 40px; 
+          height: 40px; 
+          border-radius: 10px; 
+          object-fit: contain;
+          transition: width 0.2s, height 0.2s;
+        }
+        .user-avatar-small {
+          width: 36px; 
+          height: 36px; 
+          border-radius: 50%; 
+          background: var(--accent); 
+          display: flex; 
+          align-items: center; 
+          justify-content: center; 
+          color: white; 
+          font-weight: bold;
+        }
+        .visible-mobile { display: none; }
+        .btn-mobile-auth-icon {
+          background: var(--accent);
+          color: white;
+          border: none;
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 18px;
+          cursor: pointer;
+          box-shadow: 0 4px 10px rgba(123, 47, 247, 0.3);
         }
         .landing-nav {
           display: flex;
@@ -1617,9 +1663,18 @@ export default function Landing() {
 
         @media (max-width: 768px) {
           .hidden-mobile { display: none; }
-          .hero-slider { height: 300px; }
-          .hero-content h2 { font-size: 32px; }
-          .hero-content { left: 30px; bottom: 30px; }
+          .visible-mobile { display: flex; }
+          .landing-header { height: 64px; }
+          .landing-header-inner { gap: 10px; }
+          .landing-header-left { gap: 10px; }
+          .landing-header-right { gap: 12px; }
+          .landing-logo-text { font-size: 16px; }
+          .landing-logo-img { width: 32px; height: 32px; }
+          .landing-logo-icon { width: 32px; height: 32px; font-size: 18px; }
+          .user-avatar-small { width: 30px; height: 30px; font-size: 14px; }
+          .hero-slider { height: 280px; }
+          .hero-content h2 { font-size: 28px; }
+          .hero-content { left: 20px; bottom: 20px; }
           .footer-content { grid-template-columns: 1fr; gap: 40px; }
           .detail-header-card { flex-direction: column; text-align: center; }
           .products-grid { grid-template-columns: 1fr 1fr; }
