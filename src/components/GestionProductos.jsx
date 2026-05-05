@@ -12,7 +12,7 @@ export default function GestionProductos() {
   const { config, loading: loadingConfig } = useConfiguracion()
   const [selectedJuego, setSelectedJuego] = useState(null)
   const [searchJuego, setSearchJuego] = useState('')
-  const { productos, loading: loadingProductos, error: errorProductos, createProducto, updateProducto, deleteProducto, toggleProducto, reorderProductos, createCategoria, updateCategoria, deleteCategoria } = useProductos(selectedJuego?.id)
+  const { productos, categorias: allCategorias, loading: loadingProductos, error: errorProductos, createProducto, updateProducto, deleteProducto, toggleProducto, reorderProductos, createCategoria, updateCategoria, deleteCategoria } = useProductos(selectedJuego?.id)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isGameModalOpen, setIsGameModalOpen] = useState(false)
@@ -42,16 +42,16 @@ export default function GestionProductos() {
   }, [juegos, searchJuego])
 
   React.useEffect(() => {
-    if (categorias.length > 0 && !formGame.categoria_id) {
-      setFormGame(prev => ({ ...prev, categoria_id: categorias[0].id }))
+    if (allCategorias.length > 0 && !formGame.categoria_id) {
+      setFormGame(prev => ({ ...prev, categoria_id: allCategorias[0].id }))
     }
-  }, [categorias])
+  }, [allCategorias])
 
   const handleOpenGameModal = () => {
     setFormGame({
       id: null,
       nombre: '',
-      categoria_id: categorias[0]?.id || '',
+      categoria_id: allCategorias[0]?.id || '',
       tipo_calculo: 'estandar',
       metodo_recarga: 'id_jugador',
       guia_id_url: null,
@@ -114,7 +114,7 @@ export default function GestionProductos() {
     e.preventDefault()
     if (!newCategoryName.trim()) return
     setSaving(true)
-    const { error } = await createCategoria({ nombre: newCategoryName, activa: true, orden: categorias.length })
+    const { error } = await createCategoria({ nombre: newCategoryName, activa: true, orden: allCategorias.length })
     if (error) setAlertModal({ type: 'error', message: "Error: " + error.message })
     else {
       setNewCategoryName('')
@@ -1028,7 +1028,7 @@ export default function GestionProductos() {
               required
             >
               <option value="">Selecciona una categoría</option>
-              {categorias.map(c => (
+              {allCategorias.map(c => (
                 <option key={c.id} value={c.id}>{c.nombre}</option>
               ))}
             </select>
@@ -1203,12 +1203,12 @@ export default function GestionProductos() {
         </div>
         
         <div style={{ maxHeight: '350px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
-          {categorias.length === 0 ? (
+          {allCategorias.length === 0 ? (
             <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
               No hay categorías creadas.
             </div>
           ) : (
-            categorias.map(cat => (
+            allCategorias.map(cat => (
               <div key={cat.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid var(--border-color)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <button 
