@@ -1769,23 +1769,23 @@ export default function Landing() {
 
           /* Sidebar compact on mobile */
           .purchase-card { 
-            padding: 12px; 
+            padding: 10px; 
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 20px;
+            border-radius: 16px;
           }
-          .purchase-card h3 { font-size: 16px; margin-bottom: 10px !important; }
+          .purchase-card h3 { font-size: 15px; margin-bottom: 8px !important; }
           .buy-mode-toggle { 
             display: flex; 
             background: rgba(255,255,255,0.03); 
-            border-radius: 10px; 
-            padding: 3px; 
+            border-radius: 8px; 
+            padding: 2px; 
             border: 1px solid var(--border); 
-            margin-bottom: 12px !important; 
-            gap: 3px; 
+            margin-bottom: 10px !important; 
+            gap: 2px; 
           }
           .buy-mode-toggle button {
-            flex: 1; padding: 8px; border-radius: 7px; border: none; background: transparent; color: var(--text-muted); font-size: 12px; font-weight: 700; cursor: pointer;
+            flex: 1; padding: 6px; border-radius: 6px; border: none; background: transparent; color: var(--text-muted); font-size: 11px; font-weight: 700; cursor: pointer;
           }
           .buy-mode-toggle button.active {
             background: var(--accent); color: #000;
@@ -1793,10 +1793,14 @@ export default function Landing() {
           .card-recharge-info { 
             background: var(--bg-panel); 
             border: 1px solid var(--border); 
-            border-radius: 12px; 
-            padding: 12px !important; 
+            border-radius: 10px; 
+            padding: 10px !important; 
             margin-bottom: 0 !important; 
           }
+          .card-recharge-info .form-label { font-size: 11px !important; margin-bottom: 4px !important; }
+          .card-recharge-info .form-input { padding: 8px 12px !important; font-size: 14px !important; }
+          .sidebar-buttons button { padding: 10px !important; font-size: 13px !important; }
+          .sidebar-features { display: none !important; }
 
           .games-grid { 
             grid-template-columns: 1fr 1fr; 
