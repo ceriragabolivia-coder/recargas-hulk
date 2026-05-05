@@ -1695,11 +1695,18 @@ export default function Landing() {
           .dot.active { width: 12px; }
 
           .footer-content { grid-template-columns: 1fr; gap: 40px; }
-          .detail-header-card { flex-direction: column; text-align: center; }
+          .detail-header-card { 
+            flex-direction: column; 
+            text-align: center; 
+            padding: 16px;
+            gap: 16px;
+          }
+          .detail-header-icon { width: 80px; height: 80px; }
+          .detail-header-info h1 { font-size: 24px; }
           .games-grid { 
             grid-template-columns: 1fr 1fr; 
             gap: 12px;
-            padding: 0 10px;
+            padding: 0;
           }
           .game-card {
             border-radius: 12px;
@@ -1710,7 +1717,18 @@ export default function Landing() {
           .game-name {
             font-size: 13px;
           }
+          .price-list-section { padding: 15px; }
           .products-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+          .product-card { padding: 12px; border-radius: 16px; }
+          .product-name { font-size: 13px; height: 36px; margin-bottom: 8px; }
+          .product-icon { width: 48px; height: 48px; margin-bottom: 8px; }
+          .price-primary { font-size: 17px; }
+          .price-secondary { font-size: 11px; }
+          
+          .info-tab-header { padding: 12px 16px; }
+          .info-body { padding: 16px; font-size: 14px; }
+          
+          .landing-container { padding: 0 12px; }
           .landing-section { margin-top: 20px; }
           .section-header h3 { font-size: 20px; }
         }
