@@ -198,7 +198,6 @@ export default function GestionLanding() {
           setBannersList(prev => prev.map(b => b.id === bannerNumber ? { ...b, image: data.publicUrl } : b))
           toast.success(`Banner subido correctamente`)
         }
-      }
     } catch (err) {
       toast.error('Error al subir imagen: ' + err.message)
     } finally {
