@@ -38,8 +38,12 @@ export default function Landing() {
   const [verificacionResultado, setVerificacionResultado] = useState(null)
   const [addedItem, setAddedItem] = useState(null)
   
-  const [activeCategory, setActiveCategory] = useState('Todos')
   const [search, setSearch] = useState('')
+  
+  // Notificaciones de Usuario (Pedidos)
+  const [notificaciones, setNotificaciones] = useState([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [showNotiDropdown, setShowNotiDropdown] = useState(false)
   
   // Modo Nocturno
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('landing_dark_mode') === 'true')
@@ -234,6 +238,72 @@ export default function Landing() {
     fetchData()
   }, [])
 
+  // 🔔 Efecto para Cargar Notificaciones y Suscribirse a Realtime
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchNotis = async () => {
+      const { data, error } = await supabase
+        .from('notificaciones_usuarios')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (!error && data) {
+        setNotificaciones(data);
+        setUnreadCount(data.filter(n => !n.leido).length);
+      }
+    };
+
+    fetchNotis();
+
+    // Suscripción Realtime
+    const channel = supabase
+      .channel(`user_notis_${user.id}`)
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'notificaciones_usuarios',
+        filter: `user_id=eq.${user.id}`
+      }, (payload) => {
+        setNotificaciones(prev => [payload.new, ...prev].slice(0, 10));
+        setUnreadCount(count => count + 1);
+        // Opcional: Sonido de notificación
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
+  const markNotiAsRead = async (id) => {
+    const { error } = await supabase
+      .from('notificaciones_usuarios')
+      .update({ leido: true })
+      .eq('id', id);
+    
+    if (!error) {
+      setNotificaciones(prev => prev.map(n => n.id === id ? { ...n, leido: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    }
+  };
+
+  const markAllAsRead = async () => {
+    if (!user?.id) return;
+    const { error } = await supabase
+      .from('notificaciones_usuarios')
+      .update({ leido: true })
+      .eq('user_id', user.id)
+      .eq('leido', false);
+    
+    if (!error) {
+      setNotificaciones(prev => prev.map(n => ({ ...n, leido: true })));
+      setUnreadCount(0);
+    }
+  };
+
   useEffect(() => {
     if (selectedJuego) {
       const fetchProductos = async () => {
@@ -364,7 +434,6 @@ export default function Landing() {
             >
               {darkMode ? '☀️' : '🌙'}
             </button>
-
             {user && (
               <div 
                 style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }} 
@@ -377,6 +446,59 @@ export default function Landing() {
                     {cart.length}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* CAMPANA DE NOTIFICACIONES */}
+            {user && (
+              <div className="nav-dropdown" style={{ position: 'relative' }}>
+                <div 
+                  className="noti-bell-container" 
+                  onClick={() => setShowNotiDropdown(!showNotiDropdown)}
+                  style={{ position: 'relative', cursor: 'pointer', fontSize: '22px', padding: '5px' }}
+                >
+                  🔔
+                  {unreadCount > 0 && (
+                    <div style={{ position: 'absolute', top: '0', right: '0', background: '#ef4444', color: 'white', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold', border: '2px solid var(--bg-card)' }}>
+                      {unreadCount}
+                    </div>
+                  )}
+                </div>
+                <div className={`dropdown-content ${showNotiDropdown ? 'show' : ''}`} style={{ right: 0, left: 'auto', width: '300px', maxHeight: '400px', overflowY: 'auto' }}>
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: '700', fontSize: '14px' }}>Notificaciones</span>
+                    {unreadCount > 0 && (
+                      <button onClick={markAllAsRead} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}>Marcar todas como leídas</button>
+                    )}
+                  </div>
+                  <div style={{ padding: '8px 0' }}>
+                    {notificaciones.length === 0 ? (
+                      <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>No tienes notificaciones pendientes</div>
+                    ) : notificaciones.map(noti => (
+                      <div 
+                        key={noti.id} 
+                        onClick={() => markNotiAsRead(noti.id)}
+                        style={{ 
+                          padding: '12px 16px', 
+                          borderBottom: '1px solid var(--border)', 
+                          backgroundColor: noti.leido ? 'transparent' : 'rgba(0, 210, 255, 0.05)',
+                          cursor: 'pointer',
+                          transition: 'background 0.2s'
+                        }}
+                      >
+                        <div style={{ fontWeight: '700', fontSize: '13px', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {!noti.leido && <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent)' }}></div>}
+                          {noti.titulo}
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.4' }}>{noti.mensaje}</div>
+                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px', textAlign: 'right' }}>{new Date(noti.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ padding: '10px', textAlign: 'center', borderTop: '1px solid var(--border)' }}>
+                    <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Mis-Pedidos'); }} style={{ fontSize: '12px', fontWeight: '700', color: 'var(--accent)', textDecoration: 'none' }}>Ver todos mis pedidos</a>
+                  </div>
+                </div>
               </div>
             )}
 

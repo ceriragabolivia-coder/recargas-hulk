@@ -348,78 +348,150 @@ export default function Checkout({ onFinish }) {
 
   if (orderFinished) {
     return (
-      <div className="page-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
-        <div className="card" style={{ textAlign: 'center', padding: '32px', maxWidth: '500px', width: '100%', borderRadius: '28px', border: '1px solid var(--border-color)', boxShadow: '0 12px 48px rgba(0,0,0,0.3)' }}>
-          {!showTracking ? (
-            <div className="fade-in">
-              <div style={{ marginBottom: '24px' }}>
-                <img src="/assets/Verificando.PNG.png" alt="Verificación" style={{ width: '120px' }} />
-              </div>
-              <h2 style={{ color: 'var(--accent-success)', fontWeight: 800 }}>¡Pedido Creado!</h2>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '32px', whiteSpace: 'pre-line', fontSize: '15px' }}>
-                {isAutomaticResult ? (
-                  <>
-                    Tu pedido se ha registrado exitosamente y está en proceso.{"\n\n"}
-                    Dicho proceso comprende entre 5 a 20 minutos. Puedes consultar el estado en "Mis Pedidos".
-                  </>
+      <div className={`landing-page ${darkMode ? 'dark' : ''}`} style={{ minHeight: '100vh', position: 'relative', overflowX: 'hidden' }}>
+        <FloatingBackground />
+        
+        {/* HEADER */}
+        <header className="landing-header">
+          <div className="landing-container flex items-center justify-between landing-header-inner">
+            <div className="flex items-center landing-header-left">
+              <div className="landing-logo-container" onClick={onFinish} style={{ cursor: 'pointer' }}>
+                {config?.landing_logo ? (
+                  <img src={config.landing_logo} alt="Logo" className="landing-logo-img" />
                 ) : (
-                  <>
-                    Tu pedido se ha registrado exitosamente. En estos momentos tu pago se está verificando.{"\n\n"}
-                    Puedes consultar el estado en "Mis Pedidos" y el tiempo estimado es de 5 a 20 minutos para la respuesta.
-                  </>
+                  <div className="landing-logo-icon">⚡</div>
                 )}
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <button 
-                  className="btn btn-primary" 
-                  onClick={() => setShowTracking(true)}
-                  style={{ height: '56px', borderRadius: '14px', fontSize: '16px', fontWeight: 800, background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0088ff 100%)' }}
-                >
-                  👁️ Ver Pedido
-                </button>
-                <button className="btn btn-ghost" onClick={onFinish} style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Volver al Inicio</button>
+                <span className="landing-logo-text">{config?.landing_titulo || 'Ceriraga'}</span>
               </div>
             </div>
-          ) : (
-            <div className="tracking-view fade-in">
-              {/* REAL TIME TRACKING COMPONENT */}
-              <OrderTracking pedidoInitial={createdPedidoData} onBack={onFinish} />
+          </div>
+        </header>
+
+        <div className="landing-container" style={{ paddingTop: '100px', paddingBottom: '60px', position: 'relative', zIndex: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+            <div className="card" style={{ textAlign: 'center', padding: '32px', maxWidth: '500px', width: '100%', borderRadius: '28px', border: '1px solid var(--border-color)', boxShadow: '0 12px 48px rgba(0,0,0,0.3)' }}>
+              {!showTracking ? (
+                <div className="fade-in">
+                  <div style={{ marginBottom: '24px' }}>
+                    <img src="/assets/Verificando.PNG.png" alt="Verificación" style={{ width: '120px' }} />
+                  </div>
+                  <h2 style={{ color: 'var(--accent-success)', fontWeight: 800 }}>¡Pedido Creado!</h2>
+                  <p style={{ color: 'var(--text-muted)', marginBottom: '32px', whiteSpace: 'pre-line', fontSize: '15px' }}>
+                    {isAutomaticResult ? (
+                      <>
+                        Tu pedido se ha registrado exitosamente y está en proceso.{"\n\n"}
+                        Dicho proceso comprende entre 5 a 20 minutos. Puedes consultar el estado en "Mis Pedidos".
+                      </>
+                    ) : (
+                      <>
+                        Tu pedido se ha registrado exitosamente. En estos momentos tu pago se está verificando.{"\n\n"}
+                        Puedes consultar el estado en "Mis Pedidos" y el tiempo estimado es de 5 a 20 minutos para la respuesta.
+                      </>
+                    )}
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <button 
+                      className="btn btn-primary" 
+                      onClick={() => setShowTracking(true)}
+                      style={{ height: '56px', borderRadius: '14px', fontSize: '16px', fontWeight: 800, background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0088ff 100%)' }}
+                    >
+                      👁️ Ver Pedido
+                    </button>
+                    <button className="btn btn-ghost" onClick={onFinish} style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Volver al Inicio</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="tracking-view fade-in">
+                  <OrderTracking pedidoInitial={createdPedidoData} onBack={onFinish} />
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
     )
   }
 
+  // Modo Nocturno (consistente con la landing)
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('landing_dark_mode') === 'true')
+
   return (
-    <div className="page-content">
-      <div className="page-header mb-8" style={{ paddingBottom: 0, display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <button 
-          className="btn btn-ghost btn-icon" 
-          onClick={onFinish}
-          title="Regresar"
-          style={{ 
-            borderRadius: '50%', 
-            width: '44px', 
-            height: '44px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '18px',
-            backgroundColor: 'var(--bg-glass)',
-            border: '1px solid var(--border-color)',
-            flexShrink: 0
-          }}
-        >
-          ←
-        </button>
-        <div>
-          <h1 className="page-title" style={{ margin: 0 }}>Confirmación de la compra</h1>
-          <p className="page-subtitle" style={{ margin: 0 }}>
-            {currentStep === 1 ? 'Revisa tus productos y selecciona cómo deseas pagar.' : 'Realiza el pago y coloca los datos.'}
-          </p>
+    <div className={`landing-page ${darkMode ? 'dark' : ''}`} style={{ minHeight: '100vh', position: 'relative', overflowX: 'hidden' }}>
+      <FloatingBackground />
+      
+      {/* HEADER (Misma estructura que Landing.jsx) */}
+      <header className="landing-header">
+        <div className="landing-container flex items-center justify-between landing-header-inner">
+          <div className="flex items-center landing-header-left">
+            <div className="landing-logo-container" onClick={onFinish} style={{ cursor: 'pointer' }}>
+              {config?.landing_logo ? (
+                <img src={config.landing_logo} alt="Logo" className="landing-logo-img" />
+              ) : (
+                <div className="landing-logo-icon">⚡</div>
+              )}
+              <span className="landing-logo-text">{config?.landing_titulo || 'Ceriraga'}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center landing-header-right">
+            <button 
+              className="btn-theme-toggle" 
+              onClick={() => {
+                const newMode = !darkMode;
+                setDarkMode(newMode);
+                localStorage.setItem('landing_dark_mode', newMode);
+              }}
+              title={darkMode ? 'Modo Claro' : 'Modo Nocturno'}
+            >
+              {darkMode ? '☀️' : '🌙'}
+            </button>
+
+            {user && (
+              <div className="nav-dropdown">
+                <div className="flex items-center" style={{ gap: '8px', cursor: 'pointer' }}>
+                  <div className="user-avatar-small">
+                    {user.email?.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="hidden-mobile" style={{ fontWeight: '600' }}>Mi Cuenta ▾</span>
+                </div>
+                <div className="dropdown-content" style={{ right: 0, left: 'auto' }}>
+                  <a href="#" onClick={(e) => { e.preventDefault(); onFinish(); }}>Regresar a la Tienda</a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); window.location.href = '/Mis-Pedidos'; }}>Mis Pedidos</a>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </header>
+
+      <div className="landing-container" style={{ paddingTop: '100px', paddingBottom: '60px', position: 'relative', zIndex: 10 }}>
+        <div className="page-header mb-8" style={{ paddingBottom: 0, display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button 
+            className="btn btn-ghost btn-icon" 
+            onClick={onFinish}
+            title="Regresar"
+            style={{ 
+              borderRadius: '50%', 
+              width: '44px', 
+              height: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '18px',
+              backgroundColor: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              flexShrink: 0
+            }}
+          >
+            ←
+          </button>
+          <div>
+            <h1 className="page-title" style={{ margin: 0, fontSize: '24px', fontWeight: 800 }}>Confirmación de Compra</h1>
+            <p className="page-subtitle" style={{ margin: 0, fontSize: '14px', opacity: 0.8 }}>
+              {currentStep === 1 ? 'Revisa tus productos y selecciona tu método de pago.' : 'Completa los datos de tu pago para procesar la orden.'}
+            </p>
+          </div>
+        </div>
 
       <div className="responsive-grid-2col" style={{ display: 'grid', gap: '8px' }}>
         <div className="card">
@@ -738,6 +810,7 @@ export default function Checkout({ onFinish }) {
           onCancel={alertModal.onCancel || (() => setAlertModal(null))}
         />
       )}
+    </div>
     </div>
   )
 }
