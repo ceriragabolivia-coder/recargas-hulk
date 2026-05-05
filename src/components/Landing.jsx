@@ -1432,7 +1432,7 @@ export default function Landing() {
         .detail-game-banner img {
           width: 100%;
           height: 100%;
-          object-fit: cover;
+          object-fit: fill;
         }
         .detail-header-icon {
           width: 100px;
@@ -1739,7 +1739,7 @@ export default function Landing() {
           }
           .detail-header-card.has-banner .detail-game-banner {
             border-radius: 0;
-            aspect-ratio: 2.5 / 1;
+            aspect-ratio: 3.5 / 1;
           }
           .detail-game-banner { display: block; border-radius: 8px; }
           .detail-header-icon { width: 80px; height: 80px; }
