@@ -729,21 +729,47 @@ export default function Checkout({ onFinish }) {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', backgroundColor: 'var(--border-color)', overflow: 'hidden', borderRadius: '0 0 12px 12px' }}>
                 {cart.map(item => (
-                  <div key={item.id} className="checkout-item" style={{ display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: 'var(--bg-card)', padding: '16px' }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 8, overflow: 'hidden', backgroundColor: 'var(--bg-panel)' }}>
+                  <div key={item.id} className="checkout-item" style={{ display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: 'var(--bg-card)', padding: '16px', position: 'relative' }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 8, overflow: 'hidden', backgroundColor: 'var(--bg-panel)', flexShrink: 0 }}>
                       {item.icono_url ? <img src={item.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : '📦'}
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 'bold' }}>{item.nombre}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.nombre}</div>
                       <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>{item.juego}</div>
                       <div className="checkout-details-box" style={{ marginTop: '8px', padding: '8px', backgroundColor: 'var(--bg-primary)', borderRadius: '8px', fontSize: '12px' }}>
                          {item.metodo_recarga === 'cuenta_completa' ? `📧 ${item.account_email}` : item.metodo_recarga === 'usuario_clave' ? `👤 ${item.account_user}` : item.metodo_recarga === 'id_zone' ? `🆔 ${item.player_id} (${item.zone_id})` : `🆔 ${item.player_id}`}
                       </div>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       {!isCliente && <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{item.quantity} x {formatUSD(item.venta_usd)}</div>}
                       <div style={{ color: 'var(--accent-success)', fontWeight: 800 }}>{formatBs(item.venta_bs * item.quantity)}</div>
                     </div>
+                    {/* Botón quitar del carrito */}
+                    <button
+                      onClick={() => removeFromCart(item.id)}
+                      title="Quitar del carrito"
+                      style={{
+                        flexShrink: 0,
+                        background: 'rgba(239,68,68,0.1)',
+                        border: '1px solid rgba(239,68,68,0.3)',
+                        color: '#ef4444',
+                        borderRadius: '50%',
+                        width: '28px',
+                        height: '28px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '16px',
+                        lineHeight: 1,
+                        fontWeight: 700,
+                        transition: 'all 0.2s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.25)'; e.currentTarget.style.transform = 'scale(1.1)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; e.currentTarget.style.transform = 'scale(1)'; }}
+                    >
+                      ×
+                    </button>
                   </div>
                 ))}
               </div>
