@@ -703,6 +703,92 @@ export default function Landing() {
                   </div>
                 </div>
               </aside>
+
+              {/* LISTA DE PRECIOS E INFORMACIÓN */}
+              <div className="detail-content-area">
+                <div className="price-list-section">
+                  <h3>Selecciona un paquete</h3>
+                  {loadingProductos ? (
+                    <div className="spinner"></div>
+                  ) : (
+                    <div className="products-grid">
+                      {productosJuego.map(prod => {
+                        const pricing = calcularPrecioVenta(prod, selectedJuego, config)
+                        return (
+                          <div key={prod.id} className="product-card" onClick={() => {
+                            if (!user) {
+                              setAuthModalView('login');
+                              setIsAuthModalOpen(true);
+                              return;
+                            }
+                            
+                            if (selectedJuego.metodo_recarga === 'sin_datos') {
+                              // OK
+                            } else if (selectedJuego.metodo_recarga === 'cuenta_completa') {
+                              if (!localRechargeData.account_email.trim() || !localRechargeData.account_password.trim()) {
+                                alert('Por favor introduce el correo y clave arriba primero.')
+                                return
+                              }
+                            } else if (selectedJuego.metodo_recarga === 'usuario_clave') {
+                              if (!localRechargeData.account_user?.trim() || !localRechargeData.account_password.trim()) {
+                                alert('Por favor introduce el usuario y clave arriba primero.')
+                                return
+                              }
+                            } else {
+                              if (!localRechargeData.player_id.trim()) {
+                                alert('Por favor introduce el ID arriba primero.')
+                                return
+                              }
+                              const juegoNormalizado = selectedJuego.nombre.toLowerCase().replace(/\s/g, '')
+                              if (juegoNormalizado.includes('freefire') || juegoNormalizado.includes('bloodstrike')) {
+                                if (!verificacionResultado?.success || verificacionResultado.verified_id !== localRechargeData.player_id) {
+                                  alert('Debes verificar el nombre del jugador arriba antes de seleccionar un paquete.')
+                                  return
+                                }
+                              }
+                            }
+                            
+                            const finalPrice = calcularPrecioVenta(prod, selectedJuego, config, perfil)
+                            setPendingItem({ p: prod, selectedJuego, finalPrice, localRechargeData })
+                          }}>
+                            {prod.icono_url && <img src={prod.icono_url} alt="" className="product-icon" />}
+                            <div className="product-name">{prod.nombre}</div>
+                            <div className="product-price">
+                              {isRevendedor ? (
+                                <span className="price-primary">{formatUSD(pricing.venta_usd)}</span>
+                              ) : (
+                                <span className="price-primary">{formatBs(pricing.venta_bs)}</span>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Información / Guías */}
+                <div className="info-content-section">
+                  <div className="info-tab-header">
+                    <h4>Información de {selectedJuego.nombre}</h4>
+                  </div>
+                  <div className="info-body">
+                    {selectedJuego.caracteristicas_nota ? (
+                      <div className="rich-text" dangerouslySetInnerHTML={{ __html: selectedJuego.caracteristicas_nota.replace(/\n/g, '<br/>') }} />
+                    ) : (
+                      <p>Para adquirir recargas de {selectedJuego.nombre}, solo necesitas proporcionar tu ID de jugador. La entrega es inmediata una vez verificado el pago.</p>
+                    )}
+                    
+                    <h5>¿Cómo recargar?</h5>
+                    <ul>
+                      <li>Selecciona el paquete que deseas adquirir.</li>
+                      <li>Inicia sesión o regístrate en nuestra plataforma.</li>
+                      <li>Completa el pago mediante tu método favorito (Pago Móvil, Binance, PayPal).</li>
+                      <li>¡Listo! Tu recarga llegará en minutos.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         ) : (
