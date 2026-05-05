@@ -127,6 +127,18 @@ export function useProductos(juegoId) {
     return { data: nuevo, error: dbError }
   }
 
+  async function updateCategoria(id, data) {
+    const { error: dbError } = await supabase.from('categorias').update(data).eq('id', id)
+    if (!dbError) setCategorias(prev => prev.map(c => c.id === id ? { ...c, ...data } : c))
+    return { error: dbError }
+  }
+
+  async function deleteCategoria(id) {
+    const { error: dbError } = await supabase.from('categorias').delete().eq('id', id)
+    if (!dbError) setCategorias(prev => prev.filter(c => c.id !== id))
+    return { error: dbError }
+  }
+
   async function createProducto(data) {
     const payload = { ...data, juego_id: juegoId }
     if (isNegocio) payload.owner_id = user.id
@@ -171,7 +183,7 @@ export function useProductos(juegoId) {
 
   useEffect(() => { fetchProductos(); fetchCategorias() }, [juegoId])
 
-  return { productos, categorias, loading, error, createProducto, updateProducto, deleteProducto, toggleProducto, reorderProductos, createCategoria, refetch: fetchProductos }
+  return { productos, categorias, loading, error, createProducto, updateProducto, deleteProducto, toggleProducto, reorderProductos, createCategoria, updateCategoria, deleteCategoria, refetch: fetchProductos }
 }
 
 // ========================

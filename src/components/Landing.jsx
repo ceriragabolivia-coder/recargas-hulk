@@ -420,7 +420,19 @@ export default function Landing() {
                 <span className="nav-link">Servicios <i>▾</i></span>
                 <div className="dropdown-content">
                   {categorias.map(cat => (
-                    <a key={cat.id} href="#" onClick={(e) => { e.preventDefault(); setActiveCategory(cat.nombre); handleSelectJuego(null); }}>{cat.nombre}</a>
+                    <a 
+                      key={cat.id} 
+                      href="#all-games" 
+                      onClick={(e) => { 
+                        e.preventDefault(); 
+                        setActiveCategory(cat.nombre); 
+                        handleSelectJuego(null);
+                        const element = document.getElementById('all-games');
+                        if (element) element.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                    >
+                      {cat.nombre}
+                    </a>
                   ))}
                 </div>
               </div>

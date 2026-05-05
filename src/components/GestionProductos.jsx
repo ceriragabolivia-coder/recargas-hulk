@@ -12,7 +12,7 @@ export default function GestionProductos() {
   const { config, loading: loadingConfig } = useConfiguracion()
   const [selectedJuego, setSelectedJuego] = useState(null)
   const [searchJuego, setSearchJuego] = useState('')
-  const { productos, loading: loadingProductos, error: errorProductos, createProducto, updateProducto, deleteProducto, toggleProducto, reorderProductos, createCategoria } = useProductos(selectedJuego?.id)
+  const { productos, loading: loadingProductos, error: errorProductos, createProducto, updateProducto, deleteProducto, toggleProducto, reorderProductos, createCategoria, updateCategoria, deleteCategoria } = useProductos(selectedJuego?.id)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isGameModalOpen, setIsGameModalOpen] = useState(false)
@@ -1202,7 +1202,7 @@ export default function GestionProductos() {
           </form>
         </div>
         
-        <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+        <div style={{ maxHeight: '350px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
           {categorias.length === 0 ? (
             <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
               No hay categorías creadas.
@@ -1210,8 +1210,43 @@ export default function GestionProductos() {
           ) : (
             categorias.map(cat => (
               <div key={cat.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid var(--border-color)' }}>
-                <span style={{ fontSize: '14px' }}>{cat.nombre}</span>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>#{cat.orden}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <button 
+                    onClick={() => updateCategoria(cat.id, { activa: !cat.activa })}
+                    style={{
+                      background: cat.activa ? 'rgba(34, 197, 94, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                      color: cat.activa ? '#22c55e' : 'var(--text-muted)',
+                      border: 'none',
+                      borderRadius: '16px',
+                      padding: '4px 8px',
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                    title={cat.activa ? 'Desactivar Categoría' : 'Activar Categoría'}
+                  >
+                    <span style={{ fontSize: '8px' }}>{cat.activa ? '🟢' : '⚪'}</span>
+                    {cat.activa ? 'ACTIVA' : 'OFF'}
+                  </button>
+                  <span style={{ fontSize: '14px', fontWeight: '500' }}>{cat.nombre}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>#{cat.orden}</span>
+                  <button 
+                    className="btn btn-ghost btn-sm" 
+                    style={{ padding: '4px', color: '#ff4d4f' }}
+                    onClick={() => {
+                      if (window.confirm(`¿Seguro que deseas eliminar la categoría "${cat.nombre}"?`)) {
+                        deleteCategoria(cat.id)
+                      }
+                    }}
+                  >
+                    🗑️
+                  </button>
+                </div>
               </div>
             ))
           )}
