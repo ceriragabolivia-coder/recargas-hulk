@@ -82,6 +82,9 @@ export default function Checkout({ onFinish }) {
   const [createdPedidoData, setCreatedPedidoData] = useState(null)
   const [showTracking, setShowTracking] = useState(false)
   const [alertModal, setAlertModal] = useState(null)
+  const [notificaciones, setNotificaciones] = useState([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [showNotiDropdown, setShowNotiDropdown] = useState(false)
 
   // Banners (igual que Landing.jsx)
   const banners = useMemo(() => {
@@ -127,7 +130,31 @@ export default function Checkout({ onFinish }) {
   }, [currentBanner, banners])
 
 
-  // Efecto para asegurar que la página siempre aparezca al inicio al cargar o cambiar de paso
+  // Notificaciones del usuario (igual que Landing)
+  useEffect(() => {
+    const targetUserId = user?.id || perfil?.cliente_uuid || perfil?.id
+    if (!targetUserId) return
+    const fetchNoti = async () => {
+      const { data } = await supabase
+        .from('notificaciones_usuarios')
+        .select('*')
+        .eq('user_id', targetUserId)
+        .order('created_at', { ascending: false })
+        .limit(10)
+      if (data) {
+        setNotificaciones(data)
+        setUnreadCount(data.filter(n => !n.leido).length)
+      }
+    }
+    fetchNoti()
+  }, [user, perfil])
+
+  const markNotiAsRead = async (id) => {
+    await supabase.from('notificaciones_usuarios').update({ leido: true }).eq('id', id)
+    setNotificaciones(prev => prev.map(n => n.id === id ? { ...n, leido: true } : n))
+    setUnreadCount(prev => Math.max(0, prev - 1))
+  }
+
   useEffect(() => {
     window.scrollTo(0, 0);
     const mainElement = document.querySelector('.main-content');
@@ -516,7 +543,7 @@ export default function Checkout({ onFinish }) {
         `}} />
         <FloatingBackground />
         
-        {/* HEADER (Misma estructura que Landing.jsx) */}
+        {/* HEADER — idéntico a Landing */}
         <header className="landing-header">
           <div className="landing-container flex items-center justify-between landing-header-inner">
             <div className="flex items-center landing-header-left">
@@ -528,27 +555,99 @@ export default function Checkout({ onFinish }) {
                 )}
                 <span className="landing-logo-text">{config?.landing_titulo || 'Ceriraga'}</span>
               </div>
-          </div>
+              <nav className="landing-nav hidden-mobile" style={{ marginLeft: '24px' }}>
+                <a href="#" className="nav-link" onClick={(e) => { e.preventDefault(); onFinish(); }}>Home</a>
+                <a href="#" className="nav-link active">Checkout</a>
+              </nav>
+            </div>
 
-          <div className="flex items-center landing-header-right">
+            <div className="flex items-center landing-header-right">
 
-            {user && (
-              <div className="nav-dropdown">
-                <div className="flex items-center" style={{ gap: '8px', cursor: 'pointer', padding: '8px 14px', borderRadius: '999px', backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', transition: 'all 0.2s' }}>
-                  <div className="user-avatar-small">
-                    {user.email?.charAt(0).toUpperCase()}
+              {/* Carrito */}
+              {user && (
+                <div
+                  style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  onClick={onFinish}
+                  title="Ver Carrito"
+                >
+                  <span style={{ fontSize: '24px' }}>🛒</span>
+                  {cart.length > 0 && (
+                    <div style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#ef4444', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold' }}>
+                      {cart.length}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Campana notificaciones */}
+              {user && (
+                <div className="nav-dropdown" style={{ position: 'relative' }}>
+                  <div
+                    className="noti-bell-container"
+                    onClick={() => setShowNotiDropdown(!showNotiDropdown)}
+                    style={{ position: 'relative', cursor: 'pointer', fontSize: '22px', padding: '5px' }}
+                  >
+                    🔔
+                    {unreadCount > 0 && (
+                      <div style={{ position: 'absolute', top: '0', right: '0', background: '#ef4444', color: 'white', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold', border: '2px solid var(--bg-card)' }}>
+                        {unreadCount}
+                      </div>
+                    )}
                   </div>
-                  <span className="hidden-mobile" style={{ fontWeight: '600', fontSize: '14px' }}>Mi Cuenta ▾</span>
+                  <div className={`dropdown-content ${showNotiDropdown ? 'show' : ''}`} style={{ right: 0, left: 'auto', width: '300px', maxHeight: '400px', overflowY: 'auto' }}>
+                    <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: '700', fontSize: '14px' }}>Notificaciones</span>
+                    </div>
+                    <div style={{ padding: '8px 0' }}>
+                      {notificaciones.length === 0 ? (
+                        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>No tienes notificaciones</div>
+                      ) : notificaciones.map(noti => (
+                        <div
+                          key={noti.id}
+                          onClick={() => markNotiAsRead(noti.id)}
+                          style={{
+                            padding: '12px 16px',
+                            borderBottom: '1px solid var(--border)',
+                            backgroundColor: noti.leido ? 'transparent' : 'rgba(0, 210, 255, 0.05)',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <div style={{ fontWeight: '700', fontSize: '13px', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {!noti.leido && <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent)' }}></div>}
+                            {noti.titulo}
+                          </div>
+                          <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{noti.mensaje}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                <div className="dropdown-content" style={{ right: 0, left: 'auto' }}>
-                  <a href="#" onClick={(e) => { e.preventDefault(); onFinish(); }}>Regresar a la Tienda</a>
-                  <a href="#" onClick={(e) => { e.preventDefault(); window.location.href = '/Mis-Pedidos'; }}>Mis Pedidos</a>
+              )}
+
+              {/* Mi Cuenta */}
+              {user && (
+                <div className="nav-dropdown">
+                  <div className="flex items-center" style={{ gap: '8px', cursor: 'pointer' }}>
+                    <div className="user-avatar-small">
+                      {user.email?.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="hidden-mobile" style={{ fontWeight: '600' }}>Mi Cuenta ▾</span>
+                  </div>
+                  <div className="dropdown-content" style={{ right: 0, left: 'auto' }}>
+                    <div style={{ padding: '10px 20px', borderBottom: '1px solid var(--border)', marginBottom: '4px' }}>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Conectado como</div>
+                      <div style={{ fontWeight: '600', fontSize: '14px' }}>{user.email}</div>
+                    </div>
+                    <a href="#" onClick={(e) => { e.preventDefault(); onFinish(); }}>Regresar a la Tienda</a>
+                    <a href="#" onClick={(e) => { e.preventDefault(); window.location.href = '/Mis-Pedidos'; }}>Mis Pedidos</a>
+                    <a href="#" onClick={(e) => { e.preventDefault(); window.location.href = '/Billetera'; }}>Billetera</a>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
       {/* BANNER SLIDER (igual que Landing) */}
       <section style={{ position: 'relative', width: '100%', overflow: 'hidden', height: '200px', marginTop: '0' }}>
