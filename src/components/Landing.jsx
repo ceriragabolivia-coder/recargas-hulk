@@ -1394,7 +1394,7 @@ export default function Landing() {
         }
         
         .landing-main {
-          padding: 20px 0;
+          padding: 10px 0;
           min-height: 600px;
         }
         .hero-slider {
@@ -1568,12 +1568,12 @@ export default function Landing() {
 
         /* DETAIL VIEW STYLES */
         .detail-view {
-          margin-top: 20px;
+          margin-top: 0;
         }
         .breadcrumb {
           font-size: 14px;
           color: var(--text-muted);
-          margin-bottom: 24px;
+          margin-bottom: 12px;
         }
         .breadcrumb span {
           cursor: pointer;
@@ -1587,7 +1587,7 @@ export default function Landing() {
           grid-template-areas: 
             "header  sidebar"
             "content sidebar";
-          gap: 30px;
+          gap: 20px;
         }
         .detail-header-area { grid-area: header; }
         .detail-sidebar-area { grid-area: sidebar; }
@@ -1600,7 +1600,7 @@ export default function Landing() {
           display: flex;
           gap: 24px;
           align-items: center;
-          margin-bottom: 20px;
+          margin-bottom: 10px;
           box-shadow: 0 4px 15px rgba(0,0,0,0.05);
           border: 1px solid var(--border);
         }
