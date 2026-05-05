@@ -470,7 +470,16 @@ export default function Landing() {
               <div className="detail-main">
                 {/* Info superior */}
                 <div className="detail-header-card">
-                  <img src={selectedJuego.icono_url} alt="" className="detail-header-icon" />
+                  {selectedJuego.banner_url ? (
+                    <>
+                      <div className="detail-game-banner visible-mobile">
+                        <img src={selectedJuego.banner_url} alt={selectedJuego.nombre} />
+                      </div>
+                      <img src={selectedJuego.icono_url} alt="" className="detail-header-icon hidden-mobile" />
+                    </>
+                  ) : (
+                    <img src={selectedJuego.icono_url} alt="" className="detail-header-icon" />
+                  )}
                   <div className="detail-header-info">
                     <h1>{selectedJuego.nombre}</h1>
                     <div className="detail-stats">
@@ -1702,7 +1711,9 @@ export default function Landing() {
             text-align: center; 
             padding: 16px;
             gap: 16px;
+            overflow: hidden;
           }
+          .detail-game-banner { display: block; border-radius: 8px; }
           .detail-header-icon { width: 80px; height: 80px; }
           .detail-header-info h1 { font-size: 24px; }
           .games-grid { 

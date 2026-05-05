@@ -166,6 +166,19 @@ export default function GestionLanding() {
     }
   }
 
+  const handleUpdateGameBanner = async (juegoId, bannerUrl) => {
+    setSaving(true)
+    const { error } = await supabase.from('juegos').update({ banner_url: bannerUrl }).eq('id', juegoId)
+    setSaving(false)
+
+    if (!error) {
+      setJuegos(juegos.map(j => j.id === juegoId ? { ...j, banner_url: bannerUrl } : j))
+      toast.success('Banner de juego actualizado')
+    } else {
+      toast.error('Error al actualizar banner: ' + error.message)
+    }
+  }
+
   const handleUploadBanner = async (e, bannerNumber) => {
     try {
       const file = e.target.files[0]
@@ -194,6 +207,9 @@ export default function GestionLanding() {
         } else if (bannerNumber === 'auth_logo') {
           setForm(prev => ({ ...prev, landing_auth_icon: data.publicUrl }))
           toast.success(`Icono de login subido correctamente`)
+        } else if (String(bannerNumber).startsWith('game_banner_')) {
+          const juegoId = bannerNumber.replace('game_banner_', '')
+          handleUpdateGameBanner(juegoId, data.publicUrl)
         } else {
           setBannersList(prev => prev.map(b => b.id === bannerNumber ? { ...b, image: data.publicUrl } : b))
           toast.success(`Banner subido correctamente`)
@@ -413,8 +429,78 @@ export default function GestionLanding() {
               
               <div style={{ marginTop: '20px', borderTop: '1px dashed var(--border)', paddingTop: '20px', display: 'flex', justifyContent: 'center' }}>
                 <button type="button" className="btn btn-secondary" onClick={addBanner} style={{ width: '100%', maxWidth: '300px' }}>
-                  ➕ Añadir Nuevo Banner
+                  ➕ Añadir Nuevo Banner (Carrusel)
                 </button>
+              </div>
+
+              <div style={{ marginTop: '40px', borderTop: '2px solid var(--border)', paddingTop: '30px' }}>
+                <h3 style={{ marginBottom: '10px' }}>Banners de Juegos (Solo Móvil)</h3>
+                <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '20px' }}>
+                  Estos banners se mostrarán en la parte superior de cada juego únicamente en dispositivos móviles, reemplazando el icono cuadrado para ahorrar espacio.
+                </p>
+                
+                <div className="table-responsive card-modern">
+                  <table className="table-modern">
+                    <thead>
+                      <tr>
+                        <th>Juego/Servicio</th>
+                        <th>Banner Actual (Móvil)</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {juegos.map(j => (
+                        <tr key={j.id}>
+                          <td>
+                            <div className="flex items-center gap-8">
+                              <img src={j.icono_url} alt="" style={{ width: '32px', height: '32px', borderRadius: '6px' }} />
+                              {j.nombre}
+                            </div>
+                          </td>
+                          <td>
+                            {j.banner_url ? (
+                              <div style={{ width: '120px', height: '40px', borderRadius: '4px', overflow: 'hidden', background: '#000' }}>
+                                <img src={j.banner_url} alt="Banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              </div>
+                            ) : (
+                              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Sin banner asignado</span>
+                            )}
+                          </td>
+                          <td>
+                            <div className="flex gap-8">
+                              <input 
+                                type="file" 
+                                id={`upload_game_banner_${j.id}`} 
+                                style={{ display: 'none' }} 
+                                accept="image/*" 
+                                onChange={(e) => handleUploadBanner(e, `game_banner_${j.id}`)} 
+                              />
+                              <button 
+                                type="button" 
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => document.getElementById(`upload_game_banner_${j.id}`).click()}
+                                disabled={saving}
+                              >
+                                {j.banner_url ? 'Cambiar' : 'Subir Banner'}
+                              </button>
+                              {j.banner_url && (
+                                <button 
+                                  type="button" 
+                                  className="btn btn-sm" 
+                                  style={{ background: 'rgba(255, 77, 79, 0.1)', color: '#ff4d4f' }}
+                                  onClick={() => handleUpdateGameBanner(j.id, null)}
+                                  disabled={saving}
+                                >
+                                  Borrar
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
