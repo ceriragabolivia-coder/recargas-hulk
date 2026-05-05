@@ -593,12 +593,9 @@ export default function Landing() {
               <div className="detail-header-area">
                 <div className={`detail-header-card ${selectedJuego.banner_url ? 'has-banner' : ''}`}>
                   {selectedJuego.banner_url ? (
-                    <>
-                      <div className="detail-game-banner">
-                        <img src={selectedJuego.banner_url} alt={selectedJuego.nombre} />
-                      </div>
-                      <img src={selectedJuego.icono_url} alt="" className="detail-header-icon hidden-mobile" />
-                    </>
+                    <div className="detail-game-banner">
+                      <img src={selectedJuego.banner_url} alt={selectedJuego.nombre} />
+                    </div>
                   ) : (
                     <img src={selectedJuego.icono_url} alt="" className="detail-header-icon" />
                   )}
@@ -1553,11 +1550,11 @@ export default function Landing() {
         }
         .detail-game-banner {
           width: 100%;
-          aspect-ratio: 4 / 1;
-          border-radius: 12px;
+          aspect-ratio: 3.5 / 1;
+          border-radius: 20px;
           overflow: hidden;
           background: #000;
-          display: none;
+          display: block;
         }
         .detail-game-banner img {
           width: 100%;
@@ -1760,6 +1757,54 @@ export default function Landing() {
           color: var(--text-muted);
         }
 
+        /* BUY MODE TOGGLE & RECHARGE INFO */
+        .buy-mode-toggle { 
+          display: flex; 
+          background: rgba(255,255,255,0.03); 
+          border-radius: 12px; 
+          padding: 4px; 
+          border: 1px solid var(--border); 
+          margin-bottom: 20px; 
+          gap: 4px; 
+        }
+        .buy-mode-toggle button {
+          flex: 1; 
+          padding: 10px; 
+          border-radius: 8px; 
+          border: none; 
+          background: transparent; 
+          color: var(--text-muted); 
+          font-size: 13px; 
+          font-weight: 700; 
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .buy-mode-toggle button.active {
+          background: var(--accent); 
+          color: white;
+        }
+        .card-recharge-info { 
+          background: var(--bg-hover); 
+          border: 1px solid var(--border); 
+          border-radius: 16px; 
+          padding: 20px; 
+          margin-bottom: 20px; 
+        }
+        .form-input {
+          width: 100%;
+          padding: 12px 16px;
+          border-radius: 10px;
+          border: 1px solid var(--border);
+          background: var(--bg-card);
+          color: var(--text-main);
+          font-size: 14px;
+          outline: none;
+          transition: border-color 0.2s;
+        }
+        .form-input:focus {
+          border-color: var(--accent);
+        }
+
         .landing-footer {
           margin-top: 60px;
           background: #1a1d21;
@@ -1891,37 +1936,21 @@ export default function Landing() {
 
           /* Sidebar compact on mobile */
           .purchase-card { 
-            padding: 10px; 
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
+            padding: 16px; 
           }
-          .purchase-card h3 { font-size: 15px; margin-bottom: 8px !important; }
+          .purchase-card h3 { font-size: 18px; margin-bottom: 12px !important; }
           .buy-mode-toggle { 
-            display: flex; 
-            background: rgba(255,255,255,0.03); 
-            border-radius: 8px; 
-            padding: 2px; 
-            border: 1px solid var(--border); 
-            margin-bottom: 10px !important; 
-            gap: 2px; 
+            margin-bottom: 12px !important; 
           }
           .buy-mode-toggle button {
-            flex: 1; padding: 6px; border-radius: 6px; border: none; background: transparent; color: var(--text-muted); font-size: 11px; font-weight: 700; cursor: pointer;
-          }
-          .buy-mode-toggle button.active {
-            background: var(--accent); color: #000;
+            padding: 8px; font-size: 12px;
           }
           .card-recharge-info { 
-            background: var(--bg-panel); 
-            border: 1px solid var(--border); 
-            border-radius: 10px; 
-            padding: 10px !important; 
-            margin-bottom: 0 !important; 
+            padding: 12px !important; 
           }
           .card-recharge-info .form-label { font-size: 11px !important; margin-bottom: 4px !important; }
-          .card-recharge-info .form-input { padding: 8px 12px !important; font-size: 14px !important; }
-          .sidebar-buttons button { padding: 10px !important; font-size: 13px !important; }
+          .card-recharge-info .form-input { padding: 10px 14px !important; font-size: 14px !important; }
+          .sidebar-buttons button { padding: 12px !important; font-size: 14px !important; }
           .sidebar-features { display: none !important; }
 
           .games-grid { 
