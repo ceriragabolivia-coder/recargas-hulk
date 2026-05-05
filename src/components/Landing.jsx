@@ -780,7 +780,7 @@ export default function Landing() {
                       </div>
 
                       <div className="sidebar-buttons">
-                        <button className="btn-landing-primary w-full" onClick={() => navigate('/checkout')}>
+                        <button className="btn-landing-primary w-full" onClick={() => { setShowCheckout(true); window.scrollTo(0, 0); }}>
                           🛒 Ver Carrito / Pagar
                         </button>
                       </div>
