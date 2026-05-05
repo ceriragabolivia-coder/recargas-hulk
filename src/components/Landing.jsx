@@ -417,7 +417,7 @@ export default function Landing() {
             <nav className="landing-nav hidden-mobile">
               <a href="#" className="nav-link active" onClick={(e) => { e.preventDefault(); handleSelectJuego(null); }}>Home</a>
               <div className="nav-dropdown">
-                <span className="nav-link">Servicios ▾</span>
+                <span className="nav-link">Servicios <i>▾</i></span>
                 <div className="dropdown-content">
                   {categorias.map(cat => (
                     <a key={cat.id} href="#" onClick={(e) => { e.preventDefault(); setActiveCategory(cat.nombre); handleSelectJuego(null); }}>{cat.nombre}</a>
@@ -1293,6 +1293,7 @@ export default function Landing() {
         }
         .landing-nav {
           display: flex;
+          align-items: center;
           gap: 24px;
         }
         .nav-link {
@@ -1301,6 +1302,17 @@ export default function Landing() {
           font-weight: 500;
           font-size: 15px;
           transition: color 0.2s;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          cursor: pointer;
+        }
+        .nav-link i {
+          font-size: 12px;
+          transition: transform 0.2s;
+        }
+        .nav-dropdown:hover .nav-link i {
+          transform: rotate(180deg);
         }
         .nav-link:hover, .nav-link.active {
           color: var(--accent);
