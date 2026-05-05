@@ -469,10 +469,10 @@ export default function Landing() {
             <div className="detail-layout">
               <div className="detail-main">
                 {/* Info superior */}
-                <div className="detail-header-card">
+                <div className={`detail-header-card ${selectedJuego.banner_url ? 'has-banner' : ''}`}>
                   {selectedJuego.banner_url ? (
                     <>
-                      <div className="detail-game-banner visible-mobile">
+                      <div className="detail-game-banner">
                         <img src={selectedJuego.banner_url} alt={selectedJuego.nombre} />
                       </div>
                       <img src={selectedJuego.icono_url} alt="" className="detail-header-icon hidden-mobile" />
@@ -1413,6 +1413,27 @@ export default function Landing() {
           box-shadow: 0 4px 15px rgba(0,0,0,0.05);
           border: 1px solid var(--border);
         }
+        .detail-header-card.has-banner {
+          display: block;
+          padding: 0;
+          overflow: hidden;
+        }
+        .detail-header-card.has-banner .detail-header-info {
+          padding: 24px;
+        }
+        .detail-game-banner {
+          width: 100%;
+          aspect-ratio: 4 / 1;
+          border-radius: 12px;
+          overflow: hidden;
+          background: #000;
+          display: none;
+        }
+        .detail-game-banner img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
         .detail-header-icon {
           width: 100px;
           height: 100px;
@@ -1712,6 +1733,13 @@ export default function Landing() {
             padding: 16px;
             gap: 16px;
             overflow: hidden;
+          }
+          .detail-header-card.has-banner {
+            padding: 0;
+          }
+          .detail-header-card.has-banner .detail-game-banner {
+            border-radius: 0;
+            aspect-ratio: 2.5 / 1;
           }
           .detail-game-banner { display: block; border-radius: 8px; }
           .detail-header-icon { width: 80px; height: 80px; }
