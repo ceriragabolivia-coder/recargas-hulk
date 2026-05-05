@@ -422,17 +422,44 @@ export default function Landing() {
           </div>
 
           <div className="flex items-center landing-header-right">
-            {!selectedJuego && (
-              <div className="landing-search hidden-mobile">
-                <input 
-                  type="text" 
-                  placeholder="Buscar juegos o servicios..." 
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-                <span className="search-icon">🔍</span>
-              </div>
-            )}
+            <div className="landing-search hidden-mobile" style={{ position: 'relative' }}>
+              <input 
+                type="text" 
+                placeholder="Buscar juegos o servicios..." 
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onBlur={() => setTimeout(() => setSearch(''), 200)}
+              />
+              <span className="search-icon">🔍</span>
+              
+              {search.trim().length > 0 && (
+                <div className="search-results-dropdown">
+                  {juegos
+                    .filter(j => j.nombre.toLowerCase().includes(search.toLowerCase()))
+                    .slice(0, 8)
+                    .map(juego => (
+                      <div 
+                        key={juego.id} 
+                        className="search-result-item"
+                        onClick={() => {
+                          handleSelectJuego(juego);
+                          setSearch('');
+                        }}
+                      >
+                        <img src={juego.icono_url || 'https://via.placeholder.com/40'} alt={juego.nombre} />
+                        <div className="result-info">
+                          <div className="result-name">{juego.nombre}</div>
+                          <div className="result-cat">{juego.categoria}</div>
+                        </div>
+                      </div>
+                    ))
+                  }
+                  {juegos.filter(j => j.nombre.toLowerCase().includes(search.toLowerCase())).length === 0 && (
+                    <div className="search-no-results">No se encontraron resultados</div>
+                  )}
+                </div>
+              )}
+            </div>
             
             {user && (
               <div 
