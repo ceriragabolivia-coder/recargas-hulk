@@ -317,7 +317,9 @@ export default function App() {
     return () => clearTimeout(timer)
   }, [])
 
-  if ((loading || (user && (!perfil || perfil.estado === 'cargando'))) && !forceLoad) {
+  // Eliminamos el splash screen global para disparar el contenido de inmediato.
+  // Los componentes individuales (Landing, Dashboard, etc) ya manejan sus propios estados de carga de datos.
+  if (loading && !forceLoad && !user) {
     return (
       <div className="loading-screen-modern">
         <img src={kidsGamingImg} alt="Cargando..." className="loading-illustration" width="320" height="320" />
