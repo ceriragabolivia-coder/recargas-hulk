@@ -38,6 +38,7 @@ export default function Landing() {
   const [verificacionResultado, setVerificacionResultado] = useState(null)
   const [addedItem, setAddedItem] = useState(null)
   
+  const [activeCategory, setActiveCategory] = useState('Todos')
   const [search, setSearch] = useState('')
   
   // Notificaciones de Usuario (Pedidos)
