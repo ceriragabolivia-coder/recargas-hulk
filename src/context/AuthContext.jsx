@@ -21,7 +21,6 @@ export function AuthProvider({ children }) {
     // 1. MODO VELOZ: Retorno rápido para evitar esperas en la UI
     // Si es SuperAdmin, retornamos admin instantáneo. Si no, esperamos un poco.
     if (isSuperAdmin) {
-      console.log('👑 Auth: Modo VIP activado para admin primario');
       
       const fetchFullDetails = async () => {
         const [resP, resC, resB] = await Promise.all([
@@ -131,7 +130,6 @@ export function AuthProvider({ children }) {
 
       return await Promise.race([fetchPromise, timeoutPromise])
     } catch (err) {
-      console.warn('⚠️ Auth: Error o Timeout en carga de perfil');
       return { id: userId, rol: 'cliente', estado: 'cargando', is_fallback: true }
     }
   }
@@ -172,7 +170,6 @@ export function AuthProvider({ children }) {
           }
         }
       } catch (err) {
-        console.error("❌ Auth: Error en inicialización inicial:", err)
       } finally {
         setLoading(false)
       }

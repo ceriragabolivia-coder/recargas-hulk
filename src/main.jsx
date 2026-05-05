@@ -11,7 +11,6 @@ import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import { ConfigProvider } from './context/ConfigContext'
 
-console.log('🚀 Iniciando sistema principal...');
 
 // Error Boundary simple para producción
 class RootErrorBoundary extends React.Component {

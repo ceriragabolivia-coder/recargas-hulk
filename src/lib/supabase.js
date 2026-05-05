@@ -18,4 +18,3 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 })
 
-console.log('✅ Supabase: Cliente inicializado (Modo Normalizado)')
