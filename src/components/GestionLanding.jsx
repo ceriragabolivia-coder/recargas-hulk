@@ -249,7 +249,8 @@ export default function GestionLanding() {
       text: '',
       btnText: '',
       url: '',
-      interval: '5'
+      interval: '5',
+      active: true
     }])
   }
 
@@ -348,18 +349,29 @@ export default function GestionLanding() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
               {bannersList.map((banner, index) => (
                 <div key={banner.id} className="form-group full-width" style={{ marginTop: index > 0 ? '20px' : '0px', borderTop: index > 0 ? '1px solid var(--border)' : 'none', paddingTop: index > 0 ? '20px' : '0px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
                     <h3 style={{ margin: 0 }}>Banner {index + 1} {index === 0 ? '(Principal)' : ''}</h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <label className="form-label" style={{ margin: 0 }}>Tiempo de visualización (s):</label>
-                      <input 
-                        type="number" 
-                        className="form-input" 
-                        value={banner.interval || '5'} 
-                        onChange={(e) => updateBannerProp(banner.id, 'interval', e.target.value)} 
-                        min="1"
-                        style={{ width: '80px', padding: '6px 12px' }}
-                      />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', margin: 0, fontWeight: 500 }}>
+                        <input 
+                          type="checkbox" 
+                          checked={banner.active !== false} 
+                          onChange={(e) => updateBannerProp(banner.id, 'active', e.target.checked)} 
+                        />
+                        <span style={{ color: banner.active !== false ? '#10b981' : 'var(--text-secondary)' }}>Activo</span>
+                      </label>
+                      <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border)' }}></div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <label className="form-label" style={{ margin: 0 }}>Tiempo de visualización (s):</label>
+                        <input 
+                          type="number" 
+                          className="form-input" 
+                          value={banner.interval || '5'} 
+                          onChange={(e) => updateBannerProp(banner.id, 'interval', e.target.value)} 
+                          min="1"
+                          style={{ width: '80px', padding: '6px 12px' }}
+                        />
+                      </div>
                       {bannersList.length > 1 && (
                         <button type="button" className="btn" style={{ background: '#ff4d4f', color: 'white', padding: '6px 12px' }} onClick={() => removeBanner(banner.id)}>Eliminar</button>
                       )}
@@ -373,6 +385,11 @@ export default function GestionLanding() {
                         <input type="file" id={`upload_banner_${banner.id}`} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleUploadBanner(e, banner.id)} />
                         <button type="button" className="btn btn-secondary" onClick={() => document.getElementById(`upload_banner_${banner.id}`).click()} disabled={saving} style={{ whiteSpace: 'nowrap' }}>📁 Subir Imagen</button>
                       </div>
+                      {banner.image && (
+                        <div style={{ marginTop: '12px', borderRadius: '8px', overflow: 'hidden', height: '140px', width: '100%', border: '1px solid var(--border)', backgroundColor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <img src={banner.image} alt={`Vista previa banner ${index + 1}`} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                        </div>
+                      )}
                     </div>
                     <div className="form-group">
                       <label className="form-label">Título</label>

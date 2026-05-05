@@ -48,7 +48,10 @@ export default function Landing() {
     if (config?.landing_banners_json) {
       try {
         const parsed = JSON.parse(config.landing_banners_json);
-        if (parsed && parsed.length > 0) return parsed;
+        if (parsed && parsed.length > 0) {
+          const activeBanners = parsed.filter(b => b.active !== false);
+          return activeBanners.length > 0 ? activeBanners : parsed; // Fallback to all if somehow all are disabled to avoid empty carousel
+        }
       } catch (e) {
         console.error("Error parsing landing banners", e);
       }
