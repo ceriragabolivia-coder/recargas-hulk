@@ -44,32 +44,46 @@ export default function Landing() {
   // Modo Nocturno
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('landing_dark_mode') === 'true')
 
-  const banners = useMemo(() => [
-    {
-      id: 1,
-      image: config?.landing_banner_1 || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=2070',
-      title: config?.landing_banner_1_title ?? config?.landing_subtitulo ?? '¡Recargas al Instante!',
-      text: config?.landing_banner_1_text ?? 'Seguridad y confianza en cada transacción',
-      btnText: config?.landing_banner_1_btn_text ?? 'Empieza ahora',
-      url: config?.landing_banner_1_url ?? '/register'
-    },
-    {
-      id: 2,
-      image: config?.landing_banner_2 || 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=2071',
-      title: config?.landing_banner_2_title ?? 'Los mejores precios del mercado',
-      text: config?.landing_banner_2_text ?? '',
-      btnText: config?.landing_banner_2_btn_text ?? 'Empieza ahora',
-      url: config?.landing_banner_2_url ?? '/register'
-    },
-    {
-      id: 3,
-      image: config?.landing_banner_3 || 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&q=80&w=2070',
-      title: config?.landing_banner_3_title ?? 'Explora nuestro catálogo',
-      text: config?.landing_banner_3_text ?? '',
-      btnText: config?.landing_banner_3_btn_text ?? 'Empieza ahora',
-      url: config?.landing_banner_3_url ?? '/register'
+  const banners = useMemo(() => {
+    if (config?.landing_banners_json) {
+      try {
+        const parsed = JSON.parse(config.landing_banners_json);
+        if (parsed && parsed.length > 0) return parsed;
+      } catch (e) {
+        console.error("Error parsing landing banners", e);
+      }
     }
-  ], [config])
+    // Fallback to legacy config
+    return [
+      {
+        id: 1,
+        image: config?.landing_banner_1 || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=2070',
+        title: config?.landing_banner_1_title ?? config?.landing_subtitulo ?? '¡Recargas al Instante!',
+        text: config?.landing_banner_1_text ?? 'Seguridad y confianza en cada transacción',
+        btnText: config?.landing_banner_1_btn_text ?? 'Empieza ahora',
+        url: config?.landing_banner_1_url ?? '/register',
+        interval: config?.landing_banner_1_interval || '5'
+      },
+      {
+        id: 2,
+        image: config?.landing_banner_2 || 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=2071',
+        title: config?.landing_banner_2_title ?? 'Los mejores precios del mercado',
+        text: config?.landing_banner_2_text ?? '',
+        btnText: config?.landing_banner_2_btn_text ?? 'Empieza ahora',
+        url: config?.landing_banner_2_url ?? '/register',
+        interval: config?.landing_banner_2_interval || '5'
+      },
+      {
+        id: 3,
+        image: config?.landing_banner_3 || 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&q=80&w=2070',
+        title: config?.landing_banner_3_title ?? 'Explora nuestro catálogo',
+        text: config?.landing_banner_3_text ?? '',
+        btnText: config?.landing_banner_3_btn_text ?? 'Empieza ahora',
+        url: config?.landing_banner_3_url ?? '/register',
+        interval: config?.landing_banner_3_interval || '5'
+      }
+    ]
+  }, [config])
 
   useEffect(() => {
     localStorage.setItem('landing_dark_mode', darkMode)
@@ -259,12 +273,9 @@ export default function Landing() {
   useEffect(() => {
     if (!selectedJuego && banners.length > 0) {
       const currentBannerData = banners[currentBanner];
-      let intervalSecs = 5;
+      if (!currentBannerData) return;
       
-      if (currentBannerData.id === 1) intervalSecs = parseInt(config?.landing_banner_1_interval || '5', 10);
-      else if (currentBannerData.id === 2) intervalSecs = parseInt(config?.landing_banner_2_interval || '5', 10);
-      else if (currentBannerData.id === 3) intervalSecs = parseInt(config?.landing_banner_3_interval || '5', 10);
-      
+      let intervalSecs = parseInt(currentBannerData.interval || '5', 10);
       const ms = isNaN(intervalSecs) || intervalSecs < 1 ? 5000 : intervalSecs * 1000;
       
       const timer = setTimeout(() => {
