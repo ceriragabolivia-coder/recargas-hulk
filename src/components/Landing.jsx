@@ -427,8 +427,11 @@ export default function Landing() {
                         e.preventDefault(); 
                         setActiveCategory(cat.nombre); 
                         handleSelectJuego(null);
-                        const element = document.getElementById('all-games');
-                        if (element) element.scrollIntoView({ behavior: 'smooth' });
+                        // Usar setTimeout para esperar a que el catálogo se renderice si estábamos en detalle
+                        setTimeout(() => {
+                          const element = document.getElementById('all-games');
+                          if (element) element.scrollIntoView({ behavior: 'smooth' });
+                        }, 100);
                       }}
                     >
                       {cat.nombre}
@@ -1004,7 +1007,7 @@ export default function Landing() {
           <>
 
 
-            {!search.trim() && (
+            {!search.trim() && activeCategory === 'Todos' && (
               <section className="landing-section landing-container">
                 <div className="section-header">
                   <h3>Recarga Aquí</h3>
@@ -1021,7 +1024,7 @@ export default function Landing() {
             {/* ALL GAMES / CATEGORIES */}
             <section id="all-games" className="landing-section landing-container" style={{ marginTop: search.trim() ? '20px' : undefined }}>
               <div className="section-header">
-                <h3>Explorar Catálogo</h3>
+                <h3>{activeCategory === 'Todos' ? 'Explorar Catálogo' : `Servicios: ${activeCategory}`}</h3>
               </div>
               <div className="category-pills">
                 <button 
