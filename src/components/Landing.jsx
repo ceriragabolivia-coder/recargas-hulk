@@ -467,8 +467,8 @@ export default function Landing() {
             </div>
 
             <div className="detail-layout">
-              <div className="detail-main">
-                {/* Info superior */}
+              {/* SECCIÓN CABECERA */}
+              <div className="detail-header-area">
                 <div className={`detail-header-card ${selectedJuego.banner_url ? 'has-banner' : ''}`}>
                   {selectedJuego.banner_url ? (
                     <>
@@ -489,117 +489,32 @@ export default function Landing() {
                     </div>
                   </div>
                 </div>
-
-                {/* Lista de Precios */}
-                <div className="price-list-section">
-                  <h3>Selecciona un paquete</h3>
-                  {loadingProductos ? (
-                    <div className="spinner"></div>
-                  ) : (
-                    <div className="products-grid">
-                      {productosJuego.map(prod => {
-                        const pricing = calcularPrecioVenta(prod, selectedJuego, config)
-                        return (
-                          <div key={prod.id} className="product-card" onClick={() => {
-                            if (!user) {
-                              setAuthModalView('login');
-                              setIsAuthModalOpen(true);
-                              return;
-                            }
-                            
-                            if (selectedJuego.metodo_recarga === 'sin_datos') {
-                              // OK
-                            } else if (selectedJuego.metodo_recarga === 'cuenta_completa') {
-                              if (!localRechargeData.account_email.trim() || !localRechargeData.account_password.trim()) {
-                                alert('Por favor introduce el correo y clave en el panel de la derecha primero.')
-                                return
-                              }
-                            } else if (selectedJuego.metodo_recarga === 'usuario_clave') {
-                              if (!localRechargeData.account_user?.trim() || !localRechargeData.account_password.trim()) {
-                                alert('Por favor introduce el usuario y clave en el panel de la derecha primero.')
-                                return
-                              }
-                            } else {
-                              if (!localRechargeData.player_id.trim()) {
-                                alert('Por favor introduce el ID en el panel de la derecha primero.')
-                                return
-                              }
-                              const juegoNormalizado = selectedJuego.nombre.toLowerCase().replace(/\s/g, '')
-                              if (juegoNormalizado.includes('freefire') || juegoNormalizado.includes('bloodstrike')) {
-                                if (!verificacionResultado?.success || verificacionResultado.verified_id !== localRechargeData.player_id) {
-                                  alert('Debes verificar el nombre del jugador en el panel de la derecha antes de seleccionar un paquete.')
-                                  return
-                                }
-                              }
-                            }
-                            
-                            const finalPrice = calcularPrecioVenta(prod, selectedJuego, config, perfil)
-                            setPendingItem({ p: prod, selectedJuego, finalPrice, localRechargeData })
-                          }}>
-                            {prod.icono_url && <img src={prod.icono_url} alt="" className="product-icon" />}
-                            <div className="product-name">{prod.nombre}</div>
-                            <div className="product-price">
-                              {isRevendedor ? (
-                                <span className="price-primary">{formatUSD(pricing.venta_usd)}</span>
-                              ) : (
-                                <span className="price-primary">{formatBs(pricing.venta_bs)}</span>
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                {/* Información / Guías */}
-                <div className="info-content-section">
-                  <div className="info-tab-header">
-                    <h4>Información de {selectedJuego.nombre}</h4>
-                  </div>
-                  <div className="info-body">
-                    {selectedJuego.caracteristicas_nota ? (
-                      <div className="rich-text" dangerouslySetInnerHTML={{ __html: selectedJuego.caracteristicas_nota.replace(/\n/g, '<br/>') }} />
-                    ) : (
-                      <p>Para adquirir recargas de {selectedJuego.nombre}, solo necesitas proporcionar tu ID de jugador. La entrega es inmediata una vez verificado el pago.</p>
-                    )}
-                    
-                    <h5>¿Cómo recargar?</h5>
-                    <ul>
-                      <li>Selecciona el paquete que deseas adquirir.</li>
-                      <li>Inicia sesión o regístrate en nuestra plataforma.</li>
-                      <li>Completa el pago mediante tu método favorito (Pago Móvil, Binance, PayPal).</li>
-                      <li>¡Listo! Tu recarga llegará en minutos.</li>
-                    </ul>
-                  </div>
-                </div>
               </div>
 
-              {/* SIDEBAR DE COMPRA */}
-              <aside className="detail-sidebar">
+              {/* SIDEBAR DE COMPRA (Aparece antes de precios en móvil) */}
+              <aside className="detail-sidebar-area">
                 <div className="purchase-card">
-                  
                   {user ? (
                     <>
-                      <h3 style={{ marginBottom: '16px' }}>Datos de Recarga</h3>
+                      <h3>Datos de Recarga</h3>
                       
-                      <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '4px', border: '1px solid var(--border)', marginBottom: '20px', gap: '4px' }}>
+                      <div className="buy-mode-toggle">
                         <button 
                           onClick={() => setBuyMode('single')}
-                          style={{ flex: 1, padding: '10px', borderRadius: '8px', border: 'none', backgroundColor: buyMode === 'single' ? 'var(--accent)' : 'transparent', color: buyMode === 'single' ? '#000' : 'var(--text-muted)', fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.3s' }}
+                          className={buyMode === 'single' ? 'active' : ''}
                         >
-                          🛍️ Comprar un paquete
+                          🛍️ Comprar uno
                         </button>
                         <button 
                           onClick={() => setBuyMode('multiple')}
-                          style={{ flex: 1, padding: '10px', borderRadius: '8px', border: 'none', backgroundColor: buyMode === 'multiple' ? 'var(--accent)' : 'transparent', color: buyMode === 'multiple' ? '#000' : 'var(--text-muted)', fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.3s' }}
+                          className={buyMode === 'multiple' ? 'active' : ''}
                         >
                           🛒 Comprar varios
                         </button>
                       </div>
 
                       {/* FORMULARIO DE DATOS */}
-                      <div className="card-recharge-info" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
+                      <div className="card-recharge-info">
                         {selectedJuego.metodo_recarga === 'sin_datos' ? (
                           <div style={{ textAlign: 'center' }}>
                             <p style={{ fontSize: '14px', color: 'var(--text)', fontWeight: 600, margin: 0 }}>⚡ Entrega inmediata</p>
@@ -1400,8 +1315,15 @@ export default function Landing() {
         .detail-layout {
           display: grid;
           grid-template-columns: 1fr 350px;
+          grid-template-areas: 
+            "header  sidebar"
+            "content sidebar";
           gap: 30px;
         }
+        .detail-header-area { grid-area: header; }
+        .detail-sidebar-area { grid-area: sidebar; }
+        .detail-content-area { grid-area: content; }
+
         .detail-header-card {
           background: var(--bg-card);
           padding: 24px;
@@ -1409,7 +1331,7 @@ export default function Landing() {
           display: flex;
           gap: 24px;
           align-items: center;
-          margin-bottom: 30px;
+          margin-bottom: 20px;
           box-shadow: 0 4px 15px rgba(0,0,0,0.05);
           border: 1px solid var(--border);
         }
@@ -1727,13 +1649,21 @@ export default function Landing() {
           .dot.active { width: 12px; }
 
           .footer-content { grid-template-columns: 1fr; gap: 40px; }
+          .detail-layout { 
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+          }
+          .detail-header-area, .detail-sidebar-area, .detail-content-area {
+            grid-area: auto;
+          }
           .detail-header-card { 
             flex-direction: column; 
             text-align: center; 
             padding: 12px;
             gap: 12px;
             overflow: hidden;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
           }
           .detail-header-card.has-banner {
             padding: 0;
@@ -1746,10 +1676,42 @@ export default function Landing() {
             padding: 12px 16px;
           }
           .detail-header-info h1 { font-size: 22px; margin-bottom: 4px; }
-          .detail-stats { gap: 8px; justify-content: center; }
+          .detail-stats { display: none !important; }
 
           .detail-game-banner { display: block; border-radius: 8px; }
           .detail-header-icon { width: 70px; height: 70px; }
+
+          /* Sidebar compact on mobile */
+          .purchase-card { 
+            padding: 12px; 
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+          }
+          .purchase-card h3 { font-size: 16px; margin-bottom: 10px !important; }
+          .buy-mode-toggle { 
+            display: flex; 
+            background: rgba(255,255,255,0.03); 
+            border-radius: 10px; 
+            padding: 3px; 
+            border: 1px solid var(--border); 
+            margin-bottom: 12px !important; 
+            gap: 3px; 
+          }
+          .buy-mode-toggle button {
+            flex: 1; padding: 8px; border-radius: 7px; border: none; background: transparent; color: var(--text-muted); font-size: 12px; font-weight: 700; cursor: pointer;
+          }
+          .buy-mode-toggle button.active {
+            background: var(--accent); color: #000;
+          }
+          .card-recharge-info { 
+            background: var(--bg-panel); 
+            border: 1px solid var(--border); 
+            border-radius: 12px; 
+            padding: 12px !important; 
+            margin-bottom: 0 !important; 
+          }
+
           .games-grid { 
             grid-template-columns: 1fr 1fr; 
             gap: 10px;
@@ -1764,8 +1726,8 @@ export default function Landing() {
           .game-name {
             font-size: 13px;
           }
-          .price-list-section { padding: 12px; margin-bottom: 20px; }
-          .price-list-section h3 { margin-bottom: 12px; font-size: 18px; }
+          .price-list-section { padding: 12px; margin-bottom: 15px; }
+          .price-list-section h3 { margin-bottom: 10px; font-size: 17px; }
           .products-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
           .product-card { padding: 10px; border-radius: 16px; }
           .product-name { font-size: 12px; height: 32px; margin-bottom: 4px; }
@@ -1776,11 +1738,11 @@ export default function Landing() {
           .info-tab-header { padding: 10px 12px; }
           .info-body { padding: 12px; font-size: 13px; }
           
-          .breadcrumb { margin-bottom: 12px; font-size: 13px; }
+          .breadcrumb { margin-bottom: 10px; font-size: 13px; }
           .landing-container { padding: 0 10px; }
-          .landing-hero { margin-bottom: 15px; }
-          .landing-section { margin-top: 15px; }
-          .section-header { margin-bottom: 12px; }
+          .landing-hero { margin-bottom: 10px; }
+          .landing-section { margin-top: 10px; }
+          .section-header { margin-bottom: 10px; }
           .section-header h3 { font-size: 18px; }
         }
       `}} />
