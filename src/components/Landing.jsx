@@ -416,6 +416,49 @@ export default function Landing() {
       </header>
 
       <main className="landing-main">
+        {/* HERO SLIDER (Global) */}
+        {!search.trim() && (
+          <section className="landing-hero landing-container">
+          <div className="hero-slider">
+            {banners.map((banner, idx) => (
+              <div 
+                key={idx} 
+                className={`hero-slide ${idx === currentBanner ? 'active' : ''}`}
+                style={{ backgroundImage: `url(${banner.image})` }}
+              >
+                <div className="hero-content">
+                  {banner.title && <h2>{banner.title}</h2>}
+                  {banner.text && <p>{banner.text}</p>}
+                  {banner.btnText && (
+                    <button 
+                      className="btn-landing-primary" 
+                      onClick={() => {
+                        if (banner.url && banner.url.startsWith('http')) {
+                          window.location.href = banner.url
+                        } else if (banner.url) {
+                          navigate(banner.url)
+                        }
+                      }}
+                    >
+                      {banner.btnText}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+            <div className="slider-dots">
+              {banners.map((_, idx) => (
+                <span 
+                  key={idx} 
+                  className={`dot ${idx === currentBanner ? 'active' : ''}`}
+                  onClick={() => setCurrentBanner(idx)}
+                ></span>
+              ))}
+            </div>
+          </div>
+        </section>
+        )}
+
         {selectedJuego ? (
           /* VISTA DETALLE DEL JUEGO */
           <div className="landing-container detail-view fade-in">
@@ -741,48 +784,7 @@ export default function Landing() {
         ) : (
           /* VISTA CATALOGO PRINCIPAL */
           <>
-            {/* HERO SLIDER */}
-            {!search.trim() && (
-              <section className="landing-hero landing-container">
-              <div className="hero-slider">
-                {banners.map((banner, idx) => (
-                  <div 
-                    key={idx} 
-                    className={`hero-slide ${idx === currentBanner ? 'active' : ''}`}
-                    style={{ backgroundImage: `url(${banner.image})` }}
-                  >
-                    <div className="hero-content">
-                      {banner.title && <h2>{banner.title}</h2>}
-                      {banner.text && <p>{banner.text}</p>}
-                      {banner.btnText && (
-                        <button 
-                          className="btn-landing-primary" 
-                          onClick={() => {
-                            if (banner.url && banner.url.startsWith('http')) {
-                              window.location.href = banner.url
-                            } else if (banner.url) {
-                              navigate(banner.url)
-                            }
-                          }}
-                        >
-                          {banner.btnText}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                <div className="slider-dots">
-                  {banners.map((_, idx) => (
-                    <span 
-                      key={idx} 
-                      className={`dot ${idx === currentBanner ? 'active' : ''}`}
-                      onClick={() => setCurrentBanner(idx)}
-                    ></span>
-                  ))}
-                </div>
-              </div>
-            </section>
-            )}
+
 
             {!search.trim() && (
               <section className="landing-section landing-container">
@@ -1675,9 +1677,9 @@ export default function Landing() {
             height: auto; 
             aspect-ratio: 3.5 / 1; 
             min-height: 90px;
-            border-radius: 12px;
+            border-radius: 8px;
             margin: 0 auto;
-            width: 95%;
+            width: 100%;
           }
           .hero-slide {
             background-size: 100% 100%;
