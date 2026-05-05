@@ -649,49 +649,35 @@ export default function Checkout({ onFinish }) {
           </div>
         </header>
 
-      {/* BANNER SLIDER (igual que Landing) */}
-      <section style={{ position: 'relative', width: '100%', overflow: 'hidden', height: '200px', marginTop: '0' }}>
-        {banners.map((banner, idx) => (
-          <div
-            key={idx}
-            style={{
-              position: 'absolute', inset: 0,
-              backgroundImage: `url(${banner.image})`,
-              backgroundSize: 'cover', backgroundPosition: 'center',
-              opacity: idx === currentBanner ? 1 : 0,
-              transition: 'opacity 0.8s ease-in-out',
-              zIndex: idx === currentBanner ? 1 : 0
-            }}
-          >
-            <div style={{
-              position: 'absolute', inset: 0,
-              background: 'linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)'
-            }} />
-            {banner.title && (
-              <div style={{ position: 'relative', zIndex: 2, padding: '0 32px', height: '100%', display: 'flex', alignItems: 'center' }}>
-                <h2 style={{ color: '#fff', fontSize: '22px', fontWeight: 800, textShadow: '0 2px 8px rgba(0,0,0,0.5)', margin: 0, maxWidth: '500px' }}>{banner.title}</h2>
+      <main className="landing-main">
+        {/* BANNER SLIDER — misma estructura exacta que Landing */}
+        <section className="landing-hero landing-container">
+          <div className="hero-slider">
+            {banners.map((banner, idx) => (
+              <div
+                key={idx}
+                className={`hero-slide ${idx === currentBanner ? 'active' : ''}`}
+                style={{ backgroundImage: `url(${banner.image})` }}
+              >
+                <div className="hero-content">
+                  {banner.title && <h2>{banner.title}</h2>}
+                  {banner.text && <p>{banner.text}</p>}
+                </div>
               </div>
-            )}
+            ))}
+            <div className="slider-dots">
+              {banners.map((_, idx) => (
+                <span
+                  key={idx}
+                  className={`dot ${idx === currentBanner ? 'active' : ''}`}
+                  onClick={() => setCurrentBanner(idx)}
+                />
+              ))}
+            </div>
           </div>
-        ))}
-        {/* Dots */}
-        <div style={{ position: 'absolute', bottom: '12px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', zIndex: 10 }}>
-          {banners.map((_, idx) => (
-            <span
-              key={idx}
-              onClick={() => setCurrentBanner(idx)}
-              style={{
-                width: idx === currentBanner ? '20px' : '8px',
-                height: '8px', borderRadius: '999px',
-                backgroundColor: idx === currentBanner ? '#00d2ff' : 'rgba(255,255,255,0.4)',
-                cursor: 'pointer', transition: 'all 0.3s'
-              }}
-            />
-          ))}
-        </div>
-      </section>
+        </section>
 
-      <div className="landing-container" style={{ paddingTop: '28px', paddingBottom: '60px', position: 'relative', zIndex: 10 }}>
+        <div className="landing-container" style={{ paddingTop: '24px', paddingBottom: '60px', position: 'relative', zIndex: 10 }}>
         <div className="page-header mb-8" style={{ paddingBottom: 0, display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button 
             className="btn btn-ghost btn-icon" 
@@ -1080,10 +1066,12 @@ export default function Checkout({ onFinish }) {
         @media (max-width: 1024px) { .responsive-grid-2col { grid-template-columns: 1fr; } }
         @media (max-width: 768px) { .landing-header { height: 64px; } .landing-logo-img { width: 32px !important; height: 32px !important; } .landing-logo-text { font-size: 16px; } }
       `}} />
+      </main>
     </div>
   </>
   )
 }
+
 
 
 
