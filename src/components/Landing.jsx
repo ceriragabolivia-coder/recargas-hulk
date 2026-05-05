@@ -240,6 +240,14 @@ export default function Landing() {
       if (jRes.data) setJuegos(jRes.data)
       if (cRes.data) setCategorias(cRes.data)
       setLoading(false)
+      
+      // OPTIMIZACIÓN: Precarga de imágenes críticas para que aparezcan instantáneamente
+      jRes.data?.slice(0, 16).forEach(juego => {
+        if (juego.icono_url) {
+          const img = new Image();
+          img.src = juego.icono_url;
+        }
+      });
     }
     fetchData()
   }, [])
@@ -631,7 +639,12 @@ export default function Landing() {
                 <div className={`detail-header-card ${selectedJuego.banner_url ? 'has-banner' : ''}`}>
                   {selectedJuego.banner_url ? (
                     <div className="detail-game-banner">
-                      <img src={selectedJuego.banner_url} alt={selectedJuego.nombre} />
+                      <img 
+                        src={selectedJuego.banner_url} 
+                        alt={selectedJuego.nombre} 
+                        fetchpriority="high"
+                        loading="eager"
+                      />
                     </div>
                   ) : (
                     <img src={selectedJuego.icono_url} alt="" className="detail-header-icon" />
@@ -2069,6 +2082,8 @@ function GameCard({ juego, onSelect }) {
         src={juego.icono_url || 'https://via.placeholder.com/200x250?text=' + juego.nombre} 
         alt={juego.nombre} 
         className="game-image" 
+        fetchpriority="high"
+        loading="eager"
       />
       <div className="game-info">
         <div className="game-name">{juego.nombre}</div>
