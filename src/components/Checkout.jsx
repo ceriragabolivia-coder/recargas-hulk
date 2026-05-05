@@ -73,6 +73,7 @@ export default function Checkout({ onFinish }) {
   const [orderFinished, setOrderFinished] = useState(false)
   const [createdPedidoId, setCreatedPedidoId] = useState(null)
   const [expiresAt, setExpiresAt] = useState(null)
+  const [darkMode, setDarkMode] = useState(true)
   const orderPreparingRef = React.useRef(false)
   const [comprobanteUrl, setComprobanteUrl] = useState(null)
   const [uploadingComprobante, setUploadingComprobante] = useState(false)
@@ -448,7 +449,6 @@ export default function Checkout({ onFinish }) {
   }
 
   // Modo Nocturno (consistente con la landing)
-  const [darkMode, setDarkMode] = useState(true)
 
   return (
     <>
@@ -841,6 +841,7 @@ export default function Checkout({ onFinish }) {
           </div>
         </div>
       </div>
+    </div>
 
       {alertModal && (
         <AlertModal
@@ -869,7 +870,7 @@ export default function Checkout({ onFinish }) {
           @media (max-width: 768px) { .landing-header { height: 64px; } .landing-logo-img { width: 32px !important; height: 32px !important; } .landing-logo-text { font-size: 16px; } }
         `}} />
       </div>
-    </div>
+    </>
   )
 }
 
