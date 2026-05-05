@@ -5,6 +5,7 @@ import { useConfiguracion, useAuth, useCart, useCuentasGuardadas } from '../hook
 import { formatUSD, formatBs, calcularPrecioVenta } from '../utils/helpers'
 import LandingAuthModal from './LandingAuthModal'
 import Checkout from './Checkout'
+import Pedidos from './Pedidos'
 
 export default function Landing() {
   const navigate = useNavigate()
@@ -26,6 +27,7 @@ export default function Landing() {
   const [loadingProductos, setLoadingProductos] = useState(false)
   const [currentBanner, setCurrentBanner] = useState(0)
   const [showCheckout, setShowCheckout] = useState(false)
+  const [showOrders, setShowOrders] = useState(false)
 
   // Estados de Compra y Carrito
   const { cuentas, guardarCuenta, eliminarCuenta } = useCuentasGuardadas(selectedJuego?.id || null)
@@ -340,6 +342,7 @@ export default function Landing() {
 
   const handleSelectJuego = (juego) => {
     setShowCheckout(false)
+    setShowOrders(false)
     if (juego) {
       setSearchParams({ juego: juego.nombre.toLowerCase().replace(/\s+/g, '-') })
     } else {
@@ -497,7 +500,7 @@ export default function Landing() {
                     ))}
                   </div>
                   <div style={{ padding: '10px', textAlign: 'center', borderTop: '1px solid var(--border)' }}>
-                    <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Mis-Pedidos'); }} style={{ fontSize: '12px', fontWeight: '700', color: 'var(--accent)', textDecoration: 'none' }}>Ver todos mis pedidos</a>
+                    <a href="#" onClick={(e) => { e.preventDefault(); setShowOrders(true); setShowNotiDropdown(false); setSelectedJuego(null); }} style={{ fontSize: '12px', fontWeight: '700', color: 'var(--accent)', textDecoration: 'none' }}>Ver todos mis pedidos</a>
                   </div>
                 </div>
               </div>
@@ -520,7 +523,7 @@ export default function Landing() {
                     <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Dashboard') }} style={{ color: 'var(--accent)', fontWeight: 'bold' }}>Panel de Control</a>
                   )}
                   <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Mi-Perfil') }}>Mi Perfil</a>
-                  <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Mis-Pedidos') }}>Mis Pedidos</a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); setShowOrders(true); setSelectedJuego(null); }}>Mis Pedidos</a>
                   <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Billetera') }}>Billetera</a>
                   <a href="#" onClick={(e) => { e.preventDefault(); logout() }} style={{ color: '#ef4444' }}>Cerrar Sesión</a>
                 </div>
@@ -584,6 +587,10 @@ export default function Landing() {
 
         {showCheckout ? (
           <Checkout embedded={true} onFinish={() => setShowCheckout(false)} />
+        ) : showOrders ? (
+          <div className="landing-container fade-in" style={{ padding: '20px 0' }}>
+             <Pedidos embedded={true} />
+          </div>
         ) : selectedJuego ? (
           /* VISTA DETALLE DEL JUEGO */
           <div className="landing-container detail-view fade-in">

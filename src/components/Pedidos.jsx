@@ -16,7 +16,7 @@ Por favor verifica en tu banco el número de referencia, o comunícate con tu ba
 
 Verifica estos motivos y vuelve a crear un nuevo pedido: Recuerda que si creas muchos pedidos con referencias de pagos que no existan, tu usuario podría ser expulsado por colocar referencias de pagos falsos.`;
 
-export default function Pedidos({ filterKey, params, onNavigate }) {
+export default function Pedidos({ filterKey, params, onNavigate, embedded = false }) {
   const normalizedParams = typeof params === 'object' && params !== null ? params : { filterKey: params };
   const incomingFilterKey = normalizedParams.filterKey || filterKey;
   const targetOrderId = normalizedParams.orderId;
@@ -1047,7 +1047,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
   if (selectedPedido) {
     const est = getEstadoStyle(selectedPedido.estado)
     return (
-      <div style={{ paddingLeft: '16px', paddingBottom: '32px' }}>
+      <div style={{ paddingLeft: embedded ? '0' : '16px', paddingBottom: '32px' }}>
         <div className="page-header mb-8 pedidos-header-responsive" style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button className="btn btn-ghost btn-sm" onClick={() => setSelectedPedido(null)} style={{ padding: '4px 10px', backgroundColor: 'var(--bg-panel)', fontSize: '11px' }}>
@@ -1704,7 +1704,7 @@ export default function Pedidos({ filterKey, params, onNavigate }) {
 
   // Vista de lista
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '0 32px 32px' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: embedded ? '0' : '0 32px 32px' }}>
       <style>{`
         .orders-table-wrapper {
           overflow-x: auto !important;
