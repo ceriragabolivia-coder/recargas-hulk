@@ -3204,6 +3204,14 @@ tr:last-child td { border-bottom: none; }
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
+/* ============ CHECKOUT EMBEBIDO EN LANDING ============ */
+/* Cuando el Checkout se renderiza dentro de la Landing,
+   ocultamos su propio header, banner y fondo para que
+   la Landing provea esos elementos */
+.checkout-embedded .landing-header { display: none !important; }
+.checkout-embedded .landing-hero { display: none !important; }
+.checkout-embedded { min-height: auto !important; }
+
 /* Responsive Landing */
 @media (max-width: 768px) {
   .hidden-mobile { display: none !important; }

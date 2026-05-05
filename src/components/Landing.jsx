@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useConfiguracion, useAuth, useCart, useCuentasGuardadas } from '../hooks/useData'
 import { formatUSD, formatBs, calcularPrecioVenta } from '../utils/helpers'
 import LandingAuthModal from './LandingAuthModal'
+import Checkout from './Checkout'
 
 export default function Landing() {
   const navigate = useNavigate()
@@ -24,6 +25,7 @@ export default function Landing() {
   const [productosJuego, setProductosJuego] = useState([])
   const [loadingProductos, setLoadingProductos] = useState(false)
   const [currentBanner, setCurrentBanner] = useState(0)
+  const [showCheckout, setShowCheckout] = useState(false)
 
   // Estados de Compra y Carrito
   const { cuentas, guardarCuenta, eliminarCuenta } = useCuentasGuardadas(selectedJuego?.id || null)
@@ -193,7 +195,8 @@ export default function Landing() {
       }
 
       setPendingItem(null)
-      navigate('/checkout')
+      setShowCheckout(true)
+      window.scrollTo(0, 0)
     } else {
       addToCart(p, selectedJuego, finalPrice, localRechargeData)
       
@@ -336,6 +339,7 @@ export default function Landing() {
   }, [searchParams, juegos, selectedJuego])
 
   const handleSelectJuego = (juego) => {
+    setShowCheckout(false)
     if (juego) {
       setSearchParams({ juego: juego.nombre.toLowerCase().replace(/\s+/g, '-') })
     } else {
@@ -430,7 +434,11 @@ export default function Landing() {
             {user && (
               <div 
                 style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }} 
-                onClick={() => navigate('/checkout')}
+                onClick={() => {
+                  setShowCheckout(true);
+                  setSelectedJuego(null);
+                  window.scrollTo(0, 0);
+                }}
                 title="Ver Carrito"
               >
                 <span style={{ fontSize: '24px' }}>🛒</span>
@@ -574,7 +582,9 @@ export default function Landing() {
         </section>
         )}
 
-        {selectedJuego ? (
+        {showCheckout ? (
+          <Checkout embedded={true} onFinish={() => setShowCheckout(false)} />
+        ) : selectedJuego ? (
           /* VISTA DETALLE DEL JUEGO */
           <div className="landing-container detail-view fade-in">
             <div className="breadcrumb">

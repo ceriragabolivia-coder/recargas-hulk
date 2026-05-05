@@ -54,7 +54,7 @@ function CountdownTimer({ expiryDate, onExpire }) {
   )
 }
 
-export default function Checkout({ onFinish }) {
+export default function Checkout({ onFinish, embedded = false }) {
   const { cart, removeFromCart, clearCart, checkout, totalUSD, totalBs } = useCart()
   const { registrarVenta, verificarYRegistrarReferencia } = useVentas()
   const { metodos, cancelarPedidosExpirados, loading: loadingMetodos } = useMetodosPago()
@@ -421,11 +421,55 @@ export default function Checkout({ onFinish }) {
   }
 
   if (orderFinished) {
+    const successInner = (
+      <div className="landing-container" style={{ paddingTop: embedded ? '24px' : '100px', paddingBottom: '60px', position: 'relative', zIndex: 10 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+          <div className="card" style={{ textAlign: 'center', padding: '32px', maxWidth: '500px', width: '100%', borderRadius: '28px', border: '1px solid var(--border-color)', boxShadow: '0 12px 48px rgba(0,0,0,0.3)' }}>
+            {!showTracking ? (
+              <div className="fade-in">
+                <div style={{ marginBottom: '24px' }}>
+                  <img src="/assets/Verificando.PNG.png" alt="Verificación" style={{ width: '120px' }} />
+                </div>
+                <h2 style={{ color: 'var(--accent-success)', fontWeight: 800 }}>¡Pedido Creado!</h2>
+                <p style={{ color: 'var(--text-muted)', marginBottom: '32px', whiteSpace: 'pre-line', fontSize: '15px' }}>
+                  {isAutomaticResult ? (
+                    <>
+                      Tu pedido se ha registrado exitosamente y está en proceso.{"\n\n"}
+                      Dicho proceso comprende entre 5 a 20 minutos. Puedes consultar el estado en "Mis Pedidos".
+                    </>
+                  ) : (
+                    <>
+                      Tu pedido se ha registrado exitosamente. En estos momentos tu pago se está verificando.{"\n\n"}
+                      Puedes consultar el estado en "Mis Pedidos" y el tiempo estimado es de 5 a 20 minutos para la respuesta.
+                    </>
+                  )}
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => setShowTracking(true)}
+                    style={{ height: '56px', borderRadius: '14px', fontSize: '16px', fontWeight: 800, background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0088ff 100%)' }}
+                  >
+                    👁️ Ver Pedido
+                  </button>
+                  <button className="btn btn-ghost" onClick={onFinish} style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Volver al Inicio</button>
+                </div>
+              </div>
+            ) : (
+              <div className="tracking-view fade-in">
+                <OrderTracking pedidoInitial={createdPedidoData} onBack={onFinish} />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+
+    if (embedded) return successInner;
+
     return (
       <div style={{ minHeight: '100vh', position: 'relative', overflowX: 'hidden', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
         <FloatingBackground />
-
-        {/* HEADER — idéntico a Landing */}
         <header className="landing-header">
           <div className="landing-container flex items-center justify-between landing-header-inner">
             <div className="flex items-center landing-header-left">
@@ -440,58 +484,19 @@ export default function Checkout({ onFinish }) {
             </div>
           </div>
         </header>
-
-        <div className="landing-container" style={{ paddingTop: '100px', paddingBottom: '60px', position: 'relative', zIndex: 10 }}>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-            <div className="card" style={{ textAlign: 'center', padding: '32px', maxWidth: '500px', width: '100%', borderRadius: '28px', border: '1px solid var(--border-color)', boxShadow: '0 12px 48px rgba(0,0,0,0.3)' }}>
-              {!showTracking ? (
-                <div className="fade-in">
-                  <div style={{ marginBottom: '24px' }}>
-                    <img src="/assets/Verificando.PNG.png" alt="Verificación" style={{ width: '120px' }} />
-                  </div>
-                  <h2 style={{ color: 'var(--accent-success)', fontWeight: 800 }}>¡Pedido Creado!</h2>
-                  <p style={{ color: 'var(--text-muted)', marginBottom: '32px', whiteSpace: 'pre-line', fontSize: '15px' }}>
-                    {isAutomaticResult ? (
-                      <>
-                        Tu pedido se ha registrado exitosamente y está en proceso.{"\n\n"}
-                        Dicho proceso comprende entre 5 a 20 minutos. Puedes consultar el estado en "Mis Pedidos".
-                      </>
-                    ) : (
-                      <>
-                        Tu pedido se ha registrado exitosamente. En estos momentos tu pago se está verificando.{"\n\n"}
-                        Puedes consultar el estado en "Mis Pedidos" y el tiempo estimado es de 5 a 20 minutos para la respuesta.
-                      </>
-                    )}
-                  </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => setShowTracking(true)}
-                      style={{ height: '56px', borderRadius: '14px', fontSize: '16px', fontWeight: 800, background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0088ff 100%)' }}
-                    >
-                      👁️ Ver Pedido
-                    </button>
-                    <button className="btn btn-ghost" onClick={onFinish} style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Volver al Inicio</button>
-                  </div>
-                </div>
-              ) : (
-                <div className="tracking-view fade-in">
-                  <OrderTracking pedidoInitial={createdPedidoData} onBack={onFinish} />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        {successInner}
       </div>
-    )
+    );
   }
 
-  // Modo Nocturno (consistente con la landing)
+  // embedded=true → la Landing provee el wrapper, header y banner.
+  // El checkout renderiza normalmente pero con clase checkout-embedded
+  // para que el CSS oculte su propio header/banner.
 
   return (
     <>
-      <div style={{ minHeight: '100vh', position: 'relative', overflowX: 'hidden', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
-        <FloatingBackground />
+      <div className={embedded ? 'checkout-embedded' : ''} style={{ minHeight: '100vh', position: 'relative', overflowX: 'hidden', background: embedded ? 'transparent' : 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+        {!embedded && <FloatingBackground />}
         
         {/* HEADER — idéntico a Landing */}
         <header className="landing-header">
