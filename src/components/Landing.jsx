@@ -1730,9 +1730,10 @@ export default function Landing() {
           .detail-header-card { 
             flex-direction: column; 
             text-align: center; 
-            padding: 16px;
-            gap: 16px;
+            padding: 12px;
+            gap: 12px;
             overflow: hidden;
+            margin-bottom: 20px;
           }
           .detail-header-card.has-banner {
             padding: 0;
@@ -1741,37 +1742,46 @@ export default function Landing() {
             border-radius: 0;
             aspect-ratio: 3.5 / 1;
           }
+          .detail-header-card.has-banner .detail-header-info {
+            padding: 12px 16px;
+          }
+          .detail-header-info h1 { font-size: 22px; margin-bottom: 4px; }
+          .detail-stats { gap: 8px; justify-content: center; }
+
           .detail-game-banner { display: block; border-radius: 8px; }
-          .detail-header-icon { width: 80px; height: 80px; }
-          .detail-header-info h1 { font-size: 24px; }
+          .detail-header-icon { width: 70px; height: 70px; }
           .games-grid { 
             grid-template-columns: 1fr 1fr; 
-            gap: 12px;
+            gap: 10px;
             padding: 0;
           }
           .game-card {
             border-radius: 12px;
           }
           .game-info {
-            padding: 10px;
+            padding: 8px;
           }
           .game-name {
             font-size: 13px;
           }
-          .price-list-section { padding: 15px; }
-          .products-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-          .product-card { padding: 12px; border-radius: 16px; }
-          .product-name { font-size: 13px; height: 36px; margin-bottom: 8px; }
-          .product-icon { width: 48px; height: 48px; margin-bottom: 8px; }
-          .price-primary { font-size: 17px; }
-          .price-secondary { font-size: 11px; }
+          .price-list-section { padding: 12px; margin-bottom: 20px; }
+          .price-list-section h3 { margin-bottom: 12px; font-size: 18px; }
+          .products-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+          .product-card { padding: 10px; border-radius: 16px; }
+          .product-name { font-size: 12px; height: 32px; margin-bottom: 4px; }
+          .product-icon { width: 40px; height: 40px; margin-bottom: 4px; }
+          .price-primary { font-size: 16px; }
+          .price-secondary { font-size: 10px; }
           
-          .info-tab-header { padding: 12px 16px; }
-          .info-body { padding: 16px; font-size: 14px; }
+          .info-tab-header { padding: 10px 12px; }
+          .info-body { padding: 12px; font-size: 13px; }
           
-          .landing-container { padding: 0 12px; }
-          .landing-section { margin-top: 20px; }
-          .section-header h3 { font-size: 20px; }
+          .breadcrumb { margin-bottom: 12px; font-size: 13px; }
+          .landing-container { padding: 0 10px; }
+          .landing-hero { margin-bottom: 15px; }
+          .landing-section { margin-top: 15px; }
+          .section-header { margin-bottom: 12px; }
+          .section-header h3 { font-size: 18px; }
         }
       `}} />
     </div>
