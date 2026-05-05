@@ -4,6 +4,7 @@ import { formatUSD, formatBs, playCashRegisterSound } from '../utils/helpers'
 import { supabase } from '../lib/supabase'
 import { useConfiguracion } from '../hooks/useData'
 import AlertModal from './AlertModal'
+import FloatingBackground from './FloatingBackground'
 
 // ============================================================
 // CountdownTimer - FUERA del componente Checkout
