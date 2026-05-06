@@ -1197,6 +1197,7 @@ export default function Landing() {
             <SupportChat 
               perfil={perfil} 
               forceOpen={true} 
+              isEmbedded={true}
               onClose={() => setIsChatOpen(false)} 
             />
           </div>

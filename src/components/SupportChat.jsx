@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import AlertModal from './AlertModal'
 
-export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, isPage = false }) {
-  const [isOpen, setIsOpen] = useState(isPage)
+export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, isPage = false, isEmbedded = false }) {
+  const [isOpen, setIsOpen] = useState(isPage || isEmbedded)
   const [isHovered, setIsHovered] = useState(false)
   const [mensajes, setMensajes] = useState([])
   const [newMessage, setNewMessage] = useState('')
@@ -615,8 +615,8 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
 
   if (!perfil) return null
 
-  return (
-    <div className={isPage ? "support-chat-page-wrapper" : "support-chat-container"}>
+  const content = (
+    <div className={isPage ? "support-chat-page-wrapper" : (isEmbedded ? "support-chat-embedded-container" : "support-chat-container")}>
       
       {/* Ventana de Chat */}
       {(isOpen || isPage) && (
@@ -992,8 +992,8 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
         </div>
       )}
 
-      {/* Burbuja Flotante Interactiva (Sola si NO es modo página) */}
-      {!isPage && (
+      {/* Burbuja Flotante Interactiva (Sola si NO es modo página y NO es embebido) */}
+      {!isPage && !isEmbedded && (
         <button 
           className="btn btn-primary support-chat-toggle"
           style={{ 
@@ -1036,4 +1036,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       />
     </div>
   )
+
+  if (isEmbedded) return content;
+  return content;
 }
