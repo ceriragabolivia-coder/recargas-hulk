@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth, useClientes } from '../hooks/useData'
 
 export default function LandingPerfil({ onClose }) {
-  const { user, perfil, updatePassword } = useAuth()
+  const { user, perfil, updatePassword, refetch } = useAuth()
   const { updateProfile } = useClientes()
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
   
@@ -29,6 +29,7 @@ export default function LandingPerfil({ onClose }) {
       const { error } = await updateProfile(user.id, { whatsapp })
       if (error) throw error
       setAlert({ type: 'success', message: 'WhatsApp actualizado correctamente' })
+      refetch()
     } catch (error) {
       setAlert({ type: 'error', message: error.message })
     } finally {
@@ -93,6 +94,7 @@ export default function LandingPerfil({ onClose }) {
       if (updateError) throw updateError
       
       setAlert({ type: 'success', message: 'Avatar actualizado' })
+      refetch()
     } catch (error) {
       setAlert({ type: 'error', message: error.message })
     } finally {
