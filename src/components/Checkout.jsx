@@ -326,10 +326,16 @@ export default function Checkout({ onFinish, embedded = false }) {
       return
     }
 
+    // Capturar montos exactos ANTES de que el checkout limpie el carrito
+    const amountUSDToDeduct = walletAmountToUse;
+    const amountBsToDeduct = walletBsAmountToUse;
+    const currentIsWalletOnly = isWalletOnly;
+    const currentIsWalletBsOnly = isWalletBsOnly;
+
     setIsProcessing(true)
     try {
       // 1. Validar referencia duplicada (Si no es pago con billetera o gratis)
-      if (!isWalletOnly && !isWalletBsOnly && !isGratis) {
+      if (!currentIsWalletOnly && !currentIsWalletBsOnly && !isGratis) {
         try {
           await verificarYRegistrarReferencia(referencia, remainingBs || remainingBsFromWallet, 'pedido')
         } catch (err) {
@@ -360,45 +366,44 @@ export default function Checkout({ onFinish, embedded = false }) {
       if (isGratis) {
         finalMetodoId = null
         finalReferencia = 'PAGO_TOTAL'
-      } else if (useWalletPartial && walletAmountToUse > 0) {
-        if (isWalletOnly) {
+      } else if (useWalletPartial && amountUSDToDeduct > 0) {
+        if (currentIsWalletOnly) {
           finalMetodoId = null
           finalReferencia = 'PAGO_BILLETERA_USD_TOTAL'
         } else {
-          finalReferencia = `${referencia} | Billetera USD: ${formatUSD(walletAmountToUse)}`
+          finalReferencia = `${referencia} | Billetera USD: ${formatUSD(amountUSDToDeduct)}`
         }
-      } else if (useWalletBs && walletBsAmountToUse > 0) {
-        if (isWalletBsOnly) {
+      } else if (useWalletBs && amountBsToDeduct > 0) {
+        if (currentIsWalletBsOnly) {
           finalMetodoId = null
           finalReferencia = 'PAGO_BILLETERA_BS_TOTAL'
         } else {
-          finalReferencia = `${referencia} | Billetera Bs: ${formatBs(walletBsAmountToUse)}`
+          finalReferencia = `${referencia} | Billetera Bs: ${formatBs(amountBsToDeduct)}`
         }
       }
 
       const results = await checkout(registrarVenta, user?.id || perfil?.id, finalMetodoId, finalReferencia, null, activeRuletaDesc, createdPedidoId, comprobanteUrl, true)
       
-      // Actualizar el perfil para reflejar el nuevo saldo de la billetera
-      setTimeout(() => refreshPerfil(), 500);
-
       const pedidoResult = results.find(r => r.id === 'pedido')
       
       if (!pedidoResult || pedidoResult.error) throw new Error(pedidoResult?.error || 'No se pudo crear el pedido')
 
       const pedidoId = pedidoResult.data.id;
-
       const targetUserId = user?.id || perfil?.cliente_uuid || perfil?.id;
+      
       if (!targetUserId) throw new Error('No se pudo identificar al usuario para la transacción.');
 
-      if (useWalletPartial && walletAmountToUse > 0) {
+      // 2. Procesar débitos de billetera si aplica
+      if (useWalletPartial && amountUSDToDeduct > 0) {
         const { data: walletRes, error: walletError } = await supabase.rpc('pagar_con_billetera_rpc', {
           p_user_id: targetUserId,
-          p_amount: walletAmountToUse,
-          p_pedido_id: pedidoId,
-          p_description: isWalletOnly ? `Pago de pedido #${pedidoResult.data.numero_pedido}` : `Pago parcial - ${formatUSD(walletAmountToUse)}`
+          p_amount: amountUSDToDeduct,
+          p_pedido_id: parseInt(pedidoId), // Asegurar que sea INT
+          p_description: currentIsWalletOnly ? `Pago de pedido #${pedidoResult.data.numero_pedido}` : `Pago parcial - ${formatUSD(amountUSDToDeduct)}`
         })
         if (walletError) {
-          await supabase.from('pedidos').update({ estado: 'cancelado', notas: 'Error en débito de billetera USD' }).eq('id', pedidoId)
+          console.error("Wallet USD Error:", walletError);
+          await supabase.from('pedidos').update({ estado: 'cancelado', notas: 'Error en débito de billetera USD: ' + walletError.message }).eq('id', pedidoId)
           throw walletError
         }
         if (walletRes?.success === false) {
@@ -407,15 +412,16 @@ export default function Checkout({ onFinish, embedded = false }) {
         }
       }
 
-      if (useWalletBs && walletBsAmountToUse > 0) {
+      if (useWalletBs && amountBsToDeduct > 0) {
         const { data: walletBsRes, error: walletErrorBs } = await supabase.rpc('pagar_con_billetera_bs_rpc', {
           p_user_id: targetUserId,
-          p_amount: walletBsAmountToUse,
-          p_pedido_id: pedidoId,
-          p_description: isWalletBsOnly ? `Pago de pedido #${pedidoResult.data.numero_pedido}` : `Pago parcial (Bs) - ${formatBs(walletBsAmountToUse)}`
+          p_amount: amountBsToDeduct,
+          p_pedido_id: parseInt(pedidoId), // Asegurar que sea INT
+          p_description: currentIsWalletBsOnly ? `Pago de pedido #${pedidoResult.data.numero_pedido}` : `Pago parcial (Bs) - ${formatBs(amountBsToDeduct)}`
         })
         if (walletErrorBs) {
-          await supabase.from('pedidos').update({ estado: 'cancelado', notas: 'Error en débito de billetera Bs' }).eq('id', pedidoId)
+          console.error("Wallet Bs Error:", walletErrorBs);
+          await supabase.from('pedidos').update({ estado: 'cancelado', notas: 'Error en débito de billetera Bs: ' + walletErrorBs.message }).eq('id', pedidoId)
           throw walletErrorBs
         }
         if (walletBsRes?.success === false) {
@@ -428,12 +434,15 @@ export default function Checkout({ onFinish, embedded = false }) {
         await supabase.from('ruleta_descuentos_pendientes').update({ usado: true, pedido_id: pedidoId }).eq('id', activeRuletaDesc.id)
       }
 
+      // Actualizar el perfil para reflejar el nuevo saldo de la billetera (AHORA SÍ)
+      refreshPerfil();
+      
       playCashRegisterSound()
-      setIsAutomaticResult(isGratis || isWalletOnly || isWalletBsOnly)
+      setIsAutomaticResult(isGratis || currentIsWalletOnly || currentIsWalletBsOnly)
       setCreatedPedidoData(pedidoResult.data)
       setOrderFinished(true)
-      // Ya no cerramos automáticamente en 15s para dar tiempo a Ver Pedido
     } catch (err) {
+      console.error("Finalizar error:", err);
       setAlertModal({ type: 'error', message: 'Error: ' + err.message })
     } finally {
       setIsProcessing(false)
