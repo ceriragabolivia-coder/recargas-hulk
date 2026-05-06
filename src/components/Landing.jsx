@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useConfiguracion, useAuth, useCart, useCuentasGuardadas } from '../hooks/useData'
 import { formatUSD, formatBs, calcularPrecioVenta } from '../utils/helpers'
@@ -7,9 +7,11 @@ import LandingAuthModal from './LandingAuthModal'
 import Checkout from './Checkout'
 import Pedidos from './Pedidos'
 import SupportChat from './SupportChat'
+import LandingWallet from './LandingWallet'
 
 export default function Landing() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const { config } = useConfiguracion()
   const { user, perfil, logout } = useAuth()
@@ -29,6 +31,7 @@ export default function Landing() {
   const [currentBanner, setCurrentBanner] = useState(0)
   const [showCheckout, setShowCheckout] = useState(false)
   const [showOrders, setShowOrders] = useState(false)
+  const [showWallet, setShowWallet] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
 
   // Estados de Compra y Carrito
@@ -102,6 +105,20 @@ export default function Landing() {
   useEffect(() => {
     localStorage.setItem('landing_dark_mode', darkMode)
   }, [darkMode])
+
+  // Sincronizar estados con la URL para permitir recarga de página y navegación directa
+  useEffect(() => {
+    const path = location.pathname.toLowerCase();
+    if (path === '/billetera') {
+      setShowWallet(true);
+      setShowOrders(false);
+      setSelectedJuego(null);
+    } else if (path === '/mis-pedidos') {
+      setShowOrders(true);
+      setShowWallet(false);
+      setSelectedJuego(null);
+    }
+  }, [location.pathname]);
 
   const handleSelectCuenta = (cuenta) => {
     setLocalRechargeData({
@@ -353,6 +370,7 @@ export default function Landing() {
   const handleSelectJuego = (juego) => {
     setShowCheckout(false)
     setShowOrders(false)
+    setShowWallet(false)
     if (juego) {
       setSearchParams({ juego: juego.nombre.toLowerCase().replace(/\s+/g, '-') })
     } else {
@@ -575,8 +593,8 @@ export default function Landing() {
                     <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Dashboard') }} style={{ color: 'var(--accent)', fontWeight: 'bold' }}>Panel de Control</a>
                   )}
                   <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Mi-Perfil') }}>Mi Perfil</a>
-                  <a href="#" onClick={(e) => { e.preventDefault(); setShowOrders(true); setSelectedJuego(null); }}>Mis Pedidos</a>
-                  <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Billetera') }}>Billetera</a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Mis-Pedidos'); }}>Mis Pedidos</a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Billetera'); }}>Billetera</a>
                   <a href="#" onClick={(e) => { e.preventDefault(); logout() }} style={{ color: '#ef4444' }}>Cerrar Sesión</a>
                 </div>
               </div>
@@ -642,6 +660,10 @@ export default function Landing() {
         ) : showOrders ? (
           <div className="fade-in" style={{ width: '100%', maxWidth: '1400px', margin: '0 auto', padding: '20px' }}>
              <Pedidos embedded={true} />
+          </div>
+        ) : showWallet ? (
+          <div className="fade-in" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+             <LandingWallet onClose={() => setShowWallet(false)} />
           </div>
         ) : selectedJuego ? (
           /* VISTA DETALLE DEL JUEGO */
