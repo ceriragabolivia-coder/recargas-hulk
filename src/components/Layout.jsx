@@ -103,7 +103,7 @@ function NotificationBar({ counts, onNavigate, config, onlineUsers }) {
                 : item.key === 'billetera_pendientes' 
                   ? 'billetera' 
                   : 'pedidos';
-              onNavigate(target, item.key)
+              onNavigate(target, { filterKey: item.key })
             }
           }}
           className="notification-item"
@@ -1110,7 +1110,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
             }}
             onClick={() => {
               if (noti.type === 'new_order' || noti.type === 'order_update') {
-                onNavigate('pedidos')
+                onNavigate('pedidos', { orderId: noti.order_id || noti.db_id })
               } else if (noti.type === 'new_recharge' || noti.type === 'recharge_update') {
                 onNavigate('billetera')
               } else if (noti.type === 'chat_message') {
