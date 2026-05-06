@@ -552,14 +552,16 @@ export function useClientes() {
     if (updates.avatar_url) perfilesUpdates.avatar_url = updates.avatar_url
     if (updates.nickname) perfilesUpdates.nickname = updates.nickname
     
+    let errorProf = null
     if (Object.keys(perfilesUpdates).length > 0) {
-      await supabase
+      const { error } = await supabase
         .from('perfiles')
         .update(perfilesUpdates)
         .eq('id', authUserId)
+      errorProf = error
     }
 
-    return { error: errorCli }
+    return { error: errorCli || errorProf }
   }
 
   async function updateProfileRoleAndDiscount(authUserId, updates) {

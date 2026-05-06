@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth, useClientes } from '../hooks/useData'
+import AvatarEditor from './AvatarEditor'
 
 export default function LandingPerfil({ onClose }) {
   const { user, perfil, updatePassword, refetch } = useAuth()
@@ -14,6 +15,7 @@ export default function LandingPerfil({ onClose }) {
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [alert, setAlert] = useState(null)
   const [localAvatar, setLocalAvatar] = useState(null)
+  const [imageToCrop, setImageToCrop] = useState(null)
 
   useEffect(() => {
     if (perfil?.whatsapp) {
@@ -68,22 +70,28 @@ export default function LandingPerfil({ onClose }) {
     }
   }
 
-  const handleAvatarUpload = async (event) => {
+   const handleAvatarUpload = (event) => {
+    if (!event.target.files || event.target.files.length === 0) return
+    
+    const file = event.target.files[0]
+    const reader = new FileReader()
+    reader.onload = () => {
+      setImageToCrop(reader.result)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleSaveCroppedImage = async (blob) => {
     try {
       setUploadingAvatar(true)
       setAlert(null)
+      setImageToCrop(null)
 
-      if (!event.target.files || event.target.files.length === 0) {
-        throw new Error('Debes seleccionar una imagen para subir.')
-      }
-
-      const file = event.target.files[0]
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`
+      const fileName = `${user.id}-${Date.now()}.jpg`
       
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file)
+        .upload(fileName, blob)
 
       if (uploadError) throw uploadError
 
@@ -99,7 +107,12 @@ export default function LandingPerfil({ onClose }) {
       
       setLocalAvatar(data.publicUrl)
       setAlert({ type: 'success', message: 'Avatar actualizado' })
+      
+      // Forzar recarga del perfil en el contexto global
       await refetch()
+      
+      // Emitir evento para otros componentes si es necesario
+      window.dispatchEvent(new CustomEvent('profile-updated'))
     } catch (error) {
       setAlert({ type: 'error', message: error.message })
     } finally {
@@ -215,8 +228,16 @@ export default function LandingPerfil({ onClose }) {
               </form>
             </div>
           </div>
-        </div>
+         </div>
       </div>
+
+      {imageToCrop && (
+        <AvatarEditor 
+          imageSrc={imageToCrop} 
+          onSave={handleSaveCroppedImage} 
+          onCancel={() => setImageToCrop(null)} 
+        />
+      )}
 
       <style dangerouslySetInnerHTML={{ __html: `
         .landing-perfil-container {
