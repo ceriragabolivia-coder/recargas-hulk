@@ -387,21 +387,23 @@ export default function Checkout({ onFinish, embedded = false }) {
       if (!targetUserId) throw new Error('No se pudo identificar al usuario para la transacción.');
 
       if (useWalletPartial && walletAmountToUse > 0) {
-        await supabase.rpc('pagar_con_billetera_rpc', {
+        const { error: walletError } = await supabase.rpc('pagar_con_billetera_rpc', {
           p_user_id: targetUserId,
           p_amount: walletAmountToUse,
           p_pedido_id: pedidoId,
           p_description: isWalletOnly ? `Pago de pedido #${pedidoResult.data.numero_pedido}` : `Pago parcial - ${formatUSD(walletAmountToUse)}`
         })
+        if (walletError) throw walletError
       }
 
       if (useWalletBs && walletBsAmountToUse > 0) {
-        await supabase.rpc('pagar_con_billetera_bs_rpc', {
+        const { error: walletErrorBs } = await supabase.rpc('pagar_con_billetera_bs_rpc', {
           p_user_id: targetUserId,
           p_amount: walletBsAmountToUse,
           p_pedido_id: pedidoId,
           p_description: isWalletBsOnly ? `Pago de pedido #${pedidoResult.data.numero_pedido}` : `Pago parcial (Bs) - ${formatBs(walletBsAmountToUse)}`
         })
+        if (walletErrorBs) throw walletErrorBs
       }
 
       if (activeRuletaDesc) {

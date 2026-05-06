@@ -1276,20 +1276,22 @@ export default function Landing() {
       )}
 
       {/* BOTÓN FLOTANTE DE CHAT */}
-      <div 
-        className="floating-chat-btn"
-        onClick={() => {
-          if (!user) {
-            setAuthModalView('login');
-            setIsAuthModalOpen(true);
-          } else {
-            setIsChatOpen(true);
-          }
-        }}
-        title="Chat de Soporte"
-      >
-        💬
-      </div>
+      {!isChatOpen && (
+        <div 
+          className="floating-chat-btn"
+          onClick={() => {
+            if (!user) {
+              setAuthModalView('login');
+              setIsAuthModalOpen(true);
+            } else {
+              setIsChatOpen(true);
+            }
+          }}
+          title="Chat de Soporte"
+        >
+          💬
+        </div>
+      )}
 
       {/* AUTH MODAL */}
       <LandingAuthModal 
