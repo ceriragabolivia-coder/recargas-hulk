@@ -848,43 +848,33 @@ export default function Checkout({ onFinish, embedded = false }) {
 
                           {/* ── RESUMEN DE TOTALES ── */}
                           <div style={{
-                            backgroundColor: 'rgba(0, 210, 255, 0.04)',
-                            border: '1px solid var(--border-color)',
+                            backgroundColor: 'rgba(168, 85, 247, 0.08)',
+                            border: '1px solid rgba(168, 85, 247, 0.3)',
                             borderRadius: '16px',
                             padding: '14px 16px',
                             marginBottom: '20px'
                           }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
-                              <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Monto Total:</span>
-                              <span style={{ fontWeight: 700, textDecoration: activeRuletaDesc ? 'line-through' : 'none', opacity: activeRuletaDesc ? 0.5 : 1 }}>{formatUSD(totalUSD)}</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                              <span style={{ color: 'var(--text-muted)' }}>Monto del Pedido:</span>
+                              <span style={{ fontWeight: 600 }}>{formatBs(discountedTotalBs)}</span>
                             </div>
-                            {activeRuletaDesc && (
-                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px', color: '#FFD700' }}>
-                                <span style={{ fontWeight: 600 }}>🎡 Descuento Ruleta:</span>
-                                <span style={{ fontWeight: 800 }}>-{formatUSD(totalUSD - discountedTotalUSD)}</span>
+                            {useWalletBs && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px', color: '#a855f7' }}>
+                                <span style={{ fontWeight: 700 }}>🏦 Saldo Billetera:</span>
+                                <span style={{ fontWeight: 800 }}>-{formatBs(Math.min(walletSaldoBs, discountedTotalBs))}</span>
                               </div>
                             )}
-                            {useWalletPartial && walletAmountToUse > 0 && (
-                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px', color: 'var(--accent-success)' }}>
-                                <span style={{ fontWeight: 600 }}>💵 Billetera USD:</span>
-                                <span style={{ fontWeight: 800 }}>-{formatUSD(walletAmountToUse)}</span>
-                              </div>
-                            )}
-                            {useWalletBs && walletBsAmountToUse > 0 && (
-                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px', color: '#a855f7' }}>
-                                <span style={{ fontWeight: 600 }}>🏦 Billetera Bs:</span>
-                                <span style={{ fontWeight: 800 }}>-{formatBs(walletBsAmountToUse)}</span>
-                              </div>
-                            )}
-                            <div style={{ borderTop: '1px dashed var(--border-color)', marginTop: '10px', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontWeight: 800, fontSize: '15px' }}>Total Pagar:</span>
+                            <div style={{ borderTop: '1px solid rgba(168, 85, 247, 0.2)', marginTop: '8px', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontWeight: 800, fontSize: '14px' }}>Resta por Pagar:</span>
                               <div style={{ textAlign: 'right' }}>
-                                <div style={{ color: 'var(--accent-success)', fontSize: '22px', fontWeight: 900 }}>
-                                  {useWalletBs && !hasEnoughBalanceBs ? formatBs(remainingBsFromWallet) : formatBs(remainingBs)}
+                                <div style={{ color: '#a855f7', fontSize: '20px', fontWeight: 900 }}>
+                                  {formatBs(Math.max(0, discountedTotalBs - walletSaldoBs))}
                                 </div>
-                                <div style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: 600 }}>{formatUSD(remainingUSD)}</div>
                               </div>
                             </div>
+                            <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '6px', textAlign: 'center' }}>
+                              Selecciona un método abajo para pagar la diferencia.
+                            </p>
                           </div>
 
                           {selectedMetodo?.datos && (
