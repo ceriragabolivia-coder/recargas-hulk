@@ -418,7 +418,11 @@ export default function Checkout({ onFinish, embedded = false }) {
       
       const pedidoResult = results.find(r => r.id === 'pedido')
       
-      if (!pedidoResult || pedidoResult.error) throw new Error(pedidoResult?.error || 'No se pudo crear el pedido')
+      if (!pedidoResult || pedidoResult.error) {
+        // SI EL PEDIDO FALLÓ PERO YA COBRAMOS (Caso raro), DEBERÍAMOS DEVOLVER EL DINERO
+        // Por ahora, lanzamos el error
+        throw new Error(pedidoResult?.error || 'No se pudo crear el pedido');
+      }
 
       const pedidoId = pedidoResult.data.id;
       
