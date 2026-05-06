@@ -328,7 +328,8 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
   }
   const { user, perfil, logout } = useAuth()
   const { config } = useConfiguracion()
-  const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
+  const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
+  const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
 
   const [counts, setCounts] = useState({
     pagos_pendientes: 0,
@@ -436,7 +437,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
       soporte_pendientes: sCount,
       usuarios_online: onlineUsers.length,
     }))
-  }, [isAdmin, onlineUsers.length, perfil?.id])
+  }, [isAdmin, isNegocio, onlineUsers.length, perfil?.id])
 
   // Presence Tracking
   useEffect(() => {
@@ -610,7 +611,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
     // 2. Suscripción a Nuevos Pedidos (Solo para Administradores)
     let channelAdminPedidos = null
     let channelAdminBilletera = null
-    if (isAdmin) {
+    if (isAdmin || isNegocio) {
       console.log("✅ Suscripción a PEDIDOS (Admin) activa y escuchando...")
       channelAdminPedidos = supabase
         .channel('pedidos_realtime_admin')

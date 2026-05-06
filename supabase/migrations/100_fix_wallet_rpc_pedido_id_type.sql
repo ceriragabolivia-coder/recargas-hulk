@@ -2,9 +2,14 @@
 -- Fix the type mismatch for p_pedido_id in wallet RPC functions.
 -- The pedidos table uses SERIAL (INT), but migration 097 forced UUID, causing type errors.
 
--- 1. Drop the incorrect UUID versions
+-- 1. Eliminar todas las versiones posibles para evitar conflictos de tipo de retorno (BOOLEAN vs JSON)
 DROP FUNCTION IF EXISTS public.pagar_con_billetera_rpc(uuid, numeric, uuid, text);
+DROP FUNCTION IF EXISTS public.pagar_con_billetera_rpc(uuid, numeric, integer, text);
+DROP FUNCTION IF EXISTS public.pagar_con_billetera_rpc(uuid, numeric, anyelement, text);
+
 DROP FUNCTION IF EXISTS public.pagar_con_billetera_bs_rpc(uuid, numeric, uuid, text);
+DROP FUNCTION IF EXISTS public.pagar_con_billetera_bs_rpc(uuid, numeric, integer, text);
+DROP FUNCTION IF EXISTS public.pagar_con_billetera_bs_rpc(uuid, numeric, anyelement, text);
 
 -- 2. Re-create pagar_con_billetera_rpc with INT for p_pedido_id
 CREATE OR REPLACE FUNCTION public.pagar_con_billetera_rpc(
@@ -24,7 +29,7 @@ BEGIN
 
     -- 1. SEGURIDAD: Solo el dueño de la billetera puede pagar
     IF NOT (auth.uid() = p_user_id) THEN
-        RETURN json_build_object('success', false, 'message', 'No autorizado.');
+        RETURN json_build_object('success', false, 'message', 'No autorizado (ID: ' || auth.uid() || ' vs ' || p_user_id || ')');
     END IF;
 
     -- 2. Verificar existencia del pedido
@@ -102,5 +107,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 4. Reload schema
+-- 4. Enable Realtime for the pedidos table (Admin Notifications)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' 
+        AND tablename = 'pedidos'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE pedidos;
+    END IF;
+END $$;
+
+-- 5. Reload schema
 NOTIFY pgrst, 'reload schema';
