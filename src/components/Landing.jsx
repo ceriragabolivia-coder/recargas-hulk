@@ -789,12 +789,17 @@ export default function Landing() {
                             {(selectedJuego.nombre.toLowerCase().replace(/\s/g, '').includes('freefire') || selectedJuego.nombre.toLowerCase().replace(/\s/g, '').includes('bloodstrike')) && (
                               <div>
                                 <button 
-                                  className="btn-landing-secondary"
+                                  className="btn-verify-prominent"
                                   onClick={handleVerificarJugador}
                                   disabled={isVerificando}
-                                  style={{ width: '100%', fontSize: '13px', padding: '10px' }}
+                                  style={{ 
+                                    width: '100%', 
+                                    fontSize: '14px', 
+                                    padding: '12px',
+                                    marginTop: '8px'
+                                  }}
                                 >
-                                  {isVerificando ? 'Verificando...' : '👤 Verificar Jugador'}
+                                  {isVerificando ? 'Verificando...' : '🔍 Verificar Jugador'}
                                 </button>
 
                                 {verificacionResultado && (
@@ -1403,6 +1408,25 @@ export default function Landing() {
         }
         .btn-theme-toggle:hover {
           transform: scale(1.1);
+        }
+
+        .btn-verify-prominent {
+          background: linear-gradient(135deg, #00d2ff 0%, #7b2ff7 100%) !important;
+          box-shadow: 0 4px 15px rgba(123, 47, 247, 0.4);
+          border: none;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          transition: all 0.3s ease;
+          color: white !important;
+        }
+        .btn-verify-prominent:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(123, 47, 247, 0.6);
+          filter: brightness(1.1);
+        }
+        .btn-verify-prominent:active {
+          transform: translateY(0);
         }
 
         .btn-landing-primary {
