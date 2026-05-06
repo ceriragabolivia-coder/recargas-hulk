@@ -52,10 +52,10 @@ export default function Landing() {
   const [activeCategory, setActiveCategory] = useState('Todos')
   const [search, setSearch] = useState('')
   
-  // Notificaciones de Usuario (Pedidos)
   const [notificaciones, setNotificaciones] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [showNotiDropdown, setShowNotiDropdown] = useState(false)
+  const [activeToast, setActiveToast] = useState(null)
   
   // Modo Nocturno
   const [darkMode, setDarkMode] = useState(true)
@@ -310,7 +310,17 @@ export default function Landing() {
       }, (payload) => {
         setNotificaciones(prev => [payload.new, ...prev].slice(0, 10));
         setUnreadCount(count => count + 1);
-        // Opcional: Sonido de notificación
+        setActiveToast(payload.new);
+        
+        // Auto-cerrar toast tras 8 segundos
+        setTimeout(() => setActiveToast(null), 8000);
+        
+        // Sonido sutil de notificación
+        try {
+          const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+          audio.volume = 0.4;
+          audio.play();
+        } catch (e) {}
       })
       .subscribe();
 
@@ -430,6 +440,28 @@ export default function Landing() {
 
   return (
     <div className={`landing-page ${darkMode ? 'dark' : ''}`}>
+      {/* TOAST NOTIFICATION */}
+      {activeToast && (
+        <div 
+          className="noti-toast fade-in" 
+          onClick={() => { setActiveToast(null); setShowNotiDropdown(true); }}
+          style={{
+            position: 'fixed', top: '90px', right: '20px', zIndex: 10000,
+            background: 'var(--bg-card)', border: '1px solid var(--accent)',
+            borderRadius: '16px', padding: '16px 20px', width: '320px',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.4)', cursor: 'pointer',
+            display: 'flex', gap: '12px', alignItems: 'center'
+          }}
+        >
+          <div style={{ fontSize: '24px' }}>🔔</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800, fontSize: '14px', color: 'var(--accent)', marginBottom: '2px' }}>{activeToast.titulo}</div>
+            <div style={{ fontSize: '13px', color: 'var(--text-main)', lineHeight: '1.4' }}>{activeToast.mensaje}</div>
+          </div>
+          <button style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '16px' }}>✕</button>
+        </div>
+      )}
+
       {/* HEADER */}
       <header className="landing-header">
         <div className="landing-container flex items-center justify-between landing-header-inner">
