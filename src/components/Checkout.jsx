@@ -391,8 +391,8 @@ export default function Checkout({ onFinish, embedded = false }) {
           const { data: walletBsRes, error: walletErrorBs } = await supabase.rpc('pagar_con_billetera_bs_rpc', {
             p_user_id: targetUserId,
             p_amount: amountBsToDeduct,
-            p_pedido_id: 0, // Temporal
-            p_description: `Reserva para pedido en proceso - ${formatBs(amountBsToDeduct)}`
+            p_pedido_id: 0,
+            p_description: `Pago Billetera Bs - Monto: ${amountBsToDeduct}`
           })
 
           if (walletErrorBs || !walletBsRes?.success) {
