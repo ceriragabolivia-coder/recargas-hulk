@@ -35,6 +35,7 @@ export default function Landing() {
   const [showWallet, setShowWallet] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
+  const [ordersParams, setOrdersParams] = useState(null)
 
   // Estados de Compra y Carrito
   const { cuentas, guardarCuenta, eliminarCuenta } = useCuentasGuardadas(selectedJuego?.id || null)
@@ -330,7 +331,9 @@ export default function Landing() {
           setActiveToast({
             titulo: `🎉 ¡Pedido #${updated.numero_pedido || 'N/A'} Listo!`,
             mensaje: 'Tu recarga ha sido procesada con éxito. ¡Gracias por tu compra!',
-            type: 'success'
+            type: 'success',
+            target: 'orders',
+            orderId: updated.id
           });
           setTimeout(() => setActiveToast(null), 10000);
           playNotificationSound();
@@ -338,7 +341,9 @@ export default function Landing() {
           setActiveToast({
             titulo: `❌ Pedido #${updated.numero_pedido || 'N/A'} Cancelado`,
             mensaje: 'Tu pedido no pudo ser procesado. Revisa los detalles en tu perfil.',
-            type: 'error'
+            type: 'error',
+            target: 'orders',
+            orderId: updated.id
           });
           setTimeout(() => setActiveToast(null), 10000);
           playNotificationSound();
@@ -498,7 +503,24 @@ export default function Landing() {
       {activeToast && (
         <div 
           className="noti-toast fade-in" 
-          onClick={() => { setActiveToast(null); setShowNotiDropdown(true); }}
+          onClick={() => { 
+            if (activeToast.target === 'orders') {
+              setOrdersParams({ orderId: activeToast.orderId });
+              setShowOrders(true);
+              setShowCheckout(false);
+              setShowWallet(false);
+              setShowProfile(false);
+              setSelectedJuego(null);
+              window.scrollTo(0, 0);
+            } else if (activeToast.target === 'wallet') {
+              setShowWallet(true);
+              setShowOrders(false);
+              setSelectedJuego(null);
+            } else {
+              setShowNotiDropdown(true);
+            }
+            setActiveToast(null); 
+          }}
           style={{
             position: 'fixed', top: '90px', right: '20px', zIndex: 10000,
             background: 'var(--bg-card)', border: '1px solid var(--accent)',
@@ -758,7 +780,7 @@ export default function Landing() {
           <Checkout embedded={true} onFinish={() => setShowCheckout(false)} />
         ) : showOrders ? (
           <div className="fade-in" style={{ width: '100%', maxWidth: '1400px', margin: '0 auto', padding: '20px' }}>
-             <Pedidos embedded={true} />
+             <Pedidos embedded={true} params={ordersParams} />
           </div>
         ) : showWallet ? (
           <div className="fade-in wallet-page-wrapper">
