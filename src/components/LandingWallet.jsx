@@ -50,6 +50,28 @@ export default function LandingWallet({ onClose }) {
     if (isAdmin) fetchPendingRecargas()
   }, [isAdmin])
 
+  // Suscripción Realtime para transacciones de billetera (Actualiza el historial en vivo)
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`wallet_activity_${user.id}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'billetera_transacciones',
+        filter: `auth_user_id=eq.${user.id}`
+      }, () => {
+        console.log("♻️ Nuevo movimiento detectado, refrescando historial...");
+        refetch(); // Esta función viene de useWallet() y actualiza los datos
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
   const handleFileUpload = async (e) => {
     const file = e.target.files[0]
     if (!file) return
