@@ -108,11 +108,11 @@ export default function LandingPerfil({ onClose }) {
       setLocalAvatar(data.publicUrl)
       setAlert({ type: 'success', message: 'Avatar actualizado' })
       
-      // Forzar recarga del perfil en el contexto global
+      // Forzar recarga inmediata en el contexto global
       await refetch()
       
-      // Emitir evento para otros componentes si es necesario
-      window.dispatchEvent(new CustomEvent('profile-updated'))
+      // Limpiar estados locales para forzar renderizado desde contexto
+      setImageToCrop(null)
     } catch (error) {
       setAlert({ type: 'error', message: error.message })
     } finally {

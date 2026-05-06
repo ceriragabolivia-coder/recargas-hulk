@@ -540,28 +540,18 @@ export function useClientes() {
     setLoading(false)
   }
 
-  async function updateProfile(authUserId, updates) {
-    // Actualizar tabla clientes
-    const { error: errorCli } = await supabase
-      .from('clientes')
-      .update(updates)
-      .eq('auth_user_id', authUserId)
-    
-    // Actualizar tabla perfiles (para disparar realtime y persistencia en AuthContext)
-    const perfilesUpdates = {}
-    if (updates.avatar_url) perfilesUpdates.avatar_url = updates.avatar_url
-    if (updates.nickname) perfilesUpdates.nickname = updates.nickname
-    
-    let errorProf = null
-    if (Object.keys(perfilesUpdates).length > 0) {
-      const { error } = await supabase
-        .from('perfiles')
-        .update(perfilesUpdates)
-        .eq('id', authUserId)
-      errorProf = error
-    }
+    // Usar RPC para asegurar persistencia y evitar problemas de RLS
+    const { data, error: rpcError } = await supabase.rpc('actualizar_perfil_usuario_rpc', {
+      p_user_id: authUserId,
+      p_avatar_url: updates.avatar_url || null,
+      p_nickname: updates.nickname || null,
+      p_whatsapp: updates.whatsapp || null
+    })
 
-    return { error: errorCli || errorProf }
+    if (rpcError) return { error: rpcError }
+    if (data && !data.success) return { error: new Error(data.message) }
+
+    return { error: null }
   }
 
   async function updateProfileRoleAndDiscount(authUserId, updates) {
