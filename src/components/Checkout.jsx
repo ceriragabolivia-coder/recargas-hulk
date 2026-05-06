@@ -369,6 +369,13 @@ export default function Checkout({ onFinish, embedded = false }) {
       let finalMetodoId = selectedMetodoId
       let finalReferencia = referencia
 
+      // SI ES PAGO TOTAL CON BILLETERA, GENERAR REFERENCIA AUTOMÁTICA
+      if (currentIsWalletOnly) {
+        finalReferencia = 'PAGO_BILLETERA_USD_TOTAL'
+      } else if (currentIsWalletBsOnly) {
+        finalReferencia = 'PAGO_BILLETERA_BS_TOTAL'
+      }
+
       // 1. Procesar débitos de billetera ANTES de crear el pedido para garantizar el pago
       if (useWalletPartial && amountUSDToDeduct > 0) {
         if (currentIsWalletOnly) finalMetodoId = null; // EVITAR ERROR UUID
