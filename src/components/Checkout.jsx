@@ -363,22 +363,48 @@ export default function Checkout({ onFinish, embedded = false }) {
       let finalMetodoId = selectedMetodoId
       let finalReferencia = referencia
 
-      if (isGratis) {
-        finalMetodoId = null
-        finalReferencia = 'PAGO_TOTAL'
-      } else if (useWalletPartial && amountUSDToDeduct > 0) {
-        if (currentIsWalletOnly) {
-          finalMetodoId = null
-          finalReferencia = 'PAGO_BILLETERA_USD_TOTAL'
-        } else {
-          finalReferencia = `${referencia} | Billetera USD: ${formatUSD(amountUSDToDeduct)}`
+      // 1. Procesar débitos de billetera ANTES de crear el pedido para garantizar el pago
+      if (useWalletPartial && amountUSDToDeduct > 0) {
+        try {
+          const { data: walletRes, error: walletError } = await supabase.rpc('pagar_con_billetera_rpc', {
+            p_user_id: targetUserId,
+            p_amount: amountUSDToDeduct,
+            p_pedido_id: 0, // Temporal, no tenemos ID aún
+            p_description: `Reserva para pedido en proceso - ${formatUSD(amountUSDToDeduct)}`
+          })
+
+          if (walletError || !walletRes?.success) {
+            alert(`ERROR COBRO USD: ${walletError?.message || walletRes?.message}`);
+            setIsProcessing(false);
+            return;
+          }
+          console.log(">> USD DEDUCTED OK");
+        } catch (e) {
+          alert("CRASH COBRO USD: " + e.message);
+          setIsProcessing(false);
+          return;
         }
-      } else if (useWalletBs && amountBsToDeduct > 0) {
-        if (currentIsWalletBsOnly) {
-          finalMetodoId = null
-          finalReferencia = 'PAGO_BILLETERA_BS_TOTAL'
-        } else {
-          finalReferencia = `${referencia} | Billetera Bs: ${formatBs(amountBsToDeduct)}`
+      }
+
+      if (useWalletBs && amountBsToDeduct > 0) {
+        try {
+          const { data: walletBsRes, error: walletErrorBs } = await supabase.rpc('pagar_con_billetera_bs_rpc', {
+            p_user_id: targetUserId,
+            p_amount: amountBsToDeduct,
+            p_pedido_id: 0, // Temporal
+            p_description: `Reserva para pedido en proceso - ${formatBs(amountBsToDeduct)}`
+          })
+
+          if (walletErrorBs || !walletBsRes?.success) {
+            alert(`ERROR COBRO BS: ${walletErrorBs?.message || walletBsRes?.message}`);
+            setIsProcessing(false);
+            return;
+          }
+          console.log(">> BS DEDUCTED OK");
+        } catch (e) {
+          alert("CRASH COBRO BS: " + e.message);
+          setIsProcessing(false);
+          return;
         }
       }
 
@@ -393,70 +419,10 @@ export default function Checkout({ onFinish, embedded = false }) {
       
       if (!targetUserId) throw new Error('No se pudo identificar al usuario para la transacción.');
 
-      // 2. Procesar débitos de billetera si aplica
-      if (useWalletPartial && amountUSDToDeduct > 0) {
-        alert(`AUDITORÍA USD: Cobrando $${amountUSDToDeduct} de usuario ${targetUserId} para pedido #${pedidoResult.data.numero_pedido}`);
-
-        const { data: walletRes, error: walletError } = await supabase.rpc('pagar_con_billetera_rpc', {
-          p_user_id: targetUserId,
-          p_amount: amountUSDToDeduct,
-          p_pedido_id: parseInt(pedidoId), // Asegurar que sea INT
-          p_description: currentIsWalletOnly ? `Pago de pedido #${pedidoResult.data.numero_pedido}` : `Pago parcial - ${formatUSD(amountUSDToDeduct)}`
-        })
-        
-        console.log("Wallet USD Result:", { walletRes, walletError });
-
-        if (walletError) {
-          console.error("Wallet USD Error:", walletError);
-          await supabase.from('pedidos').update({ estado: 'cancelado', notas: 'Error en débito de billetera USD: ' + walletError.message }).eq('id', pedidoId)
-          throw walletError
-        }
-
-        if (walletRes?.success === false) {
-          await supabase.from('pedidos').update({ estado: 'cancelado', notas: 'Saldo insuficiente en USD o error: ' + walletRes.message }).eq('id', pedidoId)
-          throw new Error(walletRes.message || 'Error en la transacción de billetera USD')
-        }
-
-        alert(`ÉXITO USD: Nuevo saldo: $${walletRes.new_balance}`);
-      }
-
-      if (useWalletBs && amountBsToDeduct > 0) {
-        try {
-          // ALERT DE VALIDACIÓN DE IDENTIDAD
-          console.log(">> INICIANDO COBRO RPC...", { targetUserId, amountBsToDeduct, pedidoId });
-          
-          const { data: walletBsRes, error: walletErrorBs } = await supabase.rpc('pagar_con_billetera_bs_rpc', {
-            p_user_id: targetUserId,
-            p_amount: amountBsToDeduct,
-            p_pedido_id: parseInt(pedidoId),
-            p_description: currentIsWalletBsOnly ? `Pago de pedido #${pedidoResult.data.numero_pedido}` : `Pago parcial (Bs) - ${formatBs(amountBsToDeduct)}`
-          });
-
-          if (walletErrorBs) {
-            alert(`ERROR RPC SERVIDOR: ${walletErrorBs.message}`);
-            throw walletErrorBs;
-          }
-
-          if (walletBsRes?.success === false) {
-            alert(`TRANSACCIÓN RECHAZADA: ${walletBsRes.message}`);
-            await supabase.from('pedidos').update({ estado: 'cancelado', notas: 'Saldo insuficiente en Bs o error: ' + walletBsRes.message }).eq('id', pedidoId);
-            throw new Error(walletBsRes.message);
-          }
-
-          console.log(">> RESPUESTA SERVIDOR:", walletBsRes);
-          alert(`RESUMEN SERVIDOR BS:\nExitoso: ${walletBsRes?.success}\nSaldo Anterior: ${walletBsRes?.old_balance}\nSaldo Nuevo: ${walletBsRes?.new_balance}`);
-
-          // FORZAR ACTUALIZACIÓN DEL PERFIL TRAS UN BREVE RETRASO
-          setTimeout(async () => {
-            await refreshPerfil();
-          }, 500);
-
-        } catch (error) {
-          console.error("CRITICAL WALLET ERROR:", error);
-          alert(`ALERTA DE CRASH EN COBRO: ${error.message}\n\nEl pedido se creó pero el cobro falló. El administrador verá esto.`);
-          throw error;
-        }
-      }
+      // El cobro ya se realizó al inicio
+      setTimeout(async () => {
+        await refreshPerfil();
+      }, 500);
 
       if (activeRuletaDesc) {
         await supabase.from('ruleta_descuentos_pendientes').update({ usado: true, pedido_id: pedidoId }).eq('id', activeRuletaDesc.id)
