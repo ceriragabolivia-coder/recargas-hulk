@@ -540,6 +540,7 @@ export function useClientes() {
     setLoading(false)
   }
 
+  async function updateProfile(authUserId, updates) {
     // Usar RPC para asegurar persistencia y evitar problemas de RLS
     const { data, error: rpcError } = await supabase.rpc('actualizar_perfil_usuario_rpc', {
       p_user_id: authUserId,
