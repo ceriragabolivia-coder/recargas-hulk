@@ -98,9 +98,9 @@ export default function Cart({ onGoToCheckout }) {
                       className="form-input" 
                       style={{ width: '45px', textAlign: 'center', height: '32px', padding: 0 }}
                       value={item.quantity}
-                      onChange={(e) => updateQuantity(item.cart_id || item.id, parseInt(e.target.value) || 1)}
+                      onChange={(e) => updateQuantity(item.cart_id, parseInt(e.target.value) || 1)}
                     />
-                    <button className="btn btn-ghost btn-icon btn-sm" onClick={() => removeFromCart(item.cart_id || item.id)}>🗑️</button>
+                    <button className="btn btn-ghost btn-icon btn-sm" onClick={() => removeFromCart(item.cart_id)}>🗑️</button>
                   </div>
                 </div>
               ))

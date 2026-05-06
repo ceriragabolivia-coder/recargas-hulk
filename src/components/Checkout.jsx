@@ -687,7 +687,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                     </div>
                     {/* Botón quitar del carrito */}
                     <button
-                      onClick={() => removeFromCart(item.id)}
+                      onClick={() => removeFromCart(item.cart_id)}
                       title="Quitar del carrito"
                       style={{
                         flexShrink: 0,
