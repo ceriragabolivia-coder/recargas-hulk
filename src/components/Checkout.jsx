@@ -443,6 +443,9 @@ export default function Checkout({ onFinish, embedded = false }) {
           throw new Error(walletBsRes.message || 'Error en la transacción de billetera Bs')
         }
 
+        // NUEVA ALERTA DE DEPURACIÓN PROFUNDA
+        alert(`RESUMEN SERVIDOR BS:\nSuccess: ${walletBsRes?.success}\nOld Balance: ${walletBsRes?.old_balance}\nNew Balance: ${walletBsRes?.new_balance}\nMessage: ${walletBsRes?.message}`);
+
         alert(`ÉXITO BS: Nuevo saldo: ${walletBsRes.new_balance} Bs`);
       }
 
