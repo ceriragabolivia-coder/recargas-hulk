@@ -374,6 +374,7 @@ export default function LandingWallet({ onClose }) {
           box-shadow: 0 10px 40px rgba(0,0,0,0.1);
           border: 1px solid var(--border);
           animation: fadeIn 0.4s ease-out;
+          width: 100%;
         }
 
         .wallet-header {
@@ -742,8 +743,10 @@ export default function LandingWallet({ onClose }) {
           .wallet-header { margin-bottom: 20px; padding-bottom: 12px; }
           .wallet-title-area h2 { font-size: 22px; }
           .wallet-content-grid { grid-template-columns: 1fr; gap: 20px; }
-          .wallet-sidebar { order: -1; }
-          .recharge-form-card { position: static; padding: 16px; }
+          .wallet-sidebar { order: 2; }
+          .wallet-main-col { order: 1; }
+          .recharge-form-card { position: static; padding: 16px; margin-top: 0; }
+          .landing-wallet-container { padding: 15px; border-radius: 16px; }
           .balance-cards { grid-template-columns: 1fr; gap: 12px; }
           .balance-card { padding: 16px; }
           .balance-value { font-size: 26px; }

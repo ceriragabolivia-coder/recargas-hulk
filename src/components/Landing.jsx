@@ -707,7 +707,7 @@ export default function Landing() {
              <Pedidos embedded={true} />
           </div>
         ) : showWallet ? (
-          <div className="fade-in" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+          <div className="fade-in wallet-page-wrapper">
              <LandingWallet onClose={() => setShowWallet(false)} />
           </div>
         ) : showProfile ? (
@@ -1442,6 +1442,18 @@ export default function Landing() {
         .nav-link:hover, .nav-link.active {
           color: var(--accent);
         }
+        .wallet-page-wrapper {
+          width: 100%;
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 30px 20px;
+        }
+        @media (max-width: 768px) {
+          .wallet-page-wrapper {
+            padding: 10px 5px;
+          }
+        }
+        
         .nav-dropdown {
           position: relative;
         }
