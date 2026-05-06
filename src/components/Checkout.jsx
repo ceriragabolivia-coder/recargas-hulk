@@ -447,6 +447,12 @@ export default function Checkout({ onFinish, embedded = false }) {
         alert(`RESUMEN SERVIDOR BS:\nSuccess: ${walletBsRes?.success}\nOld Balance: ${walletBsRes?.old_balance}\nNew Balance: ${walletBsRes?.new_balance}\nMessage: ${walletBsRes?.message}`);
 
         alert(`ÉXITO BS: Nuevo saldo: ${walletBsRes.new_balance} Bs`);
+        
+        // FORZAR ACTUALIZACIÓN DEL PERFIL TRAS UN BREVE RETRASO PARA ASEGURAR SINCRONIZACIÓN
+        setTimeout(async () => {
+          console.log(">> SOLICITANDO REFRESCO DE PERFIL POST-PAGO...");
+          await refreshPerfil();
+        }, 500);
       }
 
       if (activeRuletaDesc) {
