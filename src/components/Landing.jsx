@@ -299,8 +299,8 @@ export default function Landing() {
 
     fetchNotis();
 
-    // Suscripción Realtime
-    const channel = supabase
+    // 🔔 Suscripción Realtime para Notificaciones Generales
+    const channelNotis = supabase
       .channel(`user_notis_${user.id}`)
       .on('postgres_changes', { 
         event: 'INSERT', 
@@ -311,21 +311,75 @@ export default function Landing() {
         setNotificaciones(prev => [payload.new, ...prev].slice(0, 10));
         setUnreadCount(count => count + 1);
         setActiveToast(payload.new);
-        
-        // Auto-cerrar toast tras 8 segundos
         setTimeout(() => setActiveToast(null), 8000);
-        
-        // Sonido sutil de notificación
-        try {
-          const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
-          audio.volume = 0.4;
-          audio.play();
-        } catch (e) {}
+        playNotificationSound();
       })
       .subscribe();
 
+    // 📦 Suscripción Realtime para Cambios en Mis Pedidos
+    const channelPedidos = supabase
+      .channel(`user_orders_landing_${user.id}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'pedidos',
+        filter: `cliente_id=eq.${user.id}`
+      }, payload => {
+        const updated = payload.new;
+        if (updated.estado === 'completado') {
+          setActiveToast({
+            titulo: `🎉 ¡Pedido #${updated.numero_pedido || 'N/A'} Listo!`,
+            mensaje: 'Tu recarga ha sido procesada con éxito. ¡Gracias por tu compra!',
+            type: 'success'
+          });
+          setTimeout(() => setActiveToast(null), 10000);
+          playNotificationSound();
+        } else if (updated.estado === 'cancelado') {
+          setActiveToast({
+            titulo: `❌ Pedido #${updated.numero_pedido || 'N/A'} Cancelado`,
+            mensaje: 'Tu pedido no pudo ser procesado. Revisa los detalles en tu perfil.',
+            type: 'error'
+          });
+          setTimeout(() => setActiveToast(null), 10000);
+          playNotificationSound();
+        }
+      })
+      .subscribe();
+
+    // 🏦 Suscripción Realtime para Billetera
+    const channelWallet = supabase
+      .channel(`user_wallet_landing_${user.id}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'billetera_recargas',
+        filter: `auth_user_id=eq.${user.id}`
+      }, payload => {
+        const updated = payload.new;
+        if (updated.estado === 'aprobado') {
+          setActiveToast({
+            titulo: '✅ ¡Saldo Acreditado!',
+            mensaje: `Tu recarga por ${updated.moneda === 'bs' ? formatBs(updated.monto) : formatUSD(updated.monto)} ha sido aprobada.`,
+            type: 'success'
+          });
+          setTimeout(() => setActiveToast(null), 10000);
+          playNotificationSound();
+        }
+      })
+      .subscribe();
+
+    const playNotificationSound = () => {
+      try {
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+        audio.volume = 0.4;
+        audio.play();
+      } catch (e) {}
+    };
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(channelNotis);
+      supabase.removeChannel(channelPedidos);
+      supabase.removeChannel(channelWallet);
     };
   }, [user?.id]);
 
