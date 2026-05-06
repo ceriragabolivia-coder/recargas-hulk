@@ -745,13 +745,14 @@ export default function LandingWallet({ onClose }) {
           .wallet-content-grid { grid-template-columns: 1fr; gap: 20px; }
           .wallet-sidebar { order: 2; }
           .wallet-main-col { order: 1; }
-          .recharge-form-card { position: static; padding: 16px; margin-top: 0; }
+          .recharge-form-card { position: static; padding: 15px; margin-top: 0; }
           .landing-wallet-container { padding: 15px; border-radius: 16px; }
           .balance-cards { grid-template-columns: 1fr; gap: 12px; }
-          .balance-card { padding: 16px; }
-          .balance-value { font-size: 24px; }
+          .balance-card { padding: 12px; }
+          .balance-value { font-size: 22px; }
           .balance-icon { font-size: 26px; }
           
+          .methods-grid { gap: 8px; }
           .history-table thead { display: none; }
           .history-table tr { 
             display: flex; 

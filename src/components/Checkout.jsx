@@ -387,23 +387,37 @@ export default function Checkout({ onFinish, embedded = false }) {
       if (!targetUserId) throw new Error('No se pudo identificar al usuario para la transacción.');
 
       if (useWalletPartial && walletAmountToUse > 0) {
-        const { error: walletError } = await supabase.rpc('pagar_con_billetera_rpc', {
+        const { data: walletRes, error: walletError } = await supabase.rpc('pagar_con_billetera_rpc', {
           p_user_id: targetUserId,
           p_amount: walletAmountToUse,
           p_pedido_id: pedidoId,
           p_description: isWalletOnly ? `Pago de pedido #${pedidoResult.data.numero_pedido}` : `Pago parcial - ${formatUSD(walletAmountToUse)}`
         })
-        if (walletError) throw walletError
+        if (walletError) {
+          await supabase.from('pedidos').update({ estado: 'cancelado', notas: 'Error en débito de billetera USD' }).eq('id', pedidoId)
+          throw walletError
+        }
+        if (walletRes?.success === false) {
+          await supabase.from('pedidos').update({ estado: 'cancelado', notas: 'Saldo insuficiente o error: ' + walletRes.message }).eq('id', pedidoId)
+          throw new Error(walletRes.message || 'Error en la transacción de billetera USD')
+        }
       }
 
       if (useWalletBs && walletBsAmountToUse > 0) {
-        const { error: walletErrorBs } = await supabase.rpc('pagar_con_billetera_bs_rpc', {
+        const { data: walletBsRes, error: walletErrorBs } = await supabase.rpc('pagar_con_billetera_bs_rpc', {
           p_user_id: targetUserId,
           p_amount: walletBsAmountToUse,
           p_pedido_id: pedidoId,
           p_description: isWalletBsOnly ? `Pago de pedido #${pedidoResult.data.numero_pedido}` : `Pago parcial (Bs) - ${formatBs(walletBsAmountToUse)}`
         })
-        if (walletErrorBs) throw walletErrorBs
+        if (walletErrorBs) {
+          await supabase.from('pedidos').update({ estado: 'cancelado', notas: 'Error en débito de billetera Bs' }).eq('id', pedidoId)
+          throw walletErrorBs
+        }
+        if (walletBsRes?.success === false) {
+          await supabase.from('pedidos').update({ estado: 'cancelado', notas: 'Saldo insuficiente en Bs o error: ' + walletBsRes.message }).eq('id', pedidoId)
+          throw new Error(walletBsRes.message || 'Error en la transacción de billetera Bs')
+        }
       }
 
       if (activeRuletaDesc) {

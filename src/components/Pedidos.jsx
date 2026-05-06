@@ -413,26 +413,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
         setSelectedPedido({ ...selectedPedido, ...updateData })
       }
 
-      // 🔔 Insertar notificación para el cliente
-      if (nuevoEstado === 'completado' || nuevoEstado === 'cancelado' || nuevoEstado === 'reembolsado') {
-        const titulo = nuevoEstado === 'completado' ? '🎉 ¡Pedido Completado!' : 
-                       nuevoEstado === 'cancelado' ? '❌ Pedido Cancelado' : '💸 Pedido Reembolsado';
-        const mensaje = nuevoEstado === 'completado' ? `Tu pedido #${pedidoActual.numero_pedido} ha sido procesado con éxito.` :
-                        nuevoEstado === 'cancelado' ? `Tu pedido #${pedidoActual.numero_pedido} ha sido cancelado.` :
-                        `Tu pedido #${pedidoActual.numero_pedido} ha sido reembolsado a tu billetera.`;
-        
-        try {
-          await supabase.from('notificaciones_usuarios').insert([{
-            user_id: pedidoActual.cliente_id,
-            titulo,
-            mensaje,
-            tipo: 'order_status',
-            metadata: { pedido_id: pedidoId, numero_pedido: pedidoActual.numero_pedido, estado: nuevoEstado }
-          }]);
-        } catch (notiError) {
-          console.error("Error al crear notificación:", notiError);
-        }
-      }
+      // 🔔 La notificación para el cliente se maneja automáticamente vía Trigger (093_order_notifications_trigger.sql)
     } else {
       showAlert('Error al actualizar el pedido: ' + error.message, 'error')
       return
