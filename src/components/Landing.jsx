@@ -705,9 +705,9 @@ export default function Landing() {
                             <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>No necesitas ingresar ningún dato.</p>
                           </div>
                         ) : selectedJuego.metodo_recarga === 'cuenta_completa' ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <div>
-                              <label className="form-label" style={{ fontSize: '12px', marginBottom: '8px' }}>📧 Correo</label>
+                              <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>📧 Correo</label>
                               <input 
                                 type="email" 
                                 className="form-input" 
@@ -717,7 +717,7 @@ export default function Landing() {
                               />
                             </div>
                             <div>
-                              <label className="form-label" style={{ fontSize: '12px', marginBottom: '8px' }}>🔑 Contraseña</label>
+                              <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>🔑 Contraseña</label>
                               <input 
                                 type="password" 
                                 className="form-input" 
@@ -728,9 +728,9 @@ export default function Landing() {
                             </div>
                           </div>
                         ) : selectedJuego.metodo_recarga === 'usuario_clave' ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <div>
-                              <label className="form-label" style={{ fontSize: '12px', marginBottom: '8px' }}>👤 Usuario</label>
+                              <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>👤 Usuario</label>
                               <input 
                                 type="text" 
                                 className="form-input" 
@@ -740,7 +740,7 @@ export default function Landing() {
                               />
                             </div>
                             <div>
-                              <label className="form-label" style={{ fontSize: '12px', marginBottom: '8px' }}>🔑 Contraseña</label>
+                              <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>🔑 Contraseña</label>
                               <input 
                                 type="password" 
                                 className="form-input" 
@@ -751,9 +751,9 @@ export default function Landing() {
                             </div>
                           </div>
                         ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <div>
-                              <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '8px' }}>🆔 ID del Jugador</label>
+                              <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>🆔 ID del Jugador</label>
                               <input 
                                 type="text" 
                                 className="form-input" 
@@ -770,7 +770,7 @@ export default function Landing() {
                             
                             {selectedJuego.metodo_recarga === 'id_zone' && (
                               <div>
-                                <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '8px' }}>🆔 Zone ID</label>
+                                <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>🆔 Zone ID</label>
                                 <input 
                                   type="text" 
                                   className="form-input" 
@@ -819,7 +819,7 @@ export default function Landing() {
                         
                         {/* Cuentas Guardadas */}
                         {cuentas.length > 0 && (
-                          <div style={{ marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+                          <div style={{ marginTop: '10px', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
                             <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Cuentas Guardadas</div>
                             <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
                               {cuentas.map(c => (
@@ -835,7 +835,7 @@ export default function Landing() {
                           </div>
                         )}
 
-                        <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <input 
                             type="checkbox" 
                             id="save-data-checkbox-landing"
@@ -1651,7 +1651,7 @@ export default function Landing() {
           grid-template-areas: 
             "header  sidebar"
             "content sidebar";
-          gap: 20px;
+          gap: 12px;
         }
         .detail-header-area { grid-area: header; }
         .detail-sidebar-area { grid-area: sidebar; }
@@ -1659,12 +1659,12 @@ export default function Landing() {
 
         .detail-header-card {
           background: var(--bg-card);
-          padding: 24px;
+          padding: 12px 24px;
           border-radius: 20px;
           display: flex;
           gap: 24px;
           align-items: center;
-          margin-bottom: 10px;
+          margin-bottom: 4px;
           box-shadow: 0 4px 15px rgba(0,0,0,0.05);
           border: 1px solid var(--border);
         }
@@ -1699,7 +1699,7 @@ export default function Landing() {
         .detail-header-info h1 {
           font-size: 32px;
           font-weight: 800;
-          margin-bottom: 10px;
+          margin-bottom: 4px;
         }
         .detail-stats {
           display: flex;
@@ -1717,7 +1717,7 @@ export default function Landing() {
 
         .price-list-section {
           background: var(--bg-card);
-          padding: 24px;
+          padding: 12px;
           border-radius: 20px;
           margin-bottom: 30px;
           box-shadow: 0 4px 15px rgba(0,0,0,0.05);
@@ -1726,7 +1726,7 @@ export default function Landing() {
         .price-list-section h3 {
           font-size: 20px;
           font-weight: 700;
-          margin-bottom: 20px;
+          margin-bottom: 8px;
           padding-left: 10px;
           border-left: 4px solid var(--accent);
         }
@@ -1834,7 +1834,7 @@ export default function Landing() {
         }
         .purchase-card {
           background: var(--bg-card);
-          padding: 24px;
+          padding: 12px;
           border-radius: 24px;
           box-shadow: 0 10px 30px rgba(0,0,0,0.1);
           border: 1px solid var(--border);
@@ -1842,19 +1842,19 @@ export default function Landing() {
         .purchase-card h3 {
           font-size: 22px;
           font-weight: 800;
-          margin-bottom: 12px;
+          margin-bottom: 6px;
         }
         .purchase-card p {
           font-size: 14px;
           color: var(--text-muted);
-          margin-bottom: 24px;
+          margin-bottom: 12px;
           line-height: 1.5;
         }
         .w-full { width: 100%; }
         .mb-12 { margin-bottom: 12px; }
         .sidebar-features {
-          margin-top: 30px;
-          padding-top: 30px;
+          margin-top: 15px;
+          padding-top: 15px;
           border-top: 1px solid var(--border);
           display: flex;
           flex-direction: column;
@@ -1892,7 +1892,7 @@ export default function Landing() {
           border-radius: 12px; 
           padding: 4px; 
           border: 1px solid var(--border); 
-          margin-bottom: 20px; 
+          margin-bottom: 8px; 
           gap: 4px; 
         }
         .buy-mode-toggle button {
@@ -1915,8 +1915,8 @@ export default function Landing() {
           background: var(--bg-hover); 
           border: 1px solid var(--border); 
           border-radius: 16px; 
-          padding: 20px; 
-          margin-bottom: 20px; 
+          padding: 12px; 
+          margin-bottom: 15px; 
         }
         .form-input {
           width: 100%;
