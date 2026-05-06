@@ -58,7 +58,7 @@ export default function Checkout({ onFinish, embedded = false }) {
   const { cart, removeFromCart, clearCart, checkout, totalUSD, totalBs } = useCart()
   const { registrarVenta, verificarYRegistrarReferencia } = useVentas()
   const { metodos, cancelarPedidosExpirados, loading: loadingMetodos } = useMetodosPago()
-  const { perfil, user, isCliente } = useAuth()
+  const { perfil, user, isCliente, refreshPerfil } = useAuth()
   const { wallet } = useWallet()
   const { config } = useConfiguracion()
   
@@ -435,16 +435,11 @@ export default function Checkout({ onFinish, embedded = false }) {
       
       if (!targetUserId) throw new Error('No se pudo identificar al usuario para la transacción.');
 
-      // El cobro ya se realizó al inicio
-      setTimeout(async () => {
-        await refreshPerfil();
-      }, 500);
-
       if (activeRuletaDesc) {
         await supabase.from('ruleta_descuentos_pendientes').update({ usado: true, pedido_id: pedidoId }).eq('id', activeRuletaDesc.id)
       }
 
-      // Actualizar el perfil para reflejar el nuevo saldo de la billetera (AHORA SÍ)
+      // Actualizar el perfil para reflejar el nuevo saldo de la billetera
       refreshPerfil();
       
       playCashRegisterSound()
