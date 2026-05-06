@@ -1514,15 +1514,38 @@ export default function Landing() {
         .support-chat-wrapper {
           width: 400px;
           height: 600px;
-          max-height: calc(100vh - 100px);
+          max-height: calc(100vh - 120px);
           background: var(--bg-card);
           border-radius: 24px;
-          box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+          box-shadow: 0 20px 80px rgba(0,0,0,0.6);
           overflow: hidden;
           pointer-events: auto;
           animation: slideUpChat 0.4s cubic-bezier(0.4, 0, 0.2, 1);
           border: 1px solid var(--border);
+          display: flex;
+          flex-direction: column;
         }
+
+        /* Ajustes para que el componente interno no cree sombras dobles */
+        .support-chat-wrapper .support-chat-container,
+        .support-chat-wrapper .support-chat-embedded-container {
+          width: 100%;
+          height: 100%;
+          position: relative !important;
+          bottom: auto !important;
+          right: auto !important;
+          z-index: 1 !important;
+        }
+        .support-chat-wrapper .support-chat-window {
+          width: 100% !important;
+          height: 100% !important;
+          max-width: 100% !important;
+          max-height: 100% !important;
+          border: none !important;
+          box-shadow: none !important;
+          background: transparent !important;
+        }
+        
         @keyframes slideUpChat {
           from { transform: translateY(50px); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
