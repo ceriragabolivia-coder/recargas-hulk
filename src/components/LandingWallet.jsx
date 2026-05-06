@@ -231,16 +231,16 @@ export default function LandingWallet({ onClose }) {
                 <tbody>
                   {combinedHistory.map(item => (
                     <tr key={item.id}>
-                      <td>{new Date(item.fecha).toLocaleDateString()}</td>
-                      <td>
+                      <td data-label="Fecha">{new Date(item.fecha).toLocaleDateString()}</td>
+                      <td data-label="Descripción">
                         <div className="history-desc">{item.desc}</div>
                         {item.ref && <div className="history-ref">Ref: {item.ref}</div>}
                       </td>
-                      <td className={item.monto > 0 ? 'text-positive' : 'text-negative'}>
+                      <td data-label="Monto" className={item.monto > 0 ? 'text-positive' : 'text-negative'}>
                         {item.monto > 0 ? '+' : ''}
                         {item.moneda === 'bs' ? formatBs(item.monto) : formatUSD(item.monto)}
                       </td>
-                      <td>
+                      <td data-label="Estado">
                         <span className={`status-badge ${item.estado}`}>
                           {item.estado === 'completado' ? 'Completado' : item.estado === 'pendiente' ? 'Pendiente' : 'Rechazado'}
                         </span>
@@ -749,11 +749,36 @@ export default function LandingWallet({ onClose }) {
           .landing-wallet-container { padding: 15px; border-radius: 16px; }
           .balance-cards { grid-template-columns: 1fr; gap: 12px; }
           .balance-card { padding: 16px; }
-          .balance-value { font-size: 26px; }
-          .balance-icon { font-size: 30px; }
-          .history-table th, .history-table td { padding: 10px 6px; font-size: 12px; }
+          .balance-value { font-size: 24px; }
+          .balance-icon { font-size: 26px; }
+          
+          .history-table thead { display: none; }
+          .history-table tr { 
+            display: flex; 
+            flex-direction: column; 
+            padding: 12px; 
+            border-bottom: 1px solid var(--border);
+            gap: 4px;
+          }
+          .history-table td { 
+            display: block; 
+            padding: 0; 
+            border: none; 
+            text-align: left;
+            width: 100% !important;
+          }
+          .history-table td::before {
+            content: attr(data-label);
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 2px;
+          }
+          .history-desc { font-size: 13px; font-weight: 500; }
+          .status-badge { display: inline-block; }
+          
           .methods-grid { grid-template-columns: repeat(2, 1fr); }
-          .status-badge { padding: 2px 6px; font-size: 10px; }
         }
 
         @media (max-width: 480px) {
