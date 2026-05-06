@@ -395,39 +395,55 @@ export default function Checkout({ onFinish, embedded = false }) {
 
       // 2. Procesar débitos de billetera si aplica
       if (useWalletPartial && amountUSDToDeduct > 0) {
+        alert(`AUDITORÍA USD: Cobrando $${amountUSDToDeduct} de usuario ${targetUserId} para pedido #${pedidoResult.data.numero_pedido}`);
+
         const { data: walletRes, error: walletError } = await supabase.rpc('pagar_con_billetera_rpc', {
           p_user_id: targetUserId,
           p_amount: amountUSDToDeduct,
           p_pedido_id: parseInt(pedidoId), // Asegurar que sea INT
           p_description: currentIsWalletOnly ? `Pago de pedido #${pedidoResult.data.numero_pedido}` : `Pago parcial - ${formatUSD(amountUSDToDeduct)}`
         })
+        
+        console.log("Wallet USD Result:", { walletRes, walletError });
+
         if (walletError) {
           console.error("Wallet USD Error:", walletError);
           await supabase.from('pedidos').update({ estado: 'cancelado', notas: 'Error en débito de billetera USD: ' + walletError.message }).eq('id', pedidoId)
           throw walletError
         }
+
         if (walletRes?.success === false) {
-          await supabase.from('pedidos').update({ estado: 'cancelado', notas: 'Saldo insuficiente o error: ' + walletRes.message }).eq('id', pedidoId)
+          await supabase.from('pedidos').update({ estado: 'cancelado', notas: 'Saldo insuficiente en USD o error: ' + walletRes.message }).eq('id', pedidoId)
           throw new Error(walletRes.message || 'Error en la transacción de billetera USD')
         }
+
+        alert(`ÉXITO USD: Nuevo saldo: $${walletRes.new_balance}`);
       }
 
       if (useWalletBs && amountBsToDeduct > 0) {
+        alert(`AUDITORÍA BS: Cobrando ${amountBsToDeduct} Bs de usuario ${targetUserId} para pedido #${pedidoResult.data.numero_pedido}`);
+
         const { data: walletBsRes, error: walletErrorBs } = await supabase.rpc('pagar_con_billetera_bs_rpc', {
           p_user_id: targetUserId,
           p_amount: amountBsToDeduct,
           p_pedido_id: parseInt(pedidoId), // Asegurar que sea INT
           p_description: currentIsWalletBsOnly ? `Pago de pedido #${pedidoResult.data.numero_pedido}` : `Pago parcial (Bs) - ${formatBs(amountBsToDeduct)}`
         })
+
+        console.log("Wallet Bs Result:", { walletBsRes, walletErrorBs });
+
         if (walletErrorBs) {
           console.error("Wallet Bs Error:", walletErrorBs);
           await supabase.from('pedidos').update({ estado: 'cancelado', notas: 'Error en débito de billetera Bs: ' + walletErrorBs.message }).eq('id', pedidoId)
           throw walletErrorBs
         }
+
         if (walletBsRes?.success === false) {
           await supabase.from('pedidos').update({ estado: 'cancelado', notas: 'Saldo insuficiente en Bs o error: ' + walletBsRes.message }).eq('id', pedidoId)
           throw new Error(walletBsRes.message || 'Error en la transacción de billetera Bs')
         }
+
+        alert(`ÉXITO BS: Nuevo saldo: ${walletBsRes.new_balance} Bs`);
       }
 
       if (activeRuletaDesc) {
