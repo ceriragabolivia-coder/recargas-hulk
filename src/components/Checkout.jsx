@@ -326,6 +326,12 @@ export default function Checkout({ onFinish, embedded = false }) {
       return
     }
 
+    const targetUserId = user?.id || perfil?.cliente_uuid || perfil?.id;
+    if (!targetUserId) {
+      setAlertModal({ type: 'error', message: 'No se pudo identificar tu usuario. Por favor intenta recargar la página.' })
+      return
+    }
+
     // Capturar montos exactos ANTES de que el checkout limpie el carrito
     const amountUSDToDeduct = walletAmountToUse;
     const amountBsToDeduct = walletBsAmountToUse;
@@ -415,7 +421,6 @@ export default function Checkout({ onFinish, embedded = false }) {
       if (!pedidoResult || pedidoResult.error) throw new Error(pedidoResult?.error || 'No se pudo crear el pedido')
 
       const pedidoId = pedidoResult.data.id;
-      const targetUserId = user?.id || perfil?.cliente_uuid || perfil?.id;
       
       if (!targetUserId) throw new Error('No se pudo identificar al usuario para la transacción.');
 
