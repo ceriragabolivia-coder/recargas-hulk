@@ -1674,7 +1674,7 @@ export default function Landing() {
           overflow: hidden;
         }
         .detail-header-card.has-banner .detail-header-info {
-          padding: 24px;
+          padding: 10px 24px;
         }
         .detail-game-banner {
           width: 100%;
@@ -1699,7 +1699,7 @@ export default function Landing() {
         .detail-header-info h1 {
           font-size: 32px;
           font-weight: 800;
-          margin-bottom: 4px;
+          margin-bottom: 2px;
         }
         .detail-stats {
           display: flex;
