@@ -142,6 +142,16 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     }
   }, [selectedPedido?.id])
 
+  // Escuchar reset desde Sidebar
+  useEffect(() => {
+    const handleReset = () => {
+      console.log("♻️ Reseteando vista de pedidos desde navegación lateral");
+      setSelectedPedido(null);
+    };
+    window.addEventListener('reset-pedidos', handleReset);
+    return () => window.removeEventListener('reset-pedidos', handleReset);
+  }, []);
+
   // Cargar datos del cliente bajo demanda al abrir un pedido
   useEffect(() => {
     async function fetchClientData() {

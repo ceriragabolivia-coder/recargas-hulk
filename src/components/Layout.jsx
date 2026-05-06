@@ -863,8 +863,10 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
           setSidebarOpen(false);
           if (isCatalogo) {
             localStorage.removeItem('selectedJuegoId');
-            // Notificar al componente Catalogo si ya está montado
             window.dispatchEvent(new Event('reset-catalogo'));
+          }
+          if (item.key === 'pedidos') {
+            window.dispatchEvent(new Event('reset-pedidos'));
           }
         }}
       >
