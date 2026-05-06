@@ -421,41 +421,41 @@ export default function Checkout({ onFinish, embedded = false }) {
       }
 
       if (useWalletBs && amountBsToDeduct > 0) {
-        // ALERT DE VALIDACIÓN DE IDENTIDAD
-        alert(`VALIDACIÓN DE IDENTIDAD:\nTu ID de sesión: ${user?.id}\nID a cobrar: ${targetUserId}`);
+        try {
+          // ALERT DE VALIDACIÓN DE IDENTIDAD
+          console.log(">> INICIANDO COBRO RPC...", { targetUserId, amountBsToDeduct, pedidoId });
+          
+          const { data: walletBsRes, error: walletErrorBs } = await supabase.rpc('pagar_con_billetera_bs_rpc', {
+            p_user_id: targetUserId,
+            p_amount: amountBsToDeduct,
+            p_pedido_id: parseInt(pedidoId),
+            p_description: currentIsWalletBsOnly ? `Pago de pedido #${pedidoResult.data.numero_pedido}` : `Pago parcial (Bs) - ${formatBs(amountBsToDeduct)}`
+          });
 
-        alert(`AUDITORÍA BS: Cobrando ${amountBsToDeduct} Bs de usuario ${targetUserId} para pedido #${pedidoResult.data.numero_pedido}`);
+          if (walletErrorBs) {
+            alert(`ERROR RPC SERVIDOR: ${walletErrorBs.message}`);
+            throw walletErrorBs;
+          }
 
-        const { data: walletBsRes, error: walletErrorBs } = await supabase.rpc('pagar_con_billetera_bs_rpc', {
-          p_user_id: targetUserId,
-          p_amount: amountBsToDeduct,
-          p_pedido_id: parseInt(pedidoId), // Asegurar que sea INT
-          p_description: currentIsWalletBsOnly ? `Pago de pedido #${pedidoResult.data.numero_pedido}` : `Pago parcial (Bs) - ${formatBs(amountBsToDeduct)}`
-        })
+          if (walletBsRes?.success === false) {
+            alert(`TRANSACCIÓN RECHAZADA: ${walletBsRes.message}`);
+            await supabase.from('pedidos').update({ estado: 'cancelado', notas: 'Saldo insuficiente en Bs o error: ' + walletBsRes.message }).eq('id', pedidoId);
+            throw new Error(walletBsRes.message);
+          }
 
-        console.log("Wallet Bs Result:", { walletBsRes, walletErrorBs });
+          console.log(">> RESPUESTA SERVIDOR:", walletBsRes);
+          alert(`RESUMEN SERVIDOR BS:\nExitoso: ${walletBsRes?.success}\nSaldo Anterior: ${walletBsRes?.old_balance}\nSaldo Nuevo: ${walletBsRes?.new_balance}`);
 
-        if (walletErrorBs) {
-          console.error("Wallet Bs Error:", walletErrorBs);
-          await supabase.from('pedidos').update({ estado: 'cancelado', notas: 'Error en débito de billetera Bs: ' + walletErrorBs.message }).eq('id', pedidoId)
-          throw walletErrorBs
+          // FORZAR ACTUALIZACIÓN DEL PERFIL TRAS UN BREVE RETRASO
+          setTimeout(async () => {
+            await refreshPerfil();
+          }, 500);
+
+        } catch (error) {
+          console.error("CRITICAL WALLET ERROR:", error);
+          alert(`ALERTA DE CRASH EN COBRO: ${error.message}\n\nEl pedido se creó pero el cobro falló. El administrador verá esto.`);
+          throw error;
         }
-
-        if (walletBsRes?.success === false) {
-          await supabase.from('pedidos').update({ estado: 'cancelado', notas: 'Saldo insuficiente en Bs o error: ' + walletBsRes.message }).eq('id', pedidoId)
-          throw new Error(walletBsRes.message || 'Error en la transacción de billetera Bs')
-        }
-
-        // NUEVA ALERTA DE DEPURACIÓN PROFUNDA
-        alert(`RESUMEN SERVIDOR BS:\nSuccess: ${walletBsRes?.success}\nOld Balance: ${walletBsRes?.old_balance}\nNew Balance: ${walletBsRes?.new_balance}\nMessage: ${walletBsRes?.message}`);
-
-        alert(`ÉXITO BS: Nuevo saldo: ${walletBsRes.new_balance} Bs`);
-        
-        // FORZAR ACTUALIZACIÓN DEL PERFIL TRAS UN BREVE RETRASO PARA ASEGURAR SINCRONIZACIÓN
-        setTimeout(async () => {
-          console.log(">> SOLICITANDO REFRESCO DE PERFIL POST-PAGO...");
-          await refreshPerfil();
-        }, 500);
       }
 
       if (activeRuletaDesc) {
