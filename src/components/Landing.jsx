@@ -8,6 +8,7 @@ import Checkout from './Checkout'
 import Pedidos from './Pedidos'
 import SupportChat from './SupportChat'
 import LandingWallet from './LandingWallet'
+import LandingPerfil from './LandingPerfil'
 
 export default function Landing() {
   const navigate = useNavigate()
@@ -32,6 +33,7 @@ export default function Landing() {
   const [showCheckout, setShowCheckout] = useState(false)
   const [showOrders, setShowOrders] = useState(false)
   const [showWallet, setShowWallet] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
 
   // Estados de Compra y Carrito
@@ -115,6 +117,12 @@ export default function Landing() {
       setSelectedJuego(null);
     } else if (path === '/mis-pedidos') {
       setShowOrders(true);
+      setShowWallet(false);
+      setShowProfile(false);
+      setSelectedJuego(null);
+    } else if (path === '/mi-perfil') {
+      setShowProfile(true);
+      setShowOrders(false);
       setShowWallet(false);
       setSelectedJuego(null);
     }
@@ -371,6 +379,7 @@ export default function Landing() {
     setShowCheckout(false)
     setShowOrders(false)
     setShowWallet(false)
+    setShowProfile(false)
     if (juego) {
       setSearchParams({ juego: juego.nombre.toLowerCase().replace(/\s+/g, '-') })
     } else {
@@ -592,7 +601,7 @@ export default function Landing() {
                   {(user?.role === 'admin' || user?.role === 'negocio' || perfil?.rol === 'admin' || perfil?.rol === 'negocio' || perfil?.rol === 'administrador') && (
                     <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Dashboard') }} style={{ color: 'var(--accent)', fontWeight: 'bold' }}>Panel de Control</a>
                   )}
-                  <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Mi-Perfil') }}>Mi Perfil</a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Mi-Perfil'); }}>Mi Perfil</a>
                   <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Mis-Pedidos'); }}>Mis Pedidos</a>
                   <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Billetera'); }}>Billetera</a>
                   <a href="#" onClick={(e) => { e.preventDefault(); logout() }} style={{ color: '#ef4444' }}>Cerrar Sesión</a>
@@ -664,6 +673,10 @@ export default function Landing() {
         ) : showWallet ? (
           <div className="fade-in" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
              <LandingWallet onClose={() => setShowWallet(false)} />
+          </div>
+        ) : showProfile ? (
+          <div className="fade-in" style={{ width: '100%', maxWidth: '1000px', margin: '0 auto', padding: '20px' }}>
+             <LandingPerfil onClose={() => setShowProfile(false)} />
           </div>
         ) : selectedJuego ? (
           /* VISTA DETALLE DEL JUEGO */
