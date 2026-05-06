@@ -123,18 +123,47 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     }
   }, [incomingFilterKey])
   useEffect(() => {
-    if (pedidos.length > 0) {
-      if (targetOrderId) {
-        const order = pedidos.find(p => p.id === targetOrderId)
-        if (order) setSelectedPedido(order)
-      } else if (targetOrderNumber) {
-        // Limpiamos el '#' si viene incluido
-        const cleanNum = targetOrderNumber.replace('#', '').trim()
-        const order = pedidos.find(p => String(p.numero_pedido).padStart(6, '0') === cleanNum || String(p.numero_pedido) === cleanNum)
-        if (order) setSelectedPedido(order)
+    // Escuchar cambios en el ID de pedido (ej. desde notificaciones)
+    if (targetOrderId || targetOrderNumber) {
+      const findAndOpen = () => {
+        if (targetOrderId) {
+          const order = pedidos.find(p => p.id === targetOrderId);
+          if (order) {
+            setSelectedPedido(order);
+            return true;
+          }
+        } else if (targetOrderNumber) {
+          const cleanNum = targetOrderNumber.replace('#', '').trim();
+          const order = pedidos.find(p => String(p.numero_pedido).padStart(6, '0') === cleanNum || String(p.numero_pedido) === cleanNum);
+          if (order) {
+            setSelectedPedido(order);
+            return true;
+          }
+        }
+        return false;
+      };
+
+      if (pedidos.length > 0) {
+        const found = findAndOpen();
+        // Si no lo encuentra, tal vez es un pedido muy nuevo, refrescamos
+        if (!found) fetchPedidos();
       }
     }
-  }, [targetOrderId, targetOrderNumber, pedidos])
+  }, [targetOrderId, targetOrderNumber, pedidos.length]);
+
+  // Suscripción Realtime para la lista de pedidos
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin_pedidos_list')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, () => {
+        fetchPedidos();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
   useEffect(() => {
     if (selectedPedido) {
       // Garantizar que el mensaje predeterminado use el número de pedido actual
