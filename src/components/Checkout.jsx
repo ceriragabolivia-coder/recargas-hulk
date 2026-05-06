@@ -421,6 +421,9 @@ export default function Checkout({ onFinish, embedded = false }) {
       }
 
       if (useWalletBs && amountBsToDeduct > 0) {
+        // ALERT DE VALIDACIÓN DE IDENTIDAD
+        alert(`VALIDACIÓN DE IDENTIDAD:\nTu ID de sesión: ${user?.id}\nID a cobrar: ${targetUserId}`);
+
         alert(`AUDITORÍA BS: Cobrando ${amountBsToDeduct} Bs de usuario ${targetUserId} para pedido #${pedidoResult.data.numero_pedido}`);
 
         const { data: walletBsRes, error: walletErrorBs } = await supabase.rpc('pagar_con_billetera_bs_rpc', {
