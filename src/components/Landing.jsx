@@ -6,6 +6,7 @@ import { formatUSD, formatBs, calcularPrecioVenta } from '../utils/helpers'
 import LandingAuthModal from './LandingAuthModal'
 import Checkout from './Checkout'
 import Pedidos from './Pedidos'
+import SupportChat from './SupportChat'
 
 export default function Landing() {
   const navigate = useNavigate()
@@ -28,6 +29,7 @@ export default function Landing() {
   const [currentBanner, setCurrentBanner] = useState(0)
   const [showCheckout, setShowCheckout] = useState(false)
   const [showOrders, setShowOrders] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
 
   // Estados de Compra y Carrito
   const { cuentas, guardarCuenta, eliminarCuenta } = useCuentasGuardadas(selectedJuego?.id || null)
@@ -1188,6 +1190,35 @@ export default function Landing() {
         </div>
       )}
 
+      {/* CHAT DE SOPORTE */}
+      {isChatOpen && (
+        <div className="support-chat-overlay">
+          <div className="support-chat-wrapper">
+            <SupportChat 
+              perfil={perfil} 
+              forceOpen={true} 
+              onClose={() => setIsChatOpen(false)} 
+            />
+          </div>
+        </div>
+      )}
+
+      {/* BOTÓN FLOTANTE DE CHAT */}
+      <div 
+        className="floating-chat-btn"
+        onClick={() => {
+          if (!user) {
+            setAuthModalView('login');
+            setIsAuthModalOpen(true);
+          } else {
+            setIsChatOpen(true);
+          }
+        }}
+        title="Chat de Soporte"
+      >
+        💬
+      </div>
+
       {/* AUTH MODAL */}
       <LandingAuthModal 
         isOpen={isAuthModalOpen} 
@@ -1427,6 +1458,83 @@ export default function Landing() {
         }
         .btn-verify-prominent:active {
           transform: translateY(0);
+        }
+
+        /* FLOATING CHAT BUTTON */
+        .floating-chat-btn {
+          position: fixed;
+          bottom: 30px;
+          right: 30px;
+          width: 65px;
+          height: 65px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #00d2ff 0%, #7b2ff7 100%);
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 30px;
+          cursor: pointer;
+          box-shadow: 0 10px 30px rgba(123, 47, 247, 0.5);
+          z-index: 9999;
+          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        .floating-chat-btn:hover {
+          transform: scale(1.15) rotate(10deg);
+          box-shadow: 0 15px 40px rgba(123, 47, 247, 0.7);
+        }
+        .floating-chat-btn::after {
+          content: '';
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          background: inherit;
+          z-index: -1;
+          opacity: 0.5;
+          animation: pulse-chat 2s infinite;
+        }
+        @keyframes pulse-chat {
+          0% { transform: scale(1); opacity: 0.5; }
+          100% { transform: scale(1.5); opacity: 0; }
+        }
+        
+        .support-chat-overlay {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          z-index: 10000;
+          display: flex;
+          align-items: flex-end;
+          justify-content: flex-end;
+          padding: 30px;
+          pointer-events: none;
+        }
+        .support-chat-wrapper {
+          width: 400px;
+          height: 600px;
+          max-height: calc(100vh - 100px);
+          background: var(--bg-card);
+          border-radius: 24px;
+          box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+          overflow: hidden;
+          pointer-events: auto;
+          animation: slideUpChat 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          border: 1px solid var(--border);
+        }
+        @keyframes slideUpChat {
+          from { transform: translateY(50px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @media (max-width: 600px) {
+          .support-chat-overlay { padding: 0; }
+          .support-chat-wrapper { 
+            width: 100%; 
+            height: 100%; 
+            max-height: 100%; 
+            border-radius: 0; 
+          }
         }
 
         .btn-landing-primary {
