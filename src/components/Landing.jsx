@@ -115,16 +115,20 @@ export default function Landing() {
     if (path === '/billetera') {
       setShowWallet(true);
       setShowOrders(false);
+      setShowProfile(false);
+      setShowCheckout(false); // CERRAR CHECKOUT SI ESTÁ ABIERTO
       setSelectedJuego(null);
     } else if (path === '/mis-pedidos') {
       setShowOrders(true);
       setShowWallet(false);
       setShowProfile(false);
+      setShowCheckout(false); // CERRAR CHECKOUT SI ESTÁ ABIERTO
       setSelectedJuego(null);
     } else if (path === '/mi-perfil') {
       setShowProfile(true);
       setShowOrders(false);
       setShowWallet(false);
+      setShowCheckout(false); // CERRAR CHECKOUT SI ESTÁ ABIERTO
       setSelectedJuego(null);
     }
   }, [location.pathname]);
