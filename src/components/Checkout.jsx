@@ -218,7 +218,7 @@ export default function Checkout({ onFinish, embedded = false }) {
   const discountedTotalUSD = +(totalUSD * ruletaFactor).toFixed(2)
   const discountedTotalBs  = Math.round(totalBs * ruletaFactor)
 
-  const isGratis = discountedTotalUSD <= 0
+  const isGratis = discountedTotalUSD <= 0 && totalUSD > 0
 
   const hasEnoughBalance = walletSaldo >= discountedTotalUSD
   const hasAnySaldo = walletSaldo > 0
@@ -377,6 +377,10 @@ export default function Checkout({ onFinish, embedded = false }) {
       }
 
       const results = await checkout(registrarVenta, user?.id || perfil?.id, finalMetodoId, finalReferencia, null, activeRuletaDesc, createdPedidoId, comprobanteUrl, true)
+      
+      // Actualizar el perfil para reflejar el nuevo saldo de la billetera
+      setTimeout(() => refreshPerfil(), 500);
+
       const pedidoResult = results.find(r => r.id === 'pedido')
       
       if (!pedidoResult || pedidoResult.error) throw new Error(pedidoResult?.error || 'No se pudo crear el pedido')
