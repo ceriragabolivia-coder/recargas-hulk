@@ -620,8 +620,12 @@ export default function Landing() {
             {user ? (
               <div className="nav-dropdown">
                 <div className="flex items-center" style={{ gap: '8px', cursor: 'pointer' }}>
-                  <div className="user-avatar-small">
-                    {user.email?.charAt(0).toUpperCase()}
+                  <div className="user-avatar-small" style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {perfil?.avatar_url ? (
+                      <img src={perfil.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      user.email?.charAt(0).toUpperCase()
+                    )}
                   </div>
                   <span className="hidden-mobile" style={{ fontWeight: '600' }}>Mi Cuenta ▾</span>
                 </div>

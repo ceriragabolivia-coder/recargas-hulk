@@ -13,10 +13,14 @@ export default function LandingPerfil({ onClose }) {
   const [loading, setLoading] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [alert, setAlert] = useState(null)
+  const [localAvatar, setLocalAvatar] = useState(null)
 
   useEffect(() => {
     if (perfil?.whatsapp) {
       setWhatsapp(perfil.whatsapp)
+    }
+    if (perfil?.avatar_url) {
+      setLocalAvatar(perfil.avatar_url)
     }
   }, [perfil])
 
@@ -93,8 +97,9 @@ export default function LandingPerfil({ onClose }) {
 
       if (updateError) throw updateError
       
+      setLocalAvatar(data.publicUrl)
       setAlert({ type: 'success', message: 'Avatar actualizado' })
-      refetch()
+      await refetch()
     } catch (error) {
       setAlert({ type: 'error', message: error.message })
     } finally {
@@ -117,8 +122,8 @@ export default function LandingPerfil({ onClose }) {
         <div className="perfil-sidebar">
           <div className="avatar-section-card">
             <div className="avatar-wrapper">
-              {perfil?.avatar_url ? (
-                <img src={perfil.avatar_url} alt="Avatar" className="avatar-img" />
+              {localAvatar ? (
+                <img src={localAvatar} alt="Avatar" className="avatar-img" />
               ) : (
                 <div className="avatar-placeholder">{user?.email?.[0].toUpperCase()}</div>
               )}
