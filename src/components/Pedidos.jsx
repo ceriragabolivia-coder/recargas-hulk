@@ -1068,7 +1068,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     const est = getEstadoStyle(selectedPedido.estado)
     return (
       <div style={{ paddingLeft: embedded ? '0' : '16px', paddingBottom: '32px' }}>
-        <div className="page-header mb-8 pedidos-header-responsive" style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'space-between' }}>
+        <div className="page-header mb-8 pedidos-header-responsive">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button className="btn btn-ghost btn-sm" onClick={() => setSelectedPedido(null)} style={{ padding: '4px 10px', backgroundColor: 'var(--bg-panel)', fontSize: '11px' }}>
               ← Volver
@@ -1171,7 +1171,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
         {renderClientModal()}
         {renderReembolsoModal()}
 
-        <div className="pedidos-grid-responsive" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+        <div className="pedidos-grid-responsive">
           {renderAlertModal()}
           {/* Info del pedido lateral (más compacto) */}
           <div className="card" style={{ padding: '12px' }}>
@@ -1202,19 +1202,19 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
               )}
             </div>
 
-            <div style={{ display: 'grid', gap: '6px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', backgroundColor: 'var(--bg-card)', borderRadius: '6px' }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '18px' }}>N° Pedido</span>
-                <span style={{ fontWeight: 800, color: 'var(--accent-primary)', fontSize: '18px' }}>#{selectedPedido.numero_pedido}</span>
+            <div style={{ display: 'grid', gap: '8px' }}>
+              <div className="summary-row">
+                <span className="summary-label">N° Pedido</span>
+                <span className="summary-value" style={{ color: 'var(--accent-primary)' }}>#{selectedPedido.numero_pedido}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', backgroundColor: 'var(--bg-card)', borderRadius: '6px' }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '18px' }}>Fecha / Hora</span>
-                <span style={{ color: 'var(--text-primary)', fontSize: '18px' }}>{formatFecha(selectedPedido.created_at)}</span>
+              <div className="summary-row">
+                <span className="summary-label">Fecha / Hora</span>
+                <span className="summary-value">{formatFecha(selectedPedido.created_at)}</span>
               </div>
-              <div style={{ padding: '6px 10px', backgroundColor: 'var(--bg-card)', borderRadius: '6px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '18px' }}>Referencia de Pago</span>
-                  <span style={{ fontWeight: 600, color: 'var(--accent-success)', fontSize: '18px' }}>{selectedPedido.referencia_pago || '-'}</span>
+              <div className="summary-row" style={{ display: 'block' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                  <span className="summary-label">Referencia de Pago</span>
+                  <span className="summary-value" style={{ color: 'var(--accent-success)' }}>{selectedPedido.referencia_pago || '-'}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '12px', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end', marginTop: '4px' }}>
@@ -1314,11 +1314,11 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                   </div>
                 )}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', backgroundColor: 'var(--bg-card)', borderRadius: '6px' }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '18px' }}>Total</span>
+              <div className="summary-row">
+                <span className="summary-label">Total</span>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 800, fontSize: '20px', color: 'var(--accent-success)' }}>{formatBs(selectedPedido.total_bs)}</div>
-                  {!isCliente && <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>{formatUSD(selectedPedido.total_usd)}</div>}
+                  <div style={{ fontWeight: 800, fontSize: '18px', color: 'var(--accent-success)' }}>{formatBs(selectedPedido.total_bs)}</div>
+                  {!isCliente && <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{formatUSD(selectedPedido.total_usd)}</div>}
                 </div>
               </div>
 
@@ -1581,7 +1581,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                         );
                       })()}
                       <div>
-                        <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '20px' }}>{item.producto_nombre}</div>
+                        <div className="product-item-title">{item.producto_nombre}</div>
                         {/* ESTADO LABEL CLIENTE/GENERAL */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
                           {item.estado === 'completado' && <span style={{ backgroundColor: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{fontSize: '14px'}}>✅</span> Recargado</span>}
@@ -1591,7 +1591,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                     </div>
                     
                     <div style={{ textAlign: 'right' }}>
-                       <span style={{ color: 'var(--accent-success)', fontWeight: 700, fontSize: '18px', display: 'block' }}>{formatBs(item.precio_bs)}</span>
+                       <span className="product-item-price">{formatBs(item.precio_bs)}</span>
 
                        {/* BOTONES ADMIN */}
                        {isAdmin && selectedPedido.atendido_por_id === user.id && selectedPedido.estado === 'procesando' && (
