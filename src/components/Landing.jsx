@@ -310,14 +310,16 @@ export default function Landing() {
       .on('postgres_changes', { 
         event: 'INSERT', 
         schema: 'public', 
-        table: 'notificaciones_usuarios',
-        filter: `user_id=eq.${user.id}`
+        table: 'notificaciones_usuarios'
       }, (payload) => {
-        setNotificaciones(prev => [payload.new, ...prev].slice(0, 10));
-        setUnreadCount(count => count + 1);
-        setActiveToast(payload.new);
-        setTimeout(() => setActiveToast(null), 8000);
-        playNotificationSound();
+        // Filtramos manualmente por user_id para mayor robustez
+        if (payload.new && payload.new.user_id === user.id) {
+          setNotificaciones(prev => [payload.new, ...prev].slice(0, 10));
+          setUnreadCount(count => count + 1);
+          setActiveToast(payload.new);
+          setTimeout(() => setActiveToast(null), 8000);
+          playNotificationSound();
+        }
       })
       .subscribe();
 
