@@ -1857,6 +1857,9 @@ export default function Landing() {
           cursor: pointer;
           position: relative;
           border: 1px solid var(--border);
+          padding: 0;
+          display: flex;
+          flex-direction: column;
         }
         .game-card:hover {
           transform: translateY(-8px);
@@ -1867,6 +1870,11 @@ export default function Landing() {
           width: 100%;
           aspect-ratio: 1/1;
           object-fit: cover;
+          display: block;
+          transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .game-card:hover .game-image {
+          transform: scale(1.1);
         }
         .game-info {
           padding: 10px 12px 6px;
@@ -2036,7 +2044,7 @@ export default function Landing() {
           background: var(--bg-card);
           border: 2px solid var(--border);
           border-radius: 20px;
-          padding: 20px;
+          padding: 0;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -2044,6 +2052,7 @@ export default function Landing() {
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           cursor: pointer;
           position: relative;
+          overflow: hidden;
         }
         .product-card:hover {
           border-color: var(--accent);
@@ -2052,31 +2061,35 @@ export default function Landing() {
           box-shadow: 0 15px 35px rgba(123,47,247,0.2);
         }
         .product-icon {
-          width: 64px;
-          height: 64px;
-          margin-bottom: 16px;
-          filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
-          transition: transform 0.3s;
+          width: 100%;
+          aspect-ratio: 1/1;
+          object-fit: cover;
+          margin-bottom: 0;
+          transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+          display: block;
         }
         .product-card:hover .product-icon {
-          transform: scale(1.1) rotate(5deg);
+          transform: scale(1.1);
         }
         .product-name {
           font-weight: 700;
           font-size: 16px;
-          margin-bottom: 12px;
-          height: 48px;
+          margin: 12px 0 8px;
+          height: auto;
+          min-height: 48px;
           display: flex;
           align-items: center;
+          justify-content: center;
           color: var(--text-main);
           line-height: 1.3;
+          padding: 0 12px;
         }
         .product-price {
           display: flex;
           flex-direction: column;
           gap: 4px;
           width: 100%;
-          padding-top: 12px;
+          padding: 12px 12px 20px;
           border-top: 1px solid var(--border);
         }
         .price-primary {
