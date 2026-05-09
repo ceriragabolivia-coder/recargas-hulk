@@ -18,7 +18,7 @@ BEGIN
     -- (Buscamos su rol en la tabla perfiles)
     IF EXISTS (
         SELECT 1 FROM public.perfiles 
-        WHERE id = NEW.remitente_id AND role = 'admin'
+        WHERE id = NEW.remitente_id AND rol = 'admin'
     ) AND v_cliente_auth_id IS NOT NULL THEN
         
         -- A. Insertar notificación para el usuario
