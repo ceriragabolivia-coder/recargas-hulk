@@ -334,7 +334,10 @@ export default function App() {
 
   // Eliminamos el splash screen global para disparar el contenido de inmediato.
   // Los componentes individuales (Landing, Dashboard, etc) ya manejan sus propios estados de carga de datos.
-  if (loading && !forceLoad && !user) {
+  // Eliminamos el splash screen global para la Landing Page para que sea instantánea.
+  // Solo lo mostramos si no estamos en la Landing y aún estamos cargando el usuario inicial.
+  const isLandingPath = location.pathname === '/' || location.pathname === '/index.html'
+  if (loading && !forceLoad && !user && !isLandingPath) {
     return (
       <div className="loading-screen-modern">
         <img src={kidsGamingImg} alt="Cargando..." className="loading-illustration" width="320" height="320" />

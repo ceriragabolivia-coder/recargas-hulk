@@ -493,13 +493,9 @@ export default function Landing() {
     return juegos.slice(0, 20)
   }, [juegos, config])
 
-  if (loading || !config) {
-    return (
-      <div className="landing-loading">
-        <div className="spinner"></div>
-      </div>
-    )
-  }
+  // Ya no bloqueamos toda la página con un spinner. 
+  // Las secciones internas (como productos o juegos) ya tienen sus propios esqueletos/spinners locales si es necesario.
+  // Pero permitimos que el Header y el Hero (con fallbacks) se vean de inmediato.
 
   return (
     <div className={`landing-page ${darkMode ? 'dark' : ''}`}>
@@ -1172,9 +1168,17 @@ export default function Landing() {
                   <a href="#all-games" className="view-all">Ver todos &gt;</a>
                 </div>
                 <div className="games-grid">
-                  {bestsellers.map(juego => (
-                    <GameCard key={juego.id} juego={juego} onSelect={() => handleSelectJuego(juego)} />
-                  ))}
+                  {loading ? (
+                    Array(8).fill(0).map((_, i) => (
+                      <div key={i} className="game-card-skeleton" style={{ height: '220px', backgroundColor: 'var(--bg-hover)', borderRadius: '16px', opacity: 0.5, animation: 'pulse 1.5s infinite' }}></div>
+                    ))
+                  ) : bestsellers.length > 0 ? (
+                    bestsellers.map(juego => (
+                      <GameCard key={juego.id} juego={juego} onSelect={() => handleSelectJuego(juego)} />
+                    ))
+                  ) : (
+                    <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No se encontraron servicios destacados.</div>
+                  )}
                 </div>
               </section>
             )}
@@ -1202,9 +1206,17 @@ export default function Landing() {
                 ))}
               </div>
               <div className="games-grid">
-                {filteredJuegos.map(juego => (
-                  <GameCard key={juego.id} juego={juego} onSelect={() => handleSelectJuego(juego)} />
-                ))}
+                {loading ? (
+                  Array(12).fill(0).map((_, i) => (
+                    <div key={i} className="game-card-skeleton" style={{ height: '220px', backgroundColor: 'var(--bg-hover)', borderRadius: '16px', opacity: 0.5, animation: 'pulse 1.5s infinite' }}></div>
+                  ))
+                ) : filteredJuegos.length > 0 ? (
+                  filteredJuegos.map(juego => (
+                    <GameCard key={juego.id} juego={juego} onSelect={() => handleSelectJuego(juego)} />
+                  ))
+                ) : (
+                  <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No se encontraron servicios en esta categoría.</div>
+                )}
               </div>
             </section>
           </>
@@ -1401,6 +1413,12 @@ export default function Landing() {
           --text-muted: #94a3b8;
           --border: #334155;
           --bg-hover: #334155;
+        }
+
+        @keyframes pulse {
+          0% { opacity: 0.5; }
+          50% { opacity: 0.8; }
+          100% { opacity: 0.5; }
         }
 
         .landing-page {
