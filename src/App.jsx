@@ -47,9 +47,9 @@ const PendingView = ({ onLogout, onRefresh }) => (
   <div className="login-container">
     <div className="login-card" style={{ textAlign: 'center', maxWidth: '450px' }}>
       <div style={{ fontSize: '64px', marginBottom: '24px' }}>⏳</div>
-      <h2 className="login-title">Cuenta en Espera</h2>
+      <h2 className="login-title">Pendiente Por Validar</h2>
       <p style={{ color: 'var(--text-muted)', marginBottom: '32px', lineHeight: '1.6' }}>
-        Tu registro ha sido recibido. Por seguridad, un administrador debe aprobar tu cuenta antes de que puedas acceder al catálogo.
+        Tu registro ha sido recibido, Pero Por seguridad debes comunicarte a través de Whatsapp desde el mismo número que usaste para registrarte en la página y de esa manera solicitar la aprobación de tu cuenta y poder acceder a la plataforma.
       </p>
 
       <div style={{ padding: '16px', backgroundColor: 'rgba(255, 193, 7, 0.1)', borderRadius: '12px', color: '#ffc107', marginBottom: '24px', fontSize: '14px' }}>
@@ -65,14 +65,14 @@ const PendingView = ({ onLogout, onRefresh }) => (
       </button>
 
       <a
-        href="https://wa.me/584164287761?text=Hola,%20quiero%20validar%20mi%20cuenta%20en%20el%20sistema%20de%20recargas"
+        href="https://api.whatsapp.com/send/?phone=584164287761&text=Hola%2C+quiero+validar+mi+cuenta+en+el+sistema+de+recargas&type=phone_number&app_absent=0"
         target="_blank"
         rel="noopener noreferrer"
         className="btn"
         style={{
           width: '100%',
           height: '48px',
-          backgroundColor: '#2b2d42',
+          backgroundColor: '#25D366', // Color oficial de WhatsApp
           color: 'white',
           display: 'flex',
           alignItems: 'center',
@@ -81,7 +81,8 @@ const PendingView = ({ onLogout, onRefresh }) => (
           textDecoration: 'none',
           marginBottom: '16px',
           fontWeight: '600',
-          border: '1px solid #3d405b'
+          border: 'none',
+          boxShadow: '0 4px 14px rgba(37, 211, 102, 0.3)'
         }}
       >
         <span style={{ fontSize: '20px' }}>💬</span> Solicitar Aprobación
