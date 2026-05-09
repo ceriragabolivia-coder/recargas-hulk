@@ -1865,7 +1865,7 @@ export default function Landing() {
           padding: 0;
           display: flex;
           flex-direction: column;
-          margin-top: 15px; /* Espacio para el gancho */
+          margin-top: 25px; /* Espacio para el gancho */
         }
         .game-image-container {
           width: 100%;
@@ -1913,21 +1913,20 @@ export default function Landing() {
         }
         .badge-discount {
           position: absolute;
-          top: -15px; /* Más arriba */
-          left: 50%;
-          transform: translateX(-50%);
+          top: -22px; /* Completamente por encima */
+          left: 0;
           background: linear-gradient(135deg, #ff4757 0%, #ff6b6b 100%);
           color: white;
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 900;
-          padding: 6px 14px;
-          border-radius: 30px;
+          padding: 4px 10px;
+          border-radius: 4px 12px 12px 4px; /* Forma de etiqueta/tag */
           z-index: 100;
-          box-shadow: 0 6px 15px rgba(255, 71, 87, 0.4);
-          border: 2px solid #ffffff;
+          box-shadow: 0 4px 10px rgba(255, 71, 87, 0.3);
           white-space: nowrap;
           text-transform: uppercase;
           letter-spacing: 0.5px;
+          border-left: 3px solid #ffffff; /* Gancho visual a la izquierda */
         }
 
         .category-pills {
@@ -2072,7 +2071,7 @@ export default function Landing() {
           cursor: pointer;
           position: relative;
           overflow: visible; /* Permitir gancho fuera */
-          margin-top: 15px;
+          margin-top: 25px;
         }
         .product-image-container {
           width: 100%;
