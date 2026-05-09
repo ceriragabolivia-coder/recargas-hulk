@@ -1093,7 +1093,12 @@ export default function Landing() {
                             const finalPrice = calcularPrecioVenta(prod, selectedJuego, config, perfil)
                             setPendingItem({ p: prod, selectedJuego, finalPrice, localRechargeData })
                           }}>
-                            {prod.icono_url && <img src={prod.icono_url} alt="" className="product-icon" />}
+                            {(prod.etiqueta_descuento || selectedJuego.etiqueta_descuento) && (
+                              <div className="badge-discount">{prod.etiqueta_descuento || selectedJuego.etiqueta_descuento}</div>
+                            )}
+                            <div className="product-image-container">
+                              {prod.icono_url && <img src={prod.icono_url} alt="" className="product-icon" />}
+                            </div>
                             <div className="product-name">{prod.nombre}</div>
                             <div className="product-price">
                               {isRevendedor ? (
@@ -1851,7 +1856,7 @@ export default function Landing() {
         .game-card {
           background: var(--bg-card);
           border-radius: 16px;
-          overflow: hidden;
+          overflow: visible; /* Permitir que el gancho sobresalga */
           box-shadow: 0 4px 15px rgba(0,0,0,0.05);
           transition: transform 0.3s, box-shadow 0.3s;
           cursor: pointer;
@@ -1860,6 +1865,14 @@ export default function Landing() {
           padding: 0;
           display: flex;
           flex-direction: column;
+          margin-top: 15px; /* Espacio para el gancho */
+        }
+        .game-image-container {
+          width: 100%;
+          aspect-ratio: 1/1;
+          overflow: hidden; /* El clipping se hace aquí */
+          border-radius: 16px 16px 0 0;
+          position: relative;
         }
         .game-card:hover {
           transform: translateY(-8px);
@@ -1900,15 +1913,21 @@ export default function Landing() {
         }
         .badge-discount {
           position: absolute;
-          top: 10px;
-          right: 10px;
-          background: #ff6b6b;
+          top: -15px; /* Más arriba */
+          left: 50%;
+          transform: translateX(-50%);
+          background: linear-gradient(135deg, #ff4757 0%, #ff6b6b 100%);
           color: white;
           font-size: 11px;
-          font-weight: 800;
-          padding: 4px 8px;
-          border-radius: 6px;
-          z-index: 5;
+          font-weight: 900;
+          padding: 6px 14px;
+          border-radius: 30px;
+          z-index: 100;
+          box-shadow: 0 6px 15px rgba(255, 71, 87, 0.4);
+          border: 2px solid #ffffff;
+          white-space: nowrap;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
         .category-pills {
@@ -2052,7 +2071,15 @@ export default function Landing() {
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           cursor: pointer;
           position: relative;
+          overflow: visible; /* Permitir gancho fuera */
+          margin-top: 15px;
+        }
+        .product-image-container {
+          width: 100%;
+          aspect-ratio: 1/1;
           overflow: hidden;
+          border-radius: 18px 18px 0 0;
+          position: relative;
         }
         .product-card:hover {
           border-color: var(--accent);
@@ -2439,13 +2466,15 @@ function GameCard({ juego, onSelect }) {
   return (
     <div className="game-card" onClick={onSelect}>
       {juego.etiqueta_descuento && <div className="badge-discount">{juego.etiqueta_descuento}</div>}
-      <img 
-        src={juego.icono_url || 'https://via.placeholder.com/200x250?text=' + juego.nombre} 
-        alt={juego.nombre} 
-        className="game-image" 
-        fetchpriority="high"
-        loading="eager"
-      />
+      <div className="game-image-container">
+        <img 
+          src={juego.icono_url || 'https://via.placeholder.com/200x250?text=' + juego.nombre} 
+          alt={juego.nombre} 
+          className="game-image" 
+          fetchpriority="high"
+          loading="eager"
+        />
+      </div>
       <div className="game-info">
         <div className="game-name">{juego.nombre}</div>
         <div className="game-meta hidden-mobile">
