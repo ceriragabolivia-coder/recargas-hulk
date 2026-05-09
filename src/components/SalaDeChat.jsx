@@ -338,7 +338,7 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
       
       // DESBLOQUEAR CHAT AUTOMÁTICAMENTE PARA EL CLIENTE
       // Si el chat estaba marcado como "resuelto", al enviarle admin un mensaje se vuelve a habilitar
-      await supabase.from('clientes').update({ soporte_status: null }).eq('id', selectedChat.id)
+      await supabase.from('clientes').update({ soporte_status: 'pendiente' }).eq('id', selectedChat.id)
 
       setNewMessage('')
       setPendingFile(null)
