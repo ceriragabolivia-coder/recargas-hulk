@@ -246,6 +246,13 @@ export function AuthProvider({ children }) {
       lastUserIdRef.current = null
       setLoading(false)
     },
+    refetch: async () => {
+       const u = (await supabase.auth.getUser()).data?.user
+       if (u) {
+         const pData = await fetchPerfilData(u.id, u)
+         setPerfil(pData)
+       }
+    },
     refreshPerfil: async () => {
        const u = (await supabase.auth.getUser()).data?.user
        if (u) {
