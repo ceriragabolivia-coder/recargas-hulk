@@ -1093,12 +1093,7 @@ export default function Landing() {
                             const finalPrice = calcularPrecioVenta(prod, selectedJuego, config, perfil)
                             setPendingItem({ p: prod, selectedJuego, finalPrice, localRechargeData })
                           }}>
-                            {(prod.etiqueta_descuento || selectedJuego.etiqueta_descuento) && (
-                              <div className="badge-discount">{prod.etiqueta_descuento || selectedJuego.etiqueta_descuento}</div>
-                            )}
-                            <div className="product-image-container">
-                              {prod.icono_url && <img src={prod.icono_url} alt="" className="product-icon" />}
-                            </div>
+                            {prod.icono_url && <img src={prod.icono_url} alt="" className="product-icon" />}
                             <div className="product-name">{prod.nombre}</div>
                             <div className="product-price">
                               {isRevendedor ? (
@@ -2062,22 +2057,13 @@ export default function Landing() {
           background: var(--bg-card);
           border: 2px solid var(--border);
           border-radius: 20px;
-          padding: 0;
+          padding: 20px;
           display: flex;
           flex-direction: column;
           align-items: center;
           text-align: center;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           cursor: pointer;
-          position: relative;
-          overflow: visible; /* Permitir gancho fuera */
-          margin-top: 25px;
-        }
-        .product-image-container {
-          width: 100%;
-          aspect-ratio: 1/1;
-          overflow: hidden;
-          border-radius: 18px 18px 0 0;
           position: relative;
         }
         .product-card:hover {
@@ -2087,35 +2073,31 @@ export default function Landing() {
           box-shadow: 0 15px 35px rgba(123,47,247,0.2);
         }
         .product-icon {
-          width: 100%;
-          aspect-ratio: 1/1;
-          object-fit: cover;
-          margin-bottom: 0;
-          transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-          display: block;
+          width: 64px;
+          height: 64px;
+          margin-bottom: 16px;
+          filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+          transition: transform 0.3s;
         }
         .product-card:hover .product-icon {
-          transform: scale(1.1);
+          transform: scale(1.1) rotate(5deg);
         }
         .product-name {
           font-weight: 700;
           font-size: 16px;
-          margin: 12px 0 8px;
-          height: auto;
-          min-height: 48px;
+          margin-bottom: 12px;
+          height: 48px;
           display: flex;
           align-items: center;
-          justify-content: center;
           color: var(--text-main);
           line-height: 1.3;
-          padding: 0 12px;
         }
         .product-price {
           display: flex;
           flex-direction: column;
           gap: 4px;
           width: 100%;
-          padding: 12px 12px 20px;
+          padding-top: 12px;
           border-top: 1px solid var(--border);
         }
         .price-primary {
