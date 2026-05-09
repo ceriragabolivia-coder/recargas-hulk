@@ -1912,10 +1912,10 @@ export default function Landing() {
           left: 0;
           background: linear-gradient(135deg, #ff4757 0%, #ff6b6b 100%);
           color: white;
-          font-size: 9px;
+          font-size: 8px;
           font-weight: 900;
-          padding: 3px 9px;
-          border-radius: 6px;
+          padding: 2px 7px;
+          border-radius: 4px;
           z-index: 100;
           box-shadow: 0 4px 10px rgba(255, 71, 87, 0.3);
           white-space: nowrap;
