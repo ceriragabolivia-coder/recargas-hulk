@@ -1915,13 +1915,12 @@ export default function Landing() {
           font-size: 10px;
           font-weight: 900;
           padding: 4px 10px;
-          border-radius: 4px 12px 12px 4px; /* Forma de etiqueta/tag */
+          border-radius: 8px;
           z-index: 100;
           box-shadow: 0 4px 10px rgba(255, 71, 87, 0.3);
           white-space: nowrap;
           text-transform: uppercase;
           letter-spacing: 0.5px;
-          border-left: 3px solid #ffffff; /* Gancho visual a la izquierda */
         }
 
         .category-pills {
