@@ -490,7 +490,7 @@ export default function Landing() {
       const ids = config.landing_featured_games.split(',').map(id => id.trim())
       return juegos.filter(j => ids.includes(String(j.id)))
     }
-    return juegos.slice(0, 12)
+    return juegos.slice(0, 20)
   }, [juegos, config])
 
   if (loading || !config) {
