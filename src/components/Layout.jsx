@@ -611,8 +611,34 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
     // 2. Suscripción a Nuevos Pedidos (Solo para Administradores)
     let channelAdminPedidos = null
     let channelAdminBilletera = null
+    let channelAdminNotis = null
     if (isAdmin || isNegocio) {
-      console.log("✅ Suscripción a PEDIDOS (Admin) activa y escuchando...")
+      console.log("✅ Suscripciones de Admin activas...")
+      
+      // 2a. Suscripción a Notificaciones de Administración (Nuevos Usuarios, etc.)
+      channelAdminNotis = supabase
+        .channel('notificaciones_admin_realtime')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notificaciones_admin'
+        }, payload => {
+          console.log("Evento recibido en notificaciones_admin:", payload)
+          const newNoti = payload.new
+          if (newNoti) {
+            const adminToast = {
+              id: Date.now() + Math.random(),
+              db_id: newNoti.id,
+              type: newNoti.tipo || 'admin_info',
+              titulo: `📢 ${newNoti.titulo}`,
+              mensaje: newNoti.mensaje,
+              target: newNoti.tipo === 'new_user' ? 'usuarios' : null
+            }
+            setToasts(prev => [adminToast, ...prev].slice(0, 3))
+            playBellSound()
+          }
+        })
+        .subscribe()
       channelAdminPedidos = supabase
         .channel('pedidos_realtime_admin')
         .on('postgres_changes', {
@@ -815,6 +841,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
 
     return () => {
       if (channelNotis) supabase.removeChannel(channelNotis)
+      if (channelAdminNotis) supabase.removeChannel(channelAdminNotis)
       if (channelAdminPedidos) supabase.removeChannel(channelAdminPedidos)
       if (channelAdminBilletera) supabase.removeChannel(channelAdminBilletera)
       if (channelUserPedidos) supabase.removeChannel(channelUserPedidos)
