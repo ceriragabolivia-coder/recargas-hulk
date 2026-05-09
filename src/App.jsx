@@ -52,8 +52,18 @@ const PendingView = ({ onLogout, onRefresh }) => (
         Tu registro ha sido recibido, Pero Por seguridad debes comunicarte a través de Whatsapp desde el mismo número que usaste para registrarte en la página y de esa manera solicitar la aprobación de tu cuenta y poder acceder a la plataforma.
       </p>
 
-      <div style={{ padding: '16px', backgroundColor: 'rgba(255, 193, 7, 0.1)', borderRadius: '12px', color: '#ffc107', marginBottom: '24px', fontSize: '14px' }}>
-        🔔 Tu cuenta está siendo revisada por el equipo administrativo.
+      <div style={{ 
+        padding: '16px', 
+        backgroundColor: 'rgba(255, 193, 7, 0.1)', 
+        borderRadius: '12px', 
+        color: '#ffc107', 
+        marginBottom: '24px', 
+        fontSize: '13px',
+        fontWeight: '600',
+        lineHeight: '1.5',
+        border: '1px solid rgba(255, 193, 7, 0.2)'
+      }}>
+        Debes solicitar la aprobación de tu cuenta para ingresar a la plataforma, haz click en el botón verde de abajo "Solicitar Aprobación"
       </div>
 
       <button
@@ -72,7 +82,7 @@ const PendingView = ({ onLogout, onRefresh }) => (
         style={{
           width: '100%',
           height: '48px',
-          backgroundColor: '#25D366', // Color oficial de WhatsApp
+          backgroundColor: '#25D366',
           color: 'white',
           display: 'flex',
           alignItems: 'center',
@@ -80,12 +90,16 @@ const PendingView = ({ onLogout, onRefresh }) => (
           gap: '10px',
           textDecoration: 'none',
           marginBottom: '16px',
-          fontWeight: '600',
+          fontWeight: '700',
           border: 'none',
-          boxShadow: '0 4px 14px rgba(37, 211, 102, 0.3)'
+          boxShadow: '0 4px 14px rgba(37, 211, 102, 0.4)',
+          fontSize: '15px'
         }}
       >
-        <span style={{ fontSize: '20px' }}>💬</span> Solicitar Aprobación
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+          <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.181-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793 0-.853.448-1.273.607-1.446.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.101-.177.211-.077.383.101.173.449.743.964 1.203.664.591 1.221.774 1.394.86.173.088.274.072.376-.043.101-.116.433-.506.548-.68.116-.173.231-.144.39-.087.158.058 1.011.477 1.184.564.173.087.289.129.332.202.043.073.043.419-.101.824z"/>
+        </svg>
+        Solicitar Aprobación
       </a>
 
       <button className="btn btn-ghost" style={{ width: '100%', height: '48px' }} onClick={onLogout}>
