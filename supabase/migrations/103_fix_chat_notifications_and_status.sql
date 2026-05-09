@@ -14,8 +14,12 @@ BEGIN
     FROM public.clientes
     WHERE id = NEW.cliente_id;
 
-    -- Solo procedemos si el mensaje viene de un administrador (es_admin = true)
-    IF NEW.es_admin = true AND v_cliente_auth_id IS NOT NULL THEN
+    -- Verificamos si el remitente es un administrador
+    -- (Buscamos su rol en la tabla perfiles)
+    IF EXISTS (
+        SELECT 1 FROM public.perfiles 
+        WHERE id = NEW.remitente_id AND role = 'admin'
+    ) AND v_cliente_auth_id IS NOT NULL THEN
         
         -- A. Insertar notificación para el usuario
         INSERT INTO public.notificaciones_usuarios (
