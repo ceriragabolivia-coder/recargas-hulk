@@ -421,6 +421,20 @@ export default function Checkout({ onFinish, embedded = false }) {
         }
       }
 
+      // Añadir info de pago fraccionado a la referencia
+      if (!currentIsWalletOnly && !currentIsWalletBsOnly) {
+        let walletInfo = [];
+        if (useWalletPartial && amountUSDToDeduct > 0) {
+          walletInfo.push(`Billetera USD: $${amountUSDToDeduct.toFixed(2)}`);
+        }
+        if (useWalletBs && amountBsToDeduct > 0) {
+          walletInfo.push(`Billetera Bs: ${amountBsToDeduct}`);
+        }
+        if (walletInfo.length > 0) {
+          finalReferencia = finalReferencia ? `${finalReferencia} | Pago Parcial: ${walletInfo.join(' y ')}` : `Pago Parcial: ${walletInfo.join(' y ')}`;
+        }
+      }
+
       const results = await checkout(registrarVenta, user?.id || perfil?.id, finalMetodoId, finalReferencia, null, activeRuletaDesc, createdPedidoId, comprobanteUrl, true)
       
       const pedidoResult = results.find(r => r.id === 'pedido')
