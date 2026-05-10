@@ -370,7 +370,8 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
 
     let pCount = 0, oCount = 0, rCount = 0, sCount = 0, brCount = 0
 
-    if (!isAdmin) {
+    // Solo admins, administradores y negocios ven estos contadores
+    if (!isAdmin && !isNegocio) {
       setCounts(prev => ({
         ...prev,
         pagos_pendientes: 0,
@@ -382,10 +383,23 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
       return
     }
 
+    const isSuperAdmin = user?.email?.toLowerCase() === 'ceriraga@gmail.com'
+    const ownerId = perfil?.owner_id || (isNegocio ? user?.id : null)
+
     try {
-        const { count: p, error: ep } = await supabase.from('pedidos').select('*', { count: 'exact', head: true }).is('pago_verificado', null).neq('estado', 'cancelado').neq('estado', 'reembolsado')
-        const { count: o, error: eo } = await supabase.from('pedidos').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente')
-        const { count: r, error: er } = await supabase.from('pedidos').select('*', { count: 'exact', head: true }).eq('pago_verificado', true).neq('estado', 'completado').neq('estado', 'cancelado').neq('estado', 'reembolsado')
+        let pQuery = supabase.from('pedidos').select('*', { count: 'exact', head: true }).is('pago_verificado', null).neq('estado', 'cancelado').neq('estado', 'reembolsado').neq('estado', 'completado')
+        let oQuery = supabase.from('pedidos').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente')
+        let rQuery = supabase.from('pedidos').select('*', { count: 'exact', head: true }).eq('pago_verificado', true).neq('estado', 'completado').neq('estado', 'cancelado').neq('estado', 'reembolsado')
+
+        if (!isSuperAdmin && ownerId) {
+          pQuery = pQuery.eq('owner_id', ownerId)
+          oQuery = oQuery.eq('owner_id', ownerId)
+          rQuery = rQuery.eq('owner_id', ownerId)
+        }
+
+        const [{ count: p, error: ep }, { count: o, error: eo }, { count: r, error: er }] = await Promise.all([
+          pQuery, oQuery, rQuery
+        ])
         
         if (ep) console.error("Error pCount:", ep)
         if (eo) console.error("Error oCount:", eo)

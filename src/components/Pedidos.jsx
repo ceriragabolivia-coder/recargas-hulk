@@ -24,6 +24,8 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   const { user, perfil, isCliente } = useAuth()
   const { config } = useConfiguracion()
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
+  const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
+  const isSuperAdmin = user?.email?.toLowerCase() === 'ceriraga@gmail.com'
   const [pedidos, setPedidos] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedPedido, setSelectedPedido] = useState(null)
@@ -51,8 +53,15 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
       .select('*, pedido_items(*, productos(icono_url))')
       .order('created_at', { ascending: false })
 
-    if (user && !isAdmin) {
-      query = query.eq('cliente_id', user.id)
+    if (!isSuperAdmin) {
+      const ownerId = perfil?.owner_id || (isNegocio ? user?.id : null)
+      if (ownerId) {
+        // Si es un negocio o admin de negocio, ve lo de su negocio o lo que él mismo pidió
+        query = query.or(`owner_id.eq.${ownerId},cliente_id.eq.${user.id}`)
+      } else if (!isAdmin) {
+        // Si es cliente raso, solo ve lo suyo
+        query = query.eq('cliente_id', user.id)
+      }
     }
 
     const { data: rawPedidos, error } = await query
@@ -276,10 +285,10 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   const filterPedidos = (list, key) => {
     if (!key || key === 'todos') return list
     if (key === 'pagos_pendientes') {
-      return list.filter(p => p.pago_verificado === null && p.estado !== 'cancelado' && p.estado !== 'reembolsado')
+      return list.filter(p => p.pago_verificado === null && !['completado', 'cancelado', 'reembolsado'].includes(p.estado))
     }
     if (key === 'recargas_pendientes') {
-      return list.filter(p => p.pago_verificado === true && p.estado !== 'completado' && p.estado !== 'cancelado' && p.estado !== 'reembolsado')
+      return list.filter(p => p.pago_verificado === true && !['completado', 'cancelado', 'reembolsado'].includes(p.estado))
     }
     return list.filter(p => p.estado === key)
   }
