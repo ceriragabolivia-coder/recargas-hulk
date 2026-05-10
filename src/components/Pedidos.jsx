@@ -273,14 +273,18 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     { key: 'cancelado', label: 'Cancelados', icon: '❌' },
   ]
 
-  let pedidosFiltrados = pedidos
-  if (filtroEstado === 'pagos_pendientes') {
-    pedidosFiltrados = pedidos.filter(p => p.pago_verificado === null && p.estado !== 'cancelado')
-  } else if (filtroEstado === 'recargas_pendientes') {
-    pedidosFiltrados = pedidos.filter(p => p.pago_verificado === true && p.estado !== 'completado' && p.estado !== 'cancelado')
-  } else if (filtroEstado !== 'todos') {
-    pedidosFiltrados = pedidos.filter(p => p.estado === filtroEstado)
+  const filterPedidos = (list, key) => {
+    if (!key || key === 'todos') return list
+    if (key === 'pagos_pendientes') {
+      return list.filter(p => p.pago_verificado === null && p.estado !== 'cancelado' && p.estado !== 'reembolsado')
+    }
+    if (key === 'recargas_pendientes') {
+      return list.filter(p => p.pago_verificado === true && p.estado !== 'completado' && p.estado !== 'cancelado' && p.estado !== 'reembolsado')
+    }
+    return list.filter(p => p.estado === key)
   }
+
+  let pedidosFiltrados = filterPedidos(pedidos, filtroEstado)
 
   if (busqueda.trim() !== '') {
     const q = busqueda.toLowerCase()
@@ -1843,7 +1847,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {FILTROS.find(f => f.key === filtroEstado)?.icon} 
                 {FILTROS.find(f => f.key === filtroEstado)?.label} 
-                ({filtroEstado === 'todos' ? pedidos.length : pedidos.filter(p => p.estado === filtroEstado).length})
+                ({filterPedidos(pedidos, filtroEstado).length})
               </div>
               <div style={{ color: 'var(--text-muted)', fontSize: '12px', transition: 'transform 0.2s', transform: showFilterDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }}>
                 ▼
@@ -1872,7 +1876,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                   animation: 'fadeIn 0.2s ease'
                 }}>
                   {FILTROS.map(f => {
-                    const count = f.key === 'todos' ? pedidos.length : pedidos.filter(p => p.estado === f.key).length
+                    const count = filterPedidos(pedidos, f.key).length
                     const isActive = filtroEstado === f.key
                     const style = f.key !== 'todos' ? getEstadoStyle(f.key) : { bg: 'transparent', color: 'var(--text-primary)' }
                     
