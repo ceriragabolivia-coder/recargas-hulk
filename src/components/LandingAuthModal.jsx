@@ -13,10 +13,17 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
   const textSize = config?.landing_auth_text_size || '14px'
 
   useEffect(() => {
-    if (isOpen) {
+      if (isOpen) {
       setView(initialView)
       setError(null)
       setSuccessMsg(null)
+
+      // Cargar email recordado
+      const savedEmail = localStorage.getItem('rememberedEmail')
+      if (savedEmail) {
+        setLoginEmail(savedEmail)
+        setRememberMe(true)
+      }
     }
   }, [isOpen, initialView])
   
@@ -30,6 +37,9 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
   const [regNombre, setRegNombre] = useState('')
   const [regTelefono, setRegTelefono] = useState('')
   const [regRole, setRegRole] = useState('cliente')
+  
+  // Remember Me State
+  const [rememberMe, setRememberMe] = useState(false)
   
   const [error, setError] = useState(null)
   const [successMsg, setSuccessMsg] = useState(null)
@@ -51,6 +61,12 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
           : err.message
       )
     } else {
+      // Manejar "Recordar sesión"
+      if (rememberMe) {
+        localStorage.setItem('rememberedEmail', loginEmail)
+      } else {
+        localStorage.removeItem('rememberedEmail')
+      }
       onClose()
     }
   }
@@ -135,6 +151,7 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
               <div className="form-group">
                 <label>Correo electrónico</label>
                 <input
+                  name="email"
                   type="email"
                   placeholder="tu@correo.com"
                   value={loginEmail}
@@ -145,12 +162,25 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
               <div className="form-group">
                 <label>Contraseña</label>
                 <input
+                  name="password"
                   type="password"
                   placeholder="••••••••"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   required
                 />
+              </div>
+
+              <div className="form-remember-me">
+                <label className="checkbox-container">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                  />
+                  <span className="checkmark"></span>
+                  Recordar mi cuenta en este navegador
+                </label>
               </div>
               <button type="submit" className="btn-landing-primary w-full mt-4" disabled={loadingState}>
                 {loadingState ? '⏳ Procesando...' : '🔐 Iniciar Sesión'}
@@ -379,6 +409,65 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
         }
         .landing-auth-switch button:hover {
           text-decoration: underline;
+        }
+
+        /* Checkbox Styling */
+        .form-remember-me {
+          margin-top: -4px;
+          margin-bottom: 4px;
+        }
+        .checkbox-container {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          cursor: pointer;
+          font-size: 13.5px;
+          color: var(--text-muted, #64748b);
+          user-select: none;
+          transition: color 0.2s;
+        }
+        .checkbox-container:hover {
+          color: var(--text-main, #0f172a);
+        }
+        .checkbox-container input {
+          position: absolute;
+          opacity: 0;
+          cursor: pointer;
+          height: 0; width: 0;
+        }
+        .checkmark {
+          height: 18px;
+          width: 18px;
+          background-color: var(--bg-page, #f8fafc);
+          border: 1px solid var(--border, #e2e8f0);
+          border-radius: 4px;
+          position: relative;
+          transition: all 0.2s ease;
+        }
+        .checkbox-container:hover input ~ .checkmark {
+          border-color: var(--accent, #7b2ff7);
+        }
+        .checkbox-container input:checked ~ .checkmark {
+          background-color: var(--accent, #7b2ff7);
+          border-color: var(--accent, #7b2ff7);
+          box-shadow: 0 0 8px rgba(123, 47, 247, 0.3);
+        }
+        .checkmark:after {
+          content: "";
+          position: absolute;
+          display: none;
+        }
+        .checkbox-container input:checked ~ .checkmark:after {
+          display: block;
+        }
+        .checkbox-container .checkmark:after {
+          left: 6px;
+          top: 2px;
+          width: 4px;
+          height: 9px;
+          border: solid white;
+          border-width: 0 2px 2px 0;
+          transform: rotate(45deg);
         }
 
         @keyframes fadeIn {
