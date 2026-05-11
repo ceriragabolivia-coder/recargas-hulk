@@ -9,6 +9,7 @@ import Pedidos from './Pedidos'
 import SupportChat from './SupportChat'
 import LandingWallet from './LandingWallet'
 import LandingPerfil from './LandingPerfil'
+import Ruleta from './Ruleta'
 
 export default function Landing() {
   const navigate = useNavigate()
@@ -34,6 +35,7 @@ export default function Landing() {
   const [showOrders, setShowOrders] = useState(false)
   const [showWallet, setShowWallet] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
+  const [showRuleta, setShowRuleta] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [ordersParams, setOrdersParams] = useState(null)
 
@@ -116,16 +118,26 @@ export default function Landing() {
       setShowWallet(true);
       setShowOrders(false);
       setShowProfile(false);
+      setShowRuleta(false);
       setShowCheckout(false); // CERRAR CHECKOUT SI ESTÁ ABIERTO
       setSelectedJuego(null);
     } else if (path === '/mis-pedidos') {
       setShowOrders(true);
       setShowWallet(false);
       setShowProfile(false);
+      setShowRuleta(false);
       setShowCheckout(false); // CERRAR CHECKOUT SI ESTÁ ABIERTO
       setSelectedJuego(null);
     } else if (path === '/mi-perfil') {
       setShowProfile(true);
+      setShowOrders(false);
+      setShowWallet(false);
+      setShowRuleta(false);
+      setShowCheckout(false); // CERRAR CHECKOUT SI ESTÁ ABIERTO
+      setSelectedJuego(null);
+    } else if (path === '/ruleta') {
+      setShowRuleta(true);
+      setShowProfile(false);
       setShowOrders(false);
       setShowWallet(false);
       setShowCheckout(false); // CERRAR CHECKOUT SI ESTÁ ABIERTO
@@ -455,6 +467,7 @@ export default function Landing() {
     setShowOrders(false)
     setShowWallet(false)
     setShowProfile(false)
+    setShowRuleta(false)
     if (juego) {
       setSearchParams({ juego: juego.nombre.toLowerCase().replace(/\s+/g, '-') })
     } else {
@@ -512,11 +525,13 @@ export default function Landing() {
               setShowCheckout(false);
               setShowWallet(false);
               setShowProfile(false);
+              setShowRuleta(false);
               setSelectedJuego(null);
               window.scrollTo(0, 0);
             } else if (activeToast.target === 'wallet') {
               setShowWallet(true);
               setShowOrders(false);
+              setShowRuleta(false);
               setSelectedJuego(null);
             } else {
               setShowNotiDropdown(true);
@@ -578,7 +593,7 @@ export default function Landing() {
                   ))}
                 </div>
               </div>
-              <a href="#" className="nav-link">Cupones</a>
+              <a href="#" className={`nav-link ${showRuleta ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('/Ruleta'); }}>Ruleta</a>
               <a href="#" className="nav-link">Ayuda</a>
             </nav>
           </div>
@@ -628,6 +643,7 @@ export default function Landing() {
                 style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }} 
                 onClick={() => {
                   setShowCheckout(true);
+                  setShowRuleta(false);
                   setSelectedJuego(null);
                   window.scrollTo(0, 0);
                 }}
@@ -689,7 +705,7 @@ export default function Landing() {
                     ))}
                   </div>
                   <div style={{ padding: '10px', textAlign: 'center', borderTop: '1px solid var(--border)' }}>
-                    <a href="#" onClick={(e) => { e.preventDefault(); setShowOrders(true); setShowNotiDropdown(false); setSelectedJuego(null); }} style={{ fontSize: '12px', fontWeight: '700', color: 'var(--accent)', textDecoration: 'none' }}>Ver todos mis pedidos</a>
+                    <a href="#" onClick={(e) => { e.preventDefault(); setShowOrders(true); setShowRuleta(false); setShowNotiDropdown(false); setSelectedJuego(null); }} style={{ fontSize: '12px', fontWeight: '700', color: 'var(--accent)', textDecoration: 'none' }}>Ver todos mis pedidos</a>
                   </div>
                 </div>
               </div>
@@ -736,7 +752,7 @@ export default function Landing() {
 
       <main className="landing-main">
         {/* HERO SLIDER (Solo en Home arriba) */}
-        {!selectedJuego && !showCheckout && !showOrders && !search.trim() && (
+        {!selectedJuego && !showCheckout && !showOrders && !showRuleta && !showWallet && !showProfile && !search.trim() && (
           <section className="landing-hero landing-container">
             <div className="hero-slider">
               {banners.map((banner, idx) => (
@@ -783,6 +799,10 @@ export default function Landing() {
         ) : showOrders ? (
           <div className="fade-in" style={{ width: '100%', maxWidth: '1400px', margin: '0 auto', padding: '20px' }}>
              <Pedidos embedded={true} params={ordersParams} />
+          </div>
+        ) : showRuleta ? (
+          <div className="fade-in" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+             <Ruleta embedded={true} />
           </div>
         ) : showWallet ? (
           <div className="fade-in wallet-page-wrapper">

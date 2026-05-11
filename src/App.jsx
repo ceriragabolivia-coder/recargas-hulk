@@ -373,7 +373,7 @@ export default function App() {
   
   // Rutas internas del sistema permitidas para clientes (excluimos checkout para renderizarlo full-screen)
   const clientSystemRoutes = [
-    '/lista-de-precios', '/ruleta', '/soporte'
+    '/lista-de-precios', '/soporte'
   ]
 
   let isLandingRoute = false
