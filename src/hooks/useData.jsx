@@ -47,6 +47,9 @@ export function useJuegos() {
 
   async function createJuego(data) {
     const payload = isNegocio ? { ...data, owner_id: user.id } : data
+    // Forzar que los juegos nuevos aparezcan al final de la landing page por defecto
+    payload.orden_landing = 999
+    
     const { data: nuevo, error } = await supabase.from('juegos').insert(payload).select().single()
     if (!error && nuevo) setJuegos(prev => [...prev, nuevo].sort((a, b) => a.nombre.localeCompare(b.nombre)))
     return { data: nuevo, error }
