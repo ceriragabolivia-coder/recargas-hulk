@@ -201,6 +201,24 @@ export default function GestionProductos() {
     setIsModalOpen(true)
   }
 
+  const handleDuplicateProducto = (prod) => {
+    setFormData({
+      id: null,
+      nombre: `${prod.nombre} (Copia)`,
+      costo_base: prod.costo_base,
+      margen_ganancia: prod.margen_ganancia * 100,
+      icono_url: prod.icono_url,
+      descuento_revendedor: prod.descuento_revendedor || '',
+      info_adicional_texto: prod.info_adicional_texto || '',
+      info_adicional_imagen_url: prod.info_adicional_imagen_url || null,
+      entrega_automatica: prod.entrega_automatica || false
+    })
+    setNewIconFile(null)
+    setIconPreview(prod.icono_url)
+    setNewInfoFile(null)
+    setIsModalOpen(true)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
@@ -726,6 +744,14 @@ export default function GestionProductos() {
                           style={{ width: '24px', height: '24px' }}
                         >
                           ✏️
+                        </button>
+                        <button
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => handleDuplicateProducto(prod)}
+                          title={`Duplicar ${prod.nombre}`}
+                          style={{ width: '24px', height: '24px' }}
+                        >
+                          📋
                         </button>
                         <button
                           className="btn btn-danger btn-icon btn-sm"
