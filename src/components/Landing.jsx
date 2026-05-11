@@ -731,6 +731,9 @@ export default function Landing() {
                   {(user?.role === 'admin' || user?.role === 'negocio' || perfil?.rol === 'admin' || perfil?.rol === 'negocio' || perfil?.rol === 'administrador') && (
                     <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Dashboard') }} style={{ color: 'var(--accent)', fontWeight: 'bold' }}>Panel de Control</a>
                   )}
+                  <a href="#" className="visible-mobile" onClick={(e) => { e.preventDefault(); handleSelectJuego(null); setTimeout(() => { const element = document.getElementById('all-games'); if (element) element.scrollIntoView({ behavior: 'smooth' }); }, 100); }}>Servicios</a>
+                  <a href="#" className="visible-mobile" onClick={(e) => { e.preventDefault(); navigate('/Ruleta'); }}>Ruleta</a>
+                  <a href="#" className="visible-mobile" onClick={(e) => { e.preventDefault(); }}>Ayuda</a>
                   <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Mi-Perfil'); }}>Mi Perfil</a>
                   <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Mis-Pedidos'); }}>Mis Pedidos</a>
                   <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Billetera'); }}>Billetera</a>
@@ -741,9 +744,19 @@ export default function Landing() {
               <div className="flex items-center" style={{ gap: '10px' }}>
                 <button className="btn-landing-secondary hidden-mobile" onClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}>Entrar</button>
                 <button className="btn-landing-primary hidden-mobile" onClick={() => { setAuthModalView('register'); setIsAuthModalOpen(true); }}>Registrarse</button>
-                <button className="btn-mobile-auth-icon visible-mobile" onClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }} title="Entrar">
-                  👤
-                </button>
+                <div className="nav-dropdown visible-mobile">
+                  <button className="btn-mobile-auth-icon" title="Menú">
+                    👤
+                  </button>
+                  <div className="dropdown-content" style={{ right: 0, left: 'auto' }}>
+                    <a href="#" onClick={(e) => { e.preventDefault(); setAuthModalView('login'); setIsAuthModalOpen(true); }} style={{ fontWeight: 'bold' }}>Entrar</a>
+                    <a href="#" onClick={(e) => { e.preventDefault(); setAuthModalView('register'); setIsAuthModalOpen(true); }} style={{ fontWeight: 'bold' }}>Registrarse</a>
+                    <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }}></div>
+                    <a href="#" onClick={(e) => { e.preventDefault(); handleSelectJuego(null); setTimeout(() => { const element = document.getElementById('all-games'); if (element) element.scrollIntoView({ behavior: 'smooth' }); }, 100); }}>Servicios</a>
+                    <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Ruleta'); }}>Ruleta</a>
+                    <a href="#" onClick={(e) => { e.preventDefault(); }}>Ayuda</a>
+                  </div>
+                </div>
               </div>
             )}
           </div>
