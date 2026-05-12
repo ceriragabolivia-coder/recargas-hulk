@@ -37,8 +37,28 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
     if (forceOpen) setIsOpen(true)
   }, [forceOpen])  // Solo cargar el ID del perfil actual
   const currentUserId = perfil?.id
-  const currentClienteId = perfil?.cliente_uuid // EXCLUSIVAMENTE el ID de la tabla clientes
+  const [currentClienteId, setCurrentClienteId] = useState(perfil?.cliente_uuid)
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
+
+  // Sincronizar y buscar cliente_uuid si falta
+  useEffect(() => {
+    if (perfil?.cliente_uuid) {
+      setCurrentClienteId(perfil.cliente_uuid)
+    } else if (perfil?.id && !isAdmin) {
+      // Fallback: Buscar en la tabla clientes
+      const findClient = async () => {
+        const { data } = await supabase
+          .from('clientes')
+          .select('id')
+          .eq('auth_user_id', perfil.id)
+          .single()
+        if (data?.id) {
+          setCurrentClienteId(data.id)
+        }
+      }
+      findClient()
+    }
+  }, [perfil, isAdmin])
 
   // Variables específicas para ADMIN (lista de chats)
   const [activeChats, setActiveChats] = useState([]) // Lista de clientes con chat
@@ -1108,10 +1128,15 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                     borderRadius: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     padding: '0 5px', fontWeight: '900', border: '2px solid #fff',
                     boxShadow: '0 4px 10px rgba(255, 71, 87, 0.5)',
+                    zIndex: 10000,
                     animation: 'pulse 2s infinite'
                   }}>
                     {unreadCount}
                   </span>
+                )}
+                {/* Marcador de "Chat Activo" para depuración visual */}
+                {!isAdmin && (
+                  <div style={{ position: 'absolute', bottom: '2px', right: '2px', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: currentClienteId ? '#00c853' : '#ff9100', border: '2px solid #fff' }} title={currentClienteId ? 'Conectado' : 'Buscando ID...'} />
                 )}
               </>
             )}
