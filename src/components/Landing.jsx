@@ -73,12 +73,14 @@ export default function Landing({ onNavigate }) {
   const [darkMode, setDarkMode] = useState(true)
 
   const banners = useMemo(() => {
+    if (!config) return []; // No mostrar nada (ni placeholders) mientras carga la config
+    
     if (config?.landing_banners_json) {
       try {
         const parsed = JSON.parse(config.landing_banners_json);
         if (parsed && parsed.length > 0) {
           const activeBanners = parsed.filter(b => b.active !== false);
-          return activeBanners.length > 0 ? activeBanners : parsed; // Fallback to all if somehow all are disabled to avoid empty carousel
+          return activeBanners.length > 0 ? activeBanners : parsed; 
         }
       } catch (e) {
         console.error("Error parsing landing banners", e);
@@ -782,43 +784,47 @@ export default function Landing({ onNavigate }) {
         {/* HERO SLIDER (Solo en Home arriba) */}
         {!selectedJuego && !showCheckout && !showOrders && !showRuleta && !showWallet && !showProfile && !search.trim() && (
           <section className="landing-hero landing-container">
-            <div className="hero-slider">
-              {banners.map((banner, idx) => (
-                <div 
-                  key={idx} 
-                  className={`hero-slide ${idx === currentBanner ? 'active' : ''}`}
-                  style={{ backgroundImage: `url(${banner.image})` }}
-                >
-                  <div className="hero-content">
-                    {banner.title && <h2>{banner.title}</h2>}
-                    {banner.text && <p>{banner.text}</p>}
-                    {banner.btnText && (
-                      <button 
-                        className="btn-landing-primary" 
-                        onClick={() => {
-                          if (banner.url && banner.url.startsWith('http')) {
-                            window.location.href = banner.url
-                          } else if (banner.url) {
-                            navigate(banner.url)
-                          }
-                        }}
-                      >
-                        {banner.btnText}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-              <div className="slider-dots">
-                {banners.map((_, idx) => (
-                  <span 
+            {!config ? (
+              <div className="hero-slider skeleton-loader" style={{ height: '400px', background: 'var(--bg-hover)', borderRadius: '24px', opacity: 0.3, animation: 'pulse 1.5s infinite' }}></div>
+            ) : banners.length > 0 ? (
+              <div className="hero-slider">
+                {banners.map((banner, idx) => (
+                  <div 
                     key={idx} 
-                    className={`dot ${idx === currentBanner ? 'active' : ''}`}
-                    onClick={() => setCurrentBanner(idx)}
-                  ></span>
+                    className={`hero-slide ${idx === currentBanner ? 'active' : ''}`}
+                    style={{ backgroundImage: `url(${banner.image})` }}
+                  >
+                    <div className="hero-content">
+                      {banner.title && <h2>{banner.title}</h2>}
+                      {banner.text && <p>{banner.text}</p>}
+                      {banner.btnText && (
+                        <button 
+                          className="btn-landing-primary" 
+                          onClick={() => {
+                            if (banner.url && banner.url.startsWith('http')) {
+                              window.location.href = banner.url
+                            } else if (banner.url) {
+                              navigate(banner.url)
+                            }
+                          }}
+                        >
+                          {banner.btnText}
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 ))}
+                <div className="slider-dots">
+                  {banners.map((_, idx) => (
+                    <span 
+                      key={idx} 
+                      className={`dot ${idx === currentBanner ? 'active' : ''}`}
+                      onClick={() => setCurrentBanner(idx)}
+                    ></span>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : null}
           </section>
         )}
 
