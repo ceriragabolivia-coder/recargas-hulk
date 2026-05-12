@@ -33,8 +33,14 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
   const audioNotify = useRef(null)
 
   useEffect(() => {
-    audioNotify.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3')
+    // Sonido más largo y distintivo de "mensaje"
+    audioNotify.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3')
     audioNotify.current.volume = 0.5
+
+    // Solicitar permiso para notificaciones push
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
   }, [])
 
   // Detect mobile viewport
@@ -203,9 +209,15 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'soporte_mensajes' }, (payload) => {
         loadChats(true) // no resetear loading en realtime
         
-        // Sonar notificación si el mensaje no es mío
+        // Sonar notificación y mostrar push si el mensaje no es mío
         if (payload.eventType === 'INSERT' && payload.new.remitente_id !== currentUserId && audioNotify.current) {
           audioNotify.current.play().catch(e => console.log('Audio play blocked:', e))
+          
+          // Mostrar notificación push si no estamos viendo ese chat específico o la pestaña está en segundo plano
+          const activeChat = selectedChatRef.current
+          if (document.visibilityState === 'hidden' || !activeChat || activeChat.id !== payload.new.cliente_id) {
+             showPushNotification(payload.new)
+          }
         }
 
         const activeChat = selectedChatRef.current
@@ -228,6 +240,24 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
       supabase.removeChannel(channel)
     }
   }, []) // SIN DEPENDENCIAS DE ESTADO PARA EVITAR LOOPS
+
+  const showPushNotification = (msg) => {
+    if (!("Notification" in window) || Notification.permission !== "granted") return
+    
+    // Buscar el nombre del cliente en la lista actual para la notificación
+    const cliente = chats.find(c => c.id === msg.cliente_id)
+    const senderName = cliente ? cliente.display_name : "Cliente"
+
+    const notification = new Notification(`Mensaje de ${senderName}`, {
+      body: msg.mensaje || "Has recibido un nuevo mensaje de soporte",
+      icon: "/favicon.ico"
+    })
+
+    notification.onclick = () => {
+      window.focus()
+      if (cliente) handleSelectChat(cliente)
+    }
+  }
 
   useEffect(() => {
     if (messagesEndRef.current) {

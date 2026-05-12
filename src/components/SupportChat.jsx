@@ -19,10 +19,17 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   const [filePreview, setFilePreview] = useState(null)
   let messagesEndRef = useRef(null)
   const audioNotify = useRef(null)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
-    audioNotify.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3')
+    // Sonido más largo y distintivo de "mensaje"
+    audioNotify.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3')
     audioNotify.current.volume = 0.5
+    
+    // Solicitar permiso para notificaciones push del navegador
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
   }, [])
 
   useEffect(() => {
@@ -115,6 +122,32 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       setInitialLoading(false)
     } else {
       setInitialLoading(false)
+    }
+  }
+
+  const loadUnreadCount = async () => {
+    if (!currentClienteId || isAdmin) return
+    const { count } = await supabase
+      .from('soporte_mensajes')
+      .select('id', { count: 'exact', head: true })
+      .eq('cliente_id', currentClienteId)
+      .eq('leido', false)
+      .neq('remitente_id', currentClienteId)
+    
+    if (count !== null) setUnreadCount(count)
+  }
+
+  const showPushNotification = (msg) => {
+    if (!("Notification" in window) || Notification.permission !== "granted") return
+    
+    const notification = new Notification("Nuevo Mensaje de Soporte", {
+      body: msg.mensaje || "Has recibido un nuevo mensaje de administración",
+      icon: "/favicon.ico" // O un icono de chat si tienes
+    })
+
+    notification.onclick = () => {
+      window.focus()
+      setIsOpen(true)
     }
   }
 
@@ -256,6 +289,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       loadActiveChatsForAdmin()
     } else if (activeChatId) {
       loadMessages(activeChatId)
+      setUnreadCount(0) // Limpiar contador si estamos viendo el chat
       // Si soy admin y abro un chat específico, marco los mensajes no leídos como leídos
       if (isAdmin) {
         supabase
@@ -282,9 +316,15 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
             const rawMessage = payload.new
             // Si el mensaje nuevo pertenece a la sala actual que estamos viendo
             if (rawMessage.cliente_id === activeChatId) {
-              // Si el mensaje no es mío, sonar notificación
+              // Si el mensaje no es mío, sonar notificación y mostrar push
               if (rawMessage.remitente_id !== currentClienteId && audioNotify.current) {
                 audioNotify.current.play().catch(e => console.log('Audio play blocked:', e))
+                
+                // Mostrar notificación push si el chat está cerrado o la pestaña no tiene foco
+                if (!isOpen || document.visibilityState === 'hidden') {
+                  showPushNotification(rawMessage)
+                  if (!isOpen) setUnreadCount(prev => prev + 1)
+                }
               }
 
               // Cargar info del remitente para mostrar el nombre
@@ -351,6 +391,16 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       if (clientStatusChannel) supabase.removeChannel(clientStatusChannel)
     }
   }, [isOpen, perfil, isAdmin, activeChatId, selectedChatClient, currentClienteId])
+
+  useEffect(() => {
+    if (!isAdmin && currentClienteId) {
+      loadUnreadCount()
+    }
+  }, [currentClienteId])
+
+  useEffect(() => {
+    if (isOpen) setUnreadCount(0)
+  }, [isOpen])
 
   const handleSelectTicket = async (category) => {
     if (!currentClienteId || isAdmin) return
@@ -1032,11 +1082,25 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
           }}>
             <span>{isOpen ? 'Cerrar Chat' : 'Chat de Soporte'}</span>
           </div>
-          <span style={{ fontSize: '24px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+          <span style={{ fontSize: '24px', flexShrink: 0, display: 'flex', alignItems: 'center', position: 'relative' }}>
             {isOpen ? '✕' : (
-              <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
-                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.181-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793 0-.853.448-1.273.607-1.446.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.101-.177.211-.077.383.101.173.449.743.964 1.203.664.591 1.221.774 1.394.86.173.088.274.072.376-.043.101-.116.433-.506.548-.68.116-.173.231-.144.39-.087.158.058 1.011.477 1.184.564.173.087.289.129.332.202.043.073.043.419-.101.824z"/>
-              </svg>
+              <>
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+                  <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.181-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793 0-.853.448-1.273.607-1.446.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.101-.177.211-.077.383.101.173.449.743.964 1.203.664.591 1.221.774 1.394.86.173.088.274.072.376-.043.101-.116.433-.506.548-.68.116-.173.231-.144.39-.087.158.058 1.011.477 1.184.564.173.087.289.129.332.202.043.073.043.419-.101.824z"/>
+                </svg>
+                {unreadCount > 0 && (
+                  <span style={{
+                    position: 'absolute', top: '-8px', right: '-8px',
+                    backgroundColor: '#ff4757', color: '#fff',
+                    fontSize: '10px', minWidth: '18px', height: '18px',
+                    borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '0 4px', fontWeight: 'bold', border: '2px solid var(--bg-panel)',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                  }}>
+                    {unreadCount}
+                  </span>
+                )}
+              </>
             )}
           </span>
         </button>
