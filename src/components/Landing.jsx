@@ -11,7 +11,7 @@ import LandingWallet from './LandingWallet'
 import LandingPerfil from './LandingPerfil'
 import Ruleta from './Ruleta'
 import DOMPurify from 'dompurify'
-export default function Landing() {
+export default function Landing({ onNavigate }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -1437,7 +1437,7 @@ export default function Landing() {
       {perfil && (
         <SupportChat 
           perfil={perfil} 
-          onNavigate={handleNavigate} 
+          onNavigate={onNavigate} 
         />
       )}
 

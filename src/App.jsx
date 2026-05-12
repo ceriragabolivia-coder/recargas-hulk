@@ -394,7 +394,7 @@ export default function App() {
     }
     return (
       <WalletProvider>
-        <Landing />
+        <Landing onNavigate={handleNavigate} />
       </WalletProvider>
     )
   }
