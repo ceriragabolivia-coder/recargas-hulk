@@ -364,13 +364,12 @@ export default function Landing({ onNavigate }) {
         const updated = payload.new;
         if (updated.estado === 'completado') {
           setActiveToast({
-            titulo: `🎉 ¡Pedido #${updated.numero_pedido || 'N/A'} Listo!`,
-            mensaje: 'Tu recarga ha sido procesada con éxito. ¡Gracias por tu compra!',
+            titulo: `🎉 ¡Pedido #${updated.numero_pedido || 'N/A'} Completado!`,
+            mensaje: 'Tu recarga ha sido procesada. 🎁 ¡Felicitaciones, ganaste un giro en la ruleta de premios! Haz clic aquí para jugar.',
             type: 'success',
-            target: 'orders',
-            orderId: updated.id
+            target: 'ruleta'
           });
-          setTimeout(() => setActiveToast(null), 10000);
+          setTimeout(() => setActiveToast(null), 15000);
           playNotificationSound();
         } else if (updated.estado === 'cancelado') {
           setActiveToast({
@@ -559,11 +558,13 @@ export default function Landing({ onNavigate }) {
               setShowRuleta(false);
               setSelectedJuego(null);
               window.scrollTo(0, 0);
-            } else if (activeToast.target === 'wallet') {
-              setShowWallet(true);
+            } else if (activeToast.target === 'ruleta') {
+              setShowRuleta(true);
               setShowOrders(false);
-              setShowRuleta(false);
+              setShowWallet(false);
+              setShowProfile(false);
               setSelectedJuego(null);
+              window.scrollTo(0, 0);
             } else {
               setShowNotiDropdown(true);
             }
