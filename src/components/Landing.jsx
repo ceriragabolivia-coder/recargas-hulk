@@ -24,9 +24,19 @@ export default function Landing() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [authModalView, setAuthModalView] = useState('login')
 
-  const [juegos, setJuegos] = useState([])
-  const [categorias, setCategorias] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [juegos, setJuegos] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_juegos');
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) { return []; }
+  })
+  const [categorias, setCategorias] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_categorias');
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) { return []; }
+  })
+  const [loading, setLoading] = useState(!localStorage.getItem('cached_juegos'))
   const [selectedJuego, setSelectedJuego] = useState(null)
   const [productosJuego, setProductosJuego] = useState([])
   const [loadingProductos, setLoadingProductos] = useState(false)
@@ -281,8 +291,14 @@ export default function Landing() {
           .order('orden')
       ])
       
-      if (jRes.data) setJuegos(jRes.data)
-      if (cRes.data) setCategorias(cRes.data)
+      if (jRes.data) {
+        setJuegos(jRes.data)
+        localStorage.setItem('cached_juegos', JSON.stringify(jRes.data))
+      }
+      if (cRes.data) {
+        setCategorias(cRes.data)
+        localStorage.setItem('cached_categorias', JSON.stringify(cRes.data))
+      }
       setLoading(false)
       
       // OPTIMIZACIÓN: Precarga de imágenes críticas para que aparezcan instantáneamente
@@ -1256,9 +1272,22 @@ export default function Landing() {
                 ))}
               </div>
               <div className="games-grid">
-                {loading ? (
+                {loading && juegos.length === 0 ? (
                   Array(12).fill(0).map((_, i) => (
-                    <div key={i} className="game-card-skeleton" style={{ height: '220px', backgroundColor: 'var(--bg-hover)', borderRadius: '16px', opacity: 0.5, animation: 'pulse 1.5s infinite' }}></div>
+                    <div key={i} className="game-card-skeleton" style={{ 
+                      height: '240px', 
+                      backgroundColor: 'rgba(255,255,255,0.05)', 
+                      borderRadius: '16px', 
+                      overflow: 'hidden',
+                      position: 'relative',
+                      border: '1px solid rgba(255,255,255,0.05)'
+                    }}>
+                      <div style={{ height: '75%', background: 'rgba(255,255,255,0.03)', animation: 'pulse 1.5s infinite' }}></div>
+                      <div style={{ padding: '15px' }}>
+                        <div style={{ height: '12px', width: '70%', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', marginBottom: '8px', animation: 'pulse 1.5s infinite' }}></div>
+                        <div style={{ height: '10px', width: '40%', background: 'rgba(255,255,255,0.03)', borderRadius: '4px', animation: 'pulse 1.5s infinite' }}></div>
+                      </div>
+                    </div>
                   ))
                 ) : filteredJuegos.length > 0 ? (
                   filteredJuegos.map(juego => (

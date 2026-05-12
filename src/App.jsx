@@ -332,11 +332,10 @@ export default function App() {
     return () => clearTimeout(timer)
   }, [])
 
-  // Eliminamos el splash screen global para disparar el contenido de inmediato.
-  // Los componentes individuales (Landing, Dashboard, etc) ya manejan sus propios estados de carga de datos.
   // Eliminamos el splash screen global para la Landing Page para que sea instantánea.
-  // Solo lo mostramos si no estamos en la Landing y aún estamos cargando el usuario inicial.
-  const isLandingPath = location.pathname === '/' || location.pathname === '/index.html'
+  // Los componentes individuales (Landing, Dashboard, etc) ya manejan sus propios estados de carga internos.
+  const isLandingPath = location.pathname === '/' || location.pathname === '/index.html' || location.pathname === ''
+  
   if (loading && !forceLoad && !user && !isLandingPath) {
     return (
       <div className="loading-screen-modern">
