@@ -170,24 +170,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
     }
   }
 
-  const showPushNotification = (msg) => {
-    if (!("Notification" in window) || Notification.permission !== "granted") {
-      console.log('Push blocked: Permission is', Notification.permission)
-      return
-    }
-    
-    console.log('Attempting push notification for:', msg.mensaje)
-    
-    const notification = new Notification("Nuevo Mensaje de Soporte", {
-      body: msg.mensaje || "Has recibido un nuevo mensaje de administración",
-      icon: "/favicon.ico"
-    })
 
-    notification.onclick = () => {
-      window.focus()
-      setIsOpen(true)
-    }
-  }
 
   const markMessagesAsRead = async (chatId) => {
     if (!chatId || isAdmin) return
@@ -371,11 +354,8 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                 audioNotify.current.play().catch(e => console.log('Audio play blocked:', e))
                 
                 // Mostrar notificación push si el chat está cerrado o la pestaña no tiene foco
-                if (!isOpen || document.visibilityState === 'hidden') {
-                  showPushNotification(rawMessage)
-                  if (!isOpen) {
-                    setUnreadCount(prev => prev + 1)
-                  }
+                if (!isOpen) {
+                  setUnreadCount(prev => prev + 1)
                 }
               }
 
@@ -751,18 +731,6 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                   'Chat de Soporte'
                 )}
               </h3>
-              {!("Notification" in window) ? null : Notification.permission === 'default' && (
-                <button 
-                  onClick={() => Notification.requestPermission()}
-                  style={{ 
-                    fontSize: '10px', padding: '2px 8px', borderRadius: '10px', 
-                    background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
-                    color: '#fff', cursor: 'pointer'
-                  }}
-                >
-                  🔔 Activar Notificaciones
-                </button>
-              )}
               {isAdmin && selectedChatClient && (
                 <button 
                   className="btn btn-ghost btn-sm" 
