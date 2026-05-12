@@ -53,7 +53,10 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
       .select('*, pedido_items(*, productos(icono_url))')
       .order('created_at', { ascending: false })
 
-    if (!isSuperAdmin) {
+    if (normalizedParams.userId) {
+      // Si se pasa un userId específico, filtramos solo por ese usuario
+      query = query.eq('cliente_id', normalizedParams.userId)
+    } else if (!isSuperAdmin) {
       const ownerId = perfil?.owner_id || (isNegocio ? user?.id : null)
       if (ownerId) {
         // Si es un negocio o admin de negocio, ve lo de su negocio o lo que él mismo pidió
@@ -1858,10 +1861,12 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
           }
         }
       `}</style>
-      <div className="page-header mb-24">
-        <h1 className="page-title">📋 Pedidos</h1>
-        <p className="page-subtitle">Gestiona los pedidos realizados por los clientes</p>
-      </div>
+      {!embedded && (
+        <div className="page-header mb-24">
+          <h1 className="page-title">📋 Pedidos</h1>
+          <p className="page-subtitle">Gestiona los pedidos realizados por los clientes</p>
+        </div>
+      )}
 
       {renderAlertModal()}
 

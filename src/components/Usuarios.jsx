@@ -25,10 +25,13 @@ export default function Usuarios({ onNavigate }) {
   const [notaAjuste, setNotaAjuste] = useState('')
   const [ajusteMoneda, setAjusteMoneda] = useState('usd') // 'usd' or 'bs'
 
-  // Estados para ver Historial
+  // Estados para ver Historial (Billetera)
   const [viendoMovimientos, setViendoMovimientos] = useState(null)
   const [movimientos, setMovimientos] = useState([])
   const [loadingMovimientos, setLoadingMovimientos] = useState(false)
+  
+  // Estados para ver Pedidos (Movimientos)
+  const [viendoPedidosUsuario, setViendoPedidosUsuario] = useState(null)
   
   // Estados para Restablecer Contraseña
   const [reseteandoPassword, setReseteandoPassword] = useState(null)
@@ -189,6 +192,10 @@ export default function Usuarios({ onNavigate }) {
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleVerPedidos = (cliente) => {
+    setViendoPedidosUsuario(cliente)
   }
 
   const handleVerMovimientos = async (cliente) => {
@@ -513,9 +520,17 @@ export default function Usuarios({ onNavigate }) {
                               className="btn btn-ghost"
                               style={{ padding: '6px 10px', fontSize: '12px' }}
                               onClick={() => handleVerMovimientos(cliente)}
-                              title="Ver movimientos de billetera"
+                              title="Ver transacciones de billetera"
                             >
-                              📋 Historial
+                              💰 Billetera
+                            </button>
+                            <button 
+                              className="btn btn-ghost"
+                              style={{ padding: '6px 10px', fontSize: '12px' }}
+                              onClick={() => handleVerPedidos(cliente)}
+                              title="Ver pedidos realizados"
+                            >
+                              📋 Movimientos
                             </button>
                              <button 
                                className="btn btn-ghost"
@@ -791,6 +806,32 @@ export default function Usuarios({ onNavigate }) {
             <div style={{ display: 'flex', gap: '12px' }}>
               <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => setReseteandoPassword(null)} disabled={saving}>Cancelar</button>
               <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleResetPassword} disabled={saving}>{saving ? 'Procesando...' : 'Cambiar Clave'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Ver Pedidos (Movimientos) */}
+      {viendoPedidosUsuario && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999, animation: 'fadeIn 0.2s ease'
+        }}>
+          <div style={{ backgroundColor: '#1a1d21', borderRadius: '24px', width: '100%', maxWidth: '1000px', padding: '24px', maxHeight: '95vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+              <div>
+                <h3 style={{ fontSize: '20px', margin: 0 }}>Pedidos de {viendoPedidosUsuario.nombres}</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '12px', margin: '4px 0 0 0' }}>Historial de compras y recargas realizadas</p>
+              </div>
+              <button className="btn btn-ghost btn-sm" onClick={() => setViendoPedidosUsuario(null)} style={{ width: '32px', height: '32px', borderRadius: '50%', padding: 0 }}>✕</button>
+            </div>
+            
+            <div style={{ overflowY: 'auto', flex: 1 }}>
+              <Pedidos 
+                embedded={true} 
+                params={{ userId: viendoPedidosUsuario.auth_user_id }} 
+              />
             </div>
           </div>
         </div>
