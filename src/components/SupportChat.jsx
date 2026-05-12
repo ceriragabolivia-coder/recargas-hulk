@@ -171,11 +171,13 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   }
 
   const showPushNotification = (msg) => {
-    if (!("Notification" in window) || Notification.permission !== "granted") return
+    if (!("Notification" in window) || Notification.permission !== "granted") {
+      console.log('Push blocked: Permission is', Notification.permission)
+      return
+    }
     
-    // Si la pestaña tiene foco, no molestamos con push
-    if (document.visibilityState === 'visible') return
-
+    console.log('Attempting push notification for:', msg.mensaje)
+    
     const notification = new Notification("Nuevo Mensaje de Soporte", {
       body: msg.mensaje || "Has recibido un nuevo mensaje de administración",
       icon: "/favicon.ico"
@@ -1166,10 +1168,6 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                   }}>
                     {unreadCount}
                   </span>
-                )}
-                {/* Marcador de "Chat Activo" para depuración visual */}
-                {!isAdmin && (
-                  <div style={{ position: 'absolute', bottom: '2px', right: '2px', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: currentClienteId ? '#00c853' : '#ff9100', border: '2px solid #fff' }} title={currentClienteId ? 'Conectado' : 'Buscando ID...'} />
                 )}
               </>
             )}
