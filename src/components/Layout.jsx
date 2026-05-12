@@ -4,6 +4,7 @@ import { NavLink, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { formatUSD, formatBs } from '../utils/helpers'
 import FloatingBackground from './FloatingBackground'
+import DOMPurify from 'dompurify'
 
 const NAV_ITEMS = [
   { key: 'dashboard', icon: '📊', label: 'Dashboard', path: '/Dashboard' },
@@ -1103,7 +1104,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
               </h2>
               <div 
                 style={{ fontSize: '16px', color: 'var(--text-muted)', lineHeight: '1.6', marginBottom: '24px', whiteSpace: 'pre-line' }}
-                dangerouslySetInnerHTML={{ __html: activePopup.contenido }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(activePopup.contenido) }}
               />
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '20px', padding: '12px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
@@ -1258,7 +1259,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
               
               <div 
                 style={{ fontSize: '17px', color: 'var(--text-muted)', lineHeight: '1.7', marginBottom: '32px', whiteSpace: 'pre-line' }}
-                dangerouslySetInnerHTML={{ __html: activeNotiDetail.mensaje }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(activeNotiDetail.mensaje) }}
               />
 
               <button 

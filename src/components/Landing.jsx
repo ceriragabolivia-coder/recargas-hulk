@@ -10,7 +10,7 @@ import SupportChat from './SupportChat'
 import LandingWallet from './LandingWallet'
 import LandingPerfil from './LandingPerfil'
 import Ruleta from './Ruleta'
-
+import DOMPurify from 'dompurify'
 export default function Landing() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -1172,13 +1172,13 @@ export default function Landing() {
                   </div>
                   <div className="info-body">
                     {selectedJuego.caracteristicas_nota ? (
-                      <div className="rich-text" dangerouslySetInnerHTML={{ __html: selectedJuego.caracteristicas_nota.replace(/\n/g, '<br/>') }} />
+                      <div className="rich-text" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedJuego.caracteristicas_nota.replace(/\n/g, '<br/>')) }} />
                     ) : (
                       <p>Para adquirir recargas de {selectedJuego.nombre}, solo necesitas proporcionar tu ID de jugador. La entrega es inmediata una vez verificado el pago.</p>
                     )}
                     
                     {selectedJuego.instrucciones_recarga ? (
-                      <div className="rich-text" dangerouslySetInnerHTML={{ __html: selectedJuego.instrucciones_recarga.replace(/\n/g, '<br/>') }} />
+                      <div className="rich-text" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedJuego.instrucciones_recarga.replace(/\n/g, '<br/>')) }} />
                     ) : (
                       <>
                         <h5>¿Cómo recargar?</h5>
