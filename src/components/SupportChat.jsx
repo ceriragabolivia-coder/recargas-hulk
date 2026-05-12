@@ -173,14 +173,33 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   const showPushNotification = (msg) => {
     if (!("Notification" in window) || Notification.permission !== "granted") return
     
+    // Si la pestaña tiene foco, no molestamos con push
+    if (document.visibilityState === 'visible') return
+
     const notification = new Notification("Nuevo Mensaje de Soporte", {
       body: msg.mensaje || "Has recibido un nuevo mensaje de administración",
-      icon: "/favicon.ico" // O un icono de chat si tienes
+      icon: "/favicon.ico"
     })
 
     notification.onclick = () => {
       window.focus()
       setIsOpen(true)
+    }
+  }
+
+  const markMessagesAsRead = async (chatId) => {
+    if (!chatId || isAdmin) return
+    try {
+      const { error } = await supabase
+        .from('soporte_mensajes')
+        .update({ leido: true })
+        .eq('cliente_id', chatId)
+        .eq('leido', false)
+        .neq('remitente_id', currentClienteId)
+      
+      if (error) throw error
+    } catch (err) {
+      console.error("Error al marcar como leídos:", err)
     }
   }
 
@@ -378,6 +397,11 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                 if (!isAdmin) checkThrottling(updated)
                 return updated
               })
+
+              // Si el chat está abierto, marcarlo como leído inmediatamente en BD
+              if (isOpen && activeChatId) {
+                markMessagesAsRead(activeChatId)
+              }
             }
             
             // Si somos admin y estamos en la lista principal, recargar lista
@@ -429,8 +453,11 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   }, [currentClienteId])
 
   useEffect(() => {
-    if (isOpen) setUnreadCount(0)
-  }, [isOpen])
+    if (isOpen && activeChatId) {
+      setUnreadCount(0)
+      markMessagesAsRead(activeChatId)
+    }
+  }, [isOpen, activeChatId])
 
   const handleSelectTicket = async (category) => {
     if (!currentClienteId || isAdmin) return
