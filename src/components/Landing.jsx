@@ -485,6 +485,7 @@ export default function Landing({ onNavigate }) {
     setShowWallet(false)
     setShowProfile(false)
     setShowRuleta(false)
+    window.scrollTo(0, 0)
     if (juego) {
       setSearchParams({ juego: juego.nombre.toLowerCase().replace(/\s+/g, '-') })
     } else {
