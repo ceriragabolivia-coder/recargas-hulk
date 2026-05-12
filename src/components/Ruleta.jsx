@@ -70,6 +70,43 @@ export default function Ruleta() {
     setGirosDisp(girosRes.data?.giros_disponibles || 0)
     setHistorial(histRes.data || [])
     setLoading(false)
+
+    // ── RECUPERACIÓN: giros recientes no mostrados (recarga / pérdida de conexión) ──
+    const diezMinAtras = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+    const { data: pendientes } = await supabase
+      .from('ruleta_giros')
+      .select('id,premio_nombre,tipo,valor,acreditado')
+      .eq('cliente_id', user.id)
+      .eq('mostrado', false)
+      .gte('created_at', diezMinAtras)
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    if (pendientes && pendientes.length > 0) {
+      const g = pendientes[0]
+      setResultado({
+        premio_nombre: g.premio_nombre,
+        tipo: g.tipo,
+        valor: g.valor,
+        emoji: '🎁',
+        acreditado: g.acreditado,
+        giro_id_recuperado: g.id,
+        es_recuperado: true,
+      })
+      setShowModal(true)
+    }
+  }
+
+  // Cierra el modal y marca el giro como visto en la BD
+  const handleCloseModal = async () => {
+    setShowModal(false)
+    if (resultado?.giro_id_recuperado) {
+      await supabase.rpc('marcar_giro_mostrado', {
+        p_giro_id: resultado.giro_id_recuperado,
+        p_cliente_id: user.id
+      })
+    }
+    setResultado(null)
   }
 
   // Build EQUAL-SIZE segments — probability is internal only (handled server-side by RPC)
@@ -107,7 +144,7 @@ export default function Ruleta() {
     setRotation(newRotation)
     if (audioSpin.current) audioSpin.current.play().catch(() => {})
 
-    setTimeout(() => {
+    setTimeout(async () => {
       setAnimate(false)
       if (audioSpin.current) {
         audioSpin.current.pause()
@@ -120,7 +157,7 @@ export default function Ruleta() {
         if (audioWin.current) audioWin.current.play().catch(() => {})
       }
 
-      setResultado(res)
+      setResultado({ ...res, giro_id_recuperado: res.giro_id })
       setGirosDisp(res.giros_restantes ?? Math.max(0, girosDisp - 1))
       setHistorial(prev => [{ premio_nombre: res.premio_nombre, tipo: res.tipo, valor: res.valor, created_at: new Date().toISOString() }, ...prev].slice(0, 10))
       setSpinning(false)
@@ -308,7 +345,7 @@ export default function Ruleta() {
       {/* Result Modal */}
       {showModal && resultado && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50000, background: 'rgba(0,0,0,.88)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-          onClick={() => setShowModal(false)}>
+          onClick={handleCloseModal}>
           <div style={{ background: 'var(--bg-card)', borderRadius: 28, padding: '40px', maxWidth: 450, width: '100%', textAlign: 'center', border: '2px solid #FFD700', boxShadow: '0 30px 80px rgba(0,0,0,0.9)', animation: 'winPop .6s cubic-bezier(.175,.885,.32,1.275)' }}
             onClick={e => e.stopPropagation()}>
 
@@ -331,9 +368,14 @@ export default function Ruleta() {
               {resultado.acreditado && (
                 <div style={{ color: '#22c55e', fontSize: 14, marginTop: 10, fontWeight: 700 }}>✅ Acreditado automáticamente</div>
               )}
+              {resultado.es_recuperado && (
+                <div style={{ color: '#FFD700', fontSize: 12, marginTop: 15, fontStyle: 'italic', opacity: 0.8 }}>
+                  Giro recuperado de una sesión anterior
+                </div>
+              )}
             </div>
 
-            <button className="btn btn-primary" style={{ width: '100%', height: 60, fontSize: 18, fontWeight: 900, borderRadius: 16 }} onClick={() => setShowModal(false)}>
+            <button className="btn btn-primary" style={{ width: '100%', height: 60, fontSize: 18, fontWeight: 900, borderRadius: 16 }} onClick={handleCloseModal}>
               ENTENDIDO
             </button>
           </div>
