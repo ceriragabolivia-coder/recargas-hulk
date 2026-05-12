@@ -156,6 +156,18 @@ export default function Landing({ onNavigate }) {
     }
   }, [location.pathname]);
 
+  const resetRechargeForm = () => {
+    setLocalRechargeData({
+      player_id: '',
+      zone_id: '',
+      account_email: '',
+      account_password: '',
+      account_user: ''
+    })
+    setVerificacionResultado(null)
+    setShouldSaveData(false)
+  }
+
   const handleSelectCuenta = (cuenta) => {
     setLocalRechargeData({
       player_id: cuenta.player_id || '',
@@ -273,6 +285,7 @@ export default function Landing({ onNavigate }) {
       setTimeout(() => setAddedItem(null), 1000)
       setPendingItem(null)
     }
+    resetRechargeForm()
   }
 
   useEffect(() => {

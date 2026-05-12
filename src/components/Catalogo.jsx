@@ -67,6 +67,18 @@ export default function Catalogo() {
   const { cuentas, guardarCuenta, eliminarCuenta } = useCuentasGuardadas(selectedJuegoId)
   const [shouldSaveData, setShouldSaveData] = useState(false)
 
+  const resetRechargeForm = () => {
+    setLocalRechargeData({
+      player_id: '',
+      zone_id: '',
+      account_email: '',
+      account_password: '',
+      account_user: ''
+    })
+    setVerificacionResultado(null)
+    setShouldSaveData(false)
+  }
+
   const handleSelectCuenta = (cuenta) => {
     setLocalRechargeData({
       player_id: cuenta.player_id || '',
@@ -192,6 +204,7 @@ export default function Catalogo() {
       setTimeout(() => setAddedItem(null), 1000)
       setPendingItem(null)
     }
+    resetRechargeForm()
   }
   
 
