@@ -735,7 +735,6 @@ export default function Checkout({ onFinish, embedded = false }) {
                       </div>
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      {!isCliente && <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{item.quantity} x {formatUSD(item.venta_usd)}</div>}
                       <div style={{ color: 'var(--accent-success)', fontWeight: 800 }}>{formatBs(item.venta_bs * item.quantity)}</div>
                     </div>
                     {/* Botón quitar del carrito */}
@@ -793,7 +792,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                   {hasAnySaldo && !isGratis && !isCliente && (
                     <div onClick={handleToggleWalletPartial} className="checkout-toggle-card" style={{ border: `2px solid ${useWalletPartial ? 'var(--accent-success)' : 'var(--border-color)'}`, opacity: useWalletBs ? 0.5 : 1 }}>
                       <span>💵 Usar Saldo USD</span>
-                      <small>Disp: {formatUSD(walletSaldo)}</small>
+                      <small>Disp: {formatBs(Math.round(walletSaldo * (Number(config?.tasa_dolar) || 1)))}</small>
                     </div>
                   )}
                   {hasAnySaldoBs && !isGratis && (
@@ -1058,7 +1057,6 @@ export default function Checkout({ onFinish, embedded = false }) {
                             <div style={{ color: 'var(--accent-success)', fontSize: '22px', fontWeight: 900 }}>
                               {useWalletBs && !hasEnoughBalanceBs ? formatBs(remainingBsFromWallet) : formatBs(remainingBs)}
                             </div>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: 600 }}>{formatUSD(remainingUSD)}</div>
                           </div>
                         </div>
                       </div>

@@ -194,7 +194,7 @@ export default function LandingWallet({ onClose }) {
         <div className="wallet-main-col">
           {/* Tarjetas de Saldo */}
           <div className="balance-cards">
-            {!isCliente && (
+            {isAdmin && (
               <div className="balance-card usd">
                 <div className="balance-label">SALDO DÓLARES</div>
                 <div className="balance-value">{formatUSD(wallet?.saldo || 0)}</div>
@@ -260,7 +260,7 @@ export default function LandingWallet({ onClose }) {
                       </td>
                       <td data-label="Monto" className={item.monto > 0 ? 'text-positive' : 'text-negative'}>
                         {item.monto > 0 ? '+' : ''}
-                        {item.moneda === 'bs' ? formatBs(item.monto) : formatUSD(item.monto)}
+                        {item.moneda === 'bs' ? formatBs(item.monto) : (isAdmin ? formatUSD(item.monto) : formatBs(Math.round(item.monto * (Number(config?.tasa_dolar) || 1))))}
                       </td>
                       <td data-label="Estado">
                         <span className={`status-badge ${item.estado}`}>
@@ -290,7 +290,7 @@ export default function LandingWallet({ onClose }) {
               <div className="form-group">
                 <label>Moneda</label>
                 <div className="currency-selector">
-                  {!isCliente && (
+                  {isAdmin && (
                     <button 
                       type="button" 
                       className={monedaRecarga === 'usd' ? 'active' : ''} 

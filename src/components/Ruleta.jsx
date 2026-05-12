@@ -372,7 +372,9 @@ export default function Ruleta() {
               <div style={{ fontSize: 24, fontWeight: 900, marginBottom: 6 }}>{resultado.premio_nombre || resultado.nombre}</div>
               {resultado.valor > 0 && (
                 <div style={{ fontSize: 38, fontWeight: 1000, color: resultado.tipo === 'saldo_bs' ? '#a855f7' : '#22c55e' }}>
-                  +{resultado.tipo === 'saldo_bs' ? formatBs(resultado.valor) : resultado.tipo === 'saldo_usd' ? formatUSD(resultado.valor) : `${resultado.valor}%`}
+                  {resultado.tipo === 'saldo_bs' ? formatBs(resultado.valor) : 
+                   resultado.tipo === 'saldo_usd' ? (isCliente ? formatBs(Math.round(resultado.valor * (Number(config?.tasa_dolar) || 1))) : formatUSD(resultado.valor)) : 
+                   `${resultado.valor}%`}
                 </div>
               )}
               {resultado.acreditado && (
@@ -408,7 +410,9 @@ export default function Ruleta() {
               </p>
               {selectedPrize.valor > 0 && (
                 <div style={{ marginTop: '16px', display: 'inline-block', padding: '6px 16px', borderRadius: '10px', background: 'rgba(255,215,0,0.1)', color: '#FFD700', fontSize: '14px', fontWeight: 800 }}>
-                  VALOR: {selectedPrize.tipo === 'saldo_bs' ? formatBs(selectedPrize.valor) : selectedPrize.tipo === 'saldo_usd' ? formatUSD(selectedPrize.valor) : `${selectedPrize.valor}% Desc.`}
+                  VALOR: {selectedPrize.tipo === 'saldo_bs' ? formatBs(selectedPrize.valor) : 
+                          selectedPrize.tipo === 'saldo_usd' ? (isCliente ? formatBs(Math.round(selectedPrize.valor * (Number(config?.tasa_dolar) || 1))) : formatUSD(selectedPrize.valor)) : 
+                          `${selectedPrize.valor}% Desc.`}
                 </div>
               )}
             </div>

@@ -398,7 +398,7 @@ export default function Landing({ onNavigate }) {
         if (updated.estado === 'aprobado') {
           setActiveToast({
             titulo: '✅ ¡Saldo Acreditado!',
-            mensaje: `Tu recarga por ${updated.moneda === 'bs' ? formatBs(updated.monto) : formatUSD(updated.monto)} ha sido aprobada.`,
+            mensaje: `Tu recarga por ${formatBs(updated.moneda === 'bs' ? updated.monto : Math.round(updated.monto * (Number(config?.tasa_dolar) || 1)))} ha sido aprobada.`,
             type: 'success'
           });
           setTimeout(() => setActiveToast(null), 10000);
@@ -1172,11 +1172,7 @@ export default function Landing({ onNavigate }) {
                             {prod.icono_url && <img src={prod.icono_url} alt="" className="product-icon" />}
                             <div className="product-name">{prod.nombre}</div>
                             <div className="product-price">
-                              {isRevendedor ? (
-                                <span className="price-primary">{formatUSD(pricing.venta_usd)}</span>
-                              ) : (
-                                <span className="price-primary">{formatBs(pricing.venta_bs)}</span>
-                              )}
+                              <span className="price-primary">{formatBs(pricing.venta_bs)}</span>
                             </div>
                           </div>
                         )
