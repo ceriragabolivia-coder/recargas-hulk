@@ -332,7 +332,17 @@ export default function Ruleta() {
                 {historial.map((h, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderRadius: 14, background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.06)' }}>
                     <span style={{ fontWeight: 600, fontSize: 15 }}>{h.premio_nombre}</span>
-                    <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>{new Date(h.created_at).toLocaleDateString('es-VE')}</span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '11px', whiteSpace: 'nowrap' }}>
+                      {new Date(h.created_at).toLocaleString('es-VE', { 
+                        timeZone: 'America/Caracas',
+                        day: '2-digit', 
+                        month: '2-digit', 
+                        year: 'numeric', 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        second: '2-digit' 
+                      })}
+                    </span>
                   </div>
                 ))}
               </div>
