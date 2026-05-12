@@ -466,18 +466,21 @@ export default function Landing({ onNavigate }) {
     }
   }, [selectedJuego])
 
-  useEffect(() => {
-    const juegoIdQuery = searchParams.get('juego')
-    if (juegos.length > 0 && juegoIdQuery) {
-      const found = juegos.find(j => String(j.id) === juegoIdQuery || j.nombre.toLowerCase().replace(/\s+/g, '-') === juegoIdQuery)
-      if (found && (!selectedJuego || selectedJuego.id !== found.id)) {
-        setSelectedJuego(found)
-        window.scrollTo(0, 0)
-      }
-    } else if (!juegoIdQuery && selectedJuego) {
-      setSelectedJuego(null)
-    }
   }, [searchParams, juegos, selectedJuego])
+
+  // EFECTO DE SCROLL AL TOP: Forzar siempre al cambiar de vista o seleccionar juego
+  useEffect(() => {
+    const forceScroll = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    
+    forceScroll();
+    // Re-intentar brevemente después por si hay cambios de layout
+    const t = setTimeout(forceScroll, 100);
+    return () => clearTimeout(t);
+  }, [selectedJuego, showCheckout, showOrders, showRuleta, showWallet, showProfile]);
 
   const handleSelectJuego = (juego) => {
     setShowCheckout(false)
