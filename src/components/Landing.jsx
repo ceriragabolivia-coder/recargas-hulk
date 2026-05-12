@@ -1167,7 +1167,16 @@ export default function Landing({ onNavigate }) {
                             }
                             
                             const finalPrice = calcularPrecioVenta(prod, selectedJuego, config, perfil)
-                            setPendingItem({ p: prod, selectedJuego, finalPrice, localRechargeData })
+                            setPendingItem({ 
+                              p: prod, 
+                              selectedJuego, 
+                              finalPrice, 
+                              localRechargeData: {
+                                ...localRechargeData,
+                                nickname: (verificacionResultado?.success && verificacionResultado.verified_id === localRechargeData.player_id) 
+                                          ? verificacionResultado.nickname : null
+                              } 
+                            })
                           }}>
                             {prod.icono_url && <img src={prod.icono_url} alt="" className="product-icon" />}
                             <div className="product-name">{prod.nombre}</div>

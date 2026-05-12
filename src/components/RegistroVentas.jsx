@@ -473,7 +473,10 @@ export default function RegistroVentas({ onNavigate }) {
                     <strong>Items:</strong>
                     <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
                       {selectedVentaDetalle.pedido.pedido_items?.map((item, i) => (
-                        <li key={i}>{item.cantidad}x {item.productos?.nombre}</li>
+                        <li key={i}>
+                          {item.cantidad}x {item.productos?.nombre}
+                          {item.nickname && <span style={{ color: 'var(--accent-primary)', fontWeight: 600, fontSize: '11px' }}> (👤 {item.nickname})</span>}
+                        </li>
                       ))}
                     </ul>
                   </div>

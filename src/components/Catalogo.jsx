@@ -794,7 +794,16 @@ export default function Catalogo() {
                           }
                         }
                         
-                        setPendingItem({ p, selectedJuego, finalPrice, localRechargeData })
+                        setPendingItem({ 
+                          p, 
+                          selectedJuego, 
+                          finalPrice, 
+                          localRechargeData: {
+                            ...localRechargeData,
+                            nickname: (verificacionResultado?.success && verificacionResultado.verified_id === localRechargeData.player_id) 
+                                      ? verificacionResultado.nickname : null
+                          } 
+                        })
                       }}
                     >
                       {p.icono_url ? (

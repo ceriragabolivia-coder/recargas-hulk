@@ -1700,11 +1700,15 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                       </div>
                     ) : item.metodo_recarga === 'id_zone' ? (
                       <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)', color: 'var(--accent-primary)', fontWeight: 'bold' }}>
-                        🆔 ID: {item.player_id} | 🌐 ZONE ID: {item.zone_id}
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span>🆔 ID: {item.player_id} | 🌐 ZONE ID: {item.zone_id}</span>
+                        </div>
+                        {item.nickname && <div style={{ fontSize: '14px', color: '#fff', marginTop: '4px', fontWeight: 600 }}>👤 Nickname: {item.nickname}</div>}
                       </div>
                     ) : item.player_id ? (
                       <div style={{ fontSize: '20px', color: 'var(--accent-primary)', fontWeight: 800 }}>
                         🆔 {item.player_id}
+                        {item.nickname && <div style={{ fontSize: '15px', color: '#fff', marginTop: '4px', fontWeight: 700 }}>👤 {item.nickname}</div>}
                       </div>
                     ) : null}
                   </div>

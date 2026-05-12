@@ -28,6 +28,7 @@ export function CartProvider({ children }) {
       venta_bs: finalPrice.venta_bs,
       venta_usd: finalPrice.venta_usd,
       ...rechargeData,
+      nickname: rechargeData.nickname || null,
       quantity: 1
     }
 
@@ -118,6 +119,7 @@ export function CartProvider({ children }) {
             precio_bs: item.venta_bs,
             metodo_recarga: item.metodo_recarga,
             player_id: item.player_id || null,
+            nickname: item.nickname || null,
             account_email: item.account_email || null,
             account_password: item.account_password || null,
             account_user: item.account_user || null,
