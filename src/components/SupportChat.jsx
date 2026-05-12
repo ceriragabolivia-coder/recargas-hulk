@@ -66,10 +66,17 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
 
   // Autoscroll para cuando se abre o seleccionan chats
   useEffect(() => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }, 150)
-  }, [mensajes, isOpen, selectedChatClient])
+    const scrollToBottom = () => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' })
+      }
+    }
+    
+    if (isOpen || isPage) {
+      setTimeout(scrollToBottom, 50)
+      setTimeout(scrollToBottom, 300) // Segundo intento por si el render tardó
+    }
+  }, [mensajes.length, isOpen, selectedChatClient])
 
   // Variables para saber en qué sala (cliente_id) estamos
   const activeChatId = isAdmin ? selectedChatClient?.id : currentClienteId
@@ -708,7 +715,13 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
           {/* Header */}
           <div style={{ backgroundColor: 'var(--bg-panel)', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800 }}>Chat de Soporte</h3>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800 }}>
+                {isAdmin ? (
+                  selectedChatClient ? `Chat con ${selectedChatClient.nombres}` : 'Sala de Soporte'
+                ) : (
+                  'Chat de Soporte'
+                )}
+              </h3>
               {!("Notification" in window) ? null : Notification.permission === 'default' && (
                 <button 
                   onClick={() => Notification.requestPermission()}
@@ -730,13 +743,6 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                   ←
                 </button>
               )}
-              <div style={{ fontWeight: 'bold' }}>
-                {isAdmin ? (
-                  selectedChatClient ? `Chat con ${selectedChatClient.nombres}` : 'Chats de Soporte'
-                ) : (
-                  'Soporte Técnico'
-                )}
-              </div>
             </div>
             <button className="btn btn-ghost btn-icon btn-sm" onClick={() => { setIsOpen(false); if(onClose) onClose(); }} style={{ display: isPage ? 'none' : 'flex' }}>×</button>
           </div>
