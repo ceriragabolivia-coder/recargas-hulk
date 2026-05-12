@@ -18,6 +18,12 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   const [pendingFile, setPendingFile] = useState(null)
   const [filePreview, setFilePreview] = useState(null)
   let messagesEndRef = useRef(null)
+  const audioNotify = useRef(null)
+
+  useEffect(() => {
+    audioNotify.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3')
+    audioNotify.current.volume = 0.5
+  }, [])
 
   useEffect(() => {
     if (forceOpen) setIsOpen(true)
@@ -276,6 +282,11 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
             const rawMessage = payload.new
             // Si el mensaje nuevo pertenece a la sala actual que estamos viendo
             if (rawMessage.cliente_id === activeChatId) {
+              // Si el mensaje no es mío, sonar notificación
+              if (rawMessage.remitente_id !== currentClienteId && audioNotify.current) {
+                audioNotify.current.play().catch(e => console.log('Audio play blocked:', e))
+              }
+
               // Cargar info del remitente para mostrar el nombre
               const { data: userData } = await supabase
                 .from('clientes')

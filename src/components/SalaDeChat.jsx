@@ -30,6 +30,12 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
   const currentUserId = perfil?.id
   const currentClienteId = perfil?.cliente_uuid || perfil?.id // Fallback si no hay cliente_uuid
   const [isMobileChat, setIsMobileChat] = useState(false)
+  const audioNotify = useRef(null)
+
+  useEffect(() => {
+    audioNotify.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3')
+    audioNotify.current.volume = 0.5
+  }, [])
 
   // Detect mobile viewport
   const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 768)
@@ -196,6 +202,12 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
       .channel('sala_de_chat_global')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'soporte_mensajes' }, (payload) => {
         loadChats(true) // no resetear loading en realtime
+        
+        // Sonar notificación si el mensaje no es mío
+        if (payload.eventType === 'INSERT' && payload.new.remitente_id !== currentUserId && audioNotify.current) {
+          audioNotify.current.play().catch(e => console.log('Audio play blocked:', e))
+        }
+
         const activeChat = selectedChatRef.current
         if (activeChat) {
           if (payload.eventType === 'INSERT' && payload.new.cliente_id === activeChat.id) {
