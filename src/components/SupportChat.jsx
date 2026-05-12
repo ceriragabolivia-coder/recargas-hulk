@@ -687,21 +687,20 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
           
           {/* Header */}
           <div style={{ backgroundColor: 'var(--bg-panel)', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', flexShrink: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800 }}>Chat de Soporte</h3>
-                {!("Notification" in window) ? null : Notification.permission === 'default' && (
-                  <button 
-                    onClick={() => Notification.requestPermission()}
-                    style={{ 
-                      fontSize: '10px', padding: '2px 8px', borderRadius: '10px', 
-                      background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
-                      color: '#fff', cursor: 'pointer'
-                    }}
-                  >
-                    🔔 Activar Notificaciones
-                  </button>
-                )}
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800 }}>Chat de Soporte</h3>
+              {!("Notification" in window) ? null : Notification.permission === 'default' && (
+                <button 
+                  onClick={() => Notification.requestPermission()}
+                  style={{ 
+                    fontSize: '10px', padding: '2px 8px', borderRadius: '10px', 
+                    background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
+                    color: '#fff', cursor: 'pointer'
+                  }}
+                >
+                  🔔 Activar Notificaciones
+                </button>
+              )}
               {isAdmin && selectedChatClient && (
                 <button 
                   className="btn btn-ghost btn-sm" 
