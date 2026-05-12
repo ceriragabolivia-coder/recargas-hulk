@@ -726,7 +726,12 @@ export default function Checkout({ onFinish, embedded = false }) {
                       <div style={{ fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.nombre}</div>
                       <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>{item.juego}</div>
                       <div className="checkout-details-box" style={{ marginTop: '8px', padding: '8px', backgroundColor: 'var(--bg-primary)', borderRadius: '8px', fontSize: '12px' }}>
-                         {item.metodo_recarga === 'cuenta_completa' ? `📧 ${item.account_email}` : item.metodo_recarga === 'usuario_clave' ? `👤 ${item.account_user}` : item.metodo_recarga === 'id_zone' ? `🆔 ${item.player_id} (${item.zone_id})` : `🆔 ${item.player_id}`}
+                         {item.metodo_recarga === 'cuenta_completa' ? `📧 ${item.account_email}` 
+                          : item.metodo_recarga === 'usuario_clave' ? `👤 ${item.account_user}` 
+                          : item.metodo_recarga === 'id_zone' ? `🆔 ${item.player_id} (${item.zone_id})` 
+                          : item.metodo_recarga === 'entrega_codigo' ? `🎁 Entrega de Código`
+                          : item.metodo_recarga === 'sin_datos' ? `📥 Entrega Automática`
+                          : `🆔 ${item.player_id}`}
                       </div>
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>

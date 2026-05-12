@@ -882,6 +882,28 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
        return p
     }))
   }
+
+  const updateItemCodigo = async (itemId, codigo) => {
+    const { error } = await supabase.from('pedido_items').update({ codigo_entregado: codigo }).eq('id', itemId)
+    if (error) {
+       showAlert("Error al actualizar código: " + error.message, 'error')
+       return
+    }
+    
+    setSelectedPedido(prev => {
+       if(!prev || !prev.pedido_items) return prev
+       const newItems = prev.pedido_items.map(i => i.id === itemId ? { ...i, codigo_entregado: codigo } : i)
+       return { ...prev, pedido_items: newItems }
+    })
+    
+    setPedidos(prev => prev.map(p => {
+       if(p.id === selectedPedido?.id) {
+          const newItems = p.pedido_items?.map(i => i.id === itemId ? { ...i, codigo_entregado: codigo } : i)
+          return { ...p, pedido_items: newItems }
+       }
+       return p
+    }))
+  }
   
   const handleConfirmRechazo = () => {
      if(!motivoRechazo.trim()) {
@@ -1642,6 +1664,21 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                            }}
                            style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(0, 210, 255, 0.3)', backgroundColor: 'rgba(0, 210, 255, 0.05)', color: 'var(--accent-primary)', fontSize: '13px', outline: 'none', fontWeight: 600 }}
                         />
+                        
+                        {/* INPUT CÓDIGO GIFT CARD */}
+                        <div style={{ marginTop: '8px' }}>
+                           <input 
+                              type="text" 
+                              placeholder="Escribir Código de Gift Card (Ej: XXXX-XXXX-XXXX)" 
+                              defaultValue={item.codigo_entregado || ''}
+                              onBlur={(e) => {
+                                if (e.target.value !== (item.codigo_entregado || '')) {
+                                  updateItemCodigo(item.id, e.target.value)
+                                }
+                              }}
+                              style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #22c55e', backgroundColor: 'rgba(34, 197, 94, 0.05)', color: '#22c55e', fontSize: '13px', outline: 'none', fontWeight: 700 }}
+                           />
+                        </div>
                      </div>
                   ) : item.referencia_admin && (
                      <div style={{ marginBottom: '8px', fontSize: '13px', padding: '6px 10px', backgroundColor: 'rgba(0, 210, 255, 0.08)', borderRadius: '6px', border: '1px dashed rgba(0, 210, 255, 0.3)', color: 'var(--accent-primary)', fontWeight: 700, display: 'inline-block' }}>

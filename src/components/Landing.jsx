@@ -888,6 +888,11 @@ export default function Landing() {
                             <p style={{ fontSize: '14px', color: 'var(--text)', fontWeight: 600, margin: 0 }}>⚡ Entrega inmediata</p>
                             <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>No necesitas ingresar ningún dato.</p>
                           </div>
+                        ) : selectedJuego.metodo_recarga === 'entrega_codigo' ? (
+                          <div style={{ textAlign: 'center' }}>
+                            <p style={{ fontSize: '14px', color: 'var(--text)', fontWeight: 600, margin: 0 }}>🎁 Entrega de Código</p>
+                            <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>Recibirás un código de Gift Card tras la compra.</p>
+                          </div>
                         ) : selectedJuego.metodo_recarga === 'cuenta_completa' ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <div>
@@ -1107,6 +1112,8 @@ export default function Landing() {
                                 alert('Por favor introduce el usuario y clave arriba primero.')
                                 return
                               }
+                            } else if (selectedJuego.metodo_recarga === 'sin_datos' || selectedJuego.metodo_recarga === 'entrega_codigo') {
+                              // No se requieren datos
                             } else {
                               if (!localRechargeData.player_id.trim()) {
                                 alert('Por favor introduce el ID arriba primero.')
@@ -1332,6 +1339,8 @@ export default function Landing() {
                 
                 {pendingItem.selectedJuego.metodo_recarga === 'sin_datos' ? (
                   <div style={{ fontSize: '14px', color: '#fff', fontWeight: 600 }}>⚡ Entrega Inmediata (Sin Datos)</div>
+                ) : pendingItem.selectedJuego.metodo_recarga === 'entrega_codigo' ? (
+                  <div style={{ fontSize: '14px', color: '#fff', fontWeight: 600 }}>🎁 Entrega de Código (Manual)</div>
                 ) : pendingItem.selectedJuego.metodo_recarga === 'cuenta_completa' ? (
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Correo:</span> <strong style={{ color: '#fff' }}>{pendingItem.localRechargeData.account_email}</strong></div>

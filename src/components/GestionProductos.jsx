@@ -1087,6 +1087,7 @@ export default function GestionProductos() {
               <option value="cuenta_completa">🔐 Correo y Clave</option>
               <option value="usuario_clave">👤 Usuario y Clave</option>
               <option value="sin_datos">📥 Sin Datos (Entrega Automática)</option>
+              <option value="entrega_codigo">🎁 Entrega de Código (Manual)</option>
             </select>
             <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
               {formGame.metodo_recarga === 'id_jugador'
@@ -1096,8 +1097,10 @@ export default function GestionProductos() {
                   : formGame.metodo_recarga === 'cuenta_completa'
                     ? 'Se le pedirá al cliente su correo electrónico y contraseña del juego.'
                     : formGame.metodo_recarga === 'usuario_clave'
-                      ? 'Se le pedirá al cliente su nombre de usuario y contraseña del juego.'
-                      : 'No se le pedirá ningún dato al cliente. Ideal para Gift Cards en Baúl.'}
+                        ? 'Se le pedirá al cliente su nombre de usuario y contraseña del juego.'
+                        : formGame.metodo_recarga === 'entrega_codigo'
+                          ? 'No se piden datos al cliente. El administrador proveerá el código manualmente.'
+                          : 'No se le pedirá ningún dato al cliente. Ideal para Gift Cards automáticas en Baúl.'}
             </p>
           </div>
 
