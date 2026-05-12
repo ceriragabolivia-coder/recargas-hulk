@@ -6,3 +6,6 @@ ALTER TABLE public.pedido_items ADD COLUMN IF NOT EXISTS nickname TEXT;
 
 -- 2. Añadir comentario
 COMMENT ON COLUMN public.pedido_items.nickname IS 'Nombre del jugador verificado antes de crear el pedido';
+
+-- 3. Recargar caché de PostgREST
+NOTIFY pgrst, 'reload schema';
