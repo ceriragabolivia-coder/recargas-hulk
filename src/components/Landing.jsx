@@ -1024,15 +1024,17 @@ export default function Landing() {
                           </div>
                         )}
 
-                        <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <input 
-                            type="checkbox" 
-                            id="save-data-checkbox-landing"
-                            checked={shouldSaveData}
-                            onChange={(e) => setShouldSaveData(e.target.checked)}
-                          />
-                          <label htmlFor="save-data-checkbox-landing" style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Guardar datos</label>
-                        </div>
+                        {!(selectedJuego.metodo_recarga === 'sin_datos' || selectedJuego.metodo_recarga === 'entrega_codigo') && (
+                          <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <input 
+                              type="checkbox" 
+                              id="save-data-checkbox-landing"
+                              checked={shouldSaveData}
+                              onChange={(e) => setShouldSaveData(e.target.checked)}
+                            />
+                            <label htmlFor="save-data-checkbox-landing" style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Guardar datos</label>
+                          </div>
+                        )}
                       </div>
 
                       <div className="sidebar-buttons">
@@ -1159,13 +1161,19 @@ export default function Landing() {
                       <p>Para adquirir recargas de {selectedJuego.nombre}, solo necesitas proporcionar tu ID de jugador. La entrega es inmediata una vez verificado el pago.</p>
                     )}
                     
-                    <h5>¿Cómo recargar?</h5>
-                    <ul>
-                      <li>Selecciona el paquete que deseas adquirir.</li>
-                      <li>Inicia sesión o regístrate en nuestra plataforma.</li>
-                      <li>Completa el pago mediante tu método favorito (Pago Móvil, Binance, PayPal).</li>
-                      <li>¡Listo! Tu recarga llegará en minutos.</li>
-                    </ul>
+                    {selectedJuego.instrucciones_recarga ? (
+                      <div className="rich-text" dangerouslySetInnerHTML={{ __html: selectedJuego.instrucciones_recarga.replace(/\n/g, '<br/>') }} />
+                    ) : (
+                      <>
+                        <h5>¿Cómo recargar?</h5>
+                        <ul>
+                          <li>Selecciona el paquete que deseas adquirir.</li>
+                          <li>Inicia sesión o regístrate en nuestra plataforma.</li>
+                          <li>Completa el pago mediante tu método favorito (Pago Móvil, Binance, PayPal).</li>
+                          <li>¡Listo! Tu recarga llegará en minutos.</li>
+                        </ul>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

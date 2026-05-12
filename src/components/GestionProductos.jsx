@@ -33,7 +33,8 @@ export default function GestionProductos() {
     caracteristicas_tipo: 'Recarga (Automática)',
     caracteristicas_region: 'Global',
     caracteristicas_entrega: 'Inmediata',
-    caracteristicas_nota: ''
+    caracteristicas_nota: '',
+    instrucciones_recarga: ''
   })
 
   const juegosFiltrados = useMemo(() => {
@@ -58,7 +59,8 @@ export default function GestionProductos() {
       caracteristicas_tipo: 'Recarga (Automática)',
       caracteristicas_region: 'Global',
       caracteristicas_entrega: 'Inmediata',
-      caracteristicas_nota: ''
+      caracteristicas_nota: '',
+      instrucciones_recarga: ''
     })
     setIsGameModalOpen(true)
   }
@@ -75,7 +77,8 @@ export default function GestionProductos() {
       caracteristicas_tipo: selectedJuego.caracteristicas_tipo || 'Recarga (Automática)',
       caracteristicas_region: selectedJuego.caracteristicas_region || 'Global',
       caracteristicas_entrega: selectedJuego.caracteristicas_entrega || 'Inmediata',
-      caracteristicas_nota: selectedJuego.caracteristicas_nota || ''
+      caracteristicas_nota: selectedJuego.caracteristicas_nota || '',
+      instrucciones_recarga: selectedJuego.instrucciones_recarga || ''
     })
     setIsGameModalOpen(true)
   }
@@ -95,7 +98,8 @@ export default function GestionProductos() {
         caracteristicas_tipo: formGame.caracteristicas_tipo,
         caracteristicas_region: formGame.caracteristicas_region,
         caracteristicas_entrega: formGame.caracteristicas_entrega,
-        caracteristicas_nota: formGame.caracteristicas_nota
+        caracteristicas_nota: formGame.caracteristicas_nota,
+        instrucciones_recarga: formGame.instrucciones_recarga
       })
       if (!res.error) {
         setSelectedJuego(prev => ({ ...prev, ...formGame }))
@@ -1195,6 +1199,17 @@ export default function GestionProductos() {
                 placeholder="Ej: Válido solo para cuentas LATAM."
                 value={formGame.caracteristicas_nota}
                 onChange={e => setFormGame({ ...formGame, caracteristicas_nota: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label className="form-label">Guía de Recarga (Paso a paso)</label>
+              <textarea
+                className="form-input"
+                rows={4}
+                placeholder="Ej: 1) Selecciona el paquete... 2) Ingresa tu ID... (Soporta HTML básico)"
+                value={formGame.instrucciones_recarga}
+                onChange={e => setFormGame({ ...formGame, instrucciones_recarga: e.target.value })}
+                style={{ resize: 'vertical', minHeight: '80px' }}
               />
             </div>
           </div>
