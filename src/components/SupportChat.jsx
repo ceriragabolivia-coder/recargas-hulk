@@ -22,12 +22,13 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
-    // Sonido más largo y distintivo de "mensaje"
+    // Sonido distintivo de "mensaje"
     audioNotify.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3')
     audioNotify.current.volume = 0.5
     
-    // Solicitar permiso para notificaciones push del navegador
+    // Solicitar permiso para notificaciones push si es posible
     if ("Notification" in window && Notification.permission === "default") {
+      // Intentamos pedir permiso. Algunos navegadores requieren interacción del usuario.
       Notification.requestPermission();
     }
   }, [])
@@ -323,7 +324,9 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                 // Mostrar notificación push si el chat está cerrado o la pestaña no tiene foco
                 if (!isOpen || document.visibilityState === 'hidden') {
                   showPushNotification(rawMessage)
-                  if (!isOpen) setUnreadCount(prev => prev + 1)
+                  if (!isOpen) {
+                    setUnreadCount(prev => prev + 1)
+                  }
                 }
               }
 
@@ -1056,17 +1059,22 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       {/* Burbuja Flotante Interactiva (Sola si NO es modo página y NO es embebido) */}
       {!isPage && !isEmbedded && (
         <button 
-          className="btn btn-primary support-chat-toggle"
+          className="floating-chat-btn"
           style={{ 
-            height: '48px', borderRadius: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center',
-            boxShadow: '0 8px 24px rgba(0, 210, 255, 0.3)', padding: isOpen || isHovered ? '0 18px' : '0',
-            width: isOpen || isHovered ? 'auto' : '48px',
-            fontSize: '14px', gap: '8px',
-            fontWeight: 'bold', border: 'none',
-            transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-            overflow: 'hidden', whiteSpace: 'nowrap'
+            position: 'fixed', bottom: '30px', right: '30px',
+            width: '65px', height: '65px', borderRadius: '50%',
+            background: 'linear-gradient(135deg, #00d2ff 0%, #7b2ff7 100%)',
+            color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '30px', cursor: 'pointer',
+            boxShadow: '0 10px 30px rgba(123, 47, 247, 0.5)', zIndex: 9999,
+            transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            border: '2px solid rgba(255, 255, 255, 0.2)',
+            padding: 0
           }}
           onClick={() => {
+            if ("Notification" in window && Notification.permission === "default") {
+              Notification.requestPermission();
+            }
             const newState = !isOpen;
             setIsOpen(newState);
             if (!newState && onClose) onClose();
@@ -1074,28 +1082,21 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          <div style={{ 
-            display: 'flex', alignItems: 'center', gap: '8px', 
-            opacity: isOpen || isHovered ? 1 : 0,
-            width: isOpen || isHovered ? 'auto' : '0px',
-            transition: 'all 0.3s ease'
-          }}>
-            <span>{isOpen ? 'Cerrar Chat' : 'Chat de Soporte'}</span>
-          </div>
-          <span style={{ fontSize: '24px', flexShrink: 0, display: 'flex', alignItems: 'center', position: 'relative' }}>
+          <span style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {isOpen ? '✕' : (
               <>
-                <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+                <svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor">
                   <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.181-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793 0-.853.448-1.273.607-1.446.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.101-.177.211-.077.383.101.173.449.743.964 1.203.664.591 1.221.774 1.394.86.173.088.274.072.376-.043.101-.116.433-.506.548-.68.116-.173.231-.144.39-.087.158.058 1.011.477 1.184.564.173.087.289.129.332.202.043.073.043.419-.101.824z"/>
                 </svg>
                 {unreadCount > 0 && (
                   <span style={{
-                    position: 'absolute', top: '-8px', right: '-8px',
+                    position: 'absolute', top: '-12px', right: '-12px',
                     backgroundColor: '#ff4757', color: '#fff',
-                    fontSize: '10px', minWidth: '18px', height: '18px',
-                    borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: '0 4px', fontWeight: 'bold', border: '2px solid var(--bg-panel)',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    fontSize: '12px', minWidth: '22px', height: '22px',
+                    borderRadius: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '0 5px', fontWeight: '900', border: '2px solid #fff',
+                    boxShadow: '0 4px 10px rgba(255, 71, 87, 0.5)',
+                    animation: 'pulse 2s infinite'
                   }}>
                     {unreadCount}
                   </span>

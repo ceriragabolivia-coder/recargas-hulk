@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { formatUSD, formatBs } from '../utils/helpers'
 import FloatingBackground from './FloatingBackground'
 import DOMPurify from 'dompurify'
+import SupportChat from './SupportChat'
 
 const NAV_ITEMS = [
   { key: 'dashboard', icon: '📊', label: 'Dashboard', path: '/Dashboard' },
@@ -1272,6 +1273,11 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
             </div>
           </div>
         </div>
+      )}
+
+      {/* CHAT DE SOPORTE PARA CLIENTES (Fuera de la landing) */}
+      {perfil && perfil.rol !== 'admin' && (
+        <SupportChat perfil={perfil} onNavigate={onNavigate} />
       )}
     </div>
   )
