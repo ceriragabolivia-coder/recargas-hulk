@@ -466,6 +466,16 @@ export default function Landing({ onNavigate }) {
     }
   }, [selectedJuego])
 
+  useEffect(() => {
+    const juegoIdQuery = searchParams.get('juego')
+    if (juegos.length > 0 && juegoIdQuery) {
+      const found = juegos.find(j => String(j.id) === juegoIdQuery || j.nombre.toLowerCase().replace(/\s+/g, '-') === juegoIdQuery)
+      if (found && (!selectedJuego || selectedJuego.id !== found.id)) {
+        setSelectedJuego(found)
+      }
+    } else if (!juegoIdQuery && selectedJuego) {
+      setSelectedJuego(null)
+    }
   }, [searchParams, juegos, selectedJuego])
 
   // EFECTO DE SCROLL AL TOP: Forzar siempre al cambiar de vista o seleccionar juego
