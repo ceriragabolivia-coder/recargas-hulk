@@ -37,7 +37,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
     if (forceOpen) setIsOpen(true)
   }, [forceOpen])  // Solo cargar el ID del perfil actual
   const currentUserId = perfil?.id
-  const currentClienteId = perfil?.cliente_uuid || perfil?.id
+  const currentClienteId = perfil?.cliente_uuid // EXCLUSIVAMENTE el ID de la tabla clientes
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
 
   // Variables específicas para ADMIN (lista de chats)
@@ -128,14 +128,19 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
 
   const loadUnreadCount = async () => {
     if (!currentClienteId || isAdmin) return
-    const { count } = await supabase
-      .from('soporte_mensajes')
-      .select('id', { count: 'exact', head: true })
-      .eq('cliente_id', currentClienteId)
-      .eq('leido', false)
-      .neq('remitente_id', currentClienteId)
-    
-    if (count !== null) setUnreadCount(count)
+    try {
+      const { count, error } = await supabase
+        .from('soporte_mensajes')
+        .select('id', { count: 'exact', head: true })
+        .eq('cliente_id', currentClienteId)
+        .eq('leido', false)
+        .neq('remitente_id', currentClienteId)
+      
+      if (error) throw error
+      if (count !== null) setUnreadCount(count)
+    } catch (err) {
+      console.error("Error al cargar contador de no leídos:", err)
+    }
   }
 
   const showPushNotification = (msg) => {
@@ -242,8 +247,6 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       .select('cliente_id, created_at, leido, remitente_id')
       .order('created_at', { ascending: false })
       
-    console.log('[DEBUG CHAT] messagesData:', messagesData, 'error:', error)
-    
     if (messagesData) {
       // 2. Extraer IDs únicos de clientes que tienen chat
       const uniqueClientIds = [...new Set(messagesData.map(m => m.cliente_id))]
@@ -255,8 +258,6 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
           .select('id, nombres, whatsapp')
           .in('id', uniqueClientIds)
           
-        console.log('[DEBUG CHAT] clientsData:', clientsData, 'clientsError:', clientsError)
-        
         if (clientsData) {
           // 4. Mapear y calcular mensajes no leídos por cada cliente
           const chatsConUnread = clientsData.map(client => {
@@ -318,7 +319,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
             // Si el mensaje nuevo pertenece a la sala actual que estamos viendo
             if (rawMessage.cliente_id === activeChatId) {
               // Si el mensaje no es mío, sonar notificación y mostrar push
-              if (rawMessage.remitente_id !== currentClienteId && audioNotify.current) {
+              if (currentClienteId && rawMessage.remitente_id !== currentClienteId && audioNotify.current) {
                 audioNotify.current.play().catch(e => console.log('Audio play blocked:', e))
                 
                 // Mostrar notificación push si el chat está cerrado o la pestaña no tiene foco
@@ -382,7 +383,6 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
           (payload) => {
             if (payload.new && payload.new.soporte_status !== undefined) {
               setClientStatus(payload.new.soporte_status)
-              console.log('[DEBUG CHAT] Client status updated:', payload.new.soporte_status)
             }
           }
         )
@@ -460,8 +460,8 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       // Fallback si no hay columna es_sistema
       if (error && (error.code === '42703' || error.message?.includes('es_sistema'))) {
         await supabase.from('soporte_mensajes').insert([
-          { cliente_id: currentUserId, remitente_id: senderId, mensaje: ticketMsg },
-          { cliente_id: currentUserId, remitente_id: senderId, mensaje: infoMsg }
+          { cliente_id: currentClienteId, remitente_id: senderId, mensaje: ticketMsg },
+          { cliente_id: currentClienteId, remitente_id: senderId, mensaje: infoMsg }
         ])
       }
       
@@ -476,7 +476,6 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       await supabase.from('clientes').update({ soporte_status: null }).eq('id', currentClienteId)
       setClientStatus(null)
       setTicketSubject(null)
-      // Opcional: Podríamos enviar un mensaje de sistema de "Nueva solicitud" aquí
     } catch (err) { console.error(err) }
   }
 
@@ -688,7 +687,21 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
           
           {/* Header */}
           <div style={{ backgroundColor: 'var(--bg-panel)', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800 }}>Chat de Soporte</h3>
+                {!("Notification" in window) ? null : Notification.permission === 'default' && (
+                  <button 
+                    onClick={() => Notification.requestPermission()}
+                    style={{ 
+                      fontSize: '10px', padding: '2px 8px', borderRadius: '10px', 
+                      background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
+                      color: '#fff', cursor: 'pointer'
+                    }}
+                  >
+                    🔔 Activar Notificaciones
+                  </button>
+                )}
+              </div>
               {isAdmin && selectedChatClient && (
                 <button 
                   className="btn btn-ghost btn-sm" 
@@ -1106,6 +1119,14 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
           </span>
         </button>
       )}
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes pulse {
+          0% { transform: scale(1); box-shadow: 0 4px 10px rgba(255, 71, 87, 0.5); }
+          50% { transform: scale(1.1); box-shadow: 0 4px 20px rgba(255, 71, 87, 0.8); }
+          100% { transform: scale(1); box-shadow: 0 4px 10px rgba(255, 71, 87, 0.5); }
+        }
+      ` }} />
 
       {/* Modal de Confirmación para la eliminación de mensajes */}
       <AlertModal 
