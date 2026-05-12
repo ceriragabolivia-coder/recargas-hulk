@@ -572,7 +572,9 @@ export default function Landing({ onNavigate }) {
               setSelectedJuego(null);
               window.scrollTo(0, 0);
             } else if (activeToast.target === 'ruleta') {
+              navigate('/Ruleta');
               setShowRuleta(true);
+              setShowCheckout(false);
               setShowOrders(false);
               setShowWallet(false);
               setShowProfile(false);
