@@ -7,14 +7,20 @@ export default function TutorialVideoModal({ isOpen, onClose, videoUrl, title })
   const getEmbedUrl = (url) => {
     if (!url) return ''
     if (url.includes('youtube.com/embed/')) return url
+    
+    let videoId = ''
     if (url.includes('youtube.com/watch?v=')) {
-      const id = url.split('v=')[1]?.split('&')[0]
-      return `https://www.youtube.com/embed/${id}?autoplay=1`
+      videoId = url.split('v=')[1]?.split('&')[0]
+    } else if (url.includes('youtu.be/')) {
+      videoId = url.split('youtu.be/')[1]?.split('?')[0]
+    } else if (url.includes('youtube.com/shorts/')) {
+      videoId = url.split('shorts/')[1]?.split('?')[0]
     }
-    if (url.includes('youtu.be/')) {
-      const id = url.split('youtu.be/')[1]?.split('?')[0]
-      return `https://www.youtube.com/embed/${id}?autoplay=1`
+    
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}?autoplay=1`
     }
+    
     return url
   }
 
