@@ -66,7 +66,9 @@ export default function GestionProductos() {
       instrucciones_recarga: '',
       tutorial_video_url: '',
       tutorial_banner_texto: '',
-      tutorial_banner_img: ''
+      tutorial_banner_img: '',
+      verificacion_api_activa: false,
+      verificacion_api_url: ''
     })
     setIsGameModalOpen(true)
   }
@@ -87,7 +89,9 @@ export default function GestionProductos() {
       instrucciones_recarga: selectedJuego.instrucciones_recarga || '',
       tutorial_video_url: selectedJuego.tutorial_video_url || '',
       tutorial_banner_texto: selectedJuego.tutorial_banner_texto || '',
-      tutorial_banner_img: selectedJuego.tutorial_banner_img || ''
+      tutorial_banner_img: selectedJuego.tutorial_banner_img || '',
+      verificacion_api_activa: selectedJuego.verificacion_api_activa || false,
+      verificacion_api_url: selectedJuego.verificacion_api_url || ''
     })
     setIsGameModalOpen(true)
   }
@@ -111,7 +115,9 @@ export default function GestionProductos() {
         instrucciones_recarga: formGame.instrucciones_recarga,
         tutorial_video_url: formGame.tutorial_video_url,
         tutorial_banner_texto: formGame.tutorial_banner_texto,
-        tutorial_banner_img: formGame.tutorial_banner_img
+        tutorial_banner_img: formGame.tutorial_banner_img,
+        verificacion_api_activa: formGame.verificacion_api_activa,
+        verificacion_api_url: formGame.verificacion_api_url
       })
       if (!res.error) {
         setSelectedJuego(prev => ({ ...prev, ...formGame }))
@@ -1225,6 +1231,43 @@ export default function GestionProductos() {
               />
             </div>
           </div>
+
+          <hr style={{ margin: '24px 0', borderColor: 'var(--border-color)' }} />
+          <h3 style={{ fontSize: 13, textTransform: 'uppercase', color: 'var(--accent-primary)', marginBottom: 12 }}>Configuración de Verificación de Jugador</h3>
+          
+          <div className="form-group" style={{ marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <input
+                type="checkbox"
+                id="verificacion_api_activa"
+                checked={formGame.verificacion_api_activa}
+                onChange={e => setFormGame({ ...formGame, verificacion_api_activa: e.target.checked })}
+                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+              />
+              <label htmlFor="verificacion_api_activa" className="form-label" style={{ margin: 0, cursor: 'pointer', fontWeight: 700 }}>
+                Activar API de Verificación de Nombres
+              </label>
+            </div>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+              Si se activa, el usuario deberá verificar su ID antes de poder añadir el paquete al carrito.
+            </p>
+          </div>
+
+          {formGame.verificacion_api_activa && (
+            <div className="form-group">
+              <label className="form-label">URL de la API (Opcional - Uso futuro)</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Ej: https://api.game.com/verify?id={{ID}}"
+                value={formGame.verificacion_api_url}
+                onChange={e => setFormGame({ ...formGame, verificacion_api_url: e.target.value })}
+              />
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                Actualmente se usan las APIs integradas para Free Fire y Blood Strike.
+              </p>
+            </div>
+          )}
 
           <hr style={{ margin: '24px 0', borderColor: 'var(--border-color)' }} />
           <h3 style={{ fontSize: 13, textTransform: 'uppercase', color: 'var(--accent-primary)', marginBottom: 12 }}>Configuración de Video Tutorial</h3>

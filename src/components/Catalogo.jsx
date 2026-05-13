@@ -631,7 +631,7 @@ export default function Catalogo() {
                   </div>
                 )}
 
-                {(selectedJuego.nombre.toLowerCase().replace(/\s/g, '').includes('freefire') || selectedJuego.nombre.toLowerCase().replace(/\s/g, '').includes('bloodstrike')) && (
+                {selectedJuego.verificacion_api_activa && (
                   <div style={{ marginTop: '12px' }}>
                     <button 
                       className="btn"
@@ -841,9 +841,7 @@ export default function Catalogo() {
                             return
                           }
                           
-                          // Validación obligatoria para Free Fire y Blood Strike
-                          const juegoNormalizado = selectedJuego.nombre.toLowerCase().replace(/\s/g, '')
-                          if (juegoNormalizado.includes('freefire') || juegoNormalizado.includes('bloodstrike')) {
+                          if (selectedJuego.verificacion_api_activa) {
                             if (!verificacionResultado?.success || verificacionResultado.verified_id !== localRechargeData.player_id) {
                               alert('Debes verificar el nombre del jugador antes de seleccionar un paquete.')
                               return
