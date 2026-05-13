@@ -428,6 +428,7 @@ export default function Usuarios({ onNavigate }) {
                               <option value="revendedor">⭐ Revendedor</option>
                               <option value="negocio">🏢 Negocio (Punto de Venta)</option>
                               <option value="admin">👑 Administrador</option>
+                              <option value="empleado">👷 Empleado / Trabajador</option>
                             </select>
 
                             {editingData.rol === 'negocio' && (
@@ -471,13 +472,16 @@ export default function Usuarios({ onNavigate }) {
                               fontWeight: 600,
                               backgroundColor: cliente.rol === 'admin' ? 'rgba(156, 39, 176, 0.15)' : 
                                                cliente.rol === 'revendedor' ? 'rgba(255, 152, 0, 0.15)' : 
+                                               cliente.rol === 'empleado' ? 'rgba(233, 30, 99, 0.15)' :
                                                cliente.rol === 'negocio' ? 'rgba(0, 210, 255, 0.15)' : 'rgba(52, 152, 219, 0.15)',
                               color: cliente.rol === 'admin' ? '#ce93d8' : 
                                      cliente.rol === 'revendedor' ? '#ffb74d' : 
+                                     cliente.rol === 'empleado' ? '#f48fb1' :
                                      cliente.rol === 'negocio' ? 'var(--accent-primary)' : 'var(--accent-primary)'
                             }}>
                               {cliente.rol === 'admin' ? '👑 Administrador' : 
                                cliente.rol === 'revendedor' ? '⭐ Revendedor' : 
+                               cliente.rol === 'empleado' ? '👷 Empleado' :
                                cliente.rol === 'negocio' ? '🏢 Negocio' : '👤 Cliente'}
                             </span>
                             
