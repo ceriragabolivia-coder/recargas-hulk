@@ -10,7 +10,8 @@ export default function GestionProductos() {
   const { juegos, categorias, loading: loadingJuegos, createJuego, updateJuego, deleteJuego } = useJuegos()
   const { perfil } = useAuth()
   const { config, loading: loadingConfig } = useConfiguracion()
-  const [selectedJuego, setSelectedJuego] = useState(null)
+  const [selectedJuegoId, setSelectedJuegoId] = useState(null)
+  const selectedJuego = useMemo(() => juegos.find(j => j.id === selectedJuegoId), [juegos, selectedJuegoId])
   const [searchJuego, setSearchJuego] = useState('')
   const { productos, categorias: allCategorias, loading: loadingProductos, error: errorProductos, createProducto, updateProducto, deleteProducto, toggleProducto, reorderProductos, createCategoria, updateCategoria, deleteCategoria } = useProductos(selectedJuego?.id)
 
@@ -120,7 +121,7 @@ export default function GestionProductos() {
         verificacion_api_url: formGame.verificacion_api_url
       })
       if (!res.error) {
-        setSelectedJuego(prev => ({ ...prev, ...formGame }))
+        // useJuegos hook will refresh the 'juegos' list automatically
       }
     } else {
       const { id: _ignored, ...gamePayload } = formGame
@@ -154,7 +155,7 @@ export default function GestionProductos() {
       onConfirm: async () => {
         setSaving(true)
         await deleteJuego(selectedJuego.id)
-        setSelectedJuego(null)
+        setSelectedJuegoId(null)
         setSaving(false)
         setAlertModal(null)
       }
@@ -536,7 +537,7 @@ export default function GestionProductos() {
                   key={juego.id}
                   className={`nav-item ${selectedJuego?.id === juego.id ? 'active' : ''}`}
                   style={{ padding: '14px 20px', margin: 0, borderRadius: 0, borderBottom: '1px solid var(--border-color)' }}
-                  onClick={() => setSelectedJuego(juego)}
+                  onClick={() => setSelectedJuegoId(juego.id)}
                 >
                   {juego.nombre}
                 </div>
