@@ -341,28 +341,37 @@ export default function App() {
   // Lógica para el Pop-up de Horario - aparece UNA VEZ por sesión del navegador
   const hasShownModal = React.useRef(false)
   useEffect(() => {
-    // Solo ejecutar si hay usuario autenticado y no se ha mostrado en esta sesión
-    if (!user || hasShownModal.current || sessionStorage.getItem('horario_popup_shown')) return
+    if (!user || hasShownModal.current) return
     
     const checkAndShowModal = async () => {
       try {
-        // Consultar directamente sin depender del contexto (más confiable)
         const { data } = await supabase
           .from('configuracion')
           .select('clave, valor_texto, valor')
-          .in('clave', ['show_horario_popup', 'horario_atencion_texto', 'horario_flyer_url'])
+          .in('clave', ['show_horario_popup'])
           .is('owner_id', null)
         
-        if (!data) return
+        if (!data || data.length === 0) return
         
-        const configMap = {}
-        data.forEach(r => { configMap[r.clave] = r.valor_texto || String(r.valor) })
+        const row = data.find(r => r.clave === 'show_horario_popup')
+        const isEnabled = (row?.valor_texto || String(row?.valor)) === 'true'
         
-        if (configMap.show_horario_popup === 'true' && !sessionStorage.getItem('horario_popup_shown')) {
+        if (!isEnabled) return
+        
+        // Usar una clave con fecha para que se resetee cada día
+        const today = new Date().toISOString().split('T')[0]
+        const sessionKey = `horario_popup_${today}`
+        
+        if (!sessionStorage.getItem(sessionKey)) {
           hasShownModal.current = true
+          // Limpiar flags de días anteriores
+          Object.keys(sessionStorage)
+            .filter(k => k.startsWith('horario_popup_') && k !== sessionKey)
+            .forEach(k => sessionStorage.removeItem(k))
+          
           setTimeout(() => {
             setShowScheduleModal(true)
-            sessionStorage.setItem('horario_popup_shown', 'true')
+            sessionStorage.setItem(sessionKey, 'true')
           }, 1500)
         }
       } catch (err) {
@@ -372,7 +381,6 @@ export default function App() {
     
     checkAndShowModal()
   }, [user])
-
 
 
   // Sistema de Estadísticas: Latido y Actividad
