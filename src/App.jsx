@@ -46,120 +46,97 @@ const Placeholder = ({ title }) => (
 function ScheduleModal({ show, onClose, config }) {
   if (!show) return null
   const horario = config?.horario_atencion_texto || 'Lunes a Domingo: 8:00 AM - 10:00 PM'
-  // Split lines if there are multiple (separated by | or \n)
   const horarioLines = horario.split(/[|\n]/).map(s => s.trim()).filter(Boolean)
 
   return (
     <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      position: 'fixed', inset: 0,
       backgroundColor: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(6px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 999999, padding: '12px',
-      animation: 'fadeIn 0.3s ease'
+      zIndex: 999999, padding: '10px',
     }} onClick={onClose}>
       <style>{`
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        .schedule-modal-inner { animation: fadeIn 0.3s ease; }
-        @media (max-width: 480px) {
-          .schedule-modal-inner { max-width: 98vw !important; }
-          .schedule-horario-text { font-size: 15px !important; }
-          .schedule-horario-line { font-size: 13px !important; padding: 3px 8px !important; }
-        }
+        @keyframes smFadeIn { from { opacity:0; transform:scale(0.93); } to { opacity:1; transform:scale(1); } }
+        .sm-inner { animation: smFadeIn 0.3s ease; max-height: 95vh; overflow-y: auto; }
+        .sm-inner::-webkit-scrollbar { width: 4px; }
+        .sm-inner::-webkit-scrollbar-thumb { background: rgba(57,255,20,0.4); border-radius: 4px; }
       `}</style>
 
-      <div 
-        className="schedule-modal-inner"
+      <div
+        className="sm-inner"
         style={{
-          maxWidth: '440px', width: '100%',
-          borderRadius: '20px', overflow: 'hidden',
-          boxShadow: '0 30px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.08)',
-          position: 'relative', backgroundColor: '#000'
-        }} 
+          width: '100%', maxWidth: '420px',
+          borderRadius: '16px', overflow: 'hidden',
+          boxShadow: '0 0 0 1px rgba(57,255,20,0.25), 0 30px 60px rgba(0,0,0,0.7)',
+          backgroundColor: '#060608', position: 'relative',
+        }}
         onClick={e => e.stopPropagation()}
       >
-        {/* X button */}
-        <button 
-          onClick={onClose}
-          style={{
-            position: 'absolute', top: '10px', right: '10px',
-            width: '30px', height: '30px', borderRadius: '50%',
-            backgroundColor: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.3)',
-            color: 'white', cursor: 'pointer', zIndex: 20,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '14px', fontWeight: 'bold', lineHeight: 1
-          }}
-        >✕</button>
+        {/* Close button */}
+        <button onClick={onClose} style={{
+          position: 'absolute', top: 10, right: 10, zIndex: 10,
+          width: 28, height: 28, borderRadius: '50%',
+          backgroundColor: 'rgba(0,0,0,0.75)', border: '1px solid rgba(255,255,255,0.3)',
+          color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', fontSize: 13, fontWeight: 'bold',
+        }}>✕</button>
 
-        {/* Flyer image + schedule text overlay */}
-        <div style={{ position: 'relative', width: '100%' }}>
-          {config?.horario_flyer_url ? (
-            <img 
-              src={config.horario_flyer_url} 
-              alt="Horario de Atención"
-              style={{ 
-                width: '100%', height: 'auto', display: 'block',
-                maxHeight: '70vh', objectFit: 'contain'
-              }}
-            />
-          ) : (
-            <div style={{ 
-              padding: '60px 40px', textAlign: 'center',
-              background: 'linear-gradient(135deg, #1a0533 0%, #0d0d2b 100%)'
-            }}>
-              <span style={{ fontSize: '56px', display: 'block', marginBottom: '12px' }}>⏰</span>
-              <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#39ff14', marginBottom: '4px', textShadow: '0 0 20px #39ff14' }}>
-                HORARIO PARA RECARGAR:
-              </h2>
-            </div>
-          )}
-
-          {/* Schedule text overlay — bottom-right of flyer header area */}
+        {/* Flyer image */}
+        {config?.horario_flyer_url ? (
+          <img
+            src={config.horario_flyer_url}
+            alt="Horario de Atención"
+            style={{ width: '100%', height: 'auto', display: 'block' }}
+          />
+        ) : (
           <div style={{
-            position: 'absolute',
-            top: '14%',       // just below "HORARIO PARA RECARGAR:" text on the image
-            right: '3%',
-            width: '52%',     // matches the right side of the flyer
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '4px',
-            alignItems: 'flex-start'
+            padding: '40px', textAlign: 'center',
+            background: 'linear-gradient(135deg, #1a0533, #0d0d2b)'
           }}>
+            <span style={{ fontSize: 52, display: 'block', marginBottom: 12 }}>⏰</span>
+            <p style={{ color: '#39ff14', fontWeight: 900, fontSize: 20 }}>HORARIO PARA RECARGAR:</p>
+          </div>
+        )}
+
+        {/* Schedule hours block — below the image */}
+        <div style={{
+          background: 'linear-gradient(135deg, #0d1a00 0%, #001a0d 100%)',
+          borderTop: '3px solid #39ff14',
+          padding: '14px 16px',
+        }}>
+          <p style={{
+            textAlign: 'center', fontSize: 11, fontWeight: 700, color: 'rgba(57,255,20,0.7)',
+            textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8
+          }}>🕐 Horario para Recargar</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
             {horarioLines.map((line, i) => (
-              <div 
-                key={i}
-                className="schedule-horario-line"
-                style={{
-                  backgroundColor: 'rgba(0,0,0,0.75)',
-                  border: '2px solid #39ff14',
-                  borderRadius: '6px',
-                  padding: '4px 10px',
-                  color: '#39ff14',
-                  fontFamily: "'Arial Black', Arial, sans-serif",
-                  fontWeight: 900,
-                  fontSize: '14px',
-                  textShadow: '0 0 8px rgba(57,255,20,0.8)',
-                  whiteSpace: 'nowrap',
-                  boxShadow: '0 0 10px rgba(57,255,20,0.3)',
-                  letterSpacing: '0.02em'
-                }}
-              >
+              <div key={i} style={{
+                width: '100%', padding: '8px 14px', borderRadius: 8,
+                backgroundColor: 'rgba(57,255,20,0.08)',
+                border: '1px solid rgba(57,255,20,0.35)',
+                color: '#39ff14',
+                fontFamily: "'Arial Black', Arial, sans-serif",
+                fontWeight: 900, fontSize: 15,
+                textAlign: 'center',
+                textShadow: '0 0 12px rgba(57,255,20,0.5)',
+                letterSpacing: '0.03em',
+                wordBreak: 'break-word',
+              }}>
                 {line}
               </div>
             ))}
           </div>
         </div>
 
-        {/* Footer button */}
-        <div style={{ padding: '12px 16px', backgroundColor: '#000', borderTop: '1px solid rgba(57,255,20,0.2)' }}>
-          <button 
-            onClick={onClose}
-            style={{
-              width: '100%', height: '44px', fontSize: '15px', fontWeight: 800,
-              background: 'linear-gradient(135deg, #39ff14, #00d2ff)',
-              border: 'none', borderRadius: '10px', color: '#000',
-              cursor: 'pointer', letterSpacing: '0.05em', textTransform: 'uppercase'
-            }}
-          >
+        {/* CTA Button */}
+        <div style={{ padding: '10px 14px 14px', backgroundColor: '#060608' }}>
+          <button onClick={onClose} style={{
+            width: '100%', height: 44, fontSize: 15, fontWeight: 800,
+            background: 'linear-gradient(90deg, #39ff14, #00d2ff)',
+            border: 'none', borderRadius: 10, color: '#000',
+            cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em',
+            boxShadow: '0 0 20px rgba(57,255,20,0.3)',
+          }}>
             ¡Entendido!
           </button>
         </div>
@@ -406,11 +383,16 @@ export default function App() {
     localStorage.setItem('lastPage', currentPage)
   }, [currentPage])
   
-  // Lógica para el Pop-up de Horario - aparece UNA VEZ por sesión del navegador
+  // Lógica para el Pop-up de Horario - aparece UNA VEZ por día por usuario
   const hasShownModal = React.useRef(false)
   useEffect(() => {
     if (!user || hasShownModal.current) return
     
+    const today = new Date().toISOString().split('T')[0]
+    const sessionKey = `horario_popup_${user.id}_${today}`
+
+    if (sessionStorage.getItem(sessionKey)) return
+
     const checkAndShowModal = async () => {
       try {
         const { data } = await supabase
@@ -418,25 +400,19 @@ export default function App() {
           .select('clave, valor_texto, valor')
           .in('clave', ['show_horario_popup'])
           .is('owner_id', null)
-        
+
         if (!data || data.length === 0) return
-        
+
         const row = data.find(r => r.clave === 'show_horario_popup')
         const isEnabled = (row?.valor_texto || String(row?.valor)) === 'true'
-        
-        if (!isEnabled) return
-        
-        // Usar una clave con fecha para que se resetee cada día
-        const today = new Date().toISOString().split('T')[0]
-        const sessionKey = `horario_popup_${today}`
-        
-        if (!sessionStorage.getItem(sessionKey)) {
+
+        if (isEnabled) {
           hasShownModal.current = true
-          // Limpiar flags de días anteriores
+          // Limpiar claves viejas del mismo usuario
           Object.keys(sessionStorage)
-            .filter(k => k.startsWith('horario_popup_') && k !== sessionKey)
+            .filter(k => k.startsWith(`horario_popup_${user.id}_`) && k !== sessionKey)
             .forEach(k => sessionStorage.removeItem(k))
-          
+
           setTimeout(() => {
             setShowScheduleModal(true)
             sessionStorage.setItem(sessionKey, 'true')
@@ -446,7 +422,7 @@ export default function App() {
         console.error('Error checking schedule modal config:', err)
       }
     }
-    
+
     checkAndShowModal()
   }, [user])
 
