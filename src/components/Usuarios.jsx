@@ -3,6 +3,7 @@ import { useClientes, useAuth } from '../hooks/useData'
 import { supabase } from '../lib/supabase'
 import { formatUSD, formatBs } from '../utils/helpers'
 import AlertModal from './AlertModal'
+import Pedidos from './Pedidos'
 
 export default function Usuarios({ onNavigate }) {
   const { clientes, loading, updateProfileRoleAndDiscount, updateProfile, updateProfileStatus, ajustarSaldoWallet, ajustarSaldoWalletBs, resetUserPassword, refetch } = useClientes()
