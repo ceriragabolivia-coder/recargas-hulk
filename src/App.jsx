@@ -74,58 +74,83 @@ function ScheduleModal({ show, onClose, config }) {
       >
         {/* Close button */}
         <button onClick={onClose} style={{
-          position: 'absolute', top: 10, right: 10, zIndex: 10,
+          position: 'absolute', top: 10, right: 10, zIndex: 20,
           width: 28, height: 28, borderRadius: '50%',
           backgroundColor: 'rgba(0,0,0,0.75)', border: '1px solid rgba(255,255,255,0.3)',
           color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center',
           justifyContent: 'center', fontSize: 13, fontWeight: 'bold',
         }}>✕</button>
 
-        {/* Flyer image */}
-        {config?.horario_flyer_url ? (
-          <img
-            src={config.horario_flyer_url}
-            alt="Horario de Atención"
-            style={{ width: '100%', height: 'auto', display: 'block' }}
-          />
-        ) : (
-          <div style={{
-            padding: '40px', textAlign: 'center',
-            background: 'linear-gradient(135deg, #1a0533, #0d0d2b)'
-          }}>
-            <span style={{ fontSize: 52, display: 'block', marginBottom: 12 }}>⏰</span>
-            <p style={{ color: '#39ff14', fontWeight: 900, fontSize: 20 }}>HORARIO PARA RECARGAR:</p>
-          </div>
-        )}
+        {/* Flyer image with schedule overlay in the RED BOX area */}
+        <div style={{ position: 'relative', width: '100%' }}>
+          {config?.horario_flyer_url ? (
+            <img
+              src={config.horario_flyer_url}
+              alt="Horario de Atención"
+              style={{ width: '100%', height: 'auto', display: 'block' }}
+            />
+          ) : (
+            <div style={{
+              padding: '40px', textAlign: 'center',
+              background: 'linear-gradient(135deg, #1a0533, #0d0d2b)'
+            }}>
+              <span style={{ fontSize: 52, display: 'block', marginBottom: 12 }}>⏰</span>
+              <p style={{ color: '#39ff14', fontWeight: 900, fontSize: 20 }}>HORARIO PARA RECARGAR:</p>
+            </div>
+          )}
 
-        {/* Schedule hours block — below the image */}
-        <div style={{
-          background: 'linear-gradient(135deg, #0d1a00 0%, #001a0d 100%)',
-          borderTop: '3px solid #39ff14',
-          padding: '14px 16px',
-        }}>
-          <p style={{
-            textAlign: 'center', fontSize: 11, fontWeight: 700, color: 'rgba(57,255,20,0.7)',
-            textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8
-          }}>🕐 Horario para Recargar</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
+          {/* SCHEDULE HOURS OVERLAY — positioned in the blank red box area
+              (top-right of flyer, below "HORARIO PARA RECARGAR:" title) */}
+          <div style={{
+            position: 'absolute',
+            top: '17%',
+            left: '35%',
+            right: '2%',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4,
+            alignItems: 'stretch',
+          }}>
             {horarioLines.map((line, i) => (
               <div key={i} style={{
-                width: '100%', padding: '8px 14px', borderRadius: 8,
-                backgroundColor: 'rgba(57,255,20,0.08)',
-                border: '1px solid rgba(57,255,20,0.35)',
+                backgroundColor: 'rgba(0,0,0,0.72)',
+                border: '2px solid #39ff14',
+                borderRadius: 6,
+                padding: '5px 8px',
                 color: '#39ff14',
                 fontFamily: "'Arial Black', Arial, sans-serif",
-                fontWeight: 900, fontSize: 15,
+                fontWeight: 900,
+                fontSize: 'clamp(11px, 3.2vw, 15px)',
                 textAlign: 'center',
-                textShadow: '0 0 12px rgba(57,255,20,0.5)',
-                letterSpacing: '0.03em',
+                textShadow: '0 0 10px rgba(57,255,20,0.9)',
+                letterSpacing: '0.02em',
                 wordBreak: 'break-word',
+                boxShadow: '0 0 8px rgba(57,255,20,0.4)',
               }}>
                 {line}
               </div>
             ))}
           </div>
+        </div>
+
+        {/* BOTTOM WARNING SECTION (YELLOW BOX) — warning message about out-of-hours orders */}
+        <div style={{
+          background: 'linear-gradient(135deg, #1a0800 0%, #1a0d00 100%)',
+          borderTop: '3px solid #ff9900',
+          padding: '12px 16px',
+          display: 'flex', alignItems: 'flex-start', gap: 10,
+        }}>
+          <span style={{ fontSize: 20, flexShrink: 0, marginTop: 2 }}>⚠️</span>
+          <p style={{
+            color: '#ffb347',
+            fontSize: 13,
+            fontWeight: 600,
+            lineHeight: 1.5,
+            margin: 0,
+            textShadow: '0 0 8px rgba(255,153,0,0.4)',
+          }}>
+            Las órdenes creadas fuera del horario establecido se procesarán al siguiente día en el horario laboral.
+          </p>
         </div>
 
         {/* CTA Button */}
