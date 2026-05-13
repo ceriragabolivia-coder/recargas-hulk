@@ -24,7 +24,7 @@ export function useJuegos() {
   const isNegocio = perfil?.rol === 'negocio'
 
   async function fetchJuegos() {
-    let jSelect = supabase.from('juegos').select('*, descuento_revendedor').eq('activo', true)
+    let jSelect = supabase.from('juegos').select('*, descuento_revendedor, verificacion_api_activa, verificacion_api_url').eq('activo', true)
     let cSelect = supabase.from('categorias').select('*').eq('activa', true)
 
     if (isNegocio) {
@@ -471,7 +471,7 @@ export function useTodosLosProductos() {
     try {
       let query = supabase
         .from('productos')
-        .select('*, juegos!inner(*, categorias(*))')
+        .select('*, juegos!inner(*, categorias(*), verificacion_api_activa, verificacion_api_url)')
         .eq('activo', true)
         .eq('juegos.activo', true)
 
