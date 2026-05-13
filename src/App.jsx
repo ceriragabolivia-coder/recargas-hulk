@@ -280,7 +280,7 @@ export default function App() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, perfil, loading, logout, refetch } = useAuth()
-  const { config } = useConfiguracion()
+  const { config, loading: configLoading } = useConfiguracion()
   
   const [currentParams, setCurrentParams] = useState(null)
   const [isRegistering, setIsRegistering] = useState(false)
@@ -339,26 +339,40 @@ export default function App() {
   }, [currentPage])
   
   // Lógica para el Pop-up de Horario - aparece UNA VEZ por sesión del navegador
-  const prevPopupConfig = React.useRef(null)
+  const hasShownModal = React.useRef(false)
   useEffect(() => {
-    if (!user || !config) return
+    // Solo ejecutar si hay usuario autenticado y no se ha mostrado en esta sesión
+    if (!user || hasShownModal.current || sessionStorage.getItem('horario_popup_shown')) return
     
-    const isEnabled = config?.show_horario_popup === 'true'
-    
-    // Si el admin acaba de habilitar el popup (cambió de false -> true), resetear la sesión
-    if (prevPopupConfig.current === 'false' && isEnabled) {
-      sessionStorage.removeItem('horario_popup_shown')
+    const checkAndShowModal = async () => {
+      try {
+        // Consultar directamente sin depender del contexto (más confiable)
+        const { data } = await supabase
+          .from('configuracion')
+          .select('clave, valor_texto, valor')
+          .in('clave', ['show_horario_popup', 'horario_atencion_texto', 'horario_flyer_url'])
+          .is('owner_id', null)
+        
+        if (!data) return
+        
+        const configMap = {}
+        data.forEach(r => { configMap[r.clave] = r.valor_texto || String(r.valor) })
+        
+        if (configMap.show_horario_popup === 'true' && !sessionStorage.getItem('horario_popup_shown')) {
+          hasShownModal.current = true
+          setTimeout(() => {
+            setShowScheduleModal(true)
+            sessionStorage.setItem('horario_popup_shown', 'true')
+          }, 1500)
+        }
+      } catch (err) {
+        console.error('Error checking schedule modal config:', err)
+      }
     }
-    prevPopupConfig.current = config?.show_horario_popup
     
-    if (isEnabled && !sessionStorage.getItem('horario_popup_shown')) {
-      const timer = setTimeout(() => {
-        setShowScheduleModal(true)
-        sessionStorage.setItem('horario_popup_shown', 'true')
-      }, 1500)
-      return () => clearTimeout(timer)
-    }
-  }, [user, config?.show_horario_popup])
+    checkAndShowModal()
+  }, [user])
+
 
 
   // Sistema de Estadísticas: Latido y Actividad
