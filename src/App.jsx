@@ -44,9 +44,13 @@ const Placeholder = ({ title }) => (
 )
 
 function ScheduleModal({ show, onClose, config }) {
+  const [dontShow, setDontShow] = React.useState(false)
   if (!show) return null
   const horario = config?.horario_atencion_texto || 'Lunes a Domingo: 8:00 AM - 10:00 PM'
   const horarioLines = horario.split(/[|\n]/).map(s => s.trim()).filter(Boolean)
+
+  const handleClose = () => onClose(false)
+  const handleEntendido = () => onClose(dontShow)
 
   return (
     <div style={{
@@ -54,12 +58,20 @@ function ScheduleModal({ show, onClose, config }) {
       backgroundColor: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(6px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       zIndex: 999999, padding: '10px',
-    }} onClick={onClose}>
+    }} onClick={handleClose}>
       <style>{`
         @keyframes smFadeIn { from { opacity:0; transform:scale(0.93); } to { opacity:1; transform:scale(1); } }
         .sm-inner { animation: smFadeIn 0.3s ease; max-height: 95vh; overflow-y: auto; }
         .sm-inner::-webkit-scrollbar { width: 4px; }
         .sm-inner::-webkit-scrollbar-thumb { background: rgba(57,255,20,0.4); border-radius: 4px; }
+        .sm-checkbox-row { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .sm-checkbox-box {
+          width: 18px; height: 18px; border-radius: 4px; border: 2px solid #39ff14;
+          background: transparent; display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0; transition: background 0.2s ease;
+        }
+        .sm-checkbox-box.checked { background: #39ff14; }
+        .sm-checkbox-label { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.75); line-height: 1.3; }
       `}</style>
 
       <div
@@ -73,7 +85,7 @@ function ScheduleModal({ show, onClose, config }) {
         onClick={e => e.stopPropagation()}
       >
         {/* Close button */}
-        <button onClick={onClose} style={{
+        <button onClick={handleClose} style={{
           position: 'absolute', top: 10, right: 10, zIndex: 20,
           width: 28, height: 28, borderRadius: '50%',
           backgroundColor: 'rgba(0,0,0,0.75)', border: '1px solid rgba(255,255,255,0.3)',
@@ -99,33 +111,19 @@ function ScheduleModal({ show, onClose, config }) {
             </div>
           )}
 
-          {/* SCHEDULE HOURS OVERLAY — positioned in the blank red box area
-              (top-right of flyer, below "HORARIO PARA RECARGAR:" title) */}
+          {/* Schedule hours overlay — red box area (top-right of flyer) */}
           <div style={{
-            position: 'absolute',
-            top: '17%',
-            left: '35%',
-            right: '2%',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 4,
-            alignItems: 'stretch',
+            position: 'absolute', top: '17%', left: '35%', right: '2%',
+            display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'stretch',
           }}>
             {horarioLines.map((line, i) => (
               <div key={i} style={{
-                backgroundColor: 'rgba(0,0,0,0.72)',
-                border: '2px solid #39ff14',
-                borderRadius: 6,
-                padding: '5px 8px',
-                color: '#39ff14',
-                fontFamily: "'Arial Black', Arial, sans-serif",
-                fontWeight: 900,
-                fontSize: 'clamp(11px, 3.2vw, 15px)',
-                textAlign: 'center',
-                textShadow: '0 0 10px rgba(57,255,20,0.9)',
-                letterSpacing: '0.02em',
-                wordBreak: 'break-word',
-                boxShadow: '0 0 8px rgba(57,255,20,0.4)',
+                backgroundColor: 'rgba(0,0,0,0.72)', border: '2px solid #39ff14',
+                borderRadius: 6, padding: '5px 8px', color: '#39ff14',
+                fontFamily: "'Arial Black', Arial, sans-serif", fontWeight: 900,
+                fontSize: 'clamp(11px, 3.2vw, 15px)', textAlign: 'center',
+                textShadow: '0 0 10px rgba(57,255,20,0.9)', letterSpacing: '0.02em',
+                wordBreak: 'break-word', boxShadow: '0 0 8px rgba(57,255,20,0.4)',
               }}>
                 {line}
               </div>
@@ -133,29 +131,35 @@ function ScheduleModal({ show, onClose, config }) {
           </div>
         </div>
 
-        {/* BOTTOM WARNING SECTION (YELLOW BOX) — warning message about out-of-hours orders */}
+        {/* Warning section */}
         <div style={{
           background: 'linear-gradient(135deg, #1a0800 0%, #1a0d00 100%)',
-          borderTop: '3px solid #ff9900',
-          padding: '12px 16px',
+          borderTop: '3px solid #ff9900', padding: '12px 16px',
           display: 'flex', alignItems: 'flex-start', gap: 10,
         }}>
           <span style={{ fontSize: 20, flexShrink: 0, marginTop: 2 }}>⚠️</span>
           <p style={{
-            color: '#ffb347',
-            fontSize: 13,
-            fontWeight: 600,
-            lineHeight: 1.5,
-            margin: 0,
-            textShadow: '0 0 8px rgba(255,153,0,0.4)',
+            color: '#ffb347', fontSize: 13, fontWeight: 600,
+            lineHeight: 1.5, margin: 0, textShadow: '0 0 8px rgba(255,153,0,0.4)',
           }}>
             Las órdenes creadas fuera del horario establecido se procesarán al siguiente día en el horario laboral.
           </p>
         </div>
 
-        {/* CTA Button */}
-        <div style={{ padding: '10px 14px 14px', backgroundColor: '#060608' }}>
-          <button onClick={onClose} style={{
+        {/* Footer: checkbox + button */}
+        <div style={{ padding: '10px 14px 14px', backgroundColor: '#060608', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {/* "No mostrar por 12h" checkbox */}
+          <div
+            className="sm-checkbox-row"
+            onClick={() => setDontShow(v => !v)}
+          >
+            <div className={`sm-checkbox-box${dontShow ? ' checked' : ''}`}>
+              {dontShow && <span style={{ color: '#000', fontSize: 12, fontWeight: 900, lineHeight: 1 }}>✓</span>}
+            </div>
+            <span className="sm-checkbox-label">No mostrar por 12 horas</span>
+          </div>
+
+          <button onClick={handleEntendido} style={{
             width: '100%', height: 44, fontSize: 15, fontWeight: 800,
             background: 'linear-gradient(90deg, #39ff14, #00d2ff)',
             border: 'none', borderRadius: 10, color: '#000',
@@ -408,15 +412,21 @@ export default function App() {
     localStorage.setItem('lastPage', currentPage)
   }, [currentPage])
   
-  // Lógica para el Pop-up de Horario - aparece UNA VEZ por día por usuario
-  const hasShownModal = React.useRef(false)
+  // Pop-up de Horario: muestra en cada navegación/recarga, salvo supresión de 12h
+  const scheduleTimerRef = React.useRef(null)
   useEffect(() => {
-    if (!user || hasShownModal.current) return
-    
-    const today = new Date().toISOString().split('T')[0]
-    const sessionKey = `horario_popup_${user.id}_${today}`
+    if (!user) return
 
-    if (sessionStorage.getItem(sessionKey)) return
+    // Limpiar timer previo si el usuario navega rápido
+    if (scheduleTimerRef.current) clearTimeout(scheduleTimerRef.current)
+    setShowScheduleModal(false)
+
+    // Verificar supresión de 12 horas
+    const suppressKey = `horario_no_mostrar_${user.id}`
+    const suppressedUntil = localStorage.getItem(suppressKey)
+    if (suppressedUntil && Date.now() < parseInt(suppressedUntil)) return
+    // Limpiar la clave si ya expiró
+    if (suppressedUntil) localStorage.removeItem(suppressKey)
 
     const checkAndShowModal = async () => {
       try {
@@ -427,29 +437,30 @@ export default function App() {
           .is('owner_id', null)
 
         if (!data || data.length === 0) return
-
         const row = data.find(r => r.clave === 'show_horario_popup')
         const isEnabled = (row?.valor_texto || String(row?.valor)) === 'true'
+        if (!isEnabled) return
 
-        if (isEnabled) {
-          hasShownModal.current = true
-          // Limpiar claves viejas del mismo usuario
-          Object.keys(sessionStorage)
-            .filter(k => k.startsWith(`horario_popup_${user.id}_`) && k !== sessionKey)
-            .forEach(k => sessionStorage.removeItem(k))
-
-          setTimeout(() => {
-            setShowScheduleModal(true)
-            sessionStorage.setItem(sessionKey, 'true')
-          }, 1500)
-        }
+        scheduleTimerRef.current = setTimeout(() => {
+          setShowScheduleModal(true)
+        }, 1500)
       } catch (err) {
         console.error('Error checking schedule modal config:', err)
       }
     }
 
     checkAndShowModal()
-  }, [user])
+    return () => { if (scheduleTimerRef.current) clearTimeout(scheduleTimerRef.current) }
+  }, [user, location.pathname])
+
+  const handleScheduleModalClose = (dontShow) => {
+    setShowScheduleModal(false)
+    if (dontShow && user) {
+      const suppressUntil = Date.now() + 12 * 60 * 60 * 1000
+      localStorage.setItem(`horario_no_mostrar_${user.id}`, suppressUntil.toString())
+    }
+  }
+
 
 
   // Sistema de Estadísticas: Latido y Actividad
@@ -625,7 +636,7 @@ export default function App() {
     return (
       <WalletProvider>
         <Landing onNavigate={handleNavigate} />
-        <ScheduleModal show={showScheduleModal} onClose={() => setShowScheduleModal(false)} config={config} />
+        <ScheduleModal show={showScheduleModal} onClose={handleScheduleModalClose} config={config} />
       </WalletProvider>
     )
   }
@@ -642,7 +653,7 @@ export default function App() {
         />
         <Cart onGoToCheckout={() => navigate('/Checkout')} />
       </Layout>
-      <ScheduleModal show={showScheduleModal} onClose={() => setShowScheduleModal(false)} config={config} />
+      <ScheduleModal show={showScheduleModal} onClose={handleScheduleModalClose} config={config} />
     </WalletProvider>
   )
 }
