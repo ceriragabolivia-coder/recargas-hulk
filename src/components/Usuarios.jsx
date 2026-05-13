@@ -422,6 +422,7 @@ export default function Usuarios({ onNavigate }) {
                               className="form-input" 
                               style={{ padding: '6px', fontSize: '13px', width: '100%' }}
                               value={editingData.rol}
+                              disabled={isEmpleado}
                               onChange={(e) => setEditingData({...editingData, rol: e.target.value})}
                             >
                               <option value="cliente">👤 Cliente</option>
@@ -569,14 +570,16 @@ export default function Usuarios({ onNavigate }) {
                               </>
                             )}
 
-                            <button 
-                              className="btn btn-ghost"
-                              style={{ padding: '6px 10px', fontSize: '12px' }}
-                              onClick={() => handleEditClick(cliente)}
-                              title="Editar usuario"
-                            >
-                              ✏️ Editar
-                            </button>
+                             {!isEmpleado && (
+                              <button 
+                                className="btn btn-ghost"
+                                style={{ padding: '6px 10px', fontSize: '12px' }}
+                                onClick={() => handleEditClick(cliente)}
+                                title="Editar usuario"
+                              >
+                                ✏️ Editar
+                              </button>
+                            )}
                           </div>
                         )}
                       </td>

@@ -888,11 +888,11 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
   const renderNavItem = (item) => {
     let label = item.label;
     let path = item.path;
-    if (!isAdmin && item.key === 'pedidos') {
+    if (!isAdmin && !isEmpleado && item.key === 'pedidos') {
       label = 'Mis Pedidos';
       path = '/Mis-Pedidos';
     }
-    if (!isAdmin && item.key === 'chats') {
+    if (!isAdmin && !isEmpleado && item.key === 'chats') {
       label = 'Chat Con Soporte';
     }
     

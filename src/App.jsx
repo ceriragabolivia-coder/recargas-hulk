@@ -180,7 +180,7 @@ const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
         <Route path="/Ruleta" element={<Ruleta />} />
         <Route path="/Checkout" element={<Checkout onFinish={() => window.history.back()} />} />
         <Route path="/Soporte" element={
-          isAdmin ? (
+          (isAdmin || isEmpleado) ? (
             <SalaDeChat 
               key={currentParams?.targetClientId ? `${currentParams.targetClientId}_${currentParams.prefill}` : 'default'} 
               perfil={perfil} 
@@ -199,7 +199,7 @@ const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
         <Route path="/Gestion-Pedidos" element={<Pedidos params={currentParams} onNavigate={handleNavigate} />} />
 
         {/* Rutas Administrativas (Admin y Negocio) */}
-        <Route path="/Dashboard" element={(isAdmin || isNegocio) ? <Dashboard /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Dashboard" element={(isAdmin || isNegocio || isEmpleado) ? <Dashboard /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Registro-Ventas" element={(isAdmin || isNegocio) ? <RegistroVentas onNavigate={handleNavigate} /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Gestion-Productos" element={(isAdmin || isNegocio) ? <GestionProductos /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Configuracion" element={(isAdmin || isNegocio) ? <Configuracion /> : <Navigate to="/Lista-De-Precios" replace />} />
@@ -212,8 +212,8 @@ const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
         <Route path="/Gestion-Landing" element={isAdmin ? <GestionLanding /> : <Navigate to="/Lista-De-Precios" replace />} />
 
         {/* Redirección por defecto */}
-        <Route path="/" element={<Navigate to={(isAdmin || isNegocio) ? "/Dashboard" : "/"} replace />} />
-        <Route path="*" element={<Navigate to={(isAdmin || isNegocio) ? "/Dashboard" : "/"} replace />} />
+        <Route path="/" element={<Navigate to={(isAdmin || isNegocio || isEmpleado) ? "/Dashboard" : "/"} replace />} />
+        <Route path="*" element={<Navigate to={(isAdmin || isNegocio || isEmpleado) ? "/Dashboard" : "/"} replace />} />
       </Routes>
     </Suspense>
   )
@@ -242,7 +242,7 @@ export default function App() {
       'catalogo': '/Lista-De-Precios',
       'ventas': '/Registro-Ventas',
       'productos': '/Gestion-Productos',
-      'pedidos': perfil?.rol?.toLowerCase() === 'admin' ? '/Gestion-Pedidos' : '/Mis-Pedidos',
+      'pedidos': (perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador') ? '/Gestion-Pedidos' : '/Mis-Pedidos',
       'usuarios': '/Usuarios',
       'chats': '/Soporte',
       'config': '/Configuracion',
