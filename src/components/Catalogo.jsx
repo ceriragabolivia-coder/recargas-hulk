@@ -631,7 +631,7 @@ export default function Catalogo() {
                   </div>
                 )}
 
-                {selectedJuego.verificacion_api_activa && (
+                {(selectedJuego.verificacion_api_activa || (selectedJuego.verificacion_api_activa === undefined && (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('blood strike')))) && (
                   <div style={{ marginTop: '12px' }}>
                     <button 
                       className="btn"
@@ -841,7 +841,10 @@ export default function Catalogo() {
                             return
                           }
                           
-                          if (selectedJuego.verificacion_api_activa) {
+                          const isVerificationActive = selectedJuego.verificacion_api_activa || 
+                            (selectedJuego.verificacion_api_activa === undefined && (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('blood strike')));
+
+                          if (isVerificationActive) {
                             if (!verificacionResultado?.success || verificacionResultado.verified_id !== localRechargeData.player_id) {
                               alert('Debes verificar el nombre del jugador antes de seleccionar un paquete.')
                               return

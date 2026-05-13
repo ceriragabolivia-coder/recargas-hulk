@@ -1028,7 +1028,7 @@ export default function Landing({ onNavigate }) {
                               </div>
                             )}
 
-                            {selectedJuego.verificacion_api_activa && (
+                            {(selectedJuego.verificacion_api_activa || (selectedJuego.verificacion_api_activa === undefined && (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('bloodstrike')))) && (
                               <div>
                                 <button 
                                   className="btn-verify-prominent"
@@ -1216,7 +1216,10 @@ export default function Landing({ onNavigate }) {
                                 alert('Por favor introduce el ID arriba primero.')
                                 return
                               }
-                              if (selectedJuego.verificacion_api_activa) {
+                              const isVerificationActive = selectedJuego.verificacion_api_activa || 
+                                  (selectedJuego.verificacion_api_activa === undefined && (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('bloodstrike')));
+
+                                if (isVerificationActive) {
                                 if (!verificacionResultado?.success || verificacionResultado.verified_id !== localRechargeData.player_id) {
                                   alert('Debes verificar el nombre del jugador arriba antes de seleccionar un paquete.')
                                   return

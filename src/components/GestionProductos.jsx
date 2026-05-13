@@ -91,7 +91,9 @@ export default function GestionProductos() {
       tutorial_video_url: selectedJuego.tutorial_video_url || '',
       tutorial_banner_texto: selectedJuego.tutorial_banner_texto || '',
       tutorial_banner_img: selectedJuego.tutorial_banner_img || '',
-      verificacion_api_activa: !!selectedJuego.verificacion_api_activa,
+      verificacion_api_activa: selectedJuego.verificacion_api_activa === undefined 
+        ? (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('blood strike'))
+        : !!selectedJuego.verificacion_api_activa,
       verificacion_api_url: selectedJuego.verificacion_api_url || ''
     })
     setIsGameModalOpen(true)
