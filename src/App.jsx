@@ -45,51 +45,119 @@ const Placeholder = ({ title }) => (
 
 function ScheduleModal({ show, onClose, config }) {
   if (!show) return null
+  const horario = config?.horario_atencion_texto || 'Lunes a Domingo: 8:00 AM - 10:00 PM'
+  // Split lines if there are multiple (separated by | or \n)
+  const horarioLines = horario.split(/[|\n]/).map(s => s.trim()).filter(Boolean)
+
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
+      backgroundColor: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(6px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 999999, padding: '20px', animation: 'fadeIn 0.3s ease'
+      zIndex: 999999, padding: '12px',
+      animation: 'fadeIn 0.3s ease'
     }} onClick={onClose}>
-      <div style={{
-        maxWidth: '500px', width: '100%', backgroundColor: '#0a0a0f',
-        borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)',
-        overflow: 'hidden', position: 'relative', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
-      }} onClick={e => e.stopPropagation()}>
+      <style>{`
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .schedule-modal-inner { animation: fadeIn 0.3s ease; }
+        @media (max-width: 480px) {
+          .schedule-modal-inner { max-width: 98vw !important; }
+          .schedule-horario-text { font-size: 15px !important; }
+          .schedule-horario-line { font-size: 13px !important; padding: 3px 8px !important; }
+        }
+      `}</style>
+
+      <div 
+        className="schedule-modal-inner"
+        style={{
+          maxWidth: '440px', width: '100%',
+          borderRadius: '20px', overflow: 'hidden',
+          boxShadow: '0 30px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.08)',
+          position: 'relative', backgroundColor: '#000'
+        }} 
+        onClick={e => e.stopPropagation()}
+      >
+        {/* X button */}
         <button 
           onClick={onClose}
           style={{
-            position: 'absolute', top: '15px', right: '15px', width: '32px', height: '32px',
-            borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.2)',
-            color: 'white', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center',
-            justifyContent: 'center', fontSize: '16px', fontWeight: 'bold'
+            position: 'absolute', top: '10px', right: '10px',
+            width: '30px', height: '30px', borderRadius: '50%',
+            backgroundColor: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.3)',
+            color: 'white', cursor: 'pointer', zIndex: 20,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '14px', fontWeight: 'bold', lineHeight: 1
           }}
         >✕</button>
 
-        <div style={{ position: 'relative', backgroundColor: '#000', minHeight: '280px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {/* Flyer image + schedule text overlay */}
+        <div style={{ position: 'relative', width: '100%' }}>
           {config?.horario_flyer_url ? (
             <img 
               src={config.horario_flyer_url} 
               alt="Horario de Atención"
-              style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '75vh', objectFit: 'contain' }}
+              style={{ 
+                width: '100%', height: 'auto', display: 'block',
+                maxHeight: '70vh', objectFit: 'contain'
+              }}
             />
           ) : (
-            <div style={{ padding: '60px', textAlign: 'center' }}>
-              <span style={{ fontSize: '64px', display: 'block', marginBottom: '16px' }}>⏰</span>
-              <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#00d2ff', marginBottom: '8px' }}>Horario de Atención</h2>
-              <p style={{ fontSize: '18px', fontWeight: 600, color: '#fff' }}>{config?.horario_atencion_texto || 'Lunes a Domingo: 8:00 AM - 10:00 PM'}</p>
+            <div style={{ 
+              padding: '60px 40px', textAlign: 'center',
+              background: 'linear-gradient(135deg, #1a0533 0%, #0d0d2b 100%)'
+            }}>
+              <span style={{ fontSize: '56px', display: 'block', marginBottom: '12px' }}>⏰</span>
+              <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#39ff14', marginBottom: '4px', textShadow: '0 0 20px #39ff14' }}>
+                HORARIO PARA RECARGAR:
+              </h2>
             </div>
           )}
+
+          {/* Schedule text overlay — bottom-right of flyer header area */}
+          <div style={{
+            position: 'absolute',
+            top: '14%',       // just below "HORARIO PARA RECARGAR:" text on the image
+            right: '3%',
+            width: '52%',     // matches the right side of the flyer
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px',
+            alignItems: 'flex-start'
+          }}>
+            {horarioLines.map((line, i) => (
+              <div 
+                key={i}
+                className="schedule-horario-line"
+                style={{
+                  backgroundColor: 'rgba(0,0,0,0.75)',
+                  border: '2px solid #39ff14',
+                  borderRadius: '6px',
+                  padding: '4px 10px',
+                  color: '#39ff14',
+                  fontFamily: "'Arial Black', Arial, sans-serif",
+                  fontWeight: 900,
+                  fontSize: '14px',
+                  textShadow: '0 0 8px rgba(57,255,20,0.8)',
+                  whiteSpace: 'nowrap',
+                  boxShadow: '0 0 10px rgba(57,255,20,0.3)',
+                  letterSpacing: '0.02em'
+                }}
+              >
+                {line}
+              </div>
+            ))}
+          </div>
         </div>
-        
-        <div style={{ padding: '16px', textAlign: 'center', backgroundColor: '#0a0a0f' }}>
+
+        {/* Footer button */}
+        <div style={{ padding: '12px 16px', backgroundColor: '#000', borderTop: '1px solid rgba(57,255,20,0.2)' }}>
           <button 
             onClick={onClose}
             style={{
-              width: '100%', height: '48px', fontSize: '16px', fontWeight: 700,
-              background: 'linear-gradient(135deg, #00d2ff, #7b2ff7)',
-              border: 'none', borderRadius: '12px', color: 'white', cursor: 'pointer'
+              width: '100%', height: '44px', fontSize: '15px', fontWeight: 800,
+              background: 'linear-gradient(135deg, #39ff14, #00d2ff)',
+              border: 'none', borderRadius: '10px', color: '#000',
+              cursor: 'pointer', letterSpacing: '0.05em', textTransform: 'uppercase'
             }}
           >
             ¡Entendido!
