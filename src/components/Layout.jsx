@@ -153,7 +153,7 @@ function NotificationBar({ counts, onNavigate, config, onlineUsers }) {
                     </div>
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.nickname || u.email?.split('@')[0]}</div>
-                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.email}</div>
+                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{isEmpleado ? '***' : u.email}</div>
                     </div>
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--accent-success)', boxShadow: '0 0 8px var(--accent-success)' }} />
                   </div>
@@ -332,6 +332,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
   const { config } = useConfiguracion()
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
   const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
+  const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
 
   const [counts, setCounts] = useState({
     pagos_pendientes: 0,
@@ -980,6 +981,13 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
               <div className="nav-section-label">Cuenta</div>
               {NAV_ITEMS.filter(i => ['perfil'].includes(i.key)).map(renderNavItem)}
             </>
+          ) : isEmpleado ? (
+            <>
+              <div className="nav-section-label">Gestión Administrativa</div>
+              {NAV_ITEMS.filter(item => ['pedidos', 'usuarios', 'chats', 'catalogo'].includes(item.key)).map(renderNavItem)}
+              <div className="nav-section-label">Cuenta</div>
+              {NAV_ITEMS.filter(i => ['perfil'].includes(i.key)).map(renderNavItem)}
+            </>
           ) : (
             <>
               <div className="nav-section-label">Catálogo</div>
@@ -1053,6 +1061,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
             <div className="desktop-only"><LiveClock /></div>
             {isAdmin && <NotificationBar key="notif-bar" counts={counts} onNavigate={handleMobileNavigate} config={config} onlineUsers={onlineUsers} />}
+            {isEmpleado && <NotificationBar key="notif-bar-emp" counts={counts} onNavigate={handleMobileNavigate} config={config} onlineUsers={onlineUsers} />}
             <CartWidget />
           </div>
         </header>

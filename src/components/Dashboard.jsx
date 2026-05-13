@@ -441,7 +441,8 @@ export default function Dashboard() {
   const { user, perfil } = useAuth()
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
   const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
-  const isAuthorized = isAdmin || isNegocio
+  const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
+  const isAuthorized = isAdmin || isNegocio || isEmpleado
   const isSuperAdmin = user?.email === 'ceriraga@gmail.com'
   
   const [viewMode, setViewMode] = useState('global') // 'global' | 'own'
@@ -591,7 +592,7 @@ export default function Dashboard() {
         <div className="kpi-grid">
           <div className="kpi-card">
             <div className="kpi-label">Ganancias Hoy (USD)</div>
-            <div className="kpi-value">{formatUSD(resumen?.ganancias_totales || 0)}</div>
+            <div className="kpi-value">{isEmpleado ? '***' : formatUSD(resumen?.ganancias_totales || 0)}</div>
             <div className="kpi-change">Métricas en vivo</div>
           </div>
           <div className="kpi-card">
@@ -601,7 +602,7 @@ export default function Dashboard() {
           </div>
           <div className="kpi-card">
             <div className="kpi-label">Ventas Totales Hoy (Bs)</div>
-            <div className="kpi-value">{formatBs(resumen?.ventas_totales_bs || 0)}</div>
+            <div className="kpi-value">{isEmpleado ? '***' : formatBs(resumen?.ventas_totales_bs || 0)}</div>
           </div>
           <div className="kpi-card" style={{ display: 'flex', flexDirection: 'column' }}>
             <div className="flex justify-between items-center mb-8">
@@ -657,7 +658,7 @@ export default function Dashboard() {
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total del período</div>
                   <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent-success)', lineHeight: 1.2 }}>
-                    {formatUSD(dataLine.reduce((sum, d) => sum + (d.ganancia || 0), 0))}
+                    {isEmpleado ? '***' : formatUSD(dataLine.reduce((sum, d) => sum + (d.ganancia || 0), 0))}
                   </div>
                 </div>
                 <select 

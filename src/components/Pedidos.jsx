@@ -25,6 +25,20 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   const { config } = useConfiguracion()
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
   const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
+  const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
+  
+  const maskSensitive = (val, type = 'text') => {
+    if (!isEmpleado) return val;
+    if (!val) return '***';
+    if (type === 'email') {
+      const [u, d] = val.split('@');
+      return `${u.charAt(0)}***@${d}`;
+    }
+    if (type === 'phone') {
+      return val.substring(0, 4) + '***' + val.substring(val.length - 2);
+    }
+    return val.split(' ')[0] + ' ***';
+  }
   const isSuperAdmin = user?.email?.toLowerCase() === 'ceriraga@gmail.com'
   const [pedidos, setPedidos] = useState([])
   const [loading, setLoading] = useState(true)
@@ -796,16 +810,16 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
             }}>
               👤
             </div>
-            <h2 style={{ fontSize: '22px', color: '#fff', marginBottom: '4px' }}>{modalClient.nombres} {modalClient.apellidos}</h2>
-            <p style={{ color: 'var(--accent-primary)', fontWeight: 600, fontSize: '14px' }}>@{modalClient.usuario || modalClient.nickname || 'Usuario'}</p>
+            <h2 style={{ fontSize: '22px', color: '#fff', marginBottom: '4px' }}>{maskSensitive(modalClient.nombres + ' ' + (modalClient.apellidos || ''))}</h2>
+            <p style={{ color: 'var(--accent-primary)', fontWeight: 600, fontSize: '14px' }}>@{maskSensitive(modalClient.nickname || 'Usuario')}</p>
           </div>
 
           <div style={{ display: 'grid', gap: '16px' }}>
             <div style={{ padding: '16px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
               <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '1px' }}>📱 WhatsApp</div>
               <div style={{ color: '#fff', fontWeight: 600, fontSize: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                {modalClient.whatsapp || 'No suministrado'}
-                {modalClient.whatsapp && (
+                {modalClient.whatsapp ? maskSensitive(modalClient.whatsapp, 'phone') : 'No suministrado'}
+                {modalClient.whatsapp && !isEmpleado && (
                   <a href={`https://wa.me/${modalClient.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{
                     fontSize: '12px', color: '#25D366', textDecoration: 'none', backgroundColor: 'rgba(37, 211, 102, 0.1)', padding: '4px 10px', borderRadius: '8px'
                   }}>Chatear</a>
@@ -1225,8 +1239,8 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                   cursor: 'pointer'
                 }} onClick={() => { setModalClient(selectedPedido.cliente); setShowClientModal(true); }}>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>{selectedPedido.cliente.nombres}</div>
-                    <div style={{ fontSize: '10px', color: 'var(--accent-primary)' }}>{selectedPedido.cliente.whatsapp}</div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>{maskSensitive(selectedPedido.cliente.nombres + ' ' + (selectedPedido.cliente.apellidos || ''))}</div>
+                    <div style={{ fontSize: '10px', color: 'var(--accent-primary)' }}>{maskSensitive(selectedPedido.cliente.whatsapp, 'phone')}</div>
                   </div>
                   <div style={{
                     width: '32px', height: '32px', borderRadius: '50%',
@@ -2041,7 +2055,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                           </td>
                           <td data-label="Cliente" style={{ fontWeight: 600, fontSize: '12px' }}>
                             {pedido.cliente ?
-                              `${pedido.cliente.nombres} ${pedido.cliente.apellidos?.toLowerCase() === 'pendiente' ? '' : (pedido.cliente.apellidos || '')}`.trim() :
+                              maskSensitive(`${pedido.cliente.nombres} ${pedido.cliente.apellidos?.toLowerCase() === 'pendiente' ? '' : (pedido.cliente.apellidos || '')}`.trim()) :
                               '-'
                             }
                           </td>

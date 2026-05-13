@@ -8,8 +8,21 @@ import Pedidos from './Pedidos'
 export default function Usuarios({ onNavigate }) {
   const { clientes, loading, updateProfileRoleAndDiscount, updateProfile, updateProfileStatus, ajustarSaldoWallet, ajustarSaldoWalletBs, resetUserPassword, refetch } = useClientes()
   const { perfil } = useAuth()
+  const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
+  const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
   
-  const [editingRow, setEditingRow] = useState(null)
+  const maskSensitive = (val, type = 'text') => {
+    if (!isEmpleado) return val;
+    if (!val) return '***';
+    if (type === 'email') {
+      const [u, d] = val.split('@');
+      return `${u.charAt(0)}***@${d}`;
+    }
+    if (type === 'phone') {
+      return val.substring(0, 4) + '***' + val.substring(val.length - 2);
+    }
+    return val.split(' ')[0] + ' ***';
+  }
   const [editingData, setEditingData] = useState({})
   const [saving, setSaving] = useState(false)
   const [alertModal, setAlertModal] = useState(null)
@@ -280,16 +293,16 @@ export default function Usuarios({ onNavigate }) {
                     <tr key={cliente.id} style={{ backgroundColor: isEditing ? 'rgba(52, 152, 219, 0.05)' : 'transparent' }}>
                       <td>
                         <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                          {cliente.nombres} {cliente.apellidos}
+                          {maskSensitive(cliente.nombres + ' ' + (cliente.apellidos || ''))}
                         </div>
                         <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                          {cliente.nickname ? `@${cliente.nickname}` : 'Sin apodo'}
+                          {isEmpleado ? '***' : (cliente.nickname ? `@${cliente.nickname}` : 'Sin apodo')}
                         </div>
                       </td>
                       
                       <td>
                         <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>
-                          📧 {cliente.usuario}
+                          📧 {maskSensitive(cliente.usuario, 'email')}
                         </div>
                         
                         {isEditing ? (
@@ -306,7 +319,7 @@ export default function Usuarios({ onNavigate }) {
                           </div>
                         ) : (
                           <div style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
-                            📱 {cliente.whatsapp || 'No registrado'}
+                            📱 {cliente.whatsapp ? maskSensitive(cliente.whatsapp, 'phone') : 'No registrado'}
                           </div>
                         )}
                       </td>
@@ -320,10 +333,10 @@ export default function Usuarios({ onNavigate }) {
                       <td>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                           <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent-success)' }}>
-                            💵 {formatUSD(cliente.billetera_saldo)}
+                            💵 {isEmpleado ? '***' : formatUSD(cliente.billetera_saldo)}
                           </span>
                           <span style={{ fontSize: '13px', fontWeight: 600, color: '#a855f7' }}>
-                            🏦 {formatBs(cliente.billetera_saldo_bs)}
+                            🏦 {isEmpleado ? '***' : formatBs(cliente.billetera_saldo_bs)}
                           </span>
                         </div>
                       </td>
@@ -509,50 +522,56 @@ export default function Usuarios({ onNavigate }) {
                             >
                               💬 Chat
                             </button>
+                            
+                            {!isEmpleado && (
+                              <>
+                                <button 
+                                  className="btn btn-ghost"
+                                  style={{ padding: '6px 10px', fontSize: '12px' }}
+                                  onClick={() => handleAbrirAjuste(cliente)}
+                                  title="Ajustar saldo de billetera"
+                                >
+                                  💵 Saldo
+                                </button>
+                                <button 
+                                  className="btn btn-ghost"
+                                  style={{ padding: '6px 10px', fontSize: '12px' }}
+                                  onClick={() => handleVerMovimientos(cliente)}
+                                  title="Ver transacciones de billetera"
+                                >
+                                  💰 Billetera
+                                </button>
+                                <button 
+                                  className="btn btn-ghost"
+                                  style={{ padding: '6px 10px', fontSize: '12px' }}
+                                  onClick={() => handleVerPedidos(cliente)}
+                                  title="Ver pedidos realizados"
+                                >
+                                  📋 Movimientos
+                                </button>
+                                <button 
+                                  className="btn btn-ghost"
+                                  style={{ padding: '6px 10px', fontSize: '12px' }}
+                                  onClick={() => {
+                                    setReseteandoPassword(cliente)
+                                    setNewPassword('')
+                                    setShowPassword(false)
+                                  }}
+                                  title="Restablecer contraseña"
+                                >
+                                  🔑 Clave
+                                </button>
+                              </>
+                            )}
+
                             <button 
                               className="btn btn-ghost"
                               style={{ padding: '6px 10px', fontSize: '12px' }}
-                              onClick={() => handleAbrirAjuste(cliente)}
-                              title="Ajustar saldo de billetera"
+                              onClick={() => handleEditClick(cliente)}
+                              title="Editar usuario"
                             >
-                              💵 Saldo
+                              ✏️ Editar
                             </button>
-                            <button 
-                              className="btn btn-ghost"
-                              style={{ padding: '6px 10px', fontSize: '12px' }}
-                              onClick={() => handleVerMovimientos(cliente)}
-                              title="Ver transacciones de billetera"
-                            >
-                              💰 Billetera
-                            </button>
-                            <button 
-                              className="btn btn-ghost"
-                              style={{ padding: '6px 10px', fontSize: '12px' }}
-                              onClick={() => handleVerPedidos(cliente)}
-                              title="Ver pedidos realizados"
-                            >
-                              📋 Movimientos
-                            </button>
-                             <button 
-                               className="btn btn-ghost"
-                               style={{ padding: '6px 10px', fontSize: '12px' }}
-                               onClick={() => {
-                                 setReseteandoPassword(cliente)
-                                 setNewPassword('')
-                                 setShowPassword(false)
-                               }}
-                               title="Restablecer contraseña"
-                             >
-                               🔑 Clave
-                             </button>
-                             <button 
-                               className="btn btn-ghost"
-                               style={{ padding: '6px 10px', fontSize: '12px' }}
-                               onClick={() => handleEditClick(cliente)}
-                               title="Editar usuario"
-                             >
-                               ✏️ Editar
-                             </button>
                           </div>
                         )}
                       </td>

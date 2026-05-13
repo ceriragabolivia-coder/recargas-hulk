@@ -162,6 +162,7 @@ const SuspendedView = ({ onLogout, onRefresh, type = 'suspendido' }) => (
 // Componente de rutas separado para evitar re-montado al cambiar estado de App
 const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
   const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
+  const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
   const fallback = (
     <div className="loading-screen">
       <div className="spinner"></div>
@@ -202,7 +203,7 @@ const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
         <Route path="/Registro-Ventas" element={(isAdmin || isNegocio) ? <RegistroVentas onNavigate={handleNavigate} /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Gestion-Productos" element={(isAdmin || isNegocio) ? <GestionProductos /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Configuracion" element={(isAdmin || isNegocio) ? <Configuracion /> : <Navigate to="/Lista-De-Precios" replace />} />
-        <Route path="/Usuarios" element={isAdmin ? <Usuarios onNavigate={handleNavigate} /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Usuarios" element={(isAdmin || isEmpleado) ? <Usuarios onNavigate={handleNavigate} /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Reportes" element={(isAdmin || isNegocio) ? <Reportes /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Pagos-Admins" element={isAdmin ? <PagosAdmins /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Revendedores" element={isAdmin ? <Revendedores onNavigate={handleNavigate} /> : <Navigate to="/Lista-De-Precios" replace />} />
@@ -306,12 +307,13 @@ export default function App() {
 
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
   const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
+  const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
 
   // Solo redirigimos automáticamente la PRIMERA vez que cargamos el perfil
   const hasRedirectedRef = React.useRef(false)
   React.useEffect(() => {
     if (perfil && !hasRedirectedRef.current && (location.pathname === '/login' || location.pathname === '/register')) {
-      if (isAdmin || isNegocio) {
+      if (isAdmin || isNegocio || isEmpleado) {
         navigate('/Dashboard', { replace: true })
       } else {
         navigate('/', { replace: true })
@@ -378,6 +380,9 @@ export default function App() {
   let isLandingRoute = false
   if (isAdmin || isNegocio) {
     // Admins/Negocio ven Landing solo en las rutas específicas
+    isLandingRoute = coreLandingRoutes.includes(currentPath)
+  } else if (isEmpleado) {
+    // Empleado también ve el sistema por defecto
     isLandingRoute = coreLandingRoutes.includes(currentPath)
   } else {
     // Clientes ven Landing por defecto, A MENOS que estén en una sección del sistema
