@@ -34,7 +34,10 @@ export default function GestionProductos() {
     caracteristicas_region: 'Global',
     caracteristicas_entrega: 'Inmediata',
     caracteristicas_nota: '',
-    instrucciones_recarga: ''
+    instrucciones_recarga: '',
+    tutorial_video_url: '',
+    tutorial_banner_texto: '',
+    tutorial_banner_img: ''
   })
 
   const juegosFiltrados = useMemo(() => {
@@ -60,7 +63,10 @@ export default function GestionProductos() {
       caracteristicas_region: 'Global',
       caracteristicas_entrega: 'Inmediata',
       caracteristicas_nota: '',
-      instrucciones_recarga: ''
+      instrucciones_recarga: '',
+      tutorial_video_url: '',
+      tutorial_banner_texto: '',
+      tutorial_banner_img: ''
     })
     setIsGameModalOpen(true)
   }
@@ -78,7 +84,10 @@ export default function GestionProductos() {
       caracteristicas_region: selectedJuego.caracteristicas_region || 'Global',
       caracteristicas_entrega: selectedJuego.caracteristicas_entrega || 'Inmediata',
       caracteristicas_nota: selectedJuego.caracteristicas_nota || '',
-      instrucciones_recarga: selectedJuego.instrucciones_recarga || ''
+      instrucciones_recarga: selectedJuego.instrucciones_recarga || '',
+      tutorial_video_url: selectedJuego.tutorial_video_url || '',
+      tutorial_banner_texto: selectedJuego.tutorial_banner_texto || '',
+      tutorial_banner_img: selectedJuego.tutorial_banner_img || ''
     })
     setIsGameModalOpen(true)
   }
@@ -99,7 +108,10 @@ export default function GestionProductos() {
         caracteristicas_region: formGame.caracteristicas_region,
         caracteristicas_entrega: formGame.caracteristicas_entrega,
         caracteristicas_nota: formGame.caracteristicas_nota,
-        instrucciones_recarga: formGame.instrucciones_recarga
+        instrucciones_recarga: formGame.instrucciones_recarga,
+        tutorial_video_url: formGame.tutorial_video_url,
+        tutorial_banner_texto: formGame.tutorial_banner_texto,
+        tutorial_banner_img: formGame.tutorial_banner_img
       })
       if (!res.error) {
         setSelectedJuego(prev => ({ ...prev, ...formGame }))
@@ -1211,6 +1223,81 @@ export default function GestionProductos() {
                 onChange={e => setFormGame({ ...formGame, instrucciones_recarga: e.target.value })}
                 style={{ resize: 'vertical', minHeight: '80px' }}
               />
+            </div>
+          </div>
+
+          <hr style={{ margin: '24px 0', borderColor: 'var(--border-color)' }} />
+          <h3 style={{ fontSize: 13, textTransform: 'uppercase', color: 'var(--accent-primary)', marginBottom: 12 }}>Configuración de Video Tutorial</h3>
+          
+          <div className="form-group">
+            <label className="form-label">URL del Video (YouTube)</label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Ej: https://www.youtube.com/watch?v=..."
+              value={formGame.tutorial_video_url}
+              onChange={e => setFormGame({ ...formGame, tutorial_video_url: e.target.value })}
+            />
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+              Si se proporciona, aparecerá un banner de tutorial en la página del producto.
+            </p>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Texto del Banner (Opcional)</label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Ej: ¿Aún no sabes recargar vía Pago Móvil?"
+              value={formGame.tutorial_banner_texto}
+              onChange={e => setFormGame({ ...formGame, tutorial_banner_texto: e.target.value })}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Imagen del Banner (Opcional - Reemplaza al texto)</label>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: 8 }}>
+              <div style={{
+                width: 100, height: 50, borderRadius: 8, backgroundColor: 'var(--bg-panel)',
+                border: '1px solid var(--border-color)', overflow: 'hidden', display: 'flex',
+                alignItems: 'center', justifyContent: 'center'
+              }}>
+                {formGame.tutorial_banner_img ? (
+                  <img src={formGame.tutorial_banner_img} alt="Banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={{ fontSize: 18, opacity: 0.3 }}>🖼️</span>
+                )}
+              </div>
+              <div style={{ flex: 1 }}>
+                <input
+                  type="file"
+                  id="tutorial-banner-upload"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={async (e) => {
+                    const file = e.target.files[0]
+                    if (!file) return
+                    setSaving(true)
+                    try {
+                      const fileName = `banner-${Date.now()}.png`
+                      const { error: uploadError } = await supabase.storage.from('logos').upload(fileName, file)
+                      if (uploadError) throw uploadError
+                      const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(fileName)
+                      setFormGame(prev => ({ ...prev, tutorial_banner_img: publicUrl }))
+                    } catch (err) {
+                      setAlertModal({ type: 'error', message: 'Error subiendo banner: ' + err.message })
+                    } finally {
+                      setSaving(false)
+                    }
+                  }}
+                />
+                <label htmlFor="tutorial-banner-upload" className="btn btn-ghost btn-sm">
+                  {saving ? 'Procesando...' : '📤 Subir Banner'}
+                </label>
+                {formGame.tutorial_banner_img && (
+                  <button type="button" className="btn btn-ghost btn-sm text-danger" style={{ marginLeft: '8px' }} onClick={() => setFormGame(prev => ({ ...prev, tutorial_banner_img: '' }))}>🗑️</button>
+                )}
+              </div>
             </div>
           </div>
 

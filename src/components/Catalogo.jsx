@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useConfiguracion, useTodosLosProductos, useCart, useAuth, useCuentasGuardadas } from '../hooks/useData'
 import { calcularPrecioVenta, formatBs, formatUSD } from '../utils/helpers'
+import TutorialVideoModal from './TutorialVideoModal'
 
 export default function Catalogo() {
   const { productos, loading } = useTodosLosProductos()
@@ -97,6 +98,7 @@ export default function Catalogo() {
   const [infoProductModal, setInfoProductModal] = useState(null)
   const [isVerificando, setIsVerificando] = useState(false)
   const [verificacionResultado, setVerificacionResultado] = useState(null)
+  const [showTutorialModal, setShowTutorialModal] = useState(false)
 
   const handleVerificarJugador = async () => {
     if (!localRechargeData.player_id.trim()) {
@@ -392,6 +394,48 @@ export default function Catalogo() {
             )}
 
           </div>
+
+          {selectedJuego.tutorial_video_url && (
+            <div 
+              className="tutorial-banner-card"
+              onClick={() => setShowTutorialModal(true)}
+              style={{
+                position: 'relative',
+                cursor: 'pointer',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                marginTop: '4px',
+                border: '1px solid rgba(0, 210, 255, 0.3)',
+                background: 'var(--bg-panel)',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,210,255,0.2)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.2)' }}
+            >
+              {selectedJuego.tutorial_banner_img ? (
+                <img src={selectedJuego.tutorial_banner_img} alt="Tutorial" style={{ width: '100%', display: 'block' }} />
+              ) : (
+                <div style={{ padding: '16px', display: 'flex', gap: '16px', alignItems: 'center', background: 'linear-gradient(135deg, rgba(0, 210, 255, 0.1) 0%, rgba(0, 115, 230, 0.1) 100%)' }}>
+                  <div style={{ 
+                    width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'rgba(0, 210, 255, 0.2)', 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0,
+                    boxShadow: '0 0 15px rgba(0, 210, 255, 0.3)'
+                  }}>
+                    🔔
+                  </div>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)' }}>
+                      {selectedJuego.tutorial_banner_texto || `¿Aún no sabes recargar ${selectedJuego.nombre}?`}
+                    </h4>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: 'var(--accent-primary)', fontWeight: 600 }}>
+                      Aquí tienes un video guía <span style={{ textDecoration: 'underline' }}>Click aquí</span>
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {config?.tutorial_banner_texto && config?.tutorial_banner_link && (
             <a 
@@ -975,6 +1019,12 @@ export default function Catalogo() {
           )
         })}
       </div>
+      <TutorialVideoModal 
+        isOpen={showTutorialModal} 
+        onClose={() => setShowTutorialModal(false)} 
+        videoUrl={selectedJuego.tutorial_video_url} 
+        title={`¿Cómo recargar ${selectedJuego.nombre}?`} 
+      />
     </div>
   )
 }
