@@ -58,6 +58,11 @@ export default function Configuracion() {
   const [bgFloatingOpacity, setBgFloatingOpacity] = useState('0.4')
   const [bgFloatingImages, setBgFloatingImages] = useState([])
   
+  // Estados para Horario de Atención
+  const [showHorarioPopup, setShowHorarioPopup] = useState(false)
+  const [horarioAtencionTexto, setHorarioAtencionTexto] = useState('Lunes a Domingo: 8:00 AM - 10:00 PM')
+  const [horarioFlyerUrl, setHorarioFlyerUrl] = useState('')
+  
   // Ref para evitar que las actualizaciones de Realtime sobrescriban lo que el admin está escribiendo
   const initialized = useRef(false)
 
@@ -89,6 +94,11 @@ export default function Configuracion() {
       } catch (e) {
         setBgFloatingImages([])
       }
+
+      // Horario
+      setShowHorarioPopup(config.show_horario_popup === 'true')
+      setHorarioAtencionTexto(config.horario_atencion_texto || 'Lunes a Domingo: 8:00 AM - 10:00 PM')
+      setHorarioFlyerUrl(config.horario_flyer_url || '')
 
       initialized.current = true
     }
@@ -376,6 +386,13 @@ export default function Configuracion() {
                 onClick={() => setActiveTab('cashback')}
               >
                 💸 Cash Back
+              </button>
+              <button 
+                className={`btn ${activeTab === 'horario' ? 'btn-primary' : 'btn-ghost'}`}
+                style={{ justifyContent: 'flex-start', textAlign: 'left' }}
+                onClick={() => setActiveTab('horario')}
+              >
+                📅 Horario Pop-up
               </button>
             </>
           )}
@@ -1390,6 +1407,114 @@ export default function Configuracion() {
                     </div>
                   </div>
 
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'horario' && (
+            <>
+              <div className="card-header">
+                <h2 className="card-title">Pop-up de Horario de Atención</h2>
+              </div>
+              <div style={{ padding: '24px' }}>
+                <p style={{ color: 'var(--text-muted)', marginBottom: '24px', fontSize: '14px' }}>
+                  Configura un mensaje emergente que se mostrará a los clientes logueados al ingresar a la plataforma para informar sobre el horario laboral.
+                </p>
+
+                <div className="responsive-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '32px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div style={{ padding: '16px', backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <p style={{ fontWeight: 700, fontSize: '15px' }}>Habilitar Pop-up</p>
+                        <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Muestra el aviso al entrar (Solo logueados)</p>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          const newVal = !showHorarioPopup
+                          setShowHorarioPopup(newVal)
+                          updateConfig('show_horario_popup', newVal ? 'true' : 'false', true)
+                        }}
+                        style={{
+                          width: '44px', height: '22px', borderRadius: '11px', 
+                          backgroundColor: showHorarioPopup ? 'var(--accent-success)' : '#3f3f46',
+                          position: 'relative', transition: 'all 0.3s ease', cursor: 'pointer', border: 'none'
+                        }}
+                      >
+                        <div style={{
+                          width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'white',
+                          position: 'absolute', top: '2px', left: showHorarioPopup ? '24px' : '2px',
+                          transition: 'all 0.3s ease'
+                        }} />
+                      </button>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Texto del Horario</label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        placeholder="Ej: Lunes a Viernes: 8am - 10pm"
+                        value={horarioAtencionTexto}
+                        onChange={(e) => setHorarioAtencionTexto(e.target.value)}
+                      />
+                    </div>
+
+                    <button 
+                      className="btn btn-primary" 
+                      onClick={async () => {
+                        await updateConfig('horario_atencion_texto', horarioAtencionTexto, true)
+                        setAlertModal({ type: 'success', message: 'Texto del horario guardado' })
+                      }}
+                    >
+                      💾 Guardar Texto
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ 
+                      width: '100%', aspectRatio: '4/5', borderRadius: '16px', backgroundColor: 'var(--bg-card)',
+                      border: '2px dashed var(--border-color)', display: 'flex', alignItems: 'center', 
+                      justifyContent: 'center', overflow: 'hidden', position: 'relative'
+                    }}>
+                      {horarioFlyerUrl ? (
+                        <img src={horarioFlyerUrl} alt="Flyer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ textAlign: 'center', padding: '20px' }}>
+                          <span style={{ fontSize: '40px', display: 'block', marginBottom: '8px' }}>🖼️</span>
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Flyer del Horario</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <input 
+                      type="file" 
+                      id="horario-flyer-upload" 
+                      style={{ display: 'none' }} 
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files[0]
+                        if (!file) return
+                        setUploadingImage(true)
+                        try {
+                          const path = `system/horario_flyer_${Date.now()}.png`
+                          const { error: uploadError } = await supabase.storage.from('logos').upload(path, file)
+                          if (uploadError) throw uploadError
+                          const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(path)
+                          setHorarioFlyerUrl(publicUrl)
+                          await updateConfig('horario_flyer_url', publicUrl, true)
+                          setAlertModal({ type: 'success', message: 'Flyer actualizado correctamente' })
+                        } catch (err) {
+                          setAlertModal({ type: 'error', message: 'Error: ' + err.message })
+                        } finally {
+                          setUploadingImage(false)
+                        }
+                      }}
+                    />
+                    <label htmlFor="horario-flyer-upload" className={`btn ${uploadingImage ? 'btn-ghost' : 'btn-primary'}`} style={{ width: '100%' }}>
+                      {uploadingImage ? 'Subiendo...' : '📤 Cambiar Flyer'}
+                    </label>
+                  </div>
                 </div>
               </div>
             </>

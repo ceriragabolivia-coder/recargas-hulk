@@ -227,6 +227,7 @@ export default function App() {
   
   const [currentParams, setCurrentParams] = useState(null)
   const [isRegistering, setIsRegistering] = useState(false)
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
   
   // Sincronizar isRegistering con la ruta para compatibilidad
   useEffect(() => {
@@ -279,6 +280,18 @@ export default function App() {
   React.useEffect(() => {
     localStorage.setItem('lastPage', currentPage)
   }, [currentPage])
+  
+  // Lógica para el Pop-up de Horario
+  useEffect(() => {
+    if (user && config?.show_horario_popup === 'true' && !sessionStorage.getItem('horario_popup_shown')) {
+      // Pequeño delay para no abrumar al entrar
+      const timer = setTimeout(() => {
+        setShowScheduleModal(true)
+        sessionStorage.setItem('horario_popup_shown', 'true')
+      }, 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [user, config?.show_horario_popup])
 
   // Sistema de Estadísticas: Latido y Actividad
   React.useEffect(() => {
@@ -469,6 +482,65 @@ export default function App() {
         />
         <Cart onGoToCheckout={() => navigate('/Checkout')} />
       </Layout>
+
+      {/* MODAL DE HORARIO DE ATENCIÓN */}
+      {showScheduleModal && (
+        <div className="schedule-modal-overlay" style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 999999, padding: '20px', animation: 'fadeIn 0.3s ease'
+        }} onClick={() => setShowScheduleModal(false)}>
+          <div className="schedule-modal-content" style={{
+            maxWidth: '500px', width: '100%', backgroundColor: 'var(--bg-card)',
+            borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)',
+            overflow: 'hidden', position: 'relative', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
+          }} onClick={e => e.stopPropagation()}>
+            <button 
+              onClick={() => setShowScheduleModal(false)}
+              style={{
+                position: 'absolute', top: '15px', right: '15px', width: '32px', height: '32px',
+                borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.2)',
+                color: 'white', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}
+            >✕</button>
+
+            <div style={{ position: 'relative', aspectRatio: '4/5', backgroundColor: '#000' }}>
+              {config?.horario_flyer_url ? (
+                <img src={config.horario_flyer_url} alt="Horario" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '12px', padding: '40px', textAlign: 'center' }}>
+                  <span style={{ fontSize: '64px' }}>⏰</span>
+                  <h2 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--accent-primary)' }}>Nuestro Horario</h2>
+                </div>
+              )}
+              <div style={{
+                position: 'absolute', bottom: 0, left: 0, right: 0,
+                background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%)',
+                padding: '40px 20px 20px', textAlign: 'center'
+              }}>
+                <div style={{ 
+                  backgroundColor: 'rgba(0, 210, 255, 0.1)', border: '1px solid rgba(0, 210, 255, 0.3)',
+                  padding: '12px', borderRadius: '12px', backdropFilter: 'blur(4px)'
+                }}>
+                  <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>Estamos activos</p>
+                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#fff' }}>{config?.horario_atencion_texto || 'Lunes a Domingo: 8:00 AM - 10:00 PM'}</h3>
+                </div>
+              </div>
+            </div>
+            
+            <div style={{ padding: '20px', textAlign: 'center' }}>
+              <button 
+                className="btn btn-primary" 
+                style={{ width: '100%', height: '48px', fontSize: '16px', fontWeight: 700 }}
+                onClick={() => setShowScheduleModal(false)}
+              >
+                ¡Entendido!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </WalletProvider>
   )
 }
