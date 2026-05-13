@@ -1132,7 +1132,9 @@ export default function Landing({ onNavigate }) {
                         <strong>Mejor Tasa</strong>
                         <small>Precios competitivos</small>
                       </div>
+                    </div>
                   </div>
+                </div>
 
                   {selectedJuego.tutorial_video_url && (
                     <div 
@@ -1175,8 +1177,7 @@ export default function Landing({ onNavigate }) {
                       )}
                     </div>
                   )}
-                </div>
-              </aside>
+                </aside>
 
               {/* LISTA DE PRECIOS E INFORMACIÓN */}
               <div className="detail-content-area">
