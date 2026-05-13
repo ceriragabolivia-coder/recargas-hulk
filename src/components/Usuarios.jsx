@@ -23,6 +23,7 @@ export default function Usuarios({ onNavigate }) {
     }
     return val.split(' ')[0] + ' ***';
   }
+  const [editingRow, setEditingRow] = useState(null)
   const [editingData, setEditingData] = useState({})
   const [saving, setSaving] = useState(false)
   const [alertModal, setAlertModal] = useState(null)
