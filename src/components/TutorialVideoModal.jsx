@@ -19,6 +19,7 @@ export default function TutorialVideoModal({ isOpen, onClose, videoUrl, title })
   }
 
   const embedUrl = getEmbedUrl(videoUrl)
+  const isYouTube = videoUrl && (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be'))
 
   return (
     <div 
@@ -52,7 +53,7 @@ export default function TutorialVideoModal({ isOpen, onClose, videoUrl, title })
           overflow: hidden;
           background: #000;
         }
-        .video-container iframe {
+        .video-container iframe, .video-container video {
           position: absolute;
           top: 0;
           left: 0;
@@ -71,7 +72,7 @@ export default function TutorialVideoModal({ isOpen, onClose, videoUrl, title })
           border: 1px solid rgba(255, 255, 255, 0.2);
           color: white;
           display: flex;
-          alignItems: center;
+          align-items: center;
           justifyContent: center;
           cursor: pointer;
           transition: all 0.2s;
@@ -107,12 +108,21 @@ export default function TutorialVideoModal({ isOpen, onClose, videoUrl, title })
         
         <div className="video-container">
           {videoUrl ? (
-            <iframe 
-              src={embedUrl} 
-              title={title || 'Tutorial'}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-              allowFullScreen
-            ></iframe>
+            isYouTube ? (
+              <iframe 
+                src={embedUrl} 
+                title={title || 'Tutorial'}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowFullScreen
+              ></iframe>
+            ) : (
+              <video controls autoPlay>
+                <source src={videoUrl} type="video/mp4" />
+                <source src={videoUrl} type="video/webm" />
+                <source src={videoUrl} type="video/ogg" />
+                Tu navegador no soporta el tag de video.
+              </video>
+            )
           ) : (
             <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
               No se ha configurado un video para este tutorial.

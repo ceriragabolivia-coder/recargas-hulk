@@ -1230,16 +1230,54 @@ export default function GestionProductos() {
           <h3 style={{ fontSize: 13, textTransform: 'uppercase', color: 'var(--accent-primary)', marginBottom: 12 }}>Configuración de Video Tutorial</h3>
           
           <div className="form-group">
-            <label className="form-label">URL del Video (YouTube)</label>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Ej: https://www.youtube.com/watch?v=..."
-              value={formGame.tutorial_video_url}
-              onChange={e => setFormGame({ ...formGame, tutorial_video_url: e.target.value })}
-            />
+            <label className="form-label">Video Tutorial (Archivo o YouTube)</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="URL de YouTube: https://www.youtube.com/watch?v=..."
+                value={formGame.tutorial_video_url}
+                onChange={e => setFormGame({ ...formGame, tutorial_video_url: e.target.value })}
+              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <input
+                  type="file"
+                  id="tutorial-video-upload"
+                  accept="video/*"
+                  style={{ display: 'none' }}
+                  onChange={async (e) => {
+                    const file = e.target.files[0]
+                    if (!file) return
+                    if (file.size > 50 * 1024 * 1024) { // 50MB limit
+                      setAlertModal({ type: 'error', message: 'El video no debe superar los 50MB' })
+                      return
+                    }
+                    setSaving(true)
+                    try {
+                      const fileName = `video-${Date.now()}-${file.name}`
+                      const { error: uploadError } = await supabase.storage.from('logos').upload(fileName, file)
+                      if (uploadError) throw uploadError
+                      const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(fileName)
+                      setFormGame(prev => ({ ...prev, tutorial_video_url: publicUrl }))
+                    } catch (err) {
+                      setAlertModal({ type: 'error', message: 'Error subiendo video: ' + err.message })
+                    } finally {
+                      setSaving(false)
+                    }
+                  }}
+                />
+                <label htmlFor="tutorial-video-upload" className="btn btn-ghost btn-sm" style={{ flexShrink: 0 }}>
+                  {saving ? 'Procesando...' : '📤 Subir Video Local'}
+                </label>
+                {formGame.tutorial_video_url && !formGame.tutorial_video_url.includes('youtube') && !formGame.tutorial_video_url.includes('youtu.be') && (
+                  <div style={{ fontSize: '11px', color: 'var(--accent-success)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    ✅ Video cargado correctamente
+                  </div>
+                )}
+              </div>
+            </div>
             <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-              Si se proporciona, aparecerá un banner de tutorial en la página del producto.
+              Puedes pegar un link de YouTube o subir un video propio (MP4, WebM, etc).
             </p>
           </div>
 
