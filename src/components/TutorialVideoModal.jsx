@@ -28,9 +28,21 @@ export default function TutorialVideoModal({ isOpen, onClose, videoUrl, title })
   const embedUrl = getEmbedUrl(videoUrl)
   const isYouTube = videoUrl && (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be'))
 
+  React.useEffect(() => {
+    if (videoUrl && videoUrl.includes('youtube.com/shorts/')) {
+      setIsVertical(true)
+    } else {
+      // Para videos locales, se detectará en handleLoadedMetadata
+      // Para YouTube normal, asume horizontal por defecto
+      if (isYouTube) setIsVertical(false)
+    }
+  }, [videoUrl, isYouTube])
+
   const handleLoadedMetadata = (e) => {
     if (e.target.videoHeight > e.target.videoWidth) {
       setIsVertical(true)
+    } else {
+      setIsVertical(false)
     }
   }
 
@@ -70,6 +82,10 @@ export default function TutorialVideoModal({ isOpen, onClose, videoUrl, title })
         }
         .video-container.ratio-16-9 {
           padding-bottom: 56.25%;
+          height: 0;
+        }
+        .video-container.ratio-9-16 {
+          padding-bottom: 177.77%;
           height: 0;
         }
         .video-container iframe {
@@ -126,6 +142,7 @@ export default function TutorialVideoModal({ isOpen, onClose, videoUrl, title })
         @media (max-width: 600px) {
           .tutorial-modal-content {
             border-radius: 20px;
+            max-width: 100%;
           }
           .modal-title {
             font-size: 14px;
@@ -141,7 +158,7 @@ export default function TutorialVideoModal({ isOpen, onClose, videoUrl, title })
           <h2 className="modal-title">{title || 'Video Tutorial'}</h2>
         </div>
         
-        <div className={`video-container ${isYouTube ? 'ratio-16-9' : ''}`}>
+        <div className={`video-container ${isYouTube ? (isVertical ? 'ratio-9-16' : 'ratio-16-9') : ''}`}>
           {videoUrl ? (
             isYouTube ? (
               <iframe 
