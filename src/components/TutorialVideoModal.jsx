@@ -18,8 +18,15 @@ export default function TutorialVideoModal({ isOpen, onClose, videoUrl, title })
     return url
   }
 
+  const [isVertical, setIsVertical] = React.useState(false)
   const embedUrl = getEmbedUrl(videoUrl)
   const isYouTube = videoUrl && (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be'))
+
+  const handleLoadedMetadata = (e) => {
+    if (e.target.videoHeight > e.target.videoWidth) {
+      setIsVertical(true)
+    }
+  }
 
   return (
     <div 
@@ -41,19 +48,25 @@ export default function TutorialVideoModal({ isOpen, onClose, videoUrl, title })
           border: 1px solid rgba(255, 255, 255, 0.1);
           border-radius: 24px;
           width: 100%;
-          max-width: 800px;
+          max-width: ${isVertical ? '400px' : '800px'};
           overflow: hidden;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
           position: relative;
+          transition: max-width 0.3s ease;
         }
         .video-container {
           position: relative;
-          padding-bottom: 56.25%; /* 16:9 */
-          height: 0;
-          overflow: hidden;
+          width: 100%;
           background: #000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
-        .video-container iframe, .video-container video {
+        .video-container.ratio-16-9 {
+          padding-bottom: 56.25%;
+          height: 0;
+        }
+        .video-container iframe {
           position: absolute;
           top: 0;
           left: 0;
@@ -61,52 +74,68 @@ export default function TutorialVideoModal({ isOpen, onClose, videoUrl, title })
           height: 100%;
           border: none;
         }
+        .video-container video {
+          width: 100%;
+          max-height: 70vh;
+          display: block;
+          object-fit: contain;
+        }
         .close-btn {
           position: absolute;
-          top: 16px;
-          right: 16px;
-          width: 40px;
-          height: 40px;
+          top: 12px;
+          right: 12px;
+          width: 36px;
+          height: 36px;
           border-radius: 50%;
-          background: rgba(0, 0, 0, 0.5);
+          background: rgba(0, 0, 0, 0.6);
           border: 1px solid rgba(255, 255, 255, 0.2);
           color: white;
           display: flex;
           align-items: center;
-          justifyContent: center;
+          justify-content: center;
           cursor: pointer;
           transition: all 0.2s;
-          z-index: 10;
-          font-size: 20px;
+          z-index: 100;
+          font-size: 18px;
         }
         .close-btn:hover {
-          background: rgba(255, 82, 82, 0.8);
+          background: rgba(255, 82, 82, 0.9);
           transform: scale(1.1);
         }
         .modal-header {
-          padding: 20px 24px;
+          padding: 16px 20px;
           border-bottom: 1px solid rgba(255, 255, 255, 0.05);
           display: flex;
           align-items: center;
           gap: 12px;
+          padding-right: 60px; /* Space for close button */
         }
         .modal-title {
           margin: 0;
-          font-size: 18px;
+          font-size: 16px;
           font-weight: 700;
           color: white;
+          line-height: 1.2;
+        }
+        @media (max-width: 600px) {
+          .tutorial-modal-content {
+            border-radius: 20px;
+          }
+          .modal-title {
+            font-size: 14px;
+          }
         }
       `}</style>
       
       <div className="tutorial-modal-content" onClick={e => e.stopPropagation()}>
-        <button className="close-btn" onClick={onClose}>✕</button>
+        <button className="close-btn" onClick={onClose} aria-label="Cerrar">✕</button>
         
         <div className="modal-header">
-          <div style={{ fontSize: '24px' }}>🎬</div>
+          <div style={{ fontSize: '20px' }}>🎬</div>
           <h2 className="modal-title">{title || 'Video Tutorial'}</h2>
         </div>
         
-        <div className="video-container">
+        <div className={`video-container ${isYouTube ? 'ratio-16-9' : ''}`}>
           {videoUrl ? (
             isYouTube ? (
               <iframe 
@@ -116,7 +145,12 @@ export default function TutorialVideoModal({ isOpen, onClose, videoUrl, title })
                 allowFullScreen
               ></iframe>
             ) : (
-              <video controls autoPlay>
+              <video 
+                controls 
+                autoPlay 
+                onLoadedMetadata={handleLoadedMetadata}
+                style={{ backgroundColor: '#000' }}
+              >
                 <source src={videoUrl} type="video/mp4" />
                 <source src={videoUrl} type="video/webm" />
                 <source src={videoUrl} type="video/ogg" />
@@ -124,19 +158,19 @@ export default function TutorialVideoModal({ isOpen, onClose, videoUrl, title })
               </video>
             )
           ) : (
-            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+            <div style={{ height: '200px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '14px' }}>
               No se ha configurado un video para este tutorial.
             </div>
           )}
         </div>
         
-        <div style={{ padding: '20px 24px', backgroundColor: 'rgba(0, 210, 255, 0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <p style={{ margin: 0, fontSize: '14px', color: 'rgba(255, 255, 255, 0.7)' }}>
+        <div style={{ padding: '16px 20px', backgroundColor: 'rgba(255, 255, 255, 0.02)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255, 255, 255, 0.6)', lineHeight: 1.4 }}>
             ¿Tienes dudas? Contáctanos por nuestro canal oficial.
           </p>
           <button 
             className="btn btn-primary" 
-            style={{ padding: '8px 16px', fontSize: '13px' }}
+            style={{ width: '100%', padding: '10px', fontSize: '14px', borderRadius: '12px', fontWeight: 700 }}
             onClick={onClose}
           >
             Entendido
