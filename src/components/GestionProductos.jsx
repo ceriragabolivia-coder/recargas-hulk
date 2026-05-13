@@ -1269,6 +1269,16 @@ export default function GestionProductos() {
                 <label htmlFor="tutorial-video-upload" className="btn btn-ghost btn-sm" style={{ flexShrink: 0 }}>
                   {saving ? 'Procesando...' : '📤 Subir Video Local'}
                 </label>
+                {formGame.tutorial_video_url && (
+                  <button 
+                    type="button"
+                    className="btn btn-ghost btn-sm" 
+                    style={{ color: 'var(--accent-error)', flexShrink: 0 }}
+                    onClick={() => setFormGame(prev => ({ ...prev, tutorial_video_url: '' }))}
+                  >
+                    🗑️ Remover Video
+                  </button>
+                )}
                 {formGame.tutorial_video_url && !formGame.tutorial_video_url.includes('youtube') && !formGame.tutorial_video_url.includes('youtu.be') && (
                   <div style={{ fontSize: '11px', color: 'var(--accent-success)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     ✅ Video cargado correctamente
