@@ -1752,6 +1752,21 @@ tr:last-child td { border-bottom: none; }
   color: var(--text-muted);
 }
 
+.message-sender {
+  font-size: 10px;
+  font-weight: 800;
+  margin-bottom: 4px;
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent-primary);
+}
+
+.message-sender.mine {
+  text-align: right;
+  color: var(--accent-success);
+}
+
 .chat-item-bottom {
   display: flex;
   justify-content: space-between;

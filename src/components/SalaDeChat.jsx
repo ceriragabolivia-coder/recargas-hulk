@@ -31,6 +31,20 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
   const currentClienteId = perfil?.cliente_uuid || perfil?.id // Fallback si no hay cliente_uuid
   const [isMobileChat, setIsMobileChat] = useState(false)
   const audioNotify = useRef(null)
+  const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
+
+  const maskSensitive = (val, type = 'text') => {
+    if (!isEmpleado) return val;
+    if (!val) return '***';
+    if (type === 'email') {
+      const [u, d] = val.split('@');
+      return `${u.charAt(0)}***@${d}`;
+    }
+    if (type === 'phone') {
+      return val.substring(0, 4) + '***' + val.substring(val.length - 2);
+    }
+    return val.split(' ')[0] + ' ***';
+  }
 
   useEffect(() => {
     // Sonido más largo y distintivo de "mensaje"
@@ -175,7 +189,7 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
     if (!clientId) return
     const { data, error } = await supabase
       .from('soporte_mensajes')
-      .select('id, cliente_id, created_at, leido, remitente_id, mensaje, es_sistema, quoted_id, archivo_url, tipo_archivo')
+      .select('id, cliente_id, created_at, leido, remitente_id, mensaje, es_sistema, quoted_id, archivo_url, tipo_archivo, remitente:remitente_id(nombres, apellidos, nickname)')
       .eq('cliente_id', clientId)
       .order('created_at', { ascending: true })
     
@@ -744,7 +758,7 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
                 <div className="chat-item-info">
                   <div className="chat-item-top">
                     <span className="chat-item-name" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      {chat.display_name}
+                      {maskSensitive(chat.display_name)}
                       {chat.rol === 'revendedor' && (
                         <span style={{ fontSize: '8px', padding: '1px 4px', backgroundColor: 'rgba(139, 92, 246, 0.15)', color: '#a78bfa', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: '3px', fontWeight: 800 }}>REV</span>
                       )}
@@ -798,7 +812,7 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
                 </div>
                 <div>
                   <div className="chat-header-name" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {selectedChat.display_name}
+                    {maskSensitive(selectedChat.display_name)}
                     {selectedChat.rol === 'revendedor' && (
                       <span style={{ 
                         fontSize: '9px', padding: '1px 6px', borderRadius: '4px', fontWeight: 800,
@@ -821,7 +835,7 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
                     )}
                   </div>
                   <div className="chat-header-status text-xs" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span>{selectedChat.whatsapp || 'Sin WhatsApp'}</span>
+                    <span>{maskSensitive(selectedChat.whatsapp, 'phone') || 'Sin WhatsApp'}</span>
                     <span style={{ color: 'var(--text-muted)' }}>•</span>
                     <span style={{ color: 'var(--accent-success)', fontWeight: 600 }}>Saldo: ${parseFloat(selectedChat.saldo || 0).toFixed(2)}</span>
                     <span style={{ color: 'var(--text-muted)' }}>/</span>
@@ -898,7 +912,16 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
                             </div>
                           </div>
                         )}
-                        {!isMine && !m.es_sistema && <div className="message-sender">{selectedChat.display_name}</div>}
+                        {!isMine && !m.es_sistema && (
+                          <div className="message-sender">
+                            {m.remitente_id === m.cliente_id ? maskSensitive(selectedChat.display_name) : (m.remitente?.nombres ? `${m.remitente.nombres} ${m.remitente.apellidos || ''} (Admin)` : 'Administración')}
+                          </div>
+                        )}
+                        {isMine && !m.es_sistema && (
+                          <div className="message-sender mine">
+                            Tú ({perfil?.nombres || 'Admin'})
+                          </div>
+                        )}
                         
                         {m.archivo_url && (
                           <div className="message-media">
