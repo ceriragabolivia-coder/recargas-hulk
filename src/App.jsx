@@ -307,9 +307,17 @@ export default function App() {
  
   const [onlineUsers, setOnlineUsers] = useState([])
 
-  // Presence Tracking Universal
+  // Presence Tracking Universal (Estabilizado)
   useEffect(() => {
-    const trackId = user?.id || `anon_${Math.random().toString(36).substring(7)}`
+    // Generar o recuperar un ID persistente para la sesión para evitar parpadeos
+    let trackId = user?.id;
+    if (!trackId) {
+      trackId = sessionStorage.getItem('presence_anon_id');
+      if (!trackId) {
+        trackId = `anon_${Math.random().toString(36).substring(7)}`;
+        sessionStorage.setItem('presence_anon_id', trackId);
+      }
+    }
     
     const channel = supabase.channel('online-users', {
       config: {
@@ -328,7 +336,6 @@ export default function App() {
           if (presence) users.push(presence)
         })
         setOnlineUsers(users)
-        // Emitir evento global para el Dashboard
         window.dispatchEvent(new CustomEvent('online-users-update', { detail: users.length }));
       })
       .subscribe(async (status) => {
@@ -347,7 +354,9 @@ export default function App() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user?.id, perfil])
+    // Solo re-suscribir si cambia el ID de usuario o si el perfil (que define nickname/avatar) cambia de nulo a algo
+    // Usamos el ID del perfil para evitar re-suscripciones por cambios menores en el objeto perfil
+  }, [user?.id, !!perfil])
 
    const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
   const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'

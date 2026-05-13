@@ -374,14 +374,6 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
 
     // Solo admins, administradores y negocios ven estos contadores
     if (!isAdmin && !isNegocio) {
-      setCounts(prev => ({
-        ...prev,
-        pagos_pendientes: 0,
-        ordenes_pendientes: 0,
-        recargas_pendientes: 0,
-        soporte_pendientes: 0,
-        usuarios_online: onlineUsers.length,
-      }))
       return
     }
 
@@ -450,10 +442,9 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
       ordenes_pendientes: oCount,
       recargas_pendientes: rCount,
       billetera_pendientes: brCount,
-      soporte_pendientes: sCount,
-      usuarios_online: onlineUsers.length,
+      soporte_pendientes: sCount
     }))
-  }, [isAdmin, isNegocio, onlineUsers.length, perfil?.id])
+  }, [isAdmin, isNegocio, perfil?.id])
 
 
 
