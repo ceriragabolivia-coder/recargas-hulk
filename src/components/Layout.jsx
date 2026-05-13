@@ -70,7 +70,7 @@ const playNotificationSound = () => {
   }
 };
 
-function NotificationBar({ counts, onNavigate, config, onlineUsers }) {
+function NotificationBar({ counts, onNavigate, config, onlineUsers, isEmpleado }) {
   const [showOnlineDropdown, setShowOnlineDropdown] = useState(false)
   const dropdownRef = useRef(null)
 
@@ -312,7 +312,7 @@ function LiveClock() {
   )
 }
 
-export default function Layout({ currentPage, onNavigate, onOpenChat, children }) {
+export default function Layout({ currentPage, onNavigate, onOpenChat, children, onlineUsers = [] }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Close sidebar when window resizes to desktop
@@ -350,7 +350,6 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
   const { fetchNotificacionesActivas } = useNotificacionesPush()
   const [toasts, setToasts] = useState([])
   const [activeNotiDetail, setActiveNotiDetail] = useState(null)
-  const [onlineUsers, setOnlineUsers] = useState([])
   const userIdRef = useRef(null)
 
   const adminIdsRef = useRef(new Set())
@@ -456,47 +455,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
     }))
   }, [isAdmin, isNegocio, onlineUsers.length, perfil?.id])
 
-  // Presence Tracking
-  useEffect(() => {
-    if (!user?.id || !perfil) return
 
-    const channel = supabase.channel('online-users', {
-      config: {
-        presence: {
-          key: user.id,
-        },
-      },
-    })
-
-    channel
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState()
-        const users = []
-        Object.keys(state).forEach(key => {
-          const presence = state[key][0]
-          if (presence) users.push(presence)
-        })
-        setOnlineUsers(users)
-        // Emitir evento global para el Dashboard
-        window.dispatchEvent(new CustomEvent('online-users-update', { detail: users.length }));
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await channel.track({
-            user_id: user.id,
-            email: user.email,
-            nickname: perfil?.nickname || perfil?.nombres || user.email?.split('@')[0] || 'Usuario',
-            avatar_url: perfil?.avatar_url || null,
-            role: perfil?.rol || 'cliente',
-            online_at: new Date().toISOString(),
-          })
-        }
-      })
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [user?.id, perfil])
 
   useEffect(() => {
     setCounts(prev => ({ ...prev, usuarios_online: onlineUsers.length }))
@@ -1060,8 +1019,8 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children }
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
             <div className="desktop-only"><LiveClock /></div>
-            {isAdmin && <NotificationBar key="notif-bar" counts={counts} onNavigate={handleMobileNavigate} config={config} onlineUsers={onlineUsers} />}
-            {isEmpleado && <NotificationBar key="notif-bar-emp" counts={counts} onNavigate={handleMobileNavigate} config={config} onlineUsers={onlineUsers} />}
+            {isAdmin && <NotificationBar key="notif-bar" counts={counts} onNavigate={handleMobileNavigate} config={config} onlineUsers={onlineUsers} isEmpleado={isEmpleado} />}
+            {isEmpleado && <NotificationBar key="notif-bar-emp" counts={counts} onNavigate={handleMobileNavigate} config={config} onlineUsers={onlineUsers} isEmpleado={isEmpleado} />}
             <CartWidget />
           </div>
         </header>

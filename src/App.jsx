@@ -304,8 +304,52 @@ export default function App() {
       return () => clearInterval(interval);
     }
   }, [user?.id]);
+ 
+  const [onlineUsers, setOnlineUsers] = useState([])
 
-  const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
+  // Presence Tracking Universal
+  useEffect(() => {
+    const trackId = user?.id || `anon_${Math.random().toString(36).substring(7)}`
+    
+    const channel = supabase.channel('online-users', {
+      config: {
+        presence: {
+          key: trackId,
+        },
+      },
+    })
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState()
+        const users = []
+        Object.keys(state).forEach(key => {
+          const presence = state[key][0]
+          if (presence) users.push(presence)
+        })
+        setOnlineUsers(users)
+        // Emitir evento global para el Dashboard
+        window.dispatchEvent(new CustomEvent('online-users-update', { detail: users.length }));
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({
+            user_id: trackId,
+            email: user?.email || 'Visitante',
+            nickname: perfil?.nickname || perfil?.nombres || user?.email?.split('@')[0] || 'Visitante',
+            avatar_url: perfil?.avatar_url || null,
+            role: perfil?.rol || 'visitante',
+            online_at: new Date().toISOString(),
+          })
+        }
+      })
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user?.id, perfil])
+
+   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
   const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
   const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
 
@@ -407,7 +451,7 @@ export default function App() {
   return (
     <WalletProvider>
       <FloatingBackground />
-      <Layout currentPage={currentPage} onNavigate={handleNavigate} onOpenChat={() => navigate('/Soporte')}>
+      <Layout currentPage={currentPage} onNavigate={handleNavigate} onOpenChat={() => navigate('/Soporte')} onlineUsers={onlineUsers}>
         <AppRoutes 
           isAdmin={isAdmin} 
           perfil={perfil} 
