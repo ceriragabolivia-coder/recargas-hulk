@@ -11,6 +11,7 @@ import LandingWallet from './LandingWallet'
 import LandingPerfil from './LandingPerfil'
 import Ruleta from './Ruleta'
 import DOMPurify from 'dompurify'
+import TutorialVideoModal from './TutorialVideoModal'
 export default function Landing({ onNavigate }) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -68,6 +69,7 @@ export default function Landing({ onNavigate }) {
   const [unreadCount, setUnreadCount] = useState(0)
   const [showNotiDropdown, setShowNotiDropdown] = useState(false)
   const [activeToast, setActiveToast] = useState(null)
+  const [showTutorialModal, setShowTutorialModal] = useState(false)
   
   // Modo Nocturno
   const [darkMode, setDarkMode] = useState(true)
@@ -1130,8 +1132,49 @@ export default function Landing({ onNavigate }) {
                         <strong>Mejor Tasa</strong>
                         <small>Precios competitivos</small>
                       </div>
-                    </div>
                   </div>
+
+                  {selectedJuego.tutorial_video_url && (
+                    <div 
+                      className="tutorial-banner-card"
+                      onClick={() => setShowTutorialModal(true)}
+                      style={{
+                        position: 'relative',
+                        cursor: 'pointer',
+                        borderRadius: '16px',
+                        overflow: 'hidden',
+                        marginTop: '16px',
+                        border: '1px solid rgba(0, 210, 255, 0.3)',
+                        background: 'var(--bg-card)',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,210,255,0.2)' }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.2)' }}
+                    >
+                      {selectedJuego.tutorial_banner_img ? (
+                        <img src={selectedJuego.tutorial_banner_img} alt="Tutorial" style={{ width: '100%', display: 'block' }} />
+                      ) : (
+                        <div style={{ padding: '16px', display: 'flex', gap: '16px', alignItems: 'center', background: 'linear-gradient(135deg, rgba(0, 210, 255, 0.1) 0%, rgba(0, 115, 230, 0.1) 100%)' }}>
+                          <div style={{ 
+                            width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(0, 210, 255, 0.2)', 
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0,
+                            boxShadow: '0 0 15px rgba(0, 210, 255, 0.3)'
+                          }}>
+                            🔔
+                          </div>
+                          <div>
+                            <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 800, color: 'var(--text-main)' }}>
+                              {selectedJuego.tutorial_banner_texto || `¿Cómo recargar?`}
+                            </h4>
+                            <p style={{ margin: '2px 0 0 0', fontSize: '10px', color: 'var(--accent)', fontWeight: 600 }}>
+                              Ver video tutorial
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </aside>
 
@@ -1482,12 +1525,20 @@ export default function Landing({ onNavigate }) {
         />
       )}
 
-      {/* AUTH MODAL */}
       <LandingAuthModal 
         isOpen={isAuthModalOpen} 
         onClose={() => setIsAuthModalOpen(false)} 
         initialView={authModalView} 
       />
+
+      {selectedJuego && (
+        <TutorialVideoModal 
+          isOpen={showTutorialModal} 
+          onClose={() => setShowTutorialModal(false)} 
+          videoUrl={selectedJuego.tutorial_video_url} 
+          title={`¿Cómo recargar ${selectedJuego.nombre}?`} 
+        />
+      )}
 
       <style dangerouslySetInnerHTML={{ __html: `
         :root {
