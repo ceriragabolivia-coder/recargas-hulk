@@ -90,7 +90,7 @@ export default function GestionProductos() {
       tutorial_video_url: selectedJuego.tutorial_video_url || '',
       tutorial_banner_texto: selectedJuego.tutorial_banner_texto || '',
       tutorial_banner_img: selectedJuego.tutorial_banner_img || '',
-      verificacion_api_activa: selectedJuego.verificacion_api_activa || false,
+      verificacion_api_activa: !!selectedJuego.verificacion_api_activa,
       verificacion_api_url: selectedJuego.verificacion_api_url || ''
     })
     setIsGameModalOpen(true)
@@ -1240,7 +1240,7 @@ export default function GestionProductos() {
               <input
                 type="checkbox"
                 id="verificacion_api_activa"
-                checked={formGame.verificacion_api_activa}
+                checked={!!formGame.verificacion_api_activa}
                 onChange={e => setFormGame({ ...formGame, verificacion_api_activa: e.target.checked })}
                 style={{ width: '18px', height: '18px', cursor: 'pointer' }}
               />
