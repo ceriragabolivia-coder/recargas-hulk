@@ -13,6 +13,7 @@ import Cart from './components/Cart'
 import FloatingBackground from './components/FloatingBackground'
 import Landing from './components/Landing'
 import kidsGamingImg from './assets/venezuelan_kids_loading.png'
+import SystemPopup from './components/SystemPopup'
 
 // Componentes cargados dinámicamente (Lazy Load) para optimizar la velocidad inicial
 const Dashboard = lazy(() => import('./components/Dashboard'))
@@ -637,6 +638,7 @@ export default function App() {
       <WalletProvider>
         <Landing onNavigate={handleNavigate} />
         <ScheduleModal show={showScheduleModal} onClose={handleScheduleModalClose} config={config} />
+        <SystemPopup />
       </WalletProvider>
     )
   }
@@ -653,6 +655,7 @@ export default function App() {
         />
         <Cart onGoToCheckout={() => navigate('/Checkout')} />
       </Layout>
+      <SystemPopup />
       <ScheduleModal show={showScheduleModal} onClose={handleScheduleModalClose} config={config} />
     </WalletProvider>
   )
