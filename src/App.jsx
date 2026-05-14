@@ -584,25 +584,6 @@ export default function App() {
     )
   }
 
-  if (!user) {
-    const isLandingEnabled = config?.landing_enabled !== '0' // Por defecto habilitada
-    
-    // Si no hay usuario, permitimos Landing, Login y Register
-    return (
-      <Routes>
-        <Route path="/" element={isLandingEnabled ? <Landing /> : <Login onGoToRegister={() => navigate('/register')} />} />
-        <Route path="/login" element={<Login onGoToRegister={() => navigate('/register')} />} />
-        <Route path="/register" element={<Register onBackToLogin={() => navigate('/login')} />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    )
-  }
-
-  if (perfil?.estado === 'pendiente') return <PendingView onLogout={logout} onRefresh={refetch} />
-  if (perfil?.estado === 'rechazado') return <RejectedView onLogout={logout} onRefresh={refetch} />
-  if (perfil?.estado === 'suspendido') return <SuspendedView onLogout={logout} onRefresh={refetch} type="suspendido" />
-  if (perfil?.estado === 'baneado') return <SuspendedView onLogout={logout} onRefresh={refetch} type="baneado" />
-
   const normalizePath = (p) => p.toLowerCase().replace(/\/+$/, '') || '/'
   const currentPath = normalizePath(location.pathname)
   
@@ -626,37 +607,50 @@ export default function App() {
     isLandingRoute = !clientSystemRoutes.includes(currentPath)
   }
 
-  if (isLandingRoute) {
-    if (currentPath === '/checkout') {
+  const mainContent = () => {
+    if (!user) {
+      const isLandingEnabled = config?.landing_enabled !== '0'
       return (
-        <WalletProvider>
-          <Checkout onFinish={() => navigate('/')} />
-        </WalletProvider>
+        <Routes>
+          <Route path="/" element={isLandingEnabled ? <Landing /> : <Login onGoToRegister={() => navigate('/register')} />} />
+          <Route path="/login" element={<Login onGoToRegister={() => navigate('/register')} />} />
+          <Route path="/register" element={<Register onBackToLogin={() => navigate('/login')} />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       )
     }
+
     return (
       <WalletProvider>
-        <Landing onNavigate={handleNavigate} />
-        <ScheduleModal show={showScheduleModal} onClose={handleScheduleModalClose} config={config} />
-        <SystemPopup />
+        {isLandingRoute ? (
+          currentPath === '/checkout' ? (
+            <Checkout onFinish={() => navigate('/')} />
+          ) : (
+            <Landing onNavigate={handleNavigate} />
+          )
+        ) : (
+          <>
+            <FloatingBackground />
+            <Layout currentPage={currentPage} onNavigate={handleNavigate} onOpenChat={() => navigate('/Soporte')} onlineUsers={onlineUsers}>
+              <AppRoutes 
+                isAdmin={isAdmin} 
+                perfil={perfil} 
+                currentParams={currentParams} 
+                handleNavigate={handleNavigate} 
+              />
+              <Cart onGoToCheckout={() => navigate('/Checkout')} />
+            </Layout>
+          </>
+        )}
       </WalletProvider>
     )
   }
 
   return (
-    <WalletProvider>
-      <FloatingBackground />
-      <Layout currentPage={currentPage} onNavigate={handleNavigate} onOpenChat={() => navigate('/Soporte')} onlineUsers={onlineUsers}>
-        <AppRoutes 
-          isAdmin={isAdmin} 
-          perfil={perfil} 
-          currentParams={currentParams} 
-          handleNavigate={handleNavigate} 
-        />
-        <Cart onGoToCheckout={() => navigate('/Checkout')} />
-      </Layout>
+    <>
+      {mainContent()}
       <SystemPopup />
       <ScheduleModal show={showScheduleModal} onClose={handleScheduleModalClose} config={config} />
-    </WalletProvider>
+    </>
   )
 }

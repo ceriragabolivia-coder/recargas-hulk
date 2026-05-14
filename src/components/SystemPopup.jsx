@@ -8,6 +8,7 @@ export default function SystemPopup() {
   const [doNotShowAgain, setDoNotShowAgain] = useState(false)
 
   useEffect(() => {
+    console.log('SystemPopup: allMessages changed', allMessages)
     if (allMessages && allMessages.length > 0) {
       const activeOne = allMessages.find(m => m.activo)
       if (activeOne) {
@@ -16,11 +17,17 @@ export default function SystemPopup() {
         
         // Verificar si está muteado por 24 horas
         const muteUntil = localStorage.getItem(`popup_muted_until_${id}`)
-        if (muteUntil && parseInt(muteUntil) > now) return
+        if (muteUntil && parseInt(muteUntil) > now) {
+          console.log('SystemPopup: Popup is muted until', new Date(parseInt(muteUntil)))
+          return
+        }
 
         // Verificar contador de vistas (Max 3)
         const viewCount = parseInt(localStorage.getItem(`popup_count_${id}`) || '0')
-        if (viewCount >= 3) return
+        if (viewCount >= 3) {
+          console.log('SystemPopup: Popup view count limit reached', viewCount)
+          return
+        }
 
         // Si pasó los filtros, lo mostramos e incrementamos el contador
         localStorage.setItem(`popup_count_${id}`, (viewCount + 1).toString())
