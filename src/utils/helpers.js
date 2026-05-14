@@ -102,16 +102,19 @@ export function formatTime(timeStr) {
 }
 
 export function playCashRegisterSound() {
+  if (localStorage.getItem('admin_sound_enabled') === 'false') return;
   const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3')
   audio.play().catch(err => console.log('Error al reproducir sonido:', err))
 }
 
 export function playSuccessSound() {
+  if (localStorage.getItem('admin_sound_enabled') === 'false') return;
   const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3') // Un sonido de "campanita" de éxito
   audio.play().catch(err => console.log('Error al reproducir sonido de éxito:', err))
 }
 
 export function playErrorSound() {
+  if (localStorage.getItem('admin_sound_enabled') === 'false') return;
   const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2955/2955-preview.mp3') // Sonido de error/zumbador
   audio.play().catch(err => console.log('Error al reproducir sonido de error:', err))
 }
