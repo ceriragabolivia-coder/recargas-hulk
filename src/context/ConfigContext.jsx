@@ -5,15 +5,24 @@ import { useAuth } from './AuthContext'
 const ConfigContext = createContext()
 
 export function ConfigProvider({ children }) {
+  const { user, perfil, loading: loadingAuth } = useAuth()
+  
+  // Inicializar con datos del caché si existen para renderizado inmediato
+  const [config, setConfig] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_system_config');
+      return cached ? JSON.parse(cached) : {};
+    } catch (e) {
+      return {};
+    }
+  })
+  const [loading, setLoading] = useState(!localStorage.getItem('cached_system_config'))
 
   const fetchConfig = useCallback(async () => {
-    // Si estÃ¡ cargando el auth, no hacemos nada aÃºn
     if (loadingAuth) return
     
-    // Si no hay usuario, terminamos de cargar pero sin config (o podrÃ­amos cargar la global si fuera pÃºblica)
     try {
       const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
-
       let query = supabase.from('configuracion').select('*')
       
       if (user && isNegocio) {
@@ -25,13 +34,38 @@ export function ConfigProvider({ children }) {
       const { data, error } = await query
       if (error) throw error
       
+      if (data && data.length > 0) {
+        const obj = {}
+        data.forEach(r => {
+          const val = r.valor_texto !== null && r.valor_texto !== undefined ? r.valor_texto : String(r.valor)
+          obj[r.clave] = val
+        })
+        setConfig(obj)
+        // Guardar en caché
+        localStorage.setItem('cached_system_config', JSON.stringify(obj))
+      } else if (isNegocio) {
+        const { data: globalData } = await supabase.from('configuracion').select('*').is('owner_id', null)
+        if (globalData) {
+          const obj = {}
+          globalData.forEach(r => {
+            const val = r.valor_texto !== null && r.valor_texto !== undefined ? r.valor_texto : String(r.valor)
+            obj[r.clave] = val
+          })
+          setConfig(obj)
+          localStorage.setItem('cached_system_config', JSON.stringify(obj))
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching config:', err)
+    } finally {
+      setLoading(false)
+    }
   }, [user, perfil, loadingAuth])
 
   const updateConfig = async (clave, valor, isText = false) => {
     if (!user) return { error: new Error('No user logged in') }
 
     const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
-
     const safeValor = isText ? 0 : (Number(valor) || 0)
     const safeValorTexto = isText ? String(valor) : null
 
@@ -65,7 +99,10 @@ export function ConfigProvider({ children }) {
     }
     
     if (error) {
-      console.error("Error al actualizar configuraciÃ³n:", error)
+      console.error("Error al actualizar configuración:", error)
+    } else {
+      // Forzar actualización local inmediata si fue exitoso
+      fetchConfig()
     }
     
     return { error }
@@ -81,7 +118,6 @@ export function ConfigProvider({ children }) {
         schema: 'public', 
         table: 'configuracion' 
       }, (payload) => {
-        console.log('ðŸ”” GlobalContext: Sincronizando configuraciÃ³n...', payload.eventType)
         fetchConfig()
       })
       .subscribe()
