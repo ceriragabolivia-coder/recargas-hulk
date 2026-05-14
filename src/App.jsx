@@ -459,6 +459,12 @@ export default function App() {
     // Limpiar la clave si ya expiró
     if (suppressedUntil) localStorage.removeItem(suppressKey)
 
+    const estado = perfil?.estado?.toLowerCase() || 'aprobado'
+    if (['baneado', 'suspendido', 'pendiente', 'rechazado'].includes(estado)) {
+      setShowScheduleModal(false)
+      return
+    }
+
     const checkAndShowModal = async () => {
       try {
         const { data } = await supabase
@@ -684,11 +690,13 @@ export default function App() {
     )
   }
 
+  const isRestricted = user && ['baneado', 'suspendido', 'pendiente', 'rechazado'].includes(perfil?.estado?.toLowerCase())
+
   return (
     <>
       {mainContent()}
-      <SystemPopup />
-      <ScheduleModal show={showScheduleModal} onClose={handleScheduleModalClose} config={config} />
+      {!isRestricted && <SystemPopup />}
+      {!isRestricted && <ScheduleModal show={showScheduleModal} onClose={handleScheduleModalClose} config={config} />}
     </>
   )
 }
