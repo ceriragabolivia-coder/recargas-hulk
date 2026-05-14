@@ -16,7 +16,7 @@ export default function Landing({ onNavigate }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { config } = useConfiguracion()
+  const { config, loading: configLoading } = useConfiguracion()
   const { user, perfil, logout } = useAuth()
   const { cart, addToCart, clearCart } = useCart()
   const isRevendedor = user?.role === 'revendedor'
@@ -75,7 +75,8 @@ export default function Landing({ onNavigate }) {
   const [darkMode, setDarkMode] = useState(true)
 
   const banners = useMemo(() => {
-    if (!config) return []; // No mostrar nada (ni placeholders) mientras carga la config
+    // Si está cargando y no hay caché, no devolvemos nada para evitar el banner genérico
+    if (configLoading && (!config || Object.keys(config).length === 0)) return []; 
     
     if (config?.landing_banners_json) {
       try {
@@ -88,37 +89,24 @@ export default function Landing({ onNavigate }) {
         console.error("Error parsing landing banners", e);
       }
     }
-    // Fallback to legacy config
-    return [
-      {
-        id: 1,
-        image: config?.landing_banner_1 || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=2070',
-        title: config?.landing_banner_1_title ?? config?.landing_subtitulo ?? '¡Recargas al Instante!',
-        text: config?.landing_banner_1_text ?? 'Seguridad y confianza en cada transacción',
-        btnText: config?.landing_banner_1_btn_text ?? 'Empieza ahora',
-        url: config?.landing_banner_1_url ?? '/register',
-        interval: config?.landing_banner_1_interval || '5'
-      },
-      {
-        id: 2,
-        image: config?.landing_banner_2 || 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=2071',
-        title: config?.landing_banner_2_title ?? 'Los mejores precios del mercado',
-        text: config?.landing_banner_2_text ?? '',
-        btnText: config?.landing_banner_2_btn_text ?? 'Empieza ahora',
-        url: config?.landing_banner_2_url ?? '/register',
-        interval: config?.landing_banner_2_interval || '5'
-      },
-      {
-        id: 3,
-        image: config?.landing_banner_3 || 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&q=80&w=2070',
-        title: config?.landing_banner_3_title ?? 'Explora nuestro catálogo',
-        text: config?.landing_banner_3_text ?? '',
-        btnText: config?.landing_banner_3_btn_text ?? 'Empieza ahora',
-        url: config?.landing_banner_3_url ?? '/register',
-        interval: config?.landing_banner_3_interval || '5'
-      }
-    ]
-  }, [config])
+
+    // Solo si terminó de cargar Y no hay JSON, mostramos el fallback legacy si existe imagen
+    if (!configLoading && config?.landing_banner_1) {
+      return [
+        {
+          id: 1,
+          image: config.landing_banner_1,
+          title: config.landing_banner_1_title ?? config.landing_subtitulo ?? '¡Recargas al Instante!',
+          text: config.landing_banner_1_text ?? 'Seguridad y confianza en cada transacción',
+          btnText: config.landing_banner_1_btn_text ?? 'Empieza ahora',
+          url: config.landing_banner_1_url ?? '/register',
+          interval: config.landing_banner_1_interval || '5'
+        }
+      ];
+    }
+
+    return [];
+  }, [config, configLoading]);
 
   useEffect(() => {
     localStorage.setItem('landing_dark_mode', darkMode)
