@@ -5,9 +5,6 @@ import { useAuth } from './AuthContext'
 const ConfigContext = createContext()
 
 export function ConfigProvider({ children }) {
-  const { user, perfil, loading: loadingAuth } = useAuth()
-  const [config, setConfig] = useState({})
-  const [loading, setLoading] = useState(true)
 
   const fetchConfig = useCallback(async () => {
     // Si estÃ¡ cargando el auth, no hacemos nada aÃºn
@@ -28,30 +25,6 @@ export function ConfigProvider({ children }) {
       const { data, error } = await query
       if (error) throw error
       
-      if (data && data.length > 0) {
-        const obj = {}
-        data.forEach(r => {
-          const val = r.valor_texto !== null && r.valor_texto !== undefined ? r.valor_texto : String(r.valor)
-          obj[r.clave] = val
-        })
-        setConfig(obj)
-      } else if (isNegocio) {
-        // Fallback to global config if business hasn't set its own yet
-        const { data: globalData } = await supabase.from('configuracion').select('*').is('owner_id', null)
-        if (globalData) {
-          const obj = {}
-          globalData.forEach(r => {
-            const val = r.valor_texto !== null && r.valor_texto !== undefined ? r.valor_texto : String(r.valor)
-            obj[r.clave] = val
-          })
-          setConfig(obj)
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching config:', err)
-    } finally {
-      setLoading(false)
-    }
   }, [user, perfil, loadingAuth])
 
   const updateConfig = async (clave, valor, isText = false) => {
