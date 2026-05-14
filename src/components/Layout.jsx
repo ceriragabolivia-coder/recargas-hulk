@@ -47,6 +47,7 @@ const getAudioContext = () => {
 };
 
 const playNotificationSound = () => {
+  if (localStorage.getItem('admin_sound_enabled') === 'false') return;
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -330,6 +331,13 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
   }
   const { user, perfil, logout } = useAuth()
   const { config } = useConfiguracion()
+  const [soundEnabled, setSoundEnabled] = useState(() => localStorage.getItem('admin_sound_enabled') !== 'false')
+
+  const toggleSound = () => {
+    const newVal = !soundEnabled;
+    setSoundEnabled(newVal);
+    localStorage.setItem('admin_sound_enabled', newVal.toString());
+  }
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
   const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
   const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
@@ -342,8 +350,6 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
     usuarios_online: 0,
   })
 
-  const { user, perfil, logout } = useAuth()
-  const { config } = useConfiguracion()
 
   // Notificaciones en Vivo (Toasts)
   const { fetchNotificacionesActivas } = useNotificacionesPush()
@@ -463,6 +469,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
 
   // Sonido de Campanita (Bell) - respeta política de autoplay del navegador
   const playBellSound = () => {
+    if (!soundEnabled) return;
     try {
       const audioCtx = getAudioContext();
       if (!audioCtx) return;
@@ -974,6 +981,25 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
               </div>
             )}
             <WalletWidget onNavigate={handleMobileNavigate} />
+            {(isAdmin || isEmpleado || isNegocio) && (
+              <button 
+                onClick={toggleSound}
+                className="sound-toggle-btn"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  padding: '6px 14px', borderRadius: '14px',
+                  backgroundColor: soundEnabled ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                  border: `1px solid ${soundEnabled ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                  color: soundEnabled ? '#22c55e' : '#ef4444',
+                  cursor: 'pointer', transition: 'all 0.3s ease',
+                  fontSize: '11px', fontWeight: 900,
+                  textTransform: 'uppercase', letterSpacing: '0.05em'
+                }}
+              >
+                <span>{soundEnabled ? '🔊' : '🔇'}</span>
+                <span className="desktop-only">{soundEnabled ? 'Efectos Activos' : 'Silencio'}</span>
+              </button>
+            )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
             <div className="desktop-only"><LiveClock /></div>
