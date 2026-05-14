@@ -272,9 +272,39 @@ const SuspendedView = ({ onLogout, onRefresh, type = 'suspendido' }) => (
       <h2 className="login-title">{type === 'baneado' ? 'Cuenta Baneada' : 'Cuenta Suspendida'}</h2>
       <p style={{ color: 'var(--text-muted)', marginBottom: '32px', lineHeight: '1.6' }}>
         {type === 'baneado'
-          ? 'Tu cuenta ha sido expulsada permanentemente del sistema por incumplir las normas.'
+          ? 'Tu Cuenta Ha Sido Baneada Por Administración, Si Crees Que Ha Sido Un Error Comunícate Con Ellos'
           : 'Tu cuenta ha sido temporalmente suspendida. Por favor, contacta al soporte para más información.'}
       </p>
+
+      {type === 'baneado' && (
+        <a
+          href="https://api.whatsapp.com/send/?phone=584164287761&text=Hola%2C+mi+cuenta+ha+sido+baneada+y+quisiera+consultar+el+motivo&type=phone_number&app_absent=0"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn"
+          style={{
+            width: '100%',
+            height: '48px',
+            backgroundColor: '#25D366',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '12px',
+            textDecoration: 'none',
+            marginBottom: '16px',
+            fontWeight: '700',
+            border: 'none',
+            boxShadow: '0 4px 14px rgba(37, 211, 102, 0.4)',
+            fontSize: '15px'
+          }}
+        >
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.181-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793 0-.853.448-1.273.607-1.446.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.101-.177.211-.077.383.101.173.449.743.964 1.203.664.591 1.221.774 1.394.86.173.088.274.072.376-.043.101-.116.433-.506.548-.68.116-.173.231-.144.39-.087.158.058 1.011.477 1.184.564.173.087.289.129.332.202.043.073.043.419-.101.824z"/>
+          </svg>
+          Contactar Soporte
+        </a>
+      )}
 
       <button
         className="btn btn-primary"
@@ -618,6 +648,14 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       )
+    }
+
+    if (user) {
+      const estado = perfil?.estado?.toLowerCase() || 'aprobado'
+      if (estado === 'pendiente') return <PendingView onLogout={logout} onRefresh={refetch} />
+      if (estado === 'rechazado') return <RejectedView onLogout={logout} onRefresh={refetch} />
+      if (estado === 'suspendido') return <SuspendedView onLogout={logout} onRefresh={refetch} type="suspendido" />
+      if (estado === 'baneado') return <SuspendedView onLogout={logout} onRefresh={refetch} type="baneado" />
     }
 
     return (
