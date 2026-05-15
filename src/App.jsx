@@ -427,10 +427,7 @@ export default function App() {
       'checkout': '/Checkout'
     }
 
-    let targetPath = pathMap[page] || `/${page}`
-    if (page === 'pagina_estatica' && params?.slug) {
-      targetPath += params.slug
-    }
+    const targetPath = pathMap[page] || `/${page}`
     setCurrentParams(params)
     navigate(targetPath)
   }

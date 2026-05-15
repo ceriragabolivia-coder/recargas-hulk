@@ -1400,7 +1400,7 @@ export default function Landing({ onNavigate }) {
           <div className="footer-links">
             <h4>Empresa</h4>
             {paginasFooter.filter(p => p.categoria === 'Empresa').map(p => (
-              <a key={p.id} href="#" onClick={(e) => { e.preventDefault(); onNavigate('pagina_estatica', { slug: p.slug }); }}>{p.titulo}</a>
+              <a key={p.id} href="#" onClick={(e) => { e.preventDefault(); onNavigate('p/' + p.slug); }}>{p.titulo}</a>
             ))}
             {paginasFooter.filter(p => p.categoria === 'Empresa').length === 0 && (
               <>
@@ -1413,7 +1413,7 @@ export default function Landing({ onNavigate }) {
           <div className="footer-links">
             <h4>Soporte</h4>
             {paginasFooter.filter(p => p.categoria === 'Soporte').map(p => (
-              <a key={p.id} href="#" onClick={(e) => { e.preventDefault(); onNavigate('pagina_estatica', { slug: p.slug }); }}>{p.titulo}</a>
+              <a key={p.id} href="#" onClick={(e) => { e.preventDefault(); onNavigate('p/' + p.slug); }}>{p.titulo}</a>
             ))}
             {paginasFooter.filter(p => p.categoria === 'Soporte').length === 0 && (
               <>
