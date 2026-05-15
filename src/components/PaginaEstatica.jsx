@@ -40,27 +40,27 @@ export default function PaginaEstatica() {
   if (!pagina) {
     return (
       <div className="page-content" style={{ textAlign: 'center', padding: '100px 20px' }}>
-        <h2 style={{ fontSize: '48px', color: 'var(--accent-primary)', marginBottom: '20px' }}>404</h2>
+        <h2 style={{ fontSize: '48px', color: 'var(--accent)', marginBottom: '20px' }}>404</h2>
         <h3>Página no encontrada</h3>
         <p style={{ color: 'var(--text-muted)', marginBottom: '30px' }}>Lo sentimos, la página que buscas no existe o no está disponible.</p>
-        <button className="btn btn-primary" onClick={() => navigate('/')}>Volver al Inicio</button>
+        <button className="btn-landing-primary" onClick={() => navigate('/')}>Volver al Inicio</button>
       </div>
     )
   }
 
   return (
-    <div className="page-content" style={{ maxWidth: '900px', margin: '0 auto', padding: '40px 20px' }}>
-      <div className="card-modern shadow-xl" style={{ padding: '40px' }}>
-        <h1 style={{ fontSize: '32px', fontWeight: 800, marginBottom: '30px', borderBottom: '2px solid var(--accent-primary)', paddingBottom: '15px' }}>
+    <div className="static-page-container" style={{ maxWidth: '900px', margin: '0 auto' }}>
+      <div className="card-modern shadow-xl" style={{ padding: '40px', background: 'var(--bg-card)', borderRadius: '24px', border: '1px solid var(--border)' }}>
+        <h1 style={{ fontSize: '32px', fontWeight: 800, marginBottom: '30px', borderBottom: '2px solid var(--accent)', paddingBottom: '15px', color: 'var(--text-main)' }}>
           {pagina.titulo}
         </h1>
         <div 
           className="rich-text-content" 
-          style={{ lineHeight: '1.8', fontSize: '16px' }}
+          style={{ lineHeight: '1.8', fontSize: '16px', color: 'var(--text-main)' }}
           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(pagina.contenido) }} 
         />
         <div style={{ marginTop: '50px', paddingTop: '20px', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
-          <button className="btn btn-secondary" onClick={() => navigate('/')}>Regresar</button>
+          <button className="btn-landing-secondary" onClick={() => navigate('/')}>Regresar</button>
         </div>
       </div>
 
@@ -68,7 +68,7 @@ export default function PaginaEstatica() {
         .rich-text-content h1, .rich-text-content h2, .rich-text-content h3 {
           margin-top: 30px;
           margin-bottom: 15px;
-          color: var(--text-main);
+          color: var(--accent);
         }
         .rich-text-content p {
           margin-bottom: 20px;
@@ -87,7 +87,7 @@ export default function PaginaEstatica() {
           margin: 20px 0;
         }
         .rich-text-content a {
-          color: var(--accent-primary);
+          color: var(--accent);
           text-decoration: underline;
         }
       `}} />

@@ -637,17 +637,8 @@ export default function App() {
     '/lista-de-precios', '/soporte'
   ]
 
-  let isLandingRoute = false
-  if (isAdmin || isNegocio) {
-    // Admins/Negocio ven Landing solo en las rutas específicas
-    isLandingRoute = coreLandingRoutes.includes(currentPath)
-  } else if (isEmpleado) {
-    // Empleado también ve el sistema por defecto
-    isLandingRoute = coreLandingRoutes.includes(currentPath)
-  } else {
-    // Clientes ven Landing por defecto, A MENOS que estén en una sección del sistema
-    isLandingRoute = !clientSystemRoutes.includes(currentPath) && !currentPath.startsWith('/p/')
-  }
+  // Definimos si estamos en una ruta que debe usar la interfaz de la Landing Page
+  const isLandingRoute = coreLandingRoutes.includes(currentPath) || currentPath.startsWith('/p/')
 
   const mainContent = () => {
     if (!user) {

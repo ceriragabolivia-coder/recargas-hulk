@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams, useLocation, useParams } from 'react-router-dom'
+import PaginaEstatica from './PaginaEstatica'
 import { supabase } from '../lib/supabase'
 import { useConfiguracion, useAuth, useCart, useCuentasGuardadas } from '../hooks/useData'
 import { formatUSD, formatBs, calcularPrecioVenta } from '../utils/helpers'
@@ -14,6 +15,7 @@ import DOMPurify from 'dompurify'
 import TutorialVideoModal from './TutorialVideoModal'
 export default function Landing({ onNavigate }) {
   const navigate = useNavigate()
+  const { slug } = useParams()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const { config, loading: configLoading } = useConfiguracion()
@@ -810,7 +812,7 @@ export default function Landing({ onNavigate }) {
 
       <main className="landing-main">
         {/* HERO SLIDER (Solo en Home arriba) */}
-        {!selectedJuego && !showCheckout && !showOrders && !showRuleta && !showWallet && !showProfile && !search.trim() && (
+        {!slug && !selectedJuego && !showCheckout && !showOrders && !showRuleta && !showWallet && !showProfile && !search.trim() && (
           <section className="landing-hero landing-container">
             {!config ? (
               <div className="hero-slider skeleton-loader" style={{ height: '400px', background: 'var(--bg-hover)', borderRadius: '24px', opacity: 0.3, animation: 'pulse 1.5s infinite' }}></div>
@@ -856,7 +858,11 @@ export default function Landing({ onNavigate }) {
           </section>
         )}
 
-        {showCheckout ? (
+        {slug ? (
+          <div className="fade-in landing-container" style={{ width: '100%', minHeight: '60vh', padding: '40px 20px' }}>
+            <PaginaEstatica />
+          </div>
+        ) : showCheckout ? (
           <Checkout embedded={true} onFinish={() => setShowCheckout(false)} />
         ) : showOrders ? (
           <div className="fade-in" style={{ width: '100%', maxWidth: '1400px', margin: '0 auto', padding: '20px' }}>
