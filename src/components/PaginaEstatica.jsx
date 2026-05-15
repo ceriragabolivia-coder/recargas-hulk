@@ -50,14 +50,27 @@ export default function PaginaEstatica({ slug: slugProp }) {
   }
 
   return (
-    <div className="static-page-container" style={{ maxWidth: '900px', margin: '0 auto' }}>
-      <div className="card-modern shadow-xl" style={{ padding: '40px', background: 'var(--bg-card)', borderRadius: '24px', border: '1px solid var(--border)' }}>
-        <h1 style={{ fontSize: '32px', fontWeight: 800, marginBottom: '30px', borderBottom: '2px solid var(--accent)', paddingBottom: '15px', color: 'var(--text-main)' }}>
+    <div className="static-page-container" style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
+      <div className="card-modern shadow-xl" style={{ 
+        padding: '40px', 
+        background: 'var(--bg-card)', 
+        borderRadius: '24px', 
+        border: '1px solid var(--border)',
+        height: 'auto',
+        minHeight: 'fit-content'
+      }}>
+        <h1 style={{ fontSize: '32px', fontWeight: 800, marginBottom: '30px', borderBottom: '2px solid var(--accent)', paddingBottom: '15px', color: '#fff' }}>
           {pagina.titulo}
         </h1>
         <div 
           className="rich-text-content" 
-          style={{ lineHeight: '1.8', fontSize: '16px', color: 'var(--text-main)' }}
+          style={{ 
+            lineHeight: '1.8', 
+            fontSize: '16px', 
+            color: 'rgba(255,255,255,0.9)',
+            wordBreak: 'break-word',
+            overflowWrap: 'break-word'
+          }}
           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(pagina.contenido) }} 
         />
         <div style={{ marginTop: '50px', paddingTop: '20px', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
