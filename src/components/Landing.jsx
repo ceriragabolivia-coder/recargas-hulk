@@ -15,7 +15,8 @@ import DOMPurify from 'dompurify'
 import TutorialVideoModal from './TutorialVideoModal'
 export default function Landing({ onNavigate }) {
   const navigate = useNavigate()
-  const { slug } = useParams()
+  const params = useParams()
+  const slug = params.slug || (location.pathname.startsWith('/p/') ? location.pathname.split('/p/')[1] : null)
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const { config, loading: configLoading } = useConfiguracion()

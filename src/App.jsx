@@ -648,7 +648,7 @@ export default function App() {
           <Route path="/" element={isLandingEnabled ? <Landing /> : <Login onGoToRegister={() => navigate('/register')} />} />
           <Route path="/login" element={<Login onGoToRegister={() => navigate('/register')} />} />
           <Route path="/register" element={<Register onBackToLogin={() => navigate('/login')} />} />
-          <Route path="/p/:slug" element={<PaginaEstatica />} />
+          <Route path="/p/:slug" element={<Landing />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       )
