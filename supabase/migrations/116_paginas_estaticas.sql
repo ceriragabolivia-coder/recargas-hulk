@@ -23,7 +23,7 @@ CREATE POLICY "Admin full access for paginas_estaticas" ON paginas_estaticas
     FOR ALL TO authenticated USING (
         EXISTS (
             SELECT 1 FROM perfiles
-            WHERE auth_user_id = auth.uid()
+            WHERE id = auth.uid()
             AND (rol = 'admin' OR rol = 'administrador')
         )
     );
