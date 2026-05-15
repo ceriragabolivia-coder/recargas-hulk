@@ -281,7 +281,7 @@ export default function Landing({ onNavigate }) {
 
   useEffect(() => {
     async function fetchData() {
-      const [jRes, cRes] = await Promise.all([
+      const [jRes, cRes, pRes] = await Promise.all([
         supabase.from('juegos')
           .select('*, categorias(nombre)')
           .eq('activo', true)
