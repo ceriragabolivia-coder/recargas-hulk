@@ -34,6 +34,7 @@ const GestionRuleta = lazy(() => import('./components/GestionRuleta'))
 const PagosAdmins = lazy(() => import('./components/PagosAdmins'))
 const Estadisticas = lazy(() => import('./components/Estadisticas.jsx'))
 const GestionLanding = lazy(() => import('./components/GestionLanding'))
+const GestionPaginas = lazy(() => import('./components/GestionPaginas'))
 
 const Placeholder = ({ title }) => (
   <div className="page-content">
@@ -372,6 +373,7 @@ const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
         <Route path="/Gestion-Ruleta" element={isAdmin ? <GestionRuleta /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Estadisticas" element={isAdmin ? <Estadisticas /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Gestion-Landing" element={isAdmin ? <GestionLanding /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Gestion-Paginas" element={isAdmin ? <GestionPaginas /> : <Navigate to="/Lista-De-Precios" replace />} />
 
         {/* Redirección por defecto */}
         <Route path="/" element={<Navigate to={(isAdmin || isNegocio || isEmpleado) ? "/Dashboard" : "/"} replace />} />
@@ -418,6 +420,7 @@ export default function App() {
       'billetera': '/Billetera',
       'estadisticas': '/Estadisticas',
       'gestion_landing': '/Gestion-Landing',
+      'gestion_paginas': '/Gestion-Paginas',
       'checkout': '/Checkout'
     }
 

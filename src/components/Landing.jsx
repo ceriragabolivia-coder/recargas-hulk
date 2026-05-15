@@ -70,6 +70,8 @@ export default function Landing({ onNavigate }) {
   const [showNotiDropdown, setShowNotiDropdown] = useState(false)
   const [activeToast, setActiveToast] = useState(null)
   const [showTutorialModal, setShowTutorialModal] = useState(false)
+  const [paginasFooter, setPaginasFooter] = useState([])
+  const [selectedPage, setSelectedPage] = useState(null)
   
   // Modo Nocturno
   const [darkMode, setDarkMode] = useState(true)
@@ -292,7 +294,11 @@ export default function Landing({ onNavigate }) {
           .select('*')
           .eq('activa', true)
           .is('owner_id', null)
-          .order('orden')
+          .order('orden'),
+        supabase.from('paginas_estaticas')
+          .select('*')
+          .eq('visible', true)
+          .order('orden', { ascending: true })
       ])
       
       if (jRes.data) {
@@ -302,6 +308,9 @@ export default function Landing({ onNavigate }) {
       if (cRes.data) {
         setCategorias(cRes.data)
         localStorage.setItem('cached_categorias', JSON.stringify(cRes.data))
+      }
+      if (pRes.data) {
+        setPaginasFooter(pRes.data)
       }
       setLoading(false)
       
@@ -1391,15 +1400,29 @@ export default function Landing({ onNavigate }) {
           </div>
           <div className="footer-links">
             <h4>Empresa</h4>
-            <a href="#">Nosotros</a>
-            <a href="#">Términos y Condiciones</a>
-            <a href="#">Privacidad</a>
+            {paginasFooter.filter(p => p.categoria === 'Empresa').map(p => (
+              <a key={p.id} href="#" onClick={(e) => { e.preventDefault(); setSelectedPage(p); }}>{p.titulo}</a>
+            ))}
+            {paginasFooter.filter(p => p.categoria === 'Empresa').length === 0 && (
+              <>
+                <a href="#">Nosotros</a>
+                <a href="#">Términos y Condiciones</a>
+                <a href="#">Privacidad</a>
+              </>
+            )}
           </div>
           <div className="footer-links">
             <h4>Soporte</h4>
-            <a href="#">Preguntas Frecuentes</a>
-            <a href="#">Contacto WhatsApp</a>
-            <a href="#">Estado del Sistema</a>
+            {paginasFooter.filter(p => p.categoria === 'Soporte').map(p => (
+              <a key={p.id} href="#" onClick={(e) => { e.preventDefault(); setSelectedPage(p); }}>{p.titulo}</a>
+            ))}
+            {paginasFooter.filter(p => p.categoria === 'Soporte').length === 0 && (
+              <>
+                <a href="#">Preguntas Frecuentes</a>
+                <a href="#">Contacto WhatsApp</a>
+                <a href="#">Estado del Sistema</a>
+              </>
+            )}
           </div>
         </div>
         <div className="footer-bottom">
@@ -1531,6 +1554,26 @@ export default function Landing({ onNavigate }) {
         />
       )}
 
+      {selectedPage && (
+        <div className="modal-overlay" onClick={() => setSelectedPage(null)} style={{ zIndex: 10002 }}>
+          <div className="modal-content card-modern" style={{ maxWidth: '800px', width: '95%', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ position: 'sticky', top: 0, background: 'var(--bg-card)', zIndex: 10 }}>
+              <h3 style={{ margin: 0 }}>{selectedPage.titulo}</h3>
+              <button className="close-btn" onClick={() => setSelectedPage(null)}>✕</button>
+            </div>
+            <div className="info-body" style={{ padding: '30px' }}>
+              <div 
+                className="rich-text-content" 
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedPage.contenido) }} 
+              />
+            </div>
+            <div className="modal-footer" style={{ padding: '15px 20px', borderTop: '1px solid var(--border)', textAlign: 'right' }}>
+              <button className="btn-landing-primary" onClick={() => setSelectedPage(null)}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style dangerouslySetInnerHTML={{ __html: `
         :root {
           --bg-page: #f8f9fa;
@@ -1543,6 +1586,59 @@ export default function Landing({ onNavigate }) {
           --accent: #7b2ff7;
           --accent-light: rgba(123, 47, 247, 0.1);
         }
+
+        /* Modal & CMS Styles */
+        .modal-overlay {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0,0,0,0.85);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 10002;
+          backdrop-filter: blur(8px);
+          padding: 20px;
+        }
+        .modal-content.card-modern {
+          background: var(--bg-card);
+          border-radius: 24px;
+          border: 1px solid var(--border);
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+          overflow: hidden;
+          position: relative;
+        }
+        .modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 20px 24px;
+          border-bottom: 1px solid var(--border);
+        }
+        .close-btn {
+          background: rgba(255,255,255,0.05);
+          border: none;
+          color: var(--text-main);
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 14px;
+          transition: all 0.2s;
+        }
+        .close-btn:hover {
+          background: rgba(255,255,255,0.1);
+          transform: rotate(90deg);
+        }
+        .rich-text-content {
+          line-height: 1.8;
+          color: var(--text-main);
+        }
+        .rich-text-content h1, .rich-text-content h2 { margin-top: 0; color: var(--accent); }
+        .rich-text-content p { margin-bottom: 16px; }
+        .rich-text-content ul { padding-left: 20px; margin-bottom: 16px; }
 
         .dark {
           --bg-page: #0f172a;
