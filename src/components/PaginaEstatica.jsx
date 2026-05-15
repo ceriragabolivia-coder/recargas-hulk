@@ -3,8 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import DOMPurify from 'dompurify'
 
-export default function PaginaEstatica() {
-  const { slug } = useParams()
+export default function PaginaEstatica({ slug: slugProp }) {
+  const params = useParams()
+  const slug = slugProp || params.slug
   const navigate = useNavigate()
   const [pagina, setPagina] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -12,11 +13,11 @@ export default function PaginaEstatica() {
   useEffect(() => {
     async function fetchPagina() {
       setLoading(true)
+      const cleanSlug = slug?.trim()
       const { data, error } = await supabase
         .from('paginas_estaticas')
         .select('*')
-        .eq('slug', slug)
-        .eq('visible', true)
+        .ilike('slug', cleanSlug)
         .maybeSingle()
 
       if (error) {

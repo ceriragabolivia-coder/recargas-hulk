@@ -17,7 +17,7 @@ export default function Landing({ onNavigate }) {
   const navigate = useNavigate()
   const params = useParams()
   const location = useLocation()
-  const slug = params.slug || (location.pathname.startsWith('/p/') ? location.pathname.split('/p/')[1] : null)
+  const slug = params.slug || (location.pathname.startsWith('/p/') ? location.pathname.split('/p/')[1].replace(/\/$/, '') : null)
   const [searchParams, setSearchParams] = useSearchParams()
   const { config, loading: configLoading } = useConfiguracion()
   const { user, perfil, logout } = useAuth()
@@ -861,7 +861,7 @@ export default function Landing({ onNavigate }) {
 
         {slug ? (
           <div className="fade-in landing-container" style={{ width: '100%', minHeight: '60vh', padding: '40px 20px' }}>
-            <PaginaEstatica />
+            <PaginaEstatica slug={slug} />
           </div>
         ) : showCheckout ? (
           <Checkout embedded={true} onFinish={() => setShowCheckout(false)} />
