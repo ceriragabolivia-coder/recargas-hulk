@@ -646,7 +646,7 @@ export default function App() {
     isLandingRoute = coreLandingRoutes.includes(currentPath)
   } else {
     // Clientes ven Landing por defecto, A MENOS que estén en una sección del sistema
-    isLandingRoute = !clientSystemRoutes.includes(currentPath)
+    isLandingRoute = !clientSystemRoutes.includes(currentPath) && !currentPath.startsWith('/p/')
   }
 
   const mainContent = () => {
@@ -657,6 +657,7 @@ export default function App() {
           <Route path="/" element={isLandingEnabled ? <Landing /> : <Login onGoToRegister={() => navigate('/register')} />} />
           <Route path="/login" element={<Login onGoToRegister={() => navigate('/register')} />} />
           <Route path="/register" element={<Register onBackToLogin={() => navigate('/login')} />} />
+          <Route path="/p/:slug" element={<PaginaEstatica />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       )
