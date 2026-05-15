@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth, useConfiguracion } from '../hooks/useData'
 import AlertModal from './AlertModal'
-import { playSuccessSound, playCashRegisterSound, playErrorSound, formatBs } from '../utils/helpers'
+import { playSuccessSound, playCashRegisterSound, playErrorSound, formatBs, formatUSD } from '../utils/helpers'
 
 const DEFAULT_CANCEL_MESSAGE = (num) => `Tu Pedido #${num} se ha cancelado motivado a que la referencia de pago que colocaste no ha podido ser encontrado en nuestro banco, es decir, el pago no pudo ser verificado y esto se debe a alguno de los siguientes motivos:
 
@@ -1115,6 +1115,57 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     setSelectedPedido(prev => ({ ...prev, imagenes_adjuntas: json }))
   }
 
+  const renderReferenciaConMonto = (ref, totalBs, totalUsd) => {
+    if (!ref) return '-';
+    if (!ref.includes('Pago Parcial')) return ref;
+
+    const parts = ref.split('|');
+    const refNum = parts[0].trim();
+    
+    // Extraer montos de billetera en el string (formato: "Billetera Bs: 743" o "Billetera USD: $10.00")
+    const bsMatch = ref.match(/Billetera Bs:\s*([0-9.,]+)/i);
+    const usdMatch = ref.match(/Billetera USD:\s*\$?\s*([0-9.,]+)/i);
+    
+    let walletBs = 0;
+    let walletUsd = 0;
+
+    if (bsMatch) {
+      walletBs = parseFloat(bsMatch[1].replace(/\./g, '').replace(/,/g, '.'));
+    }
+    if (usdMatch) {
+      walletUsd = parseFloat(usdMatch[1].replace(/\./g, '').replace(/,/g, '.'));
+    }
+
+    const remainingBs = totalBs - walletBs;
+    const remainingUsd = totalUsd - walletUsd;
+
+    if (refNum && (remainingBs > 0 || remainingUsd > 0)) {
+      const montoRefLabel = remainingBs > 0 ? formatBs(remainingBs) : formatUSD(remainingUsd);
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', justifyContent: 'flex-end' }}>
+          <span style={{ fontWeight: 800, color: '#fff', fontSize: '15px' }}>{refNum}</span>
+          <span style={{ 
+            backgroundColor: 'rgba(0, 210, 255, 0.15)', 
+            color: 'var(--accent-primary)', 
+            padding: '2px 8px', 
+            borderRadius: '6px', 
+            fontSize: '13px', 
+            fontWeight: 900,
+            border: '1px solid var(--accent-primary)',
+            boxShadow: '0 0 10px rgba(0, 210, 255, 0.1)'
+          }}>
+            {montoRefLabel}
+          </span>
+          <span style={{ opacity: 0.6, fontSize: '11px', fontWeight: 500 }}>
+            | {parts.slice(1).join('|')}
+          </span>
+        </div>
+      );
+    }
+
+    return ref;
+  }
+
   // Vista de detalle de un pedido
   if (selectedPedido) {
     const est = getEstadoStyle(selectedPedido.estado)
@@ -1266,7 +1317,9 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
               <div className="summary-row" style={{ display: 'block' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                   <span className="summary-label">Referencia de Pago</span>
-                  <span className="summary-value" style={{ color: 'var(--accent-success)' }}>{selectedPedido.referencia_pago || '-'}</span>
+                  <span className="summary-value" style={{ color: 'var(--accent-success)' }}>
+                    {renderReferenciaConMonto(selectedPedido.referencia_pago, selectedPedido.total_bs, selectedPedido.total_usd)}
+                  </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '12px', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end', marginTop: '4px' }}>
