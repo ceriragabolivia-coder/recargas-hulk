@@ -64,12 +64,15 @@ export default function PaginaEstatica({ slug: slugProp }) {
         </h1>
         <div 
           className="rich-text-content" 
+          lang="es"
           style={{ 
             lineHeight: '1.8', 
             fontSize: '16px', 
-            color: 'rgba(255,255,255,0.9)',
+            color: '#ffffff',
             wordBreak: 'break-word',
-            overflowWrap: 'break-word'
+            overflowWrap: 'break-word',
+            hyphens: 'auto',
+            textAlign: 'justify'
           }}
           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(pagina.contenido) }} 
         />
