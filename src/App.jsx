@@ -35,6 +35,7 @@ const PagosAdmins = lazy(() => import('./components/PagosAdmins'))
 const Estadisticas = lazy(() => import('./components/Estadisticas.jsx'))
 const GestionLanding = lazy(() => import('./components/GestionLanding'))
 const GestionPaginas = lazy(() => import('./components/GestionPaginas'))
+const PaginaEstatica = lazy(() => import('./components/PaginaEstatica'))
 
 const Placeholder = ({ title }) => (
   <div className="page-content">
@@ -360,6 +361,7 @@ const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
         } />
         <Route path="/Mis-Pedidos" element={<Pedidos params={currentParams} onNavigate={handleNavigate} />} />
         <Route path="/Gestion-Pedidos" element={<Pedidos params={currentParams} onNavigate={handleNavigate} />} />
+        <Route path="/p/:slug" element={<PaginaEstatica />} />
 
         {/* Rutas Administrativas (Admin y Negocio) */}
         <Route path="/Dashboard" element={(isAdmin || isNegocio || isEmpleado) ? <Dashboard /> : <Navigate to="/Lista-De-Precios" replace />} />
@@ -421,10 +423,14 @@ export default function App() {
       'estadisticas': '/Estadisticas',
       'gestion_landing': '/Gestion-Landing',
       'gestion_paginas': '/Gestion-Paginas',
+      'pagina_estatica': '/p/',
       'checkout': '/Checkout'
     }
 
-    const targetPath = pathMap[page] || `/${page}`
+    let targetPath = pathMap[page] || `/${page}`
+    if (page === 'pagina_estatica' && params?.slug) {
+      targetPath += params.slug
+    }
     setCurrentParams(params)
     navigate(targetPath)
   }

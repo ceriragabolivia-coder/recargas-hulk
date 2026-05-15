@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { toast, ToastContainer } from 'react-toastify'
 import AlertModal from './AlertModal'
+import ReactQuill from 'react-quill-new'
+import 'react-quill-new/dist/quill.snow.css'
 
 export default function GestionPaginas() {
   const [paginas, setPaginas] = useState([])
@@ -10,6 +12,16 @@ export default function GestionPaginas() {
   const [editingPage, setEditingPage] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [alert, setAlert] = useState(null)
+
+  const modules = {
+    toolbar: [
+      [{ 'header': [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+      ['link', 'image'],
+      ['clean']
+    ],
+  }
 
   useEffect(() => {
     fetchPaginas()
@@ -253,18 +265,16 @@ export default function GestionPaginas() {
                 />
               </div>
               <div className="form-group full-width">
-                <label className="form-label">Contenido (Soporta HTML)</label>
-                <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px' }}>
-                  Puedes usar etiquetas HTML básicas como &lt;h1&gt;, &lt;p&gt;, &lt;b&gt;, &lt;ul&gt;, etc.
-                </p>
-                <textarea 
-                  className="form-input" 
-                  style={{ minHeight: '300px', fontFamily: 'monospace', fontSize: '13px' }}
-                  value={editingPage.contenido}
-                  onChange={e => setEditingPage({...editingPage, contenido: e.target.value})}
-                  required
-                  placeholder="<h1>Términos de Uso</h1><p>Bienvenido a nuestra plataforma...</p>"
-                />
+                <label className="form-label">Contenido del Artículo</label>
+                <div style={{ background: 'white', color: 'black', borderRadius: '8px', overflow: 'hidden' }}>
+                  <ReactQuill 
+                    theme="snow"
+                    value={editingPage.contenido}
+                    onChange={content => setEditingPage({...editingPage, contenido: content})}
+                    modules={modules}
+                    style={{ height: '400px', marginBottom: '50px' }}
+                  />
+                </div>
               </div>
               
               <div className="flex justify-end full-width gap-12" style={{ marginTop: '20px' }}>

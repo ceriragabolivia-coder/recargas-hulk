@@ -71,7 +71,6 @@ export default function Landing({ onNavigate }) {
   const [activeToast, setActiveToast] = useState(null)
   const [showTutorialModal, setShowTutorialModal] = useState(false)
   const [paginasFooter, setPaginasFooter] = useState([])
-  const [selectedPage, setSelectedPage] = useState(null)
   
   // Modo Nocturno
   const [darkMode, setDarkMode] = useState(true)
@@ -1401,7 +1400,7 @@ export default function Landing({ onNavigate }) {
           <div className="footer-links">
             <h4>Empresa</h4>
             {paginasFooter.filter(p => p.categoria === 'Empresa').map(p => (
-              <a key={p.id} href="#" onClick={(e) => { e.preventDefault(); setSelectedPage(p); }}>{p.titulo}</a>
+              <a key={p.id} href="#" onClick={(e) => { e.preventDefault(); onNavigate('pagina_estatica', { slug: p.slug }); }}>{p.titulo}</a>
             ))}
             {paginasFooter.filter(p => p.categoria === 'Empresa').length === 0 && (
               <>
@@ -1414,7 +1413,7 @@ export default function Landing({ onNavigate }) {
           <div className="footer-links">
             <h4>Soporte</h4>
             {paginasFooter.filter(p => p.categoria === 'Soporte').map(p => (
-              <a key={p.id} href="#" onClick={(e) => { e.preventDefault(); setSelectedPage(p); }}>{p.titulo}</a>
+              <a key={p.id} href="#" onClick={(e) => { e.preventDefault(); onNavigate('pagina_estatica', { slug: p.slug }); }}>{p.titulo}</a>
             ))}
             {paginasFooter.filter(p => p.categoria === 'Soporte').length === 0 && (
               <>
@@ -1554,25 +1553,6 @@ export default function Landing({ onNavigate }) {
         />
       )}
 
-      {selectedPage && (
-        <div className="modal-overlay" onClick={() => setSelectedPage(null)} style={{ zIndex: 10002 }}>
-          <div className="modal-content card-modern" style={{ maxWidth: '800px', width: '95%', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-            <div className="modal-header" style={{ position: 'sticky', top: 0, background: 'var(--bg-card)', zIndex: 10 }}>
-              <h3 style={{ margin: 0 }}>{selectedPage.titulo}</h3>
-              <button className="close-btn" onClick={() => setSelectedPage(null)}>✕</button>
-            </div>
-            <div className="info-body" style={{ padding: '30px' }}>
-              <div 
-                className="rich-text-content" 
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedPage.contenido) }} 
-              />
-            </div>
-            <div className="modal-footer" style={{ padding: '15px 20px', borderTop: '1px solid var(--border)', textAlign: 'right' }}>
-              <button className="btn-landing-primary" onClick={() => setSelectedPage(null)}>Cerrar</button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <style dangerouslySetInnerHTML={{ __html: `
         :root {
