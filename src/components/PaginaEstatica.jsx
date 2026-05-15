@@ -82,6 +82,11 @@ export default function PaginaEstatica({ slug: slugProp }) {
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
+        .rich-text-content, .rich-text-content p, .rich-text-content span, .rich-text-content li {
+          color: #ffffff !important;
+          text-align: justify !important;
+          hyphens: auto !important;
+        }
         .rich-text-content h1, .rich-text-content h2, .rich-text-content h3 {
           margin-top: 30px;
           margin-bottom: 15px;
