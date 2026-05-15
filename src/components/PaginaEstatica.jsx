@@ -69,7 +69,6 @@ export default function PaginaEstatica({ slug: slugProp }) {
             lineHeight: '1.8', 
             fontSize: '16px', 
             color: '#ffffff',
-            wordBreak: 'break-word',
             overflowWrap: 'break-word',
             hyphens: 'auto',
             textAlign: 'justify'
@@ -86,6 +85,9 @@ export default function PaginaEstatica({ slug: slugProp }) {
           color: #ffffff !important;
           text-align: justify !important;
           hyphens: auto !important;
+          -webkit-hyphens: auto !important;
+          -ms-hyphens: auto !important;
+          overflow-wrap: break-word !important;
         }
         .rich-text-content h1, .rich-text-content h2, .rich-text-content h3 {
           margin-top: 30px;
