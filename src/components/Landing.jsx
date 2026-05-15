@@ -16,8 +16,8 @@ import TutorialVideoModal from './TutorialVideoModal'
 export default function Landing({ onNavigate }) {
   const navigate = useNavigate()
   const params = useParams()
-  const slug = params.slug || (location.pathname.startsWith('/p/') ? location.pathname.split('/p/')[1] : null)
   const location = useLocation()
+  const slug = params.slug || (location.pathname.startsWith('/p/') ? location.pathname.split('/p/')[1] : null)
   const [searchParams, setSearchParams] = useSearchParams()
   const { config, loading: configLoading } = useConfiguracion()
   const { user, perfil, logout } = useAuth()
