@@ -1144,7 +1144,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
       return (
         <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', justifyContent: 'flex-end' }}>
           <span style={{ fontWeight: 800, color: '#fff', fontSize: '15px' }}>{refNum}</span>
-          <span style={{ 
+          <span translate="no" className="notranslate" style={{ 
             backgroundColor: 'rgba(0, 210, 255, 0.15)', 
             color: 'var(--accent-primary)', 
             padding: '2px 8px', 
@@ -1422,8 +1422,8 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
               <div className="summary-row">
                 <span className="summary-label">Total</span>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 800, fontSize: '18px', color: 'var(--accent-success)' }}>{formatBs(selectedPedido.total_bs)}</div>
-                  {isAdmin && <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{formatUSD(selectedPedido.total_usd)}</div>}
+                  <div translate="no" className="notranslate" style={{ fontWeight: 800, fontSize: '18px', color: 'var(--accent-success)' }}>{formatBs(selectedPedido.total_bs)}</div>
+                  {isAdmin && <div translate="no" className="notranslate" style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{formatUSD(selectedPedido.total_usd)}</div>}
                 </div>
               </div>
 
@@ -1436,7 +1436,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', backgroundColor: 'rgba(34, 197, 94, 0.08)', borderRadius: '6px', border: '1px solid rgba(34, 197, 94, 0.2)', marginTop: '4px' }}>
                       <span style={{ color: 'var(--text-muted)', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>💸 <span style={{color: '#22c55e', fontWeight: 600}}>Cash Back ({p}%)</span></span>
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontWeight: 800, color: 'var(--accent-success)', fontSize: '15px' }}>+{isBs ? formatBs(monto) : (isAdmin ? formatUSD(monto) : '')}</div>
+                        <div translate="no" className="notranslate" style={{ fontWeight: 800, color: 'var(--accent-success)', fontSize: '15px' }}>+{isBs ? formatBs(monto) : (isAdmin ? formatUSD(monto) : '')}</div>
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Monto retornado a Billetera</div>
                       </div>
                     </div>
@@ -1696,7 +1696,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                     </div>
                     
                     <div style={{ textAlign: 'right' }}>
-                       <span className="product-item-price">{formatBs(item.precio_bs)}</span>
+                       <span translate="no" className="notranslate product-item-price">{formatBs(item.precio_bs)}</span>
 
                        {/* BOTONES ADMIN */}
                        {isAdmin && selectedPedido.atendido_por_id === user.id && selectedPedido.estado === 'procesando' && (
@@ -2124,7 +2124,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                             {pedido.referencia_pago || '-'}
                           </td>
                           <td data-label="Total" style={{ fontWeight: 800, color: '#22c55e', fontSize: '13px' }}>
-                            {formatBs(pedido.total_bs)}
+                            <span translate="no" className="notranslate">{formatBs(pedido.total_bs)}</span>
                           </td>
                           <td data-label="Admin" className="desktop-only" style={{ color: pedido.atendido_por_id ? '#fff' : 'rgba(255,255,255,0.3)', fontSize: '11px' }}>
                             {pedido.atendido_por ? pedido.atendido_por.nombres : '-'}

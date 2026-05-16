@@ -358,8 +358,12 @@ export default function PagosAdmins() {
                         </div>
                       </div>
                     </td>
-                    <td style={{ fontWeight: 800, color: 'var(--accent-success)', fontSize: '16px' }}>{formatUSD(s.saldo_usd)}</td>
-                    <td style={{ fontWeight: 800, color: '#a855f7', fontSize: '16px' }}>{formatBs(s.saldo_bs)}</td>
+                    <td style={{ fontWeight: 800, color: 'var(--accent-success)', fontSize: '16px' }}>
+                      <span translate="no" className="notranslate">{formatUSD(s.saldo_usd)}</span>
+                    </td>
+                    <td style={{ fontWeight: 800, color: '#a855f7', fontSize: '16px' }}>
+                      <span translate="no" className="notranslate">{formatBs(s.saldo_bs)}</span>
+                    </td>
                     <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                       {new Date(s.updated_at).toLocaleString()}
                     </td>
@@ -441,7 +445,7 @@ export default function PagosAdmins() {
                         color: h.tipo_movimiento === 'liquidacion' || h.tipo_movimiento === 'reverso_venta' ? 'var(--accent-error)' : 'var(--accent-success)'
                       }}>
                         {h.tipo_movimiento === 'liquidacion' || h.tipo_movimiento === 'reverso_venta' ? '-' : '+'}
-                        {h.moneda === 'usd' ? formatUSD(h.monto) : formatBs(h.monto)}
+                        <span translate="no" className="notranslate">{h.moneda === 'usd' ? formatUSD(h.monto) : formatBs(h.monto)}</span>
                       </td>
                       <td style={{ fontSize: '12px', fontWeight: 600, color: 'var(--accent-primary)' }}>
                         {h.referencia || '-'}
@@ -487,7 +491,7 @@ export default function PagosAdmins() {
                 autoFocus
               />
               <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px' }}>
-                El saldo actual del administrador quedará en <strong>{monedaLiquidar === 'usd' ? formatUSD(adminSelected.saldo_usd - montoLiquidar) : formatBs(adminSelected.saldo_bs - montoLiquidar)}</strong>.
+                El saldo actual del administrador quedará en <strong translate="no" className="notranslate">{monedaLiquidar === 'usd' ? formatUSD(adminSelected.saldo_usd - montoLiquidar) : formatBs(adminSelected.saldo_bs - montoLiquidar)}</strong>.
               </p>
             </div>
 
@@ -564,7 +568,7 @@ export default function PagosAdmins() {
                       <h3 style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ color: 'var(--accent-success)' }}>💵</span> Órdenes en USD
                       </h3>
-                      <div style={{ fontWeight: 800, color: 'var(--accent-success)', backgroundColor: 'rgba(34, 197, 94, 0.1)', padding: '4px 12px', borderRadius: '8px' }}>
+                      <div translate="no" className="notranslate" style={{ fontWeight: 800, color: 'var(--accent-success)', backgroundColor: 'rgba(34, 197, 94, 0.1)', padding: '4px 12px', borderRadius: '8px' }}>
                         Total: {formatUSD(adminForOrders?.saldo_usd || 0)}
                       </div>
                     </div>
@@ -590,7 +594,8 @@ export default function PagosAdmins() {
                                   {renderDetallesLink(o.notas, o.pedido_id)}
                                 </td>
                                 <td style={{ textAlign: 'right', fontWeight: 700, color: o.tipo_movimiento === 'reverso_venta' ? 'var(--accent-error)' : 'var(--accent-success)' }}>
-                                  {o.tipo_movimiento === 'reverso_venta' ? '-' : '+'}{formatUSD(o.monto)}
+                                  {o.tipo_movimiento === 'reverso_venta' ? '-' : '+'}
+                                  <span translate="no" className="notranslate">{formatUSD(o.monto)}</span>
                                 </td>
                               </tr>
                             ))}
@@ -606,7 +611,7 @@ export default function PagosAdmins() {
                       <h3 style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ color: '#a855f7' }}>🏦</span> Órdenes en Bolívares
                       </h3>
-                      <div style={{ fontWeight: 800, color: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.1)', padding: '4px 12px', borderRadius: '8px' }}>
+                      <div translate="no" className="notranslate" style={{ fontWeight: 800, color: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.1)', padding: '4px 12px', borderRadius: '8px' }}>
                         Total: {formatBs(adminForOrders?.saldo_bs || 0)}
                       </div>
                     </div>
@@ -632,7 +637,8 @@ export default function PagosAdmins() {
                                   {renderDetallesLink(o.notas, o.pedido_id)}
                                 </td>
                                 <td style={{ textAlign: 'right', fontWeight: 700, color: o.tipo_movimiento === 'reverso_venta' ? 'var(--accent-error)' : 'var(--accent-success)' }}>
-                                  {o.tipo_movimiento === 'reverso_venta' ? '-' : '+'}{formatBs(o.monto)}
+                                  {o.tipo_movimiento === 'reverso_venta' ? '-' : '+'}
+                                  <span translate="no" className="notranslate">{formatBs(o.monto)}</span>
                                 </td>
                               </tr>
                             ))}
@@ -710,8 +716,8 @@ export default function PagosAdmins() {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                       <div>
                         <label style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', display: 'block' }}>Total Abonado</label>
-                        <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent-success)' }}>{formatBs(orderDetail.total_bs)}</div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{formatUSD(orderDetail.total_usd)}</div>
+                        <div translate="no" className="notranslate" style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent-success)' }}>{formatBs(orderDetail.total_bs)}</div>
+                        <div translate="no" className="notranslate" style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{formatUSD(orderDetail.total_usd)}</div>
                       </div>
                       <div>
                         <label style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', display: 'block' }}>Referencia de Pago</label>
@@ -732,7 +738,7 @@ export default function PagosAdmins() {
                               <div style={{ fontWeight: 800, fontSize: '14px' }}>{item.producto_nombre}</div>
                               <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{item.juego_nombre} (x{item.cantidad})</div>
                             </div>
-                            <div style={{ fontWeight: 700, color: 'var(--accent-success)' }}>{formatBs(item.precio_bs)}</div>
+                            <div translate="no" className="notranslate" style={{ fontWeight: 700, color: 'var(--accent-success)' }}>{formatBs(item.precio_bs)}</div>
                           </div>
                           <div style={{ marginTop: '8px', padding: '8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '6px', fontSize: '12px' }}>
                             <span style={{ color: 'var(--text-muted)' }}>ID Jugador: </span>

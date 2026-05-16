@@ -201,14 +201,14 @@ export default function RegistroVentas({ onNavigate }) {
                                 <span className="badge badge-info" style={{ marginLeft: 8, fontSize: 10 }}>{prod.juegos?.nombre}</span>
                               </span>
                               <div className="product-price">
-                                <span className="product-price-usd" title="Precio final en USD">{formatUSD(precio.venta_usd)}</span>
-                                <span className="product-price-bs" title={`Tasa aplicada: ${precio.tasa_usada}`}>{formatBs(precio.venta_bs)}</span>
+                                <span translate="no" className="notranslate product-price-usd" title="Precio final en USD">{formatUSD(precio.venta_usd)}</span>
+                                <span translate="no" className="notranslate product-price-bs" title={`Tasa aplicada: ${precio.tasa_usada}`}>{formatBs(precio.venta_bs)}</span>
                               </div>
                             </div>
                             <div className="flex items-center gap-16">
                               <div style={{ textAlign: 'right' }}>
                                 <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Ganancia</div>
-                                <div className="product-ganancia">{formatUSD(precio.ganancia_usd)}</div>
+                                <div translate="no" className="notranslate product-ganancia">{formatUSD(precio.ganancia_usd)}</div>
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                 <input 
@@ -298,14 +298,14 @@ export default function RegistroVentas({ onNavigate }) {
                             <div className="product-info">
                               <span className="product-name">{prod.nombre}</span>
                               <div className="product-price">
-                                <span className="product-price-usd" title="Precio final en USD">{formatUSD(precio.venta_usd)}</span>
-                                <span className="product-price-bs" title={`Tasa aplicada: ${precio.tasa_usada}`}>{formatBs(precio.venta_bs)}</span>
+                                <span translate="no" className="notranslate product-price-usd" title="Precio final en USD">{formatUSD(precio.venta_usd)}</span>
+                                <span translate="no" className="notranslate product-price-bs" title={`Tasa aplicada: ${precio.tasa_usada}`}>{formatBs(precio.venta_bs)}</span>
                               </div>
                             </div>
                             <div className="flex items-center gap-16">
                               <div style={{ textAlign: 'right' }}>
                                 <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Ganancia</div>
-                                <div className="product-ganancia">{formatUSD(precio.ganancia_usd)}</div>
+                                <div translate="no" className="notranslate product-ganancia">{formatUSD(precio.ganancia_usd)}</div>
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                 <input 
@@ -363,7 +363,7 @@ export default function RegistroVentas({ onNavigate }) {
                         {v.juegos?.nombre ? `${v.juegos.nombre} - ${v.productos?.nombre || '?'}` : (v.notas || 'Venta Libre')}
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                        {v.hora.substring(0, 5)} • Ganancia: {formatUSD(v.ganancia_usd)}
+                        {v.hora.substring(0, 5)} • Ganancia: <span translate="no" className="notranslate">{formatUSD(v.ganancia_usd)}</span>
                         {v.vendedor && (
                           <span style={{ marginLeft: 8, color: 'var(--accent-primary)', fontWeight: 700 }}>
                             👤 {v.vendedor.nickname || v.vendedor.nombres}
@@ -371,7 +371,7 @@ export default function RegistroVentas({ onNavigate }) {
                         )}
                       </div>
                     </div>
-                    <div className="venta-item-amount">{formatBs(v.precio_venta_bs)}</div>
+                    <div translate="no" className="notranslate" className="venta-item-amount">{formatBs(v.precio_venta_bs)}</div>
                       <button 
                         className="btn btn-ghost btn-icon btn-sm" 
                         onClick={(e) => {
@@ -392,13 +392,13 @@ export default function RegistroVentas({ onNavigate }) {
               <div className="flex justify-between items-end">
                 <div>
                   <div className="ventas-total-label">Total Recaudado Bs</div>
-                  <div className="ventas-total-value">
+                  <div translate="no" className="notranslate" className="ventas-total-value">
                     {formatBs(resumen?.ventas_totales_bs || 0)}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div className="ventas-total-label">Ganancia USD</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent-warning)' }}>
+                  <div translate="no" className="notranslate" style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent-warning)' }}>
                     {formatUSD(resumen?.ganancias_totales || 0)}
                   </div>
                 </div>
@@ -434,8 +434,8 @@ export default function RegistroVentas({ onNavigate }) {
               <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
                 <div style={{ flex: 1, padding: '10px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
                   <div style={{ fontWeight: 'bold', color: 'var(--accent-primary)', marginBottom: '4px' }}>MONTO</div>
-                  <div style={{ fontWeight: 'bold', color: 'var(--accent-success)' }}>{formatBs(selectedVentaDetalle.precio_venta_bs)}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>({formatUSD(selectedVentaDetalle.precio_venta_usd)})</div>
+                  <div translate="no" className="notranslate" style={{ fontWeight: 'bold', color: 'var(--accent-success)' }}>{formatBs(selectedVentaDetalle.precio_venta_bs)}</div>
+                  <div translate="no" className="notranslate" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>({formatUSD(selectedVentaDetalle.precio_venta_usd)})</div>
                 </div>
                 <div style={{ flex: 1, padding: '10px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
                   <div style={{ fontWeight: 'bold', color: 'var(--accent-primary)', marginBottom: '4px' }}>ADMIN RESPONSABLE</div>
