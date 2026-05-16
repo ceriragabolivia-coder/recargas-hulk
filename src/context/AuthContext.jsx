@@ -182,6 +182,7 @@ export function AuthProvider({ children }) {
       
       const u = session?.user ?? null
       if (event === 'SIGNED_OUT') {
+        sessionStorage.removeItem('admin_welcome_played')
         lastUserIdRef.current = null
         setUser(null)
         setPerfil(null)
@@ -240,6 +241,7 @@ export function AuthProvider({ children }) {
     },
     logout: async () => {
       setLoading(true)
+      sessionStorage.removeItem('admin_welcome_played')
       await supabase.auth.signOut()
       setPerfil(null)
       setUser(null)
