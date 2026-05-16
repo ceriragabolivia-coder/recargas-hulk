@@ -445,6 +445,14 @@ export default function Dashboard() {
   const isAuthorized = isAdmin || isNegocio || isEmpleado
   const isSuperAdmin = user?.email === 'ceriraga@gmail.com'
   
+  React.useEffect(() => {
+    const hasPlayed = sessionStorage.getItem('admin_welcome_played')
+    if (!hasPlayed) {
+      import('../utils/helpers').then(m => m.playAdminWelcomeSound())
+      sessionStorage.setItem('admin_welcome_played', 'true')
+    }
+  }, [])
+
   const [viewMode, setViewMode] = useState('global') // 'global' | 'own'
   const [isEditingTasa, setIsEditingTasa] = useState(false)
   const [nuevaTasa, setNuevaTasa] = useState('')

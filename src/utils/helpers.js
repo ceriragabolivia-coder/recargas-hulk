@@ -133,6 +133,12 @@ export function playErrorSound() {
   audio.play().catch(err => console.log('Error al reproducir sonido de error:', err))
 }
 
+export function playAdminWelcomeSound() {
+  if (localStorage.getItem('admin_sound_enabled') === 'false') return;
+  const audio = new Audio('/assets/audio/admin_welcome.mp3')
+  audio.play().catch(err => console.log('Error al reproducir audio de bienvenida:', err))
+}
+
 /**
  * Elimina el fondo blanco solo si está conectado a los bordes (Flood Fill).
  * Optimizado para evitar bloqueos del navegador en imágenes grandes.
