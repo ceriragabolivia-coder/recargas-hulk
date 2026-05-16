@@ -77,6 +77,7 @@ export default function Landing({ onNavigate }) {
   
   // Modo Nocturno
   const [darkMode, setDarkMode] = useState(true)
+  const [infoProductModal, setInfoProductModal] = useState(null)
 
   const banners = useMemo(() => {
     // Si está cargando y no hay caché, no devolvemos nada para evitar el banner genérico
@@ -1247,6 +1248,26 @@ export default function Landing({ onNavigate }) {
                             <div className="product-price">
                               <span className="price-primary">{formatBs(pricing.venta_bs)}</span>
                             </div>
+                            
+                            {(prod.info_adicional_texto || prod.info_adicional_imagen_url) && (
+                              <div 
+                                onClick={(e) => { e.stopPropagation(); setInfoProductModal(prod); }} 
+                                style={{ 
+                                  position: 'absolute', top: '8px', right: '8px',
+                                  backgroundColor: '#ff2a2a', color: '#ffffff', 
+                                  fontSize: '16px', fontWeight: '900', cursor: 'pointer', 
+                                  borderRadius: '50%', width: '28px', height: '28px', 
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  boxShadow: '0 4px 12px rgba(255, 42, 42, 0.6)', border: '2px solid #ffffff',
+                                  transition: 'all 0.2s', zIndex: 2
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.15)'}
+                                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                                title="Información importante"
+                              >
+                                i
+                              </div>
+                            )}
                           </div>
                         )
                       })}
@@ -1558,6 +1579,61 @@ export default function Landing({ onNavigate }) {
           videoUrl={selectedJuego.tutorial_video_url} 
           title={`¿Cómo recargar ${selectedJuego.nombre}?`} 
         />
+      )}
+
+      {/* MODAL DE INFO ADICIONAL (ⓘ) */}
+      {infoProductModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 10005,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          animation: 'fadeIn 0.2s', padding: '16px', backdropFilter: 'blur(5px)'
+        }} onClick={() => setInfoProductModal(null)}>
+          <div style={{
+            backgroundColor: 'var(--bg-panel)', width: '100%', maxWidth: '420px',
+            borderRadius: '24px', position: 'relative',
+            boxShadow: '0 24px 48px rgba(0,0,0,0.8)', overflow: 'hidden',
+            border: '1px solid rgba(255,255,255,0.1)', animation: 'scaleUp 0.3s'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.1)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '20px' }}>📦</span>
+                <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent)' }}>{infoProductModal.nombre}</span>
+              </div>
+              <button 
+                onClick={() => setInfoProductModal(null)}
+                style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', fontSize: '16px', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >✕</button>
+            </div>
+            
+            <div style={{ padding: '0', maxHeight: '70vh', overflowY: 'auto' }}>
+              {infoProductModal.info_adicional_imagen_url && (
+                <div style={{ 
+                  width: '100%', 
+                  height: '40vh',
+                  minHeight: '250px',
+                  borderBottom: '1px solid rgba(255,255,255,0.05)', 
+                  backgroundColor: '#000',
+                  backgroundImage: `url(${infoProductModal.info_adicional_imagen_url})`,
+                  backgroundSize: 'contain',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat'
+                }} />
+              )}
+              {infoProductModal.info_adicional_texto && (
+                <div style={{ padding: '24px' }}>
+                  <p style={{ margin: 0, whiteSpace: 'pre-line', fontSize: '15px', color: 'var(--text-main)', lineHeight: 1.6 }}>
+                    {infoProductModal.info_adicional_texto}
+                  </p>
+                </div>
+              )}
+            </div>
+            
+            <div style={{ padding: '20px', backgroundColor: 'rgba(255,255,255,0.02)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <button onClick={() => setInfoProductModal(null)} className="btn-landing-primary" style={{ width: '100%', padding: '12px', fontSize: '16px' }}>Entendido</button>
+            </div>
+          </div>
+        </div>
       )}
 
 
