@@ -364,7 +364,7 @@ export default function Catalogo() {
               <div style={{ fontSize: '80px' }}>🎮</div>
             )}
             <div style={{ marginTop: '0px' }}>
-              <h1 style={{ fontSize: '20px', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--text-primary)', lineHeight: 1.2 }}>{selectedJuego.nombre}</h1>
+              <h1 translate="no" className="notranslate" style={{ fontSize: '20px', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--text-primary)', lineHeight: 1.2 }}>{selectedJuego.nombre}</h1>
               <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '0px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Lista de Precios Oficial</p>
             </div>
           </div>

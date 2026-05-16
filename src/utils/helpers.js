@@ -72,16 +72,26 @@ export function calcularPrecioVenta(producto, juego, config, perfilUsuario = nul
 }
 
 export function formatUSD(value) {
-  // Agregamos un espacio de ancho cero (\u200B) después del símbolo y el punto decimal
-  // para evitar que los traductores automáticos detecten la cifra como un número a traducir.
-  return `$${Number(value || 0).toFixed(2).replace(".", ".\u200B")}`
+  const [int, dec] = Number(value || 0).toFixed(2).split(".")
+  const protectedInt = int.split("").join("\u200C")
+  return `$\u200C${protectedInt}\u2024\u200C${dec}`
 }
 
 export function formatBs(value) {
-  const num = Math.round(Number(value || 0))
-  // Agregamos un espacio de ancho cero (\u200B) después del punto para confundir a los traductores automáticos
-  // que intentan "normalizar" o "traducir" cifras con separadores de miles.
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".\u200B") + 'Bs'
+  const num = Math.round(Number(value || 0)).toString()
+  let result = ""
+  for (let i = 0; i < num.length; i++) {
+    const posFromEnd = num.length - i
+    result += num[i]
+    if (posFromEnd > 1) {
+      if ((posFromEnd - 1) % 3 === 0) {
+        result += "\u2024\u200C" // Punto de miles protegido
+      } else {
+        result += "\u200C" // Rompemos la secuencia numérica
+      }
+    }
+  }
+  return `${result} B\u200Cs`
 }
 
 export function formatDate(dateStr) {
