@@ -145,6 +145,11 @@ export function playOrderNotificationSound() {
   audio.play().catch(err => console.log('Error al reproducir sonido de pedido:', err))
 }
 
+export function playClientOrderSuccessSound() {
+  const audio = new Audio('/assets/audio/client_order_success.mp3')
+  audio.play().catch(err => console.log('Error al reproducir sonido de éxito de pedido:', err))
+}
+
 /**
  * Elimina el fondo blanco solo si está conectado a los bordes (Flood Fill).
  * Optimizado para evitar bloqueos del navegador en imágenes grandes.

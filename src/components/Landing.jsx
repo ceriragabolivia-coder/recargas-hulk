@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams, useLocation, useParams } from 'reac
 import PaginaEstatica from './PaginaEstatica'
 import { supabase } from '../lib/supabase'
 import { useConfiguracion, useAuth, useCart, useCuentasGuardadas } from '../hooks/useData'
-import { formatUSD, formatBs, calcularPrecioVenta } from '../utils/helpers'
+import { formatUSD, formatBs, calcularPrecioVenta, playClientOrderSuccessSound } from '../utils/helpers'
 import LandingAuthModal from './LandingAuthModal'
 import Checkout from './Checkout'
 import Pedidos from './Pedidos'
@@ -385,7 +385,7 @@ export default function Landing({ onNavigate }) {
             target: 'ruleta'
           });
           setTimeout(() => setActiveToast(null), 15000);
-          playNotificationSound();
+          playClientOrderSuccessSound();
         } else if (updated.estado === 'cancelado') {
           setActiveToast({
             titulo: `❌ Pedido #${updated.numero_pedido || 'N/A'} Cancelado`,

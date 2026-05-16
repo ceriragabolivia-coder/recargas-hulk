@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useAuth, useConfiguracion, useWallet, useNotificacionesPush, useCart } from '../hooks/useData'
+import { playClientOrderSuccessSound } from '../utils/helpers'
 import { NavLink, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { formatUSD, formatBs, playOrderNotificationSound } from '../utils/helpers'
@@ -709,7 +710,11 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
               }
               
               setToasts(prev => [userToast, ...prev].slice(0, 3))
-              playNotificationSound()
+              if (isSuccess) {
+                playClientOrderSuccessSound()
+              } else {
+                playNotificationSound()
+              }
             }
           }
         })
