@@ -151,7 +151,6 @@ function ScheduleModal({ show, onClose, config }) {
 
         {/* Footer: checkbox + button */}
         <div style={{ padding: '10px 14px 14px', backgroundColor: '#060608', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {/* "No mostrar por 12h" checkbox */}
           <div
             className="sm-checkbox-row"
             onClick={() => setDontShow(v => !v)}
@@ -159,7 +158,7 @@ function ScheduleModal({ show, onClose, config }) {
             <div className={`sm-checkbox-box${dontShow ? ' checked' : ''}`}>
               {dontShow && <span style={{ color: '#000', fontSize: 12, fontWeight: 900, lineHeight: 1 }}>✓</span>}
             </div>
-            <span className="sm-checkbox-label">No mostrar por 12 horas</span>
+            <span className="sm-checkbox-label">No mostrar por 5 horas</span>
           </div>
 
           <button onClick={handleEntendido} style={{
@@ -499,7 +498,7 @@ export default function App() {
   const handleScheduleModalClose = (dontShow) => {
     setShowScheduleModal(false)
     if (dontShow && user) {
-      const suppressUntil = Date.now() + 12 * 60 * 60 * 1000
+      const suppressUntil = Date.now() + 5 * 60 * 60 * 1000
       localStorage.setItem(`horario_no_mostrar_${user.id}`, suppressUntil.toString())
     }
   }

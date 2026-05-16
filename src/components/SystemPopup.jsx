@@ -39,8 +39,8 @@ export default function SystemPopup() {
 
   const handleClosePopup = () => {
     if (doNotShowAgain && activePopup) {
-      const tomorrow = Date.now() + 24 * 60 * 60 * 1000
-      localStorage.setItem(`popup_muted_until_${activePopup.id}`, tomorrow.toString())
+      const fiveHours = Date.now() + 5 * 60 * 60 * 1000
+      localStorage.setItem(`popup_muted_until_${activePopup.id}`, fiveHours.toString())
     }
     setActivePopup(null)
   }
@@ -105,7 +105,7 @@ export default function SystemPopup() {
               style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--accent-primary)' }}
             />
             <label htmlFor="dont-show-msg-global" style={{ fontSize: '13px', color: 'var(--text-muted)', cursor: 'pointer', fontWeight: 500 }}>
-              No volver a mostrar más
+              No mostrar por 5 horas
             </label>
           </div>
 
