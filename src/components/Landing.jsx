@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams, useLocation, useParams } from 'reac
 import PaginaEstatica from './PaginaEstatica'
 import { supabase } from '../lib/supabase'
 import { useConfiguracion, useAuth, useCart, useCuentasGuardadas } from '../hooks/useData'
-import { formatUSD, formatBs, calcularPrecioVenta, playClientOrderSuccessSound } from '../utils/helpers'
+import { formatUSD, formatBs, calcularPrecioVenta, playClientOrderSuccessSound, playClientWelcomeSound } from '../utils/helpers'
 import LandingAuthModal from './LandingAuthModal'
 import Checkout from './Checkout'
 import Pedidos from './Pedidos'
@@ -436,6 +436,16 @@ export default function Landing({ onNavigate }) {
       supabase.removeChannel(channelWallet);
     };
   }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      const hasPlayed = sessionStorage.getItem('client_welcome_played')
+      if (!hasPlayed) {
+        playClientWelcomeSound()
+        sessionStorage.setItem('client_welcome_played', 'true')
+      }
+    }
+  }, [user?.id])
 
   const markNotiAsRead = async (id) => {
     const { error } = await supabase
