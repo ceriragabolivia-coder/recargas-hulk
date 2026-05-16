@@ -892,7 +892,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                               <span style={{ fontWeight: 800, fontSize: '14px' }}>Resta por Pagar:</span>
                               <div style={{ textAlign: 'right' }}>
                                 <div style={{ color: '#a855f7', fontSize: '20px', fontWeight: 900 }}>
-                                  {formatBs(Math.max(0, discountedTotalBs - walletSaldoBs))}
+                                  {formatBs(Math.max(0, discountedTotalBs - (useWalletBs ? walletSaldoBs : 0)))}
                                 </div>
                               </div>
                             </div>
