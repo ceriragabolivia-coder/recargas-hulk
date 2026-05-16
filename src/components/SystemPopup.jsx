@@ -10,12 +10,42 @@ export default function SystemPopup() {
   useEffect(() => {
     console.log('SystemPopup: allMessages changed', allMessages)
     if (allMessages && allMessages.length > 0) {
-      const activeOne = allMessages.find(m => m.activo)
+      // Filtrar por activos y que estén dentro del horario programado
+      const activeOne = allMessages.find(m => {
+        if (!m.activo) return false;
+
+        // Si no tiene horario programado, se muestra siempre
+        if (!m.hora_inicio && !m.hora_fin) return true;
+
+        try {
+          // Obtener hora actual en Venezuela (UTC-4)
+          const now = new Date();
+          const vzlaTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Caracas" }));
+          const currentH = vzlaTime.getHours();
+          const currentM = vzlaTime.getMinutes();
+          const currentTimeStr = `${currentH.toString().padStart(2, '0')}:${currentM.toString().padStart(2, '0')}`;
+
+          const start = m.hora_inicio || "00:00";
+          const end = m.hora_fin || "23:59";
+
+          if (start <= end) {
+            // Rango normal (ej: 08:00 a 20:00)
+            return currentTimeStr >= start && currentTimeStr <= end;
+          } else {
+            // Rango nocturno (ej: 22:00 a 08:00)
+            return currentTimeStr >= start || currentTimeStr <= end;
+          }
+        } catch (e) {
+          console.error("Error checking popup schedule:", e);
+          return true; // Fallback: mostrar si hay error
+        }
+      })
+
       if (activeOne) {
         const id = activeOne.id
         const now = Date.now()
         
-        // Verificar si está muteado por 24 horas
+        // Verificar si está muteado por 5 horas (session)
         const muteUntil = localStorage.getItem(`popup_muted_until_${id}`)
         if (muteUntil && parseInt(muteUntil) > now) {
           console.log('SystemPopup: Popup is muted until', new Date(parseInt(muteUntil)))

@@ -21,7 +21,7 @@ export default function Configuracion() {
   // Estado para Mensajes Pop-up
   const [showMensajeForm, setShowMensajeForm] = useState(false)
   const [isEditingMensaje, setIsEditingMensaje] = useState(false)
-  const [currentMensaje, setCurrentMensaje] = useState({ titulo: '', contenido: '', activo: true, imagen_url: null })
+  const [currentMensaje, setCurrentMensaje] = useState({ titulo: '', contenido: '', activo: true, imagen_url: null, hora_inicio: '', hora_fin: '' })
 
   // Estado para Notificaciones Push
   const [formNoti, setFormNoti] = useState({ titulo: '', mensaje: '', imagen_url: null })
@@ -1104,6 +1104,29 @@ export default function Configuracion() {
                         />
                       </div>
 
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                        <div className="form-group">
+                          <label className="form-label">Hora de Inicio (Activación)</label>
+                          <input 
+                            type="time" 
+                            className="form-input"
+                            value={currentMensaje.hora_inicio || ''}
+                            onChange={(e) => setCurrentMensaje({...currentMensaje, hora_inicio: e.target.value})}
+                          />
+                          <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>Dejar vacío para siempre activo</p>
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Hora de Fin (Desactivación)</label>
+                          <input 
+                            type="time" 
+                            className="form-input"
+                            value={currentMensaje.hora_fin || ''}
+                            onChange={(e) => setCurrentMensaje({...currentMensaje, hora_fin: e.target.value})}
+                          />
+                          <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>Dejar vacío para siempre activo</p>
+                        </div>
+                      </div>
+
                       <div className="form-group">
                         <label className="form-label">Contenido HTML / Texto</label>
                         <textarea 
@@ -1159,6 +1182,11 @@ export default function Configuracion() {
                               <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{new Date(m.creado_at).toLocaleDateString()}</div>
                             </div>
                             {m.activo && <span className="badge badge-success">Activo</span>}
+                            {(m.hora_inicio || m.hora_fin) && (
+                              <span style={{ fontSize: '11px', color: 'var(--accent-primary)', fontWeight: 600 }}>
+                                ⏰ {m.hora_inicio || '00:00'} - {m.hora_fin || '23:59'}
+                              </span>
+                            )}
                           </div>
                           <div style={{ display: 'flex', gap: '8px' }}>
                             <button className="btn btn-ghost btn-sm" onClick={() => {
