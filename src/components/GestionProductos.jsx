@@ -487,7 +487,6 @@ export default function GestionProductos() {
         return
       }
 
-      setSelectedJuego(prev => ({ ...prev, icono_url: data.publicUrl }))
       setSaving(false)
     } catch (err) {
       setAlertModal({ type: 'error', message: "Error inesperado en el código: " + err.message })
