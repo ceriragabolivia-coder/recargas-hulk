@@ -38,7 +38,8 @@ export default function GestionProductos() {
     instrucciones_recarga: '',
     tutorial_video_url: '',
     tutorial_banner_texto: '',
-    tutorial_banner_img: ''
+    tutorial_banner_img: '',
+    icono_url: null
   })
 
   const juegosFiltrados = useMemo(() => {
@@ -68,6 +69,7 @@ export default function GestionProductos() {
       tutorial_video_url: '',
       tutorial_banner_texto: '',
       tutorial_banner_img: '',
+      icono_url: null,
       verificacion_api_activa: false,
       verificacion_api_url: ''
     })
@@ -91,6 +93,7 @@ export default function GestionProductos() {
       tutorial_video_url: selectedJuego.tutorial_video_url || '',
       tutorial_banner_texto: selectedJuego.tutorial_banner_texto || '',
       tutorial_banner_img: selectedJuego.tutorial_banner_img || '',
+      icono_url: selectedJuego.icono_url || null,
       verificacion_api_activa: selectedJuego.verificacion_api_activa === undefined 
         ? (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('blood strike'))
         : !!selectedJuego.verificacion_api_activa,
@@ -119,6 +122,7 @@ export default function GestionProductos() {
         tutorial_video_url: formGame.tutorial_video_url,
         tutorial_banner_texto: formGame.tutorial_banner_texto,
         tutorial_banner_img: formGame.tutorial_banner_img,
+        icono_url: formGame.icono_url,
         verificacion_api_activa: formGame.verificacion_api_activa,
         verificacion_api_url: formGame.verificacion_api_url
       })
@@ -160,6 +164,49 @@ export default function GestionProductos() {
         setSelectedJuegoId(null)
         setSaving(false)
         setAlertModal(null)
+      }
+    })
+  }
+
+  const handleCloneJuego = async () => {
+    if (!selectedJuego) return
+    setAlertModal({
+      type: 'confirm',
+      title: 'Clonar Servicio',
+      message: `¿Estás seguro que quieres clonar el servicio "${selectedJuego.nombre}" con todos sus paquetes?`,
+      onConfirm: async () => {
+        setSaving(true)
+        try {
+          // 1. Clonar el Juego
+          const { id: _oldId, created_at: _ca, updated_at: _ua, ...gameData } = selectedJuego
+          const clonePayload = {
+            ...gameData,
+            nombre: `${gameData.nombre} (Copia)`,
+            activo: true
+          }
+          const { data: newGame, error: gameError } = await createJuego(clonePayload)
+          if (gameError) throw gameError
+
+          // 2. Obtener productos originales
+          // Note: useProductos hook uses the selectedJuegoId, but we need the original ones.
+          // Since we already have 'productos' from the hook (they belong to selectedJuego.id), we use them.
+          if (productos && productos.length > 0) {
+            const productsPayload = productos.map(({ id: _pId, created_at: _pca, updated_at: _pua, ...pData }) => ({
+              ...pData,
+              juego_id: newGame.id,
+              activo: pData.activo !== false
+            }))
+            const { error: productsError } = await supabase.from('productos').insert(productsPayload)
+            if (productsError) throw productsError
+          }
+
+          setAlertModal({ type: 'success', message: 'Servicio clonado con éxito' })
+          setSelectedJuegoId(newGame.id)
+        } catch (err) {
+          setAlertModal({ type: 'error', message: 'Error al clonar: ' + err.message })
+        } finally {
+          setSaving(false)
+        }
       }
     })
   }
@@ -599,6 +646,9 @@ export default function GestionProductos() {
           </label>
           <button className="btn btn-ghost btn-icon btn-sm" onClick={handleEditJuego} title="Editar Configuración del Juego">
             ✏️
+          </button>
+          <button className="btn btn-ghost btn-icon btn-sm" onClick={handleCloneJuego} title="Clonar Servicio (Copia profunda)">
+            📋
           </button>
           <button className="btn btn-ghost btn-icon btn-sm" onClick={handleDeleteJuego} title="Eliminar Juego">
             🗑️
@@ -1056,8 +1106,64 @@ export default function GestionProductos() {
 {isGameModalOpen && (
     <div className="modal-overlay">
       <div className="modal">
-        <h2 className="modal-title">Añadir Nuevo Servicio</h2>
+        <h2 className="modal-title">{formGame.id ? 'Editar Servicio' : 'Añadir Nuevo Servicio'}</h2>
         <form onSubmit={handleGameSubmit}>
+          {/* LOGO DEL SERVICIO EN EL MODAL */}
+          <div className="form-group" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '24px' }}>
+            <label className="form-label" style={{ alignSelf: 'flex-start' }}>Logo del Servicio</label>
+            <div 
+              onClick={() => document.getElementById('modal-game-logo-upload').click()}
+              style={{
+                width: 100, height: 100, borderRadius: 16, backgroundColor: 'var(--bg-panel)',
+                border: '1px dashed var(--border-active)', cursor: 'pointer',
+                display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden',
+                position: 'relative', marginTop: '8px'
+              }}
+            >
+              {formGame.icono_url ? (
+                <img src={formGame.icono_url} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <div style={{ textAlign: 'center' }}>
+                  <span style={{ fontSize: 32, display: 'block' }}>🎮</span>
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Subir Logo</span>
+                </div>
+              )}
+              {saving && (
+                <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="spinner" style={{ width: 20, height: 20 }}></div>
+                </div>
+              )}
+            </div>
+            <input
+              type="file"
+              id="modal-game-logo-upload"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={async (e) => {
+                const file = e.target.files[0]
+                if (!file) return
+                setSaving(true)
+                try {
+                  let finalFile = file
+                  let contentType = file.type
+                  if (shouldRemoveBg) {
+                    finalFile = await removeWhiteBackground(file)
+                    contentType = 'image/png'
+                  }
+                  const fileName = `game-${Date.now()}${shouldRemoveBg ? '.png' : ''}`
+                  const { error: uploadError } = await supabase.storage.from('logos').upload(fileName, finalFile, { contentType })
+                  if (uploadError) throw uploadError
+                  const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(fileName)
+                  setFormGame(prev => ({ ...prev, icono_url: publicUrl }))
+                } catch (err) {
+                  setAlertModal({ type: 'error', message: 'Error subiendo logo: ' + err.message })
+                } finally {
+                  setSaving(false)
+                  e.target.value = null
+                }
+              }}
+            />
+          </div>
           <div className="form-group">
             <label className="form-label">Nombre (Ej: Free Fire, Netflix)</label>
             <input
