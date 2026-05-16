@@ -1022,12 +1022,14 @@ export default function Catalogo() {
           )
         })}
       </div>
-      <TutorialVideoModal 
-        isOpen={showTutorialModal} 
-        onClose={() => setShowTutorialModal(false)} 
-        videoUrl={selectedJuego.tutorial_video_url} 
-        title={`¿Cómo recargar ${selectedJuego.nombre}?`} 
-      />
+      {selectedJuego && (
+        <TutorialVideoModal 
+          isOpen={showTutorialModal} 
+          onClose={() => setShowTutorialModal(false)} 
+          videoUrl={selectedJuego.tutorial_video_url} 
+          title={`¿Cómo recargar ${selectedJuego.nombre}?`} 
+        />
+      )}
     </div>
   )
 }
