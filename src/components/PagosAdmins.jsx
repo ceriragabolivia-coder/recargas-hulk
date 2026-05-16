@@ -23,6 +23,12 @@ export default function PagosAdmins() {
   const [orderDetail, setOrderDetail] = useState(null)
   const [loadingOrder, setLoadingOrder] = useState(false)
 
+  // Estados para Historial Pendiente
+  const [showOrdersModal, setShowOrdersModal] = useState(false)
+  const [pendingOrders, setPendingOrders] = useState({ usd: [], bs: [] })
+  const [adminForOrders, setAdminForOrders] = useState(null)
+  const [loadingPending, setLoadingPending] = useState(false)
+
   const fetchData = async () => {
     setLoading(true)
     try {
@@ -106,6 +112,49 @@ export default function PagosAdmins() {
   useEffect(() => {
     fetchData()
   }, [])
+
+  const fetchPendingOrders = async (admin) => {
+    setLoadingPending(true)
+    setAdminForOrders(admin)
+    setShowOrdersModal(true)
+    setPendingOrders({ usd: [], bs: [] })
+    
+    try {
+      // 1. Obtener última fecha de liquidación para cada moneda
+      const { data: lastLiq, error: liqError } = await supabase
+        .from('admin_saldos_historial')
+        .select('moneda, created_at')
+        .eq('admin_id', admin.auth_user_id)
+        .eq('tipo_movimiento', 'liquidacion')
+        .order('created_at', { ascending: false })
+
+      if (liqError) throw liqError
+
+      const lastUsdLiqDate = lastLiq?.find(l => l.moneda === 'usd')?.created_at || '1900-01-01T00:00:00Z'
+      const lastBsLiqDate = lastLiq?.find(l => l.moneda === 'bs')?.created_at || '1900-01-01T00:00:00Z'
+
+      // 2. Obtener movimientos que NO son liquidación posteriores a esa fecha
+      const { data: movs, error: movsError } = await supabase
+        .from('admin_saldos_historial')
+        .select('*')
+        .eq('admin_id', admin.auth_user_id)
+        .in('tipo_movimiento', ['credito_venta', 'reverso_venta'])
+        .order('created_at', { ascending: false })
+
+      if (movsError) throw movsError
+
+      setPendingOrders({
+        usd: movs.filter(m => m.moneda === 'usd' && m.created_at > lastUsdLiqDate),
+        bs: movs.filter(m => m.moneda === 'bs' && m.created_at > lastBsLiqDate)
+      })
+
+    } catch (err) {
+      console.error("Error fetching pending orders:", err)
+      showAlert("No se pudieron cargar las órdenes pendientes: " + err.message, 'error')
+    } finally {
+      setLoadingPending(false)
+    }
+  }
 
   const handleOpenLiquidar = (admin, moneda) => {
     setAdminSelected(admin)
@@ -332,6 +381,14 @@ export default function PagosAdmins() {
                         >
                           🏦 Liquidar Bs
                         </button>
+                        <button 
+                          className="btn btn-sm btn-ghost" 
+                          style={{ border: '1px solid var(--border-color)' }}
+                          onClick={() => fetchPendingOrders(s)}
+                          title="Ver órdenes que componen el saldo actual"
+                        >
+                          📋 Ver Pendientes
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -471,6 +528,131 @@ export default function PagosAdmins() {
       )}
 
       {/* Modal de Detalle de Pedido */}
+      {/* Modal de Órdenes Pendientes */}
+      {showOrdersModal && (
+        <div className="modal-overlay" onClick={() => setShowOrdersModal(false)}>
+          <div className="modal-content" style={{ maxWidth: '800px', padding: '0', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
+            <div style={{ 
+              backgroundColor: 'var(--bg-panel)', 
+              padding: '20px 24px', 
+              borderBottom: '1px solid var(--border-color)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <h2 style={{ fontSize: '18px', margin: 0 }}>Órdenes que componen el saldo actual</h2>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                  Mostrando créditos y reversos desde la última liquidación de <strong>{adminForOrders?.perfil?.nombres}</strong>
+                </p>
+              </div>
+              <button className="btn btn-ghost" onClick={() => setShowOrdersModal(false)} style={{ fontSize: '20px', padding: '8px' }}>✕</button>
+            </div>
+
+            <div style={{ padding: '24px', maxHeight: '70vh', overflowY: 'auto' }}>
+              {loadingPending ? (
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                  <div className="spinner" style={{ margin: '0 auto 16px' }}></div>
+                  <p>Cargando órdenes pendientes...</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                  
+                  {/* Sección USD */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <h3 style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ color: 'var(--accent-success)' }}>💵</span> Órdenes en USD
+                      </h3>
+                      <div style={{ fontWeight: 800, color: 'var(--accent-success)', backgroundColor: 'rgba(34, 197, 94, 0.1)', padding: '4px 12px', borderRadius: '8px' }}>
+                        Total: {formatUSD(adminForOrders?.saldo_usd || 0)}
+                      </div>
+                    </div>
+                    {pendingOrders.usd.length === 0 ? (
+                      <div className="card" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+                        No hay créditos pendientes en USD.
+                      </div>
+                    ) : (
+                      <div className="table-container" style={{ border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+                        <table className="table table-sm">
+                          <thead>
+                            <tr>
+                              <th>Fecha</th>
+                              <th>Concepto / Pedido</th>
+                              <th style={{ textAlign: 'right' }}>Monto</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {pendingOrders.usd.map(o => (
+                              <tr key={o.id}>
+                                <td style={{ fontSize: '11px' }}>{new Date(o.created_at).toLocaleString()}</td>
+                                <td style={{ fontSize: '12px' }}>
+                                  {renderDetallesLink(o.notas, o.pedido_id)}
+                                </td>
+                                <td style={{ textAlign: 'right', fontWeight: 700, color: o.tipo_movimiento === 'reverso_venta' ? 'var(--accent-error)' : 'var(--accent-success)' }}>
+                                  {o.tipo_movimiento === 'reverso_venta' ? '-' : '+'}{formatUSD(o.monto)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Sección BS */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <h3 style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ color: '#a855f7' }}>🏦</span> Órdenes en Bolívares
+                      </h3>
+                      <div style={{ fontWeight: 800, color: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.1)', padding: '4px 12px', borderRadius: '8px' }}>
+                        Total: {formatBs(adminForOrders?.saldo_bs || 0)}
+                      </div>
+                    </div>
+                    {pendingOrders.bs.length === 0 ? (
+                      <div className="card" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+                        No hay créditos pendientes en BS.
+                      </div>
+                    ) : (
+                      <div className="table-container" style={{ border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+                        <table className="table table-sm">
+                          <thead>
+                            <tr>
+                              <th>Fecha</th>
+                              <th>Concepto / Pedido</th>
+                              <th style={{ textAlign: 'right' }}>Monto</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {pendingOrders.bs.map(o => (
+                              <tr key={o.id}>
+                                <td style={{ fontSize: '11px' }}>{new Date(o.created_at).toLocaleString()}</td>
+                                <td style={{ fontSize: '12px' }}>
+                                  {renderDetallesLink(o.notas, o.pedido_id)}
+                                </td>
+                                <td style={{ textAlign: 'right', fontWeight: 700, color: o.tipo_movimiento === 'reverso_venta' ? 'var(--accent-error)' : 'var(--accent-success)' }}>
+                                  {o.tipo_movimiento === 'reverso_venta' ? '-' : '+'}{formatBs(o.monto)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+              )}
+            </div>
+            
+            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-color)', backgroundColor: 'rgba(0,0,0,0.1)', textAlign: 'right' }}>
+              <button className="btn btn-primary" onClick={() => setShowOrdersModal(false)}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {selectedOrderNumber && (
         <div className="modal-overlay" onClick={() => setSelectedOrderNumber(null)}>
           <div className="modal-content" style={{ maxWidth: '600px', padding: '0', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
