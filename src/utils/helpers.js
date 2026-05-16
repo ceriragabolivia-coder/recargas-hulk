@@ -139,6 +139,12 @@ export function playAdminWelcomeSound() {
   audio.play().catch(err => console.log('Error al reproducir audio de bienvenida:', err))
 }
 
+export function playOrderNotificationSound() {
+  if (localStorage.getItem('admin_sound_enabled') === 'false') return;
+  const audio = new Audio('/assets/audio/new_order.mp3')
+  audio.play().catch(err => console.log('Error al reproducir sonido de pedido:', err))
+}
+
 /**
  * Elimina el fondo blanco solo si está conectado a los bordes (Flood Fill).
  * Optimizado para evitar bloqueos del navegador en imágenes grandes.

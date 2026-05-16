@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useAuth, useConfiguracion, useWallet, useNotificacionesPush, useCart } from '../hooks/useData'
 import { NavLink, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { formatUSD, formatBs } from '../utils/helpers'
+import { formatUSD, formatBs, playOrderNotificationSound } from '../utils/helpers'
 import FloatingBackground from './FloatingBackground'
 import DOMPurify from 'dompurify'
 import SupportChat from './SupportChat'
@@ -603,7 +603,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
                 order_id: newOrder.id
               }
               setToasts(prev => [orderToast, ...prev].slice(0, 3))
-              playBellSound()
+              playOrderNotificationSound()
             }
           }
           fetchCounts()
