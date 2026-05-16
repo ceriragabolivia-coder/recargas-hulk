@@ -358,11 +358,11 @@ export default function PagosAdmins() {
                         </div>
                       </div>
                     </td>
-                    <td style={{ fontWeight: 800, color: 'var(--accent-success)', fontSize: '16px' }}>
-                      <span translate="no" className="notranslate">{formatUSD(s.saldo_usd)}</span>
+                    <td translate="no" className="notranslate" style={{ fontWeight: 800, color: 'var(--accent-success)', fontSize: '16px' }}>
+                      {formatUSD(s.saldo_usd)}
                     </td>
-                    <td style={{ fontWeight: 800, color: '#a855f7', fontSize: '16px' }}>
-                      <span translate="no" className="notranslate">{formatBs(s.saldo_bs)}</span>
+                    <td translate="no" className="notranslate" style={{ fontWeight: 800, color: '#a855f7', fontSize: '16px' }}>
+                      {formatBs(s.saldo_bs)}
                     </td>
                     <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                       {new Date(s.updated_at).toLocaleString()}
@@ -440,12 +440,12 @@ export default function PagosAdmins() {
                           {info.icon} {info.label}
                         </span>
                       </td>
-                      <td style={{ 
+                      <td translate="no" className="notranslate" style={{ 
                         fontWeight: 700, 
                         color: h.tipo_movimiento === 'liquidacion' || h.tipo_movimiento === 'reverso_venta' ? 'var(--accent-error)' : 'var(--accent-success)'
                       }}>
                         {h.tipo_movimiento === 'liquidacion' || h.tipo_movimiento === 'reverso_venta' ? '-' : '+'}
-                        <span translate="no" className="notranslate">{h.moneda === 'usd' ? formatUSD(h.monto) : formatBs(h.monto)}</span>
+                        <span>{h.moneda === 'usd' ? formatUSD(h.monto) : formatBs(h.monto)}</span>
                       </td>
                       <td style={{ fontSize: '12px', fontWeight: 600, color: 'var(--accent-primary)' }}>
                         {h.referencia || '-'}
@@ -593,9 +593,9 @@ export default function PagosAdmins() {
                                 <td style={{ fontSize: '12px' }}>
                                   {renderDetallesLink(o.notas, o.pedido_id)}
                                 </td>
-                                <td style={{ textAlign: 'right', fontWeight: 700, color: o.tipo_movimiento === 'reverso_venta' ? 'var(--accent-error)' : 'var(--accent-success)' }}>
+                                <td translate="no" className="notranslate" style={{ textAlign: 'right', fontWeight: 700, color: o.tipo_movimiento === 'reverso_venta' ? 'var(--accent-error)' : 'var(--accent-success)' }}>
                                   {o.tipo_movimiento === 'reverso_venta' ? '-' : '+'}
-                                  <span translate="no" className="notranslate">{formatUSD(o.monto)}</span>
+                                  <span>{formatUSD(o.monto)}</span>
                                 </td>
                               </tr>
                             ))}
@@ -636,9 +636,9 @@ export default function PagosAdmins() {
                                 <td style={{ fontSize: '12px' }}>
                                   {renderDetallesLink(o.notas, o.pedido_id)}
                                 </td>
-                                <td style={{ textAlign: 'right', fontWeight: 700, color: o.tipo_movimiento === 'reverso_venta' ? 'var(--accent-error)' : 'var(--accent-success)' }}>
+                                <td translate="no" className="notranslate" style={{ textAlign: 'right', fontWeight: 700, color: o.tipo_movimiento === 'reverso_venta' ? 'var(--accent-error)' : 'var(--accent-success)' }}>
                                   {o.tipo_movimiento === 'reverso_venta' ? '-' : '+'}
-                                  <span translate="no" className="notranslate">{formatBs(o.monto)}</span>
+                                  <span>{formatBs(o.monto)}</span>
                                 </td>
                               </tr>
                             ))}

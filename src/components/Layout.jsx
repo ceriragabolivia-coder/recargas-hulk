@@ -191,16 +191,16 @@ function WalletWidget({ onNavigate }) {
         <div style={{ display: 'flex', gap: '12px' }}>
           {/* USD balance hidden for Cliente role and hidden on mobile to save space */}
           {!isCliente && (
-            <div className="desktop-only" style={{ display: 'flex', flexDirection: 'column' }}>
+            <div translate="no" className="desktop-only notranslate" style={{ display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{isAdmin ? 'Saldo' : 'USD'}</span>
-              <span translate="no" className="notranslate" style={{ fontSize: '13px', fontWeight: 800, color: 'var(--accent-success)' }}>
+              <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--accent-success)' }}>
                 {loading ? '...' : formatUSD(wallet?.saldo || 0)}
               </span>
             </div>
           )}
-          <div style={{ display: 'flex', flexDirection: 'column', borderLeft: !isCliente ? '1px solid rgba(255,255,255,0.1)' : 'none', paddingLeft: !isCliente ? '12px' : '0' }} className={!isCliente ? "mobile-no-border-left" : ""}>
+          <div translate="no" className={!isCliente ? "mobile-no-border-left notranslate" : "notranslate"} style={{ display: 'flex', flexDirection: 'column', borderLeft: !isCliente ? '1px solid rgba(255,255,255,0.1)' : 'none', paddingLeft: !isCliente ? '12px' : '0' }}>
             <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bs</span>
-            <span translate="no" className="notranslate" style={{ fontSize: '13px', fontWeight: 800, color: '#a855f7' }}>
+            <span style={{ fontSize: '13px', fontWeight: 800, color: '#a855f7' }}>
               {loading ? '...' : formatBs(wallet?.saldo_bs || 0)}
             </span>
           </div>
@@ -218,11 +218,11 @@ function WalletWidget({ onNavigate }) {
           }}
           title="Ver saldo operativo (recaudación de ventas)"
         >
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div translate="no" className="notranslate" style={{ display: 'flex', flexDirection: 'column' }}>
             <span style={{ fontSize: '8px', color: 'var(--accent-primary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px' }}>OPERATIVO</span>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-               <span translate="no" className="notranslate" style={{ fontSize: '12px', fontWeight: 700, color: 'var(--accent-success)' }}>{formatUSD(adminSalesBalance.saldo_usd || 0)}</span>
-               <span translate="no" className="notranslate" style={{ fontSize: '12px', fontWeight: 700, color: '#a855f7' }}>{formatBs(adminSalesBalance.saldo_bs || 0)}</span>
+               <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--accent-success)' }}>{formatUSD(adminSalesBalance.saldo_usd || 0)}</span>
+               <span style={{ fontSize: '12px', fontWeight: 700, color: '#a855f7' }}>{formatBs(adminSalesBalance.saldo_bs || 0)}</span>
             </div>
           </div>
           <span style={{ fontSize: '16px' }}>💸</span>

@@ -270,8 +270,8 @@ export default function Catalogo() {
                 <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-muted)' }}>Paquete:</span> 
                 <span style={{ textAlign: 'right' }}>
                   <div style={{ color: 'var(--accent-success)', fontWeight: 800, fontSize: '16px' }}>{pendingItem.p.nombre}</div>
-                  <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    <span translate="no" className="notranslate">{formatBs(pendingItem.finalPrice.venta_bs)}</span>
+                  <div translate="no" className="notranslate" style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    <span>{formatBs(pendingItem.finalPrice.venta_bs)}</span>
                   </div>
                 </span>
               </div>
@@ -876,10 +876,10 @@ export default function Catalogo() {
                         {p.nombre}
                       </strong>
                       
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span translate="no" className="notranslate" style={{ fontSize: '20px', fontWeight: 900, lineHeight: 1 }}>{formatBs(finalPrice.venta_bs)}</span>
+                      <div translate="no" className="notranslate" style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '20px', fontWeight: 900, lineHeight: 1 }}>{formatBs(finalPrice.venta_bs)}</span>
                         {!isCliente && (
-                          <span translate="no" className="notranslate" style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px', fontWeight: 600 }}>{formatUSD(finalPrice.venta_usd)}</span>
+                          <span style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px', fontWeight: 600 }}>{formatUSD(finalPrice.venta_usd)}</span>
                         )}
                       </div>
 

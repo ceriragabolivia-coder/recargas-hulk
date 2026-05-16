@@ -371,7 +371,7 @@ export default function RegistroVentas({ onNavigate }) {
                         )}
                       </div>
                     </div>
-                    <div translate="no" className="notranslate" className="venta-item-amount">{formatBs(v.precio_venta_bs)}</div>
+                    <div translate="no" className="notranslate venta-item-amount">{formatBs(v.precio_venta_bs)}</div>
                       <button 
                         className="btn btn-ghost btn-icon btn-sm" 
                         onClick={(e) => {
@@ -392,7 +392,7 @@ export default function RegistroVentas({ onNavigate }) {
               <div className="flex justify-between items-end">
                 <div>
                   <div className="ventas-total-label">Total Recaudado Bs</div>
-                  <div translate="no" className="notranslate" className="ventas-total-value">
+                  <div translate="no" className="notranslate ventas-total-value">
                     {formatBs(resumen?.ventas_totales_bs || 0)}
                   </div>
                 </div>
@@ -432,10 +432,10 @@ export default function RegistroVentas({ onNavigate }) {
               </div>
 
               <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
-                <div style={{ flex: 1, padding: '10px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
+                <div translate="no" className="notranslate" style={{ flex: 1, padding: '10px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
                   <div style={{ fontWeight: 'bold', color: 'var(--accent-primary)', marginBottom: '4px' }}>MONTO</div>
-                  <div translate="no" className="notranslate" style={{ fontWeight: 'bold', color: 'var(--accent-success)' }}>{formatBs(selectedVentaDetalle.precio_venta_bs)}</div>
-                  <div translate="no" className="notranslate" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>({formatUSD(selectedVentaDetalle.precio_venta_usd)})</div>
+                  <div style={{ fontWeight: 'bold', color: 'var(--accent-success)' }}>{formatBs(selectedVentaDetalle.precio_venta_bs)}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>({formatUSD(selectedVentaDetalle.precio_venta_usd)})</div>
                 </div>
                 <div style={{ flex: 1, padding: '10px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
                   <div style={{ fontWeight: 'bold', color: 'var(--accent-primary)', marginBottom: '4px' }}>ADMIN RESPONSABLE</div>

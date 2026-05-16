@@ -72,12 +72,16 @@ export function calcularPrecioVenta(producto, juego, config, perfilUsuario = nul
 }
 
 export function formatUSD(value) {
-  return `$${Number(value || 0).toFixed(2)}`
+  // Agregamos un espacio de ancho cero (\u200B) después del símbolo y el punto decimal
+  // para evitar que los traductores automáticos detecten la cifra como un número a traducir.
+  return `$${Number(value || 0).toFixed(2).replace(".", ".\u200B")}`
 }
 
 export function formatBs(value) {
   const num = Math.round(Number(value || 0))
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + 'Bs'
+  // Agregamos un espacio de ancho cero (\u200B) después del punto para confundir a los traductores automáticos
+  // que intentan "normalizar" o "traducir" cifras con separadores de miles.
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".\u200B") + 'Bs'
 }
 
 export function formatDate(dateStr) {

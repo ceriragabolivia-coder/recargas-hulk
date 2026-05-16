@@ -270,8 +270,8 @@ export default function Billetera({ onNavigate }) {
                 <div className="kpi-label" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                   💵 Saldo USD
                 </div>
-                <div className="kpi-value" style={{ fontWeight: 900, color: 'var(--accent-success)', textShadow: '0 0 20px rgba(34, 197, 94, 0.2)' }}>
-                  <span translate="no" className="notranslate">{formatUSD(wallet?.saldo || 0)}</span>
+                <div translate="no" className="kpi-value notranslate" style={{ fontWeight: 900, color: 'var(--accent-success)', textShadow: '0 0 20px rgba(34, 197, 94, 0.2)' }}>
+                  {formatUSD(wallet?.saldo || 0)}
                 </div>
               </div>
             )}
@@ -286,8 +286,8 @@ export default function Billetera({ onNavigate }) {
               <div className="kpi-label" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                 🏦 Saldo Bolívares
               </div>
-              <div className="kpi-value" style={{ fontWeight: 900, color: '#a855f7', textShadow: '0 0 20px rgba(139, 92, 246, 0.2)' }}>
-                <span translate="no" className="notranslate">{formatBs(wallet?.saldo_bs || 0)}</span>
+              <div translate="no" className="kpi-value notranslate" style={{ fontWeight: 900, color: '#a855f7', textShadow: '0 0 20px rgba(139, 92, 246, 0.2)' }}>
+                {formatBs(wallet?.saldo_bs || 0)}
               </div>
             </div>
           </div>
@@ -307,13 +307,13 @@ export default function Billetera({ onNavigate }) {
                 <button className="btn btn-ghost btn-sm" onClick={refetch}>🔄</button>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div style={{ padding: '12px', background: 'var(--bg-panel)', borderRadius: '12px', textAlign: 'center' }}>
+                <div translate="no" className="notranslate" style={{ padding: '12px', background: 'var(--bg-panel)', borderRadius: '12px', textAlign: 'center' }}>
                   <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Pendiente USD</div>
-                  <div translate="no" className="notranslate" style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent-success)' }}>{formatUSD(adminSalesBalance.saldo_usd || 0)}</div>
+                  <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent-success)' }}>{formatUSD(adminSalesBalance.saldo_usd || 0)}</div>
                 </div>
-                <div style={{ padding: '12px', background: 'var(--bg-panel)', borderRadius: '12px', textAlign: 'center' }}>
+                <div translate="no" className="notranslate" style={{ padding: '12px', background: 'var(--bg-panel)', borderRadius: '12px', textAlign: 'center' }}>
                   <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Pendiente Bs</div>
-                  <div translate="no" className="notranslate" style={{ fontSize: '18px', fontWeight: 800, color: '#a855f7' }}>{formatBs(adminSalesBalance.saldo_bs || 0)}</div>
+                  <div style={{ fontSize: '18px', fontWeight: 800, color: '#a855f7' }}>{formatBs(adminSalesBalance.saldo_bs || 0)}</div>
                 </div>
               </div>
               <button 
@@ -358,7 +358,7 @@ export default function Billetera({ onNavigate }) {
                                 <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>@{r.clientes?.nickname}</div>
                               </div>
                             </td>
-                            <td data-label="Monto">
+                            <td data-label="Monto" translate="no" className="notranslate">
                               <span translate="no" className="notranslate" style={{ fontWeight: 700, color: r.moneda === 'bs' ? '#a855f7' : 'var(--accent-success)' }}>{r.moneda === 'bs' ? formatBs(r.monto) : formatUSD(r.monto)}</span>
                               <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{r.moneda === 'bs' ? 'Bolívares' : 'Dólares'}</div>
                             </td>
@@ -426,7 +426,7 @@ export default function Billetera({ onNavigate }) {
                                 <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>@{r.clientes?.nickname}</div>
                               </div>
                             </td>
-                            <td data-label="Monto">
+                            <td data-label="Monto" translate="no" className="notranslate">
                               <span translate="no" className="notranslate" style={{ fontWeight: 700, color: r.moneda === 'bs' ? '#a855f7' : 'var(--accent-success)' }}>{r.moneda === 'bs' ? formatBs(r.monto) : formatUSD(r.monto)}</span>
                               <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{r.moneda === 'bs' ? 'Bolívares' : 'Dólares'}</div>
                             </td>
@@ -536,9 +536,9 @@ export default function Billetera({ onNavigate }) {
                               </div>
                             </td>
                             <td data-label="Estado">{estadoBadge(item.estado)}</td>
-                            <td data-label="Monto" style={{ fontWeight: 700, color: item.monto > 0 ? (item.moneda === 'bs' ? '#a855f7' : 'var(--accent-success)') : 'var(--accent-error)' }}>
+                            <td data-label="Monto" translate="no" className="notranslate" style={{ fontWeight: 700, color: item.monto > 0 ? (item.moneda === 'bs' ? '#a855f7' : 'var(--accent-success)') : 'var(--accent-error)' }}>
                               {item.monto > 0 ? '+' : ''}
-                              <span translate="no" className="notranslate">{item.moneda === 'bs' ? formatBs(item.monto) : formatUSD(item.monto)}</span>
+                              <span>{item.moneda === 'bs' ? formatBs(item.monto) : formatUSD(item.monto)}</span>
                               <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: 500, textTransform: 'uppercase' }}>{item.moneda === 'bs' ? 'Bs' : 'USD'}</div>
                             </td>
                           </tr>
@@ -608,13 +608,13 @@ export default function Billetera({ onNavigate }) {
                   required
                 />
                 {monedaRecarga === 'bs' && monto && (
-                  <div className="fade-in" style={{ 
+                  <div className="fade-in" translate="no" style={{ 
                     fontSize: '18px', fontWeight: 800, color: '#a855f7', 
                     padding: '12px', backgroundColor: 'rgba(168, 85, 247, 0.1)', 
                     borderRadius: '10px', border: '1px dashed rgba(168, 85, 247, 0.3)',
                     textAlign: 'center'
                   }}>
-                    💰 <span translate="no" className="notranslate">{formatBs(monto)}</span>
+                    💰 <span className="notranslate">{formatBs(monto)}</span>
                   </div>
                 )}
               </div>
