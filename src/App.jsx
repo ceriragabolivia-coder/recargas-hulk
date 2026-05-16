@@ -80,8 +80,8 @@ function ScheduleModal({ show, onClose, config }) {
       <div
         className="sm-inner"
         style={{
-          width: '100%', maxWidth: '420px',
-          borderRadius: '16px', overflow: 'hidden',
+          width: '95%', maxWidth: '420px',
+          borderRadius: '16px',
           boxShadow: '0 0 0 1px rgba(57,255,20,0.25), 0 30px 60px rgba(0,0,0,0.7)',
           backgroundColor: '#060608', position: 'relative',
         }}

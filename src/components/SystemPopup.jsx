@@ -59,10 +59,12 @@ export default function SystemPopup() {
     >
       <div 
         style={{
-          backgroundColor: 'var(--bg-card)', width: '90%', maxWidth: '500px',
+          backgroundColor: 'var(--bg-card)', width: '95%', maxWidth: '500px',
           borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)',
           boxShadow: '0 25px 50px -12px rgba(0,0,0,0.7)',
-          position: 'relative', overflow: 'hidden', animation: 'scaleUp 0.3s ease'
+          position: 'relative', overflowY: 'auto', maxHeight: '90vh',
+          animation: 'scaleUp 0.3s ease',
+          display: 'block'
         }}
         onClick={e => e.stopPropagation()}
       >
