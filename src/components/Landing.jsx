@@ -1016,7 +1016,7 @@ export default function Landing({ onNavigate }) {
                                 placeholder="Introduce el ID"
                                 value={localRechargeData.player_id}
                                 onChange={e => {
-                                  const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 15);
+                                  const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 30);
                                   setLocalRechargeData({...localRechargeData, player_id: val});
                                   if (verificacionResultado) setVerificacionResultado(null);
                                 }}

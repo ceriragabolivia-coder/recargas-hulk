@@ -606,7 +606,7 @@ export default function Catalogo() {
                   placeholder="ID del Jugador"
                   value={localRechargeData.player_id}
                   onChange={e => {
-                    const numericValue = e.target.value.replace(/[^0-9]/g, '').slice(0, 15);
+                    const numericValue = e.target.value.replace(/[^0-9]/g, '').slice(0, 30);
                     setLocalRechargeData({...localRechargeData, player_id: numericValue});
                     if (verificacionResultado) setVerificacionResultado(null);
                   }}
