@@ -931,7 +931,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
         </nav>
 
         {/* Botón Descargar App (Visible para todos) */}
-        {config?.apk_url && (
+        {(config?.apk_url && config?.mostrar_boton_app !== 'false' && config?.mostrar_boton_app !== false) && (
           <div style={{ padding: '0 12px 12px' }}>
              <a 
                href={config.apk_url} 

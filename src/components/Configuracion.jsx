@@ -1699,6 +1699,30 @@ export default function Configuracion() {
                       </div>
                     </div>
 
+                    <div style={{ padding: '16px', backgroundColor: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                      <div>
+                        <p style={{ fontWeight: 700, fontSize: '15px' }}>Mostrar Botón de Descarga</p>
+                        <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Activa o desactiva la visibilidad del botón "Descargar App" en el menú principal</p>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          const isCurrentlyActive = config?.mostrar_boton_app !== 'false' && config?.mostrar_boton_app !== false
+                          updateConfig('mostrar_boton_app', isCurrentlyActive ? 'false' : 'true', true)
+                        }}
+                        style={{
+                          width: '44px', height: '22px', borderRadius: '11px', 
+                          backgroundColor: (config?.mostrar_boton_app !== 'false' && config?.mostrar_boton_app !== false) ? 'var(--accent-success)' : '#3f3f46',
+                          position: 'relative', transition: 'all 0.3s ease', cursor: 'pointer', border: 'none'
+                        }}
+                      >
+                        <div style={{
+                          width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'white',
+                          position: 'absolute', top: '2px', left: (config?.mostrar_boton_app !== 'false' && config?.mostrar_boton_app !== false) ? '24px' : '2px',
+                          transition: 'all 0.3s ease'
+                        }} />
+                      </button>
+                    </div>
+
                     <div style={{ backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border-color)', marginBottom: '20px' }}>
                       <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>URL Actual del APK:</div>
                       <div style={{ 
