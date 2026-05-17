@@ -175,7 +175,7 @@ export default function Usuarios({ onNavigate }) {
       const label = ajusteMoneda === 'bs' ? formatBs(saldoNum) : formatUSD(saldoNum);
       setAlertModal({ type: 'success', message: `Saldo ${ajusteMoneda === 'bs' ? 'Bs' : 'USD'} ajustado correctamente a ${label}` })
       setAjustandoCliente(null)
-      refetch()
+      await refetch()
     } catch (err) {
       setAlertModal({ type: 'error', message: "Error al ajustar billetera: " + err.message })
     } finally {
