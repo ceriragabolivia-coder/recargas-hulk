@@ -6,7 +6,7 @@ import AlertModal from './AlertModal'
 import Pedidos from './Pedidos'
 
 export default function Usuarios({ onNavigate }) {
-  const { clientes, loading, updateProfileRoleAndDiscount, updateProfile, updateProfileStatus, ajustarSaldoWallet, ajustarSaldoWalletBs, resetUserPassword, refetch } = useClientes()
+  const { clientes, loading, updateProfileRoleAndDiscount, updateProfile, updateProfileStatus, ajustarSaldoWallet, ajustarSaldoWalletBs, resetUserPassword, deleteClienteDefinitivo, refetch } = useClientes()
   const { perfil } = useAuth()
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
   const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
@@ -204,6 +204,29 @@ export default function Usuarios({ onNavigate }) {
       setNewPassword('')
     } catch (err) {
       setAlertModal({ type: 'error', message: "Error al restablecer contraseña: " + err.message })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDeleteCliente = async (cliente) => {
+    if (!window.confirm(`¿Estás completamente seguro de que deseas eliminar DEFINITIVAMENTE al usuario ${cliente.nombres} ${cliente.apellidos}? Esta acción es irreversible y eliminará todos sus datos.`)) {
+      return
+    }
+    
+    setSaving(true)
+    try {
+      const { data, error } = await deleteClienteDefinitivo(cliente.auth_user_id)
+      if (error) throw error
+      if (data && !data.success) throw new Error(data.error)
+      
+      setAlertModal({ 
+        type: 'success', 
+        message: `El usuario ${cliente.nombres} ha sido eliminado definitivamente del sistema.` 
+      })
+      await refetch()
+    } catch (err) {
+      setAlertModal({ type: 'error', message: "Error al eliminar usuario: " + err.message })
     } finally {
       setSaving(false)
     }
@@ -578,6 +601,17 @@ export default function Usuarios({ onNavigate }) {
                                 title="Editar usuario"
                               >
                                 ✏️ Editar
+                              </button>
+                            )}
+
+                            {isAdmin && cliente.auth_user_id !== perfil.id && (
+                              <button 
+                                className="btn btn-ghost"
+                                style={{ padding: '6px 10px', fontSize: '12px', color: '#ef4444' }}
+                                onClick={() => handleDeleteCliente(cliente)}
+                                title="Eliminar usuario definitivamente"
+                              >
+                                🗑️ Eliminar
                               </button>
                             )}
                           </div>

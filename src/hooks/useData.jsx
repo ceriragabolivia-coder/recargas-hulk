@@ -647,6 +647,16 @@ export function useClientes() {
     return { data, error }
   }
 
+  async function deleteClienteDefinitivo(authUserId) {
+    const { data, error } = await supabase.rpc('delete_user_definitivo', {
+      p_auth_user_id: authUserId
+    })
+    if (!error && data?.success) {
+      setClientes(prev => prev.filter(c => c.auth_user_id !== authUserId))
+    }
+    return { data, error }
+  }
+
   useEffect(() => {
     fetchClientes()
   }, [])
@@ -663,6 +673,7 @@ export function useClientes() {
     ajustarSaldoWallet,
     ajustarSaldoWalletBs,
     resetUserPassword,
+    deleteClienteDefinitivo,
     refetch: fetchClientes 
   }
 }

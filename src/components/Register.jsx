@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useData'
 
 export default function Register({ onBackToLogin }) {
@@ -46,11 +47,37 @@ export default function Register({ onBackToLogin }) {
     }
 
     setLoading(true)
+    
+    // Check for existing user or whatsapp
+    const fullWhatsapp = `+58 ${formData.whatsapp}`
+    const { data: checkData, error: checkError } = await supabase.rpc('check_registration_data', {
+      p_email: formData.email,
+      p_whatsapp: fullWhatsapp
+    })
+
+    if (checkError) {
+      setError('Ocurrió un error al verificar los datos de registro. Por favor, intenta de nuevo.')
+      setLoading(false)
+      return
+    }
+
+    if (checkData?.email_exists) {
+      setError('Este correo electrónico ya está registrado en nuestro sistema (activo o suspendido). Por favor, utiliza otro.')
+      setLoading(false)
+      return
+    }
+
+    if (checkData?.whatsapp_exists) {
+      setError('Este número de WhatsApp ya se encuentra asociado a otra cuenta.')
+      setLoading(false)
+      return
+    }
+
     const { error: signUpError } = await register(formData.email, formData.password, {
       nombres: formData.nombres,
       apellidos: formData.apellidos,
       nickname: formData.nickname,
-      whatsapp: `+58 ${formData.whatsapp}`,
+      whatsapp: fullWhatsapp,
       pais: formData.pais,
       estado: formData.estado
     })
