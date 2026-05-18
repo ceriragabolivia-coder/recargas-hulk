@@ -1065,7 +1065,7 @@ export default function GestionProductos() {
           </div>
 
           {formData.id && formData.entrega_automatica && (
-            <ProductVault productoId={formData.id} />
+            <ProductVault productoId={formData.id} setAlertModal={setAlertModal} />
           )}
 
           {/* VISTA PREVIA DEL CÁLCULO EN TIEMPO REAL */}
@@ -1601,7 +1601,7 @@ export default function GestionProductos() {
   )
 }
 
-function ProductVault({ productoId }) {
+function ProductVault({ productoId, setAlertModal }) {
   const { codigos, loading, addCodigos, deleteCodigo } = useProductoCodigos(productoId)
   const [newCodesText, setNewCodesText] = useState('')
   const [adding, setAdding] = useState(false)
@@ -1613,9 +1613,14 @@ function ProductVault({ productoId }) {
     if (!newCodesText.trim()) return
     setAdding(true)
     const list = newCodesText.split('\n').filter(c => c.trim().length > 0)
-    await addCodigos(list)
-    setNewCodesText('')
+    const { error } = await addCodigos(list)
     setAdding(false)
+    if (error) {
+      if (setAlertModal) setAlertModal({ type: 'error', message: error.message || 'Error al añadir códigos.' })
+      else alert('Error: ' + (error.message || 'Error al añadir códigos.'))
+    } else {
+      setNewCodesText('')
+    }
   }
 
   return (
