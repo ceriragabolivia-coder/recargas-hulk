@@ -1621,6 +1621,8 @@ function ProductVault({ productoId, setAlertModal }) {
   const { codigos, loading, addCodigos, deleteCodigo } = useProductoCodigos(productoId)
   const [newCodesText, setNewCodesText] = useState('')
   const [adding, setAdding] = useState(false)
+  const [selectedPedidoDetalle, setSelectedPedidoDetalle] = useState(null)
+  const [pedidoLoading, setPedidoLoading] = useState(false)
 
   const available = codigos.filter(c => !c.usado).length
   const total = codigos.length
@@ -1636,6 +1638,66 @@ function ProductVault({ productoId, setAlertModal }) {
       else alert('Error: ' + (error.message || 'Error al añadir códigos.'))
     } else {
       setNewCodesText('')
+    }
+  }
+
+  const handleVerPedido = async (pedidoId) => {
+    if (!pedidoId) return
+    setPedidoLoading(true)
+    try {
+      const { data: pedido, error: err1 } = await supabase
+        .from('pedidos')
+        .select('*, cliente:cliente_id(*)')
+        .eq('id', pedidoId)
+        .single()
+
+      if (err1) throw err1
+
+      if (pedido) {
+        const { data: items, error: err2 } = await supabase
+          .from('pedido_items')
+          .select('*')
+          .eq('pedido_id', pedidoId)
+        
+        if (err2) throw err2
+        
+        setSelectedPedidoDetalle({
+          ...pedido,
+          items: items || []
+        })
+      }
+    } catch (err) {
+      if (setAlertModal) {
+        setAlertModal({ type: 'error', message: 'Error cargando detalles del pedido: ' + err.message })
+      } else {
+        alert('Error: ' + err.message)
+      }
+    } finally {
+      setPedidoLoading(false)
+    }
+  }
+
+  const formatFecha = (iso) => {
+    if (!iso) return '-'
+    const d = new Date(iso)
+    return d.toLocaleString('es-VE', {
+      timeZone: 'America/Caracas',
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: true
+    })
+  }
+
+  const formatUSD = (n) => `$${Number(n || 0).toFixed(2)}`
+  const formatBs = (n) => `${Number(n || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.`
+
+  const getEstadoStyle = (estado) => {
+    switch (estado) {
+      case 'pendiente': return { bg: 'rgba(234, 179, 8, 0.15)', color: '#eab308' }
+      case 'completado': return { bg: 'rgba(34, 197, 94, 0.15)', color: '#22c55e' }
+      case 'cancelado': return { bg: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }
+      case 'procesando': return { bg: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6' }
+      case 'reembolsado': return { bg: 'rgba(139, 92, 246, 0.15)', color: '#8b5cf6' }
+      default: return { bg: 'rgba(255, 255, 255, 0.05)', color: '#fff' }
     }
   }
 
@@ -1671,7 +1733,7 @@ function ProductVault({ productoId, setAlertModal }) {
       </div>
 
       <div style={{ marginTop: '16px', maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
-        {loading ? (
+        {loading || pedidoLoading ? (
           <div style={{ padding: '20px', textAlign: 'center' }}><div className="spinner-small"></div></div>
         ) : codigos.length === 0 ? (
           <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>El baúl está vacío</div>
@@ -1699,7 +1761,16 @@ function ProductVault({ productoId, setAlertModal }) {
                   <td style={{ padding: '8px', textAlign: 'center' }}>
                     {c.usado ? (
                       c.pedidos?.numero_pedido ? (
-                        <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>
+                        <span 
+                          onClick={() => handleVerPedido(c.pedido_id)}
+                          style={{ 
+                            color: 'var(--accent-primary)', 
+                            fontWeight: 'bold', 
+                            cursor: 'pointer', 
+                            textDecoration: 'underline' 
+                          }}
+                          title="Ver resumen del pedido"
+                        >
                           {c.pedidos.numero_pedido.startsWith('#') ? c.pedidos.numero_pedido : `#${c.pedidos.numero_pedido}`}
                         </span>
                       ) : (
@@ -1727,6 +1798,175 @@ function ProductVault({ productoId, setAlertModal }) {
           </table>
         )}
       </div>
+
+      {/* MODAL DETALLES DEL PEDIDO */}
+      {selectedPedidoDetalle && (
+        <div 
+          className="modal-overlay" 
+          style={{ 
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+            backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 12000, 
+            display: 'flex', justifyContent: 'center', alignItems: 'center', 
+            backdropFilter: 'blur(6px)', padding: '16px' 
+          }}
+          onClick={() => setSelectedPedidoDetalle(null)}
+        >
+          <div 
+            className="card" 
+            style={{ 
+              width: '100%', maxWidth: '550px', maxHeight: '90vh', 
+              overflowY: 'auto', backgroundColor: '#13151a', 
+              border: '1px solid var(--border-color)', borderRadius: '20px', 
+              padding: '24px', boxShadow: '0 20px 60px rgba(0,0,0,0.7)', 
+              color: '#fff', position: 'relative' 
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px' }}>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: 'var(--accent-primary)' }}>
+                Pedido {selectedPedidoDetalle.numero_pedido.startsWith('#') ? selectedPedidoDetalle.numero_pedido : `#${selectedPedidoDetalle.numero_pedido}`}
+              </h3>
+              <button 
+                onClick={() => setSelectedPedidoDetalle(null)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '18px', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Info Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px', fontSize: '12px' }}>
+              <div>
+                <span style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Cliente</span>
+                <span style={{ fontWeight: 'bold' }}>
+                  {selectedPedidoDetalle.cliente ? `${selectedPedidoDetalle.cliente.nombres} ${selectedPedidoDetalle.cliente.apellidos || ''}` : 'Cargando cliente...'}
+                </span>
+                {selectedPedidoDetalle.cliente?.whatsapp && (
+                  <span style={{ display: 'block', color: 'var(--accent-success)', marginTop: '2px' }}>
+                    📱 {selectedPedidoDetalle.cliente.whatsapp}
+                  </span>
+                )}
+              </div>
+              <div>
+                <span style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Fecha / Hora</span>
+                <span>{formatFecha(selectedPedidoDetalle.created_at)}</span>
+              </div>
+              <div>
+                <span style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Estado</span>
+                {(() => {
+                  const style = getEstadoStyle(selectedPedidoDetalle.estado)
+                  return (
+                    <span style={{ 
+                      backgroundColor: style.bg, color: style.color, 
+                      padding: '4px 10px', borderRadius: '12px', 
+                      fontSize: '10px', fontWeight: 'bold', display: 'inline-block' 
+                    }}>
+                      {selectedPedidoDetalle.estado.toUpperCase()}
+                    </span>
+                  )
+                })()}
+              </div>
+              <div>
+                <span style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Método de Pago</span>
+                <span style={{ fontWeight: 'bold', textTransform: 'capitalize' }}>
+                  {selectedPedidoDetalle.metodo_pago || 'Billetera'}
+                </span>
+              </div>
+            </div>
+
+            {/* Payment Summary */}
+            <div style={{ padding: '12px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '20px', fontSize: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Monto Total:</span>
+                <span style={{ fontWeight: 'bold' }}>
+                  {formatUSD(selectedPedidoDetalle.total_usd)} / {formatBs(selectedPedidoDetalle.total_bs)}
+                </span>
+              </div>
+              {selectedPedidoDetalle.referencia_pago && (
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Referencia:</span>
+                  <span style={{ fontWeight: 'bold', color: 'var(--accent-success)' }}>
+                    {selectedPedidoDetalle.referencia_pago}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Items Title */}
+            <h4 style={{ fontSize: '13px', margin: '0 0 10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '6px', color: 'var(--text-muted)' }}>
+              Detalle de Productos
+            </h4>
+
+            {/* Items List */}
+            <div style={{ display: 'grid', gap: '12px', marginBottom: '24px' }}>
+              {selectedPedidoDetalle.items.map(item => (
+                <div 
+                  key={item.id} 
+                  style={{ 
+                    padding: '12px', backgroundColor: 'rgba(255,255,255,0.01)', 
+                    borderRadius: '12px', border: '1px solid rgba(255,255,255,0.04)' 
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '12px' }}>
+                    <span style={{ fontWeight: 'bold', color: '#fff' }}>{item.producto_nombre}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>Cant: {item.cantidad}</span>
+                  </div>
+
+                  {/* Recharge Info */}
+                  <div style={{ fontSize: '11px', backgroundColor: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.02)', color: 'var(--text-muted)' }}>
+                    {item.metodo_recarga === 'cuenta_completa' ? (
+                      <>
+                        <div>📧 Correo: <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>{item.account_email}</span></div>
+                        <div style={{ marginTop: '2px' }}>🔑 Clave: <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold', fontFamily: 'monospace' }}>{item.account_password}</span></div>
+                      </>
+                    ) : item.metodo_recarga === 'usuario_clave' ? (
+                      <>
+                        <div>👤 Usuario: <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>{item.account_user}</span></div>
+                        <div style={{ marginTop: '2px' }}>🔑 Clave: <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold', fontFamily: 'monospace' }}>{item.account_password}</span></div>
+                      </>
+                    ) : item.metodo_recarga === 'id_zone' ? (
+                      <>
+                        <div>🆔 ID: <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>{item.player_id}</span> | 🌐 ZONE ID: <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>{item.zone_id}</span></div>
+                        {item.nickname && <div style={{ marginTop: '2px' }}>👤 Nickname: <span style={{ color: '#fff', fontWeight: 'bold' }}>{item.nickname}</span></div>}
+                      </>
+                    ) : item.player_id ? (
+                      <>
+                        <div>🆔 Player ID: <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>{item.player_id}</span></div>
+                        {item.nickname && <div style={{ marginTop: '2px' }}>👤 Nickname: <span style={{ color: '#fff', fontWeight: 'bold' }}>{item.nickname}</span></div>}
+                      </>
+                    ) : (
+                      <span style={{ color: 'var(--text-muted)', fontSize: '10px' }}>Sin datos de recarga requeridos (Entrega Directa)</span>
+                    )}
+
+                    {/* Delivered Code */}
+                    {item.codigo_entregado && (
+                      <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>🎁 Código Entregado:</span>
+                        <span style={{ backgroundColor: 'rgba(0, 210, 255, 0.15)', color: 'var(--accent-primary)', padding: '2px 8px', borderRadius: '6px', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '12px' }}>
+                          {item.codigo_entregado}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Footer Actions */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px' }}>
+              <button 
+                type="button" 
+                className="btn btn-ghost" 
+                onClick={() => setSelectedPedidoDetalle(null)}
+                style={{ padding: '8px 20px', borderRadius: '10px' }}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
