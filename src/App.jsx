@@ -637,7 +637,10 @@ export default function App() {
   ]
 
   // Definimos si estamos en una ruta que debe usar la interfaz de la Landing Page
-  const isLandingRoute = coreLandingRoutes.includes(currentPath) || currentPath.startsWith('/p/')
+  const isLandingRoute = coreLandingRoutes.includes(currentPath) || 
+                         currentPath.startsWith('/p/') ||
+                         ((!isAdmin && !isNegocio && !isEmpleado) && 
+                          ['/ruleta', '/mis-pedidos', '/billetera', '/mi-perfil'].includes(currentPath))
 
   const mainContent = () => {
     if (!user) {
