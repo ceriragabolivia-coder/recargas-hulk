@@ -66,6 +66,7 @@ export default function Landing({ onNavigate }) {
   const [addedItem, setAddedItem] = useState(null)
   
   const [activeCategory, setActiveCategory] = useState('Todos')
+  const [activeProductType, setActiveProductType] = useState('recarga')
   const [search, setSearch] = useState('')
   
   const [notificaciones, setNotificaciones] = useState([])
@@ -517,6 +518,7 @@ export default function Landing({ onNavigate }) {
   }, [selectedJuego, showCheckout, showOrders, showRuleta, showWallet, showProfile]);
 
   const handleSelectJuego = (juego) => {
+    setActiveProductType('recarga')
     setShowCheckout(false)
     setShowOrders(false)
     setShowWallet(false)
@@ -1200,8 +1202,47 @@ export default function Landing({ onNavigate }) {
                   {loadingProductos ? (
                     <div className="spinner"></div>
                   ) : (
-                    <div className="products-grid">
-                      {productosJuego.map(prod => {
+                    <>
+                      {(() => {
+                        const hasRecargas = productosJuego.some(p => p.tipo_producto !== 'gift_card');
+                        const hasGiftCards = productosJuego.some(p => p.tipo_producto === 'gift_card');
+                        const showTabs = hasRecargas && hasGiftCards;
+                        const filteredProducts = showTabs 
+                          ? productosJuego.filter(p => activeProductType === 'gift_card' ? p.tipo_producto === 'gift_card' : p.tipo_producto !== 'gift_card')
+                          : productosJuego;
+
+                        return (
+                          <>
+                            {showTabs && (
+                              <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                                <button 
+                                  onClick={() => setActiveProductType('recarga')}
+                                  style={{
+                                    flex: 1, padding: '10px', borderRadius: '12px', border: 'none',
+                                    backgroundColor: activeProductType === 'recarga' ? 'rgba(0, 210, 255, 0.15)' : 'transparent',
+                                    color: activeProductType === 'recarga' ? 'var(--accent-primary)' : 'var(--text-muted)',
+                                    border: activeProductType === 'recarga' ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                                    fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+                                  }}
+                                >
+                                  Recarga Interna
+                                </button>
+                                <button 
+                                  onClick={() => setActiveProductType('gift_card')}
+                                  style={{
+                                    flex: 1, padding: '10px', borderRadius: '12px', border: 'none',
+                                    backgroundColor: activeProductType === 'gift_card' ? 'rgba(255, 171, 0, 0.15)' : 'transparent',
+                                    color: activeProductType === 'gift_card' ? 'var(--accent-warning)' : 'var(--text-muted)',
+                                    border: activeProductType === 'gift_card' ? '1px solid var(--accent-warning)' : '1px solid var(--border-color)',
+                                    fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+                                  }}
+                                >
+                                  Gift Cards
+                                </button>
+                              </div>
+                            )}
+                            <div className="products-grid">
+                              {filteredProducts.map(prod => {
                         const pricing = calcularPrecioVenta(prod, selectedJuego, config)
                         return (
                           <div key={prod.id} className="product-card" onClick={() => {
@@ -1277,12 +1318,14 @@ export default function Landing({ onNavigate }) {
                               >
                                 i
                               </div>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </>
                   )}
+                  </div>
                 </div>
 
                 {/* Información / Guías */}

@@ -818,12 +818,17 @@ export default function Catalogo() {
               const hasRecargas = selectedJuego.productos.some(p => p.tipo_producto !== 'gift_card')
               const hasGiftCards = selectedJuego.productos.some(p => p.tipo_producto === 'gift_card')
               const showTabs = hasRecargas && hasGiftCards
+              
+              // DEBUG INFO FOR CERIRAGA
+              const debugStr = `Total: ${selectedJuego.productos.length} | Recargas: ${hasRecargas} | GiftCards: ${hasGiftCards} | showTabs: ${showTabs}`
+              
               const filteredProducts = showTabs 
                 ? selectedJuego.productos.filter(p => activeProductType === 'gift_card' ? p.tipo_producto === 'gift_card' : p.tipo_producto !== 'gift_card')
                 : selectedJuego.productos
 
               return (
                 <>
+                  <div style={{ fontSize: '10px', color: 'red', marginBottom: '8px' }}>{debugStr}</div>
                   {showTabs && (
                     <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
                       <button 
