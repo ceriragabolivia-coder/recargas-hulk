@@ -77,11 +77,20 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
     setIsRegistering(true)
     setError(null)
     setSuccessMsg(null)
-
     try {
-      const formattedPhone = '+58' + regTelefono.replace(/\D/g, '')
-      if (formattedPhone.length < 10) {
-        throw new Error('El número de teléfono debe tener al menos 10 dígitos')
+      let cleanPhone = regTelefono.replace(/\D/g, '')
+      if (cleanPhone.startsWith('0')) {
+        cleanPhone = cleanPhone.substring(1)
+      }
+      let formattedPhone = ''
+      if (cleanPhone.startsWith('58') && cleanPhone.length >= 11) {
+        formattedPhone = '+' + cleanPhone
+      } else {
+        formattedPhone = '+58' + cleanPhone
+      }
+
+      if (formattedPhone.length < 12) {
+        throw new Error('El número de teléfono debe tener al menos 10 dígitos (ej: 4120000000)')
       }
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -216,16 +225,19 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
               <div className="form-group">
                 <label>Teléfono (WhatsApp)</label>
                 <div className="phone-input-container">
-                  <span className="phone-prefix">🇻🇪 +58</span>
+                  <span className="phone-prefix" style={{ fontSize: '18px', padding: '10px 14px' }}>🇻🇪</span>
                   <input
                     type="tel"
-                    placeholder="4120000000"
+                    placeholder="Ej: 4120000000"
                     value={regTelefono}
                     onChange={(e) => setRegTelefono(e.target.value.replace(/\D/g, ''))}
                     required
-                    maxLength={10}
+                    maxLength={12}
                   />
                 </div>
+                <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '4px', display: 'block', textAlign: 'left', fontStyle: 'italic' }}>
+                  (Disponible Sólo Para Venezuela)
+                </span>
               </div>
               <div className="form-group">
                 <label>Contraseña</label>

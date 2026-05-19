@@ -49,7 +49,23 @@ export default function Register({ onBackToLogin }) {
     setLoading(true)
     
     // Check for existing user or whatsapp
-    const fullWhatsapp = `+58 ${formData.whatsapp}`
+    let cleanPhone = formData.whatsapp.replace(/\D/g, '')
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = cleanPhone.substring(1)
+    }
+    let fullWhatsapp = ''
+    if (cleanPhone.startsWith('58') && cleanPhone.length >= 11) {
+      fullWhatsapp = '+' + cleanPhone
+    } else {
+      fullWhatsapp = '+58' + cleanPhone
+    }
+
+    if (fullWhatsapp.length < 12) {
+      setError('El número de WhatsApp debe tener al menos 10 dígitos (ej: 4120000000)')
+      setLoading(false)
+      return
+    }
+
     const { data: checkData, error: checkError } = await supabase.rpc('check_registration_data', {
       p_email: formData.email,
       p_whatsapp: fullWhatsapp
@@ -155,8 +171,7 @@ export default function Register({ onBackToLogin }) {
                 className="form-input" 
                 style={{ display: 'flex', alignItems: 'center', padding: '0 0 0 12px' }}
               >
-                <span style={{ fontSize: '15px', marginRight: '6px' }}>🇻🇪</span>
-                <span style={{ color: 'var(--text-primary)', fontWeight: '600', marginRight: '6px' }}>+58</span>
+                <span style={{ fontSize: '18px', marginRight: '6px' }}>🇻🇪</span>
                 <input 
                   name="whatsapp" 
                   type="text" 
@@ -168,13 +183,14 @@ export default function Register({ onBackToLogin }) {
                   value={formData.whatsapp} 
                   onChange={(e) => {
                     const val = e.target.value.replace(/\D/g, '')
-                    if (val.length <= 11) handleChange({ target: { name: 'whatsapp', value: val }})
+                    if (val.length <= 12) handleChange({ target: { name: 'whatsapp', value: val }})
                   }} 
-                  placeholder="412 1234567"
+                  placeholder="Ej: 4120000000"
+                  maxLength={12}
                 />
               </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                * Sólo se admiten usuarios de Venezuela.
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', fontStyle: 'italic' }}>
+                (Disponible Sólo Para Venezuela)
               </div>
             </div>
           </div>
