@@ -191,7 +191,7 @@ export default function Register({ onBackToLogin }) {
                     const val = e.target.value.replace(/\D/g, '')
                     if (val.length <= 12) handleChange({ target: { name: 'whatsapp', value: val }})
                   }} 
-                  placeholder="Ej: 4120000000"
+                  placeholder="Tu Número De WhatsApp"
                   maxLength={12}
                 />
               </div>

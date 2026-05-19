@@ -34,9 +34,12 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
   // Register State
   const [regEmail, setRegEmail] = useState('')
   const [regPassword, setRegPassword] = useState('')
+  const [regConfirmPassword, setRegConfirmPassword] = useState('')
   const [regNombre, setRegNombre] = useState('')
   const [regTelefono, setRegTelefono] = useState('')
   const [regRole, setRegRole] = useState('cliente')
+  const [ageOption, setAgeOption] = useState('')
+  const [termsAccepted, setTermsAccepted] = useState(false)
   
   // Remember Me State
   const [rememberMe, setRememberMe] = useState(false)
@@ -74,9 +77,25 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
   const handleRegisterSubmit = async (e) => {
     e.preventDefault()
     if (isRegistering) return
-    setIsRegistering(true)
     setError(null)
     setSuccessMsg(null)
+
+    if (regPassword !== regConfirmPassword) {
+      setError('Las contraseñas no coinciden')
+      return
+    }
+
+    if (!ageOption) {
+      setError('Debes confirmar tu edad para poder registrarte.')
+      return
+    }
+
+    if (!termsAccepted) {
+      setError('Debes aceptar los términos y condiciones de uso de la plataforma para continuar.')
+      return
+    }
+
+    setIsRegistering(true)
     try {
       let cleanPhone = regTelefono.replace(/\D/g, '')
       if (cleanPhone.startsWith('0')) {
@@ -234,7 +253,7 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
                   </span>
                   <input
                     type="tel"
-                    placeholder="Ej: 4120000000"
+                    placeholder="Tu Número De WhatsApp"
                     value={regTelefono}
                     onChange={(e) => setRegTelefono(e.target.value.replace(/\D/g, ''))}
                     required
@@ -256,6 +275,64 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
                   minLength={6}
                 />
               </div>
+              <div className="form-group">
+                <label>Confirmar Contraseña</label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={regConfirmPassword}
+                  onChange={(e) => setRegConfirmPassword(e.target.value)}
+                  required
+                  minLength={6}
+                />
+              </div>
+
+              <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '12.5px', color: 'var(--text-muted, #64748b)', textAlign: 'left' }}>
+                <div className="checkbox-group">
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
+                    <input 
+                      type="radio" 
+                      name="age_modal" 
+                      checked={ageOption === 'mayor'} 
+                      onChange={() => setAgeOption('mayor')} 
+                      style={{ marginTop: '3px', accentColor: 'var(--accent, #7b2ff7)', transform: 'scale(1.2)' }}
+                    />
+                    <span style={{ lineHeight: '1.4', color: 'var(--text-muted, #64748b)' }}>
+                      Confirmo que soy mayor de edad (+18) y me registro en esta página bajo mi responsabilidad y propia voluntad.
+                    </span>
+                  </label>
+                </div>
+                
+                <div className="checkbox-group">
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
+                    <input 
+                      type="radio" 
+                      name="age_modal" 
+                      checked={ageOption === 'menor'} 
+                      onChange={() => setAgeOption('menor')} 
+                      style={{ marginTop: '3px', accentColor: 'var(--accent, #7b2ff7)', transform: 'scale(1.2)' }}
+                    />
+                    <span style={{ lineHeight: '1.4', color: 'var(--text-muted, #64748b)' }}>
+                      Soy menor de edad pero estoy bajo la supervisión de mis padres o tutores responsables y conseguí su consentimiento para registrarme.
+                    </span>
+                  </label>
+                </div>
+
+                <div className="checkbox-group" style={{ marginTop: '6px', paddingTop: '12px', borderTop: '1px solid var(--border, rgba(255,255,255,0.08))' }}>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={termsAccepted} 
+                      onChange={(e) => setTermsAccepted(e.target.checked)} 
+                      style={{ marginTop: '3px', accentColor: 'var(--accent, #7b2ff7)', transform: 'scale(1.2)' }}
+                    />
+                    <span style={{ lineHeight: '1.4', color: 'var(--text-muted, #64748b)' }}>
+                      Al momento de registrarme en este sitio web acepto los términos y condiciones de uso de la plataforma.
+                    </span>
+                  </label>
+                </div>
+              </div>
+
               <button type="submit" className="btn-landing-primary w-full mt-4" disabled={loadingState}>
                 {loadingState ? '⏳ Procesando...' : '📝 Crear Cuenta'}
               </button>
