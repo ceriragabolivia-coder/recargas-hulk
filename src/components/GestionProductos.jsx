@@ -1647,7 +1647,7 @@ function ProductVault({ productoId, setAlertModal }) {
     try {
       const { data: pedido, error: err1 } = await supabase
         .from('pedidos')
-        .select('*, cliente:cliente_id(*)')
+        .select('*')
         .eq('id', pedidoId)
         .single()
 
@@ -1660,9 +1660,23 @@ function ProductVault({ productoId, setAlertModal }) {
           .eq('pedido_id', pedidoId)
         
         if (err2) throw err2
+
+        let clienteData = null
+        if (pedido.cliente_id) {
+          const { data: client, error: err3 } = await supabase
+            .from('clientes')
+            .select('id, auth_user_id, nombres, apellidos, nickname, whatsapp, usuario, fecha_registro')
+            .or(`id.eq.${pedido.cliente_id},auth_user_id.eq.${pedido.cliente_id}`)
+            .maybeSingle()
+          
+          if (client && !err3) {
+            clienteData = client
+          }
+        }
         
         setSelectedPedidoDetalle({
           ...pedido,
+          cliente: clienteData,
           items: items || []
         })
       }
