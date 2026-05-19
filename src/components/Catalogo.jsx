@@ -836,7 +836,7 @@ export default function Catalogo() {
                           fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
                         }}
                       >
-                        Recarga
+                        Recarga Interna
                       </button>
                       <button 
                         onClick={() => { setActiveProductType('gift_card'); setPendingItem(null); }}
