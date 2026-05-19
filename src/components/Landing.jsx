@@ -1324,12 +1324,14 @@ export default function Landing({ onNavigate }) {
                         })}
                       </div>
                     </>
-                  )}
-                  </div>
-                </div>
+                  )
+                })()}
+                </>
+              )}
+            </div>
 
-                {/* Información / Guías */}
-                <div className="info-content-section">
+            {/* Información / Guías */}
+            <div className="info-content-section">
                   <div className="info-tab-header">
                     <h4>Información de {selectedJuego.nombre}</h4>
                   </div>
