@@ -113,6 +113,7 @@ export default function Catalogo() {
   const [showGuideModal, setShowGuideModal] = useState(false)
   const [pendingItem, setPendingItem] = useState(null)
   const [infoProductModal, setInfoProductModal] = useState(null)
+  const [expandedImage, setExpandedImage] = useState(null)
   const [isVerificando, setIsVerificando] = useState(false)
   const [verificacionResultado, setVerificacionResultado] = useState(null)
   const [showTutorialModal, setShowTutorialModal] = useState(false)
@@ -1026,17 +1027,33 @@ export default function Catalogo() {
             
             <div style={{ padding: '0', maxHeight: '70vh', overflowY: 'auto' }}>
               {infoProductModal.info_adicional_imagen_url && (
-                <div style={{ 
-                  width: '100%', 
-                  height: '40vh',
-                  minHeight: '250px',
-                  borderBottom: '1px solid rgba(255,255,255,0.05)', 
-                  backgroundColor: '#000',
-                  backgroundImage: `url(${infoProductModal.info_adicional_imagen_url})`,
-                  backgroundSize: 'contain',
-                  backgroundPosition: 'center',
-                  backgroundRepeat: 'no-repeat'
-                }} />
+                <div 
+                  onClick={() => setExpandedImage(infoProductModal.info_adicional_imagen_url)}
+                  style={{ 
+                    width: '100%', 
+                    height: '40vh',
+                    minHeight: '250px',
+                    borderBottom: '1px solid rgba(255,255,255,0.05)', 
+                    backgroundColor: '#000',
+                    backgroundImage: `url(${infoProductModal.info_adicional_imagen_url})`,
+                    backgroundSize: 'contain',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
+                    cursor: 'zoom-in',
+                    position: 'relative'
+                  }}
+                  title="Haz clic para ampliar la imagen"
+                >
+                  <div style={{
+                    position: 'absolute', bottom: '12px', right: '12px',
+                    backgroundColor: 'rgba(0,0,0,0.7)', color: '#fff',
+                    padding: '4px 10px', borderRadius: '8px', fontSize: '11px',
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                    border: '1px solid rgba(255,255,255,0.12)', fontWeight: 'bold'
+                  }}>
+                    🔍 Ampliar imagen
+                  </div>
+                </div>
               )}
               {infoProductModal.info_adicional_texto && (
                 <div style={{ padding: '24px' }}>
@@ -1051,6 +1068,44 @@ export default function Catalogo() {
               <button onClick={() => setInfoProductModal(null)} className="btn btn-primary" style={{ width: '100%', padding: '12px', fontSize: '16px' }}>Entendido</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* LIGHTBOX DE IMAGEN EXPANDIDA (TUTORIAL BANNER) */}
+      {expandedImage && (
+        <div 
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.95)', zIndex: 20000,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '16px', backdropFilter: 'blur(10px)',
+            cursor: 'zoom-out', animation: 'fadeIn 0.25s'
+          }}
+          onClick={() => setExpandedImage(null)}
+        >
+          <img 
+            src={expandedImage} 
+            alt="Expanded Preview" 
+            style={{
+              maxWidth: '100%', maxHeight: '95vh',
+              borderRadius: '16px', boxShadow: '0 24px 60px rgba(0,0,0,0.9)',
+              objectFit: 'contain', border: '1px solid rgba(255,255,255,0.08)',
+              animation: 'scaleUp 0.25s'
+            }}
+          />
+          <button
+            style={{
+              position: 'absolute', top: '24px', right: '24px',
+              background: 'rgba(255,255,255,0.1)', border: 'none',
+              color: '#fff', fontSize: '20px', width: '44px', height: '44px',
+              borderRadius: '50%', cursor: 'pointer', display: 'flex',
+              alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s',
+              fontWeight: 'bold'
+            }}
+            onClick={(e) => { e.stopPropagation(); setExpandedImage(null); }}
+          >
+            ✕
+          </button>
         </div>
       )}
 
