@@ -221,7 +221,8 @@ export default function GestionProductos() {
     descuento_revendedor: '',
     info_adicional_texto: '',
     info_adicional_imagen_url: '',
-    entrega_automatica: false
+    entrega_automatica: false,
+    tipo_producto: 'recarga'
   })
   const [newIconFile, setNewIconFile] = useState(null)
   const [iconPreview, setIconPreview] = useState(null)
@@ -247,7 +248,7 @@ export default function GestionProductos() {
   }
 
   const handleOpenModal = () => {
-    setFormData({ id: null, nombre: '', costo_base: '', margen_ganancia: '30', icono_url: null, descuento_revendedor: '', info_adicional_texto: '', info_adicional_imagen_url: null, entrega_automatica: false })
+    setFormData({ id: null, nombre: '', costo_base: '', margen_ganancia: '30', icono_url: null, descuento_revendedor: '', info_adicional_texto: '', info_adicional_imagen_url: null, entrega_automatica: false, tipo_producto: 'recarga' })
     setNewIconFile(null)
     setIconPreview(null)
     setNewInfoFile(null)
@@ -265,7 +266,8 @@ export default function GestionProductos() {
       descuento_revendedor: prod.descuento_revendedor || '',
       info_adicional_texto: prod.info_adicional_texto || '',
       info_adicional_imagen_url: prod.info_adicional_imagen_url || null,
-      entrega_automatica: prod.entrega_automatica || false
+      entrega_automatica: prod.entrega_automatica || false,
+      tipo_producto: prod.tipo_producto || 'recarga'
     })
     setNewIconFile(null)
     setIconPreview(prod.icono_url)
@@ -283,7 +285,8 @@ export default function GestionProductos() {
       descuento_revendedor: prod.descuento_revendedor || '',
       info_adicional_texto: prod.info_adicional_texto || '',
       info_adicional_imagen_url: prod.info_adicional_imagen_url || null,
-      entrega_automatica: prod.entrega_automatica || false
+      entrega_automatica: prod.entrega_automatica || false,
+      tipo_producto: prod.tipo_producto || 'recarga'
     })
     setNewIconFile(null)
     setIconPreview(prod.icono_url)
@@ -342,7 +345,8 @@ export default function GestionProductos() {
         descuento_revendedor: descRevendedor,
         info_adicional_texto: formData.info_adicional_texto || null,
         info_adicional_imagen_url: finalInfoUrl,
-        entrega_automatica: formData.entrega_automatica
+        entrega_automatica: formData.entrega_automatica,
+        tipo_producto: formData.tipo_producto
       }
 
       if (formData.id) {
@@ -1047,6 +1051,18 @@ export default function GestionProductos() {
                 />
               </div>
             </div>
+          </div>
+
+          <div className="form-group" style={{ marginBottom: '24px' }}>
+            <label className="form-label">Tipo de Producto</label>
+            <select
+              className="form-input"
+              value={formData.tipo_producto}
+              onChange={e => setFormData({ ...formData, tipo_producto: e.target.value })}
+            >
+              <option value="recarga">Recarga (Juego/Puntos)</option>
+              <option value="gift_card">Gift Card / Código</option>
+            </select>
           </div>
 
           <div className="form-group" style={{ marginBottom: '24px', padding: '16px', backgroundColor: 'rgba(0, 210, 255, 0.05)', borderRadius: '12px', border: '1px solid rgba(0, 210, 255, 0.1)' }}>

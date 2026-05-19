@@ -51,11 +51,14 @@ export default function Catalogo() {
   const handleSetSelectedJuego = (juego) => {
     const id = juego?.id || null
     setSelectedJuegoId(id)
+    setActiveProductType('recarga') // Reset tab
     if (id) localStorage.setItem('selectedJuegoId', id)
     else localStorage.removeItem('selectedJuegoId')
   }
   const [addedItem, setAddedItem] = useState(null) 
   const [buyMode, setBuyMode] = useState('single') // 'single' o 'multiple'
+
+  const [activeProductType, setActiveProductType] = useState('recarga')
 
   const [localRechargeData, setLocalRechargeData] = useState({
     player_id: '',
@@ -811,16 +814,55 @@ export default function Catalogo() {
 
             <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', color: 'var(--text-primary)' }}>Selecciona un paquete</h2>
             
-            {selectedJuego.productos.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', backgroundColor: 'var(--bg-panel)', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
-                <span style={{ fontSize: '48px', opacity: 0.5 }}>📦</span>
-                <p style={{ marginTop: '16px', color: 'var(--text-muted)' }}>No hay productos activos en este momento.</p>
-              </div>
-            ) : (
-              <div className="product-grid-mobile" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '16px' }}>
-                {selectedJuego.productos.map(p => {
-                  const finalPrice = calcularPrecioVenta(p, selectedJuego, config, perfil)
-                  return (
+            {(() => {
+              const hasRecargas = selectedJuego.productos.some(p => p.tipo_producto !== 'gift_card')
+              const hasGiftCards = selectedJuego.productos.some(p => p.tipo_producto === 'gift_card')
+              const showTabs = hasRecargas && hasGiftCards
+              const filteredProducts = showTabs 
+                ? selectedJuego.productos.filter(p => activeProductType === 'gift_card' ? p.tipo_producto === 'gift_card' : p.tipo_producto !== 'gift_card')
+                : selectedJuego.productos
+
+              return (
+                <>
+                  {showTabs && (
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                      <button 
+                        onClick={() => { setActiveProductType('recarga'); setPendingItem(null); }}
+                        style={{
+                          flex: 1, padding: '10px', borderRadius: '12px', border: 'none',
+                          backgroundColor: activeProductType === 'recarga' ? 'rgba(0, 210, 255, 0.15)' : 'transparent',
+                          color: activeProductType === 'recarga' ? 'var(--accent-primary)' : 'var(--text-muted)',
+                          border: activeProductType === 'recarga' ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                          fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+                        }}
+                      >
+                        Recarga
+                      </button>
+                      <button 
+                        onClick={() => { setActiveProductType('gift_card'); setPendingItem(null); }}
+                        style={{
+                          flex: 1, padding: '10px', borderRadius: '12px', border: 'none',
+                          backgroundColor: activeProductType === 'gift_card' ? 'rgba(255, 171, 0, 0.15)' : 'transparent',
+                          color: activeProductType === 'gift_card' ? 'var(--accent-warning)' : 'var(--text-muted)',
+                          border: activeProductType === 'gift_card' ? '1px solid var(--accent-warning)' : '1px solid var(--border-color)',
+                          fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+                        }}
+                      >
+                        Gift Cards
+                      </button>
+                    </div>
+                  )}
+
+                  {filteredProducts.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '40px', backgroundColor: 'var(--bg-panel)', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                      <span style={{ fontSize: '48px', opacity: 0.5 }}>📦</span>
+                      <p style={{ marginTop: '16px', color: 'var(--text-muted)' }}>No hay productos disponibles en esta categoría.</p>
+                    </div>
+                  ) : (
+                    <div className="product-grid-mobile" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '16px' }}>
+                      {filteredProducts.map(p => {
+                        const finalPrice = calcularPrecioVenta(p, selectedJuego, config, perfil)
+                        return (
                     <div 
                       key={p.id}
                       className="product-card-premium"
@@ -907,6 +949,9 @@ export default function Catalogo() {
                 })}
               </div>
             )}
+            </>
+          )
+        })()}
           </div>
           
         </div>
