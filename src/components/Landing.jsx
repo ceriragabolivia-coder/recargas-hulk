@@ -71,6 +71,13 @@ export default function Landing({ onNavigate }) {
   
   const [notificaciones, setNotificaciones] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
+
+  const hasRecargas = productosJuego.some(p => p.tipo_producto !== 'gift_card');
+  const hasGiftCards = productosJuego.some(p => p.tipo_producto === 'gift_card');
+  const showTabs = hasRecargas && hasGiftCards;
+  const isGiftCardView = showTabs ? activeProductType === 'gift_card' : (!hasRecargas && hasGiftCards);
+  const effectiveMetodoRecarga = isGiftCardView ? 'entrega_codigo' : (selectedJuego?.metodo_recarga || 'sin_datos');
+
   const [showNotiDropdown, setShowNotiDropdown] = useState(false)
   const [activeToast, setActiveToast] = useState(null)
   const [showTutorialModal, setShowTutorialModal] = useState(false)
@@ -952,17 +959,17 @@ export default function Landing({ onNavigate }) {
 
                       {/* FORMULARIO DE DATOS */}
                       <div className="card-recharge-info">
-                        {selectedJuego.metodo_recarga === 'sin_datos' ? (
+                        {effectiveMetodoRecarga === 'sin_datos' ? (
                           <div style={{ textAlign: 'center' }}>
                             <p style={{ fontSize: '14px', color: 'var(--text)', fontWeight: 600, margin: 0 }}>⚡ Entrega inmediata</p>
                             <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>No necesitas ingresar ningún dato.</p>
                           </div>
-                        ) : selectedJuego.metodo_recarga === 'entrega_codigo' ? (
+                        ) : effectiveMetodoRecarga === 'entrega_codigo' ? (
                           <div style={{ textAlign: 'center' }}>
                             <p style={{ fontSize: '14px', color: 'var(--text)', fontWeight: 600, margin: 0 }}>🎁 Entrega de Código</p>
                             <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>Recibirás un código de Gift Card tras la compra.</p>
                           </div>
-                        ) : selectedJuego.metodo_recarga === 'cuenta_completa' ? (
+                        ) : effectiveMetodoRecarga === 'cuenta_completa' ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <div>
                               <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>📧 Correo</label>
@@ -985,7 +992,7 @@ export default function Landing({ onNavigate }) {
                               />
                             </div>
                           </div>
-                        ) : selectedJuego.metodo_recarga === 'usuario_clave' ? (
+                        ) : effectiveMetodoRecarga === 'usuario_clave' ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <div>
                               <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>👤 Usuario</label>
@@ -1026,7 +1033,7 @@ export default function Landing({ onNavigate }) {
                               />
                             </div>
                             
-                            {selectedJuego.metodo_recarga === 'id_zone' && (
+                            {effectiveMetodoRecarga === 'id_zone' && (
                               <div>
                                 <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>🆔 Zone ID</label>
                                 <input 
@@ -1093,7 +1100,7 @@ export default function Landing({ onNavigate }) {
                           </div>
                         )}
 
-                        {!(selectedJuego.metodo_recarga === 'sin_datos' || selectedJuego.metodo_recarga === 'entrega_codigo') && (
+                        {!(effectiveMetodoRecarga === 'sin_datos' || effectiveMetodoRecarga === 'entrega_codigo') && (
                           <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <input 
                               type="checkbox" 
@@ -1204,9 +1211,6 @@ export default function Landing({ onNavigate }) {
                   ) : (
                     <>
                       {(() => {
-                        const hasRecargas = productosJuego.some(p => p.tipo_producto !== 'gift_card');
-                        const hasGiftCards = productosJuego.some(p => p.tipo_producto === 'gift_card');
-                        const showTabs = hasRecargas && hasGiftCards;
                         const filteredProducts = showTabs 
                           ? productosJuego.filter(p => activeProductType === 'gift_card' ? p.tipo_producto === 'gift_card' : p.tipo_producto !== 'gift_card')
                           : productosJuego;
@@ -1252,19 +1256,21 @@ export default function Landing({ onNavigate }) {
                               return;
                             }
                             
-                            if (selectedJuego.metodo_recarga === 'sin_datos') {
+                            const prodEffectiveMetodo = (prod.tipo_producto === 'gift_card') ? 'entrega_codigo' : effectiveMetodoRecarga;
+
+                            if (prodEffectiveMetodo === 'sin_datos') {
                               // OK
-                            } else if (selectedJuego.metodo_recarga === 'cuenta_completa') {
+                            } else if (prodEffectiveMetodo === 'cuenta_completa') {
                               if (!localRechargeData.account_email.trim() || !localRechargeData.account_password.trim()) {
                                 alert('Por favor introduce el correo y clave arriba primero.')
                                 return
                               }
-                            } else if (selectedJuego.metodo_recarga === 'usuario_clave') {
+                            } else if (prodEffectiveMetodo === 'usuario_clave') {
                               if (!localRechargeData.account_user?.trim() || !localRechargeData.account_password.trim()) {
                                 alert('Por favor introduce el usuario y clave arriba primero.')
                                 return
                               }
-                            } else if (selectedJuego.metodo_recarga === 'sin_datos' || selectedJuego.metodo_recarga === 'entrega_codigo') {
+                            } else if (prodEffectiveMetodo === 'sin_datos' || prodEffectiveMetodo === 'entrega_codigo') {
                               // No se requieren datos
                             } else {
                               if (!localRechargeData.player_id.trim()) {
@@ -1553,33 +1559,40 @@ export default function Landing({ onNavigate }) {
               <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <h4 style={{ margin: '0 0 12px 0', fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Datos de Recarga</h4>
                 
-                {pendingItem.selectedJuego.metodo_recarga === 'sin_datos' ? (
-                  <div style={{ fontSize: '14px', color: '#fff', fontWeight: 600 }}>⚡ Entrega Inmediata (Sin Datos)</div>
-                ) : pendingItem.selectedJuego.metodo_recarga === 'entrega_codigo' ? (
-                  <div style={{ fontSize: '14px', color: '#fff', fontWeight: 600 }}>🎁 Entrega de Código (Manual)</div>
-                ) : pendingItem.selectedJuego.metodo_recarga === 'cuenta_completa' ? (
+                {(() => {
+                  const pendingEffectiveMetodo = (pendingItem.p.tipo_producto === 'gift_card') ? 'entrega_codigo' : (pendingItem.selectedJuego.metodo_recarga || 'sin_datos');
+                  return (
+                    <>
+                      {pendingEffectiveMetodo === 'sin_datos' ? (
+                        <div style={{ fontSize: '14px', color: '#fff', fontWeight: 600 }}>⚡ Entrega Inmediata (Sin Datos)</div>
+                      ) : pendingEffectiveMetodo === 'entrega_codigo' ? (
+                        <div style={{ fontSize: '14px', color: '#fff', fontWeight: 600 }}>🎁 Entrega de Código (Manual)</div>
+                      ) : pendingEffectiveMetodo === 'cuenta_completa' ? (
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Correo:</span> <strong style={{ color: '#fff' }}>{pendingItem.localRechargeData.account_email}</strong></div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>Clave:</span> <strong style={{ color: '#fff' }}>••••••••</strong></div>
-                  </>
-                ) : pendingItem.selectedJuego.metodo_recarga === 'usuario_clave' ? (
-                  <>
+                      </>
+                      ) : pendingEffectiveMetodo === 'usuario_clave' ? (
+                        <>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Usuario:</span> <strong style={{ color: '#fff' }}>{pendingItem.localRechargeData.account_user}</strong></div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>Clave:</span> <strong style={{ color: '#fff' }}>••••••••</strong></div>
-                  </>
-                ) : (
-                  <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Player ID:</span> <strong style={{ color: '#fff' }}>{pendingItem.localRechargeData.player_id}</strong></div>
-                    {pendingItem.selectedJuego.metodo_recarga === 'id_zone' && (
+                      </>
+                      ) : (
+                        <>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Player ID:</span> <strong style={{ color: '#fff' }}>{pendingItem.localRechargeData.player_id}</strong></div>
+                          {pendingEffectiveMetodo === 'id_zone' && (
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Zone ID:</span> <strong style={{ color: '#fff' }}>{pendingItem.localRechargeData.zone_id}</strong></div>
                     )}
                     {verificacionResultado?.success && verificacionResultado.verified_id === pendingItem.localRechargeData.player_id && (
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                         <span style={{ color: 'var(--text-muted)' }}>Nombre:</span> <strong style={{ color: '#00c853' }}>{verificacionResultado.nickname}</strong>
                       </div>
-                    )}
-                  </>
-                )}
+                          )}
+                        </>
+                      )}
+                    </>
+                  )
+                })()}
               </div>
             </div>
             

@@ -68,6 +68,20 @@ export default function Catalogo() {
     account_user: ''
   })
   
+  const hasRecargas = useMemo(() => {
+    if (!selectedJuego || !selectedJuego.productos) return false
+    return selectedJuego.productos.some(p => p.tipo_producto !== 'gift_card')
+  }, [selectedJuego])
+
+  const hasGiftCards = useMemo(() => {
+    if (!selectedJuego || !selectedJuego.productos) return false
+    return selectedJuego.productos.some(p => p.tipo_producto === 'gift_card')
+  }, [selectedJuego])
+
+  const showTabs = hasRecargas && hasGiftCards
+  const isGiftCardView = showTabs ? activeProductType === 'gift_card' : (!hasRecargas && hasGiftCards)
+  const effectiveMetodoRecarga = isGiftCardView ? 'entrega_codigo' : (selectedJuego?.metodo_recarga || 'sin_datos')
+
   const { cuentas, guardarCuenta, eliminarCuenta } = useCuentasGuardadas(selectedJuegoId)
   const [shouldSaveData, setShouldSaveData] = useState(false)
 
@@ -281,13 +295,18 @@ export default function Catalogo() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-muted)' }}>Cuenta a Recargar:</span> 
                 <span style={{ color: '#ffffff', textAlign: 'right', fontWeight: 800, fontSize: '18px', letterSpacing: '1px', textShadow: '0 2px 10px rgba(0,210,255,0.4)' }}>
-                  {pendingItem.selectedJuego.metodo_recarga === 'cuenta_completa' 
-                    ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Correo:</span><br/>{pendingItem.localRechargeData.account_email}<br/><div style={{height:8}}></div><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Clave:</span><br/>{pendingItem.localRechargeData.account_password}</>
-                    : pendingItem.selectedJuego.metodo_recarga === 'usuario_clave'
-                    ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Usuario:</span><br/>{pendingItem.localRechargeData.account_user}<br/><div style={{height:8}}></div><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Clave:</span><br/>{pendingItem.localRechargeData.account_password}</>
-                    : pendingItem.selectedJuego.metodo_recarga === 'id_zone'
-                    ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>ID:</span> {pendingItem.localRechargeData.player_id}<br/><div style={{height:4}}></div><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>ZONE ID:</span> {pendingItem.localRechargeData.zone_id}</>
-                    : <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>ID/UID:</span><br/>{pendingItem.localRechargeData.player_id}</>}
+                  {(() => {
+                    const pendingEffectiveMetodo = (pendingItem.p.tipo_producto === 'gift_card') ? 'entrega_codigo' : (pendingItem.selectedJuego.metodo_recarga || 'sin_datos');
+                    return pendingEffectiveMetodo === 'cuenta_completa' 
+                      ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Correo:</span><br/>{pendingItem.localRechargeData.account_email}<br/><div style={{height:8}}></div><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Clave:</span><br/>{pendingItem.localRechargeData.account_password}</>
+                      : pendingEffectiveMetodo === 'usuario_clave'
+                      ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Usuario:</span><br/>{pendingItem.localRechargeData.account_user}<br/><div style={{height:8}}></div><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Clave:</span><br/>{pendingItem.localRechargeData.account_password}</>
+                      : pendingEffectiveMetodo === 'id_zone'
+                      ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>ID:</span> {pendingItem.localRechargeData.player_id}<br/><div style={{height:4}}></div><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>ZONE ID:</span> {pendingItem.localRechargeData.zone_id}</>
+                      : pendingEffectiveMetodo === 'entrega_codigo'
+                      ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Entrega:</span><br/>Código de Canje (Vía Baúl/Manual)</>
+                      : <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>ID/UID:</span><br/>{pendingItem.localRechargeData.player_id}</>
+                  })()}
                 </span>
               </div>
             </div>
@@ -495,7 +514,7 @@ export default function Catalogo() {
           
 
           <div className="card card-recharge-info" style={{ backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderLeft: '4px solid var(--accent-primary)', padding: '10px' }}>
-            {selectedJuego.metodo_recarga === 'sin_datos' ? (
+            {effectiveMetodoRecarga === 'sin_datos' ? (
               <div style={{ textAlign: 'center', padding: '10px' }}>
                 <p style={{ fontSize: '15px', color: 'var(--text-primary)', fontWeight: 600, margin: 0 }}>
                   ⚡ Este servicio tiene entrega inmediata. 
@@ -504,7 +523,16 @@ export default function Catalogo() {
                   No necesitas ingresar ningún dato. Recibirás tu código automáticamente después del pago.
                 </p>
               </div>
-            ) : selectedJuego.metodo_recarga === 'cuenta_completa' ? (
+            ) : effectiveMetodoRecarga === 'entrega_codigo' ? (
+              <div style={{ textAlign: 'center', padding: '10px' }}>
+                <p style={{ fontSize: '15px', color: 'var(--text-primary)', fontWeight: 600, margin: 0 }}>
+                  🎁 Entrega de Código
+                </p>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                  Recibirás tu código de canje en tu panel de pedidos. No requieres ingresar datos de cuenta.
+                </p>
+              </div>
+            ) : effectiveMetodoRecarga === 'cuenta_completa' ? (
               <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
                 <div style={{ flex: '1 1 200px' }}>
                   <label className="form-label" style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -544,7 +572,7 @@ export default function Catalogo() {
                   />
                 </div>
               </div>
-            ) : selectedJuego.metodo_recarga === 'usuario_clave' ? (
+            ) : effectiveMetodoRecarga === 'usuario_clave' ? (
               <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
                 <div style={{ flex: '1 1 200px' }}>
                   <label className="form-label" style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -585,7 +613,8 @@ export default function Catalogo() {
                 </div>
               </div>
             ) : (
-              <div>
+              <>
+                <div>
                 <label className="form-label" style={{ color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   🆔 Introduce el ID del jugador aquí
                   {selectedJuego.guia_id_url && (
@@ -616,7 +645,7 @@ export default function Catalogo() {
                   style={{ backgroundColor: 'var(--bg-card)', padding: '20px', fontSize: '18px', fontWeight: 'bold', letterSpacing: '1px' }}
                 />
                 
-                {selectedJuego.metodo_recarga === 'id_zone' && (
+                {effectiveMetodoRecarga === 'id_zone' && (
                   <div style={{ marginTop: '16px' }}>
                     <label className="form-label" style={{ color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '16px' }}>
                       🆔 Zone ID
@@ -706,7 +735,22 @@ export default function Catalogo() {
                   Asegúrese de escribir su ID correctamente. Los paquetes que seleccione a continuación se asignarán a este perfil.
                 </p>
               </div>
+            {!(effectiveMetodoRecarga === 'sin_datos' || effectiveMetodoRecarga === 'entrega_codigo') && (
+              <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', backgroundColor: 'rgba(0, 210, 255, 0.03)', borderRadius: '12px', border: '1px solid rgba(0, 210, 255, 0.1)' }}>
+                <input 
+                  type="checkbox" 
+                  id="save-data-checkbox"
+                  checked={shouldSaveData}
+                  onChange={(e) => setShouldSaveData(e.target.checked)}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--accent-primary)' }}
+                />
+                <label htmlFor="save-data-checkbox" style={{ fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 500 }}>
+                  Guardar estos datos para futuras compras
+                </label>
+              </div>
             )}
+          </>
+        )}
 
             {/* SECCIÓN DE CUENTAS GUARDADAS */}
             {cuentas.length > 0 && (
@@ -741,18 +785,7 @@ export default function Catalogo() {
               </div>
             )}
 
-            <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', backgroundColor: 'rgba(0, 210, 255, 0.03)', borderRadius: '12px', border: '1px solid rgba(0, 210, 255, 0.1)' }}>
-              <input 
-                type="checkbox" 
-                id="save-data-checkbox"
-                checked={shouldSaveData}
-                onChange={(e) => setShouldSaveData(e.target.checked)}
-                style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--accent-primary)' }}
-              />
-              <label htmlFor="save-data-checkbox" style={{ fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 500 }}>
-                Guardar estos datos para futuras compras
-              </label>
-            </div>
+
 
           </div>
 
@@ -872,18 +905,22 @@ export default function Catalogo() {
                       key={p.id}
                       className="product-card-premium"
                       onClick={() => {
-                        if (selectedJuego.metodo_recarga === 'sin_datos') {
+                        const prodEffectiveMetodo = (p.tipo_producto === 'gift_card') ? 'entrega_codigo' : effectiveMetodoRecarga;
+
+                        if (prodEffectiveMetodo === 'sin_datos') {
                           // No validation needed
-                        } else if (selectedJuego.metodo_recarga === 'cuenta_completa') {
+                        } else if (prodEffectiveMetodo === 'cuenta_completa') {
                           if (!localRechargeData.account_email.trim() || !localRechargeData.account_password.trim()) {
                             alert('Por favor introduce el correo y clave primero.')
                             return
                           }
-                        } else if (selectedJuego.metodo_recarga === 'usuario_clave') {
+                        } else if (prodEffectiveMetodo === 'usuario_clave') {
                           if (!localRechargeData.account_user?.trim() || !localRechargeData.account_password.trim()) {
                             alert('Por favor introduce el usuario y clave primero.')
                             return
                           }
+                        } else if (prodEffectiveMetodo === 'entrega_codigo') {
+                          // No validation needed
                         } else {
                           if (!localRechargeData.player_id.trim()) {
                             alert('Por favor introduce el ID del jugador primero.')
