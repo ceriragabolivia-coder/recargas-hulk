@@ -113,6 +113,19 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
       }
 
       if (clientsData) {
+        // Obtener saldos reales de la tabla 'billeteras'
+        const authUserIds = clientsData.map(c => c.auth_user_id).filter(Boolean)
+        let billeterasMap = new Map()
+        if (authUserIds.length > 0) {
+          const { data: billeterasRes } = await supabase
+            .from('billeteras')
+            .select('auth_user_id, saldo, saldo_bs')
+            .in('auth_user_id', authUserIds)
+          if (billeterasRes) {
+            billeterasMap = new Map(billeterasRes.map(b => [b.auth_user_id, b]))
+          }
+        }
+
         // 5. Mapear y calcular mensajes no leídos por cada cliente + info del último mensaje
         const now = new Date()
         const expiredChatIds = []
@@ -136,8 +149,11 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
             m => m.cliente_id === client.id && !m.leido && m.remitente_id !== currentUserId
           ).length
           
+          const bill = billeterasMap.get(client.auth_user_id)
           return {
             ...client,
+            saldo: bill?.saldo || 0,
+            saldo_bs: bill?.saldo_bs || 0,
             soporte_status: currentStatus,
             display_name: `${client.nombres || ''} ${client.apellidos || ''}`.trim() || 'Usuario sin nombre',
             lastMessage: lastMsg,
@@ -315,8 +331,24 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
 
         if (data && data.length > 0 && !error) {
           const clientData = data[0]
+          let saldo = 0
+          let saldo_bs = 0
+          if (clientData.auth_user_id) {
+            const { data: billData } = await supabase
+              .from('billeteras')
+              .select('saldo, saldo_bs')
+              .eq('auth_user_id', clientData.auth_user_id)
+              .maybeSingle()
+            if (billData) {
+              saldo = billData.saldo || 0
+              saldo_bs = billData.saldo_bs || 0
+            }
+          }
+
           target = { 
             ...clientData, 
+            saldo,
+            saldo_bs,
             display_name: `${clientData.nombres || ''} ${clientData.apellidos || ''}`.trim() || 'Usuario sin nombre',
             lastMessage: { mensaje: '(Iniciando chat...)', created_at: new Date().toISOString() },
             unreadCount: 0
@@ -339,10 +371,38 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
     initSelection()
   }, [params?.targetClientId, chats.length > 0]) // Solo ID y flag de lista cargada
 
-  const handleSelectChat = (chat) => {
+  const handleSelectChat = async (chat) => {
     setSelectedChat(chat)
     loadMessages(chat.id)
     if (isMobileView) setIsMobileChat(true)
+
+    // Refrescar el saldo en tiempo real al seleccionar por si cambió en el panel de usuarios
+    if (chat.auth_user_id) {
+      try {
+        const { data: billData } = await supabase
+          .from('billeteras')
+          .select('saldo, saldo_bs')
+          .eq('auth_user_id', chat.auth_user_id)
+          .maybeSingle()
+        if (billData) {
+          setSelectedChat(prev => {
+            if (prev && prev.id === chat.id) {
+              return {
+                ...prev,
+                saldo: billData.saldo || 0,
+                saldo_bs: billData.saldo_bs || 0
+              }
+            }
+            return prev
+          })
+          setChats(prevChats => prevChats.map(c => 
+            c.id === chat.id ? { ...c, saldo: billData.saldo || 0, saldo_bs: billData.saldo_bs || 0 } : c
+          ))
+        }
+      } catch (err) {
+        console.error("Error refreshing active chat wallet balance:", err)
+      }
+    }
   }
 
   const handleBackToList = () => {
