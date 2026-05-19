@@ -1681,6 +1681,7 @@ function ProductVault({ productoId, setAlertModal }) {
               <tr>
                 <th style={{ padding: '8px', textAlign: 'left' }}>Código</th>
                 <th style={{ padding: '8px', textAlign: 'center' }}>Estado</th>
+                <th style={{ padding: '8px', textAlign: 'center' }}>Orden</th>
                 <th style={{ padding: '8px', textAlign: 'center' }}>Acción</th>
               </tr>
             </thead>
@@ -1693,6 +1694,19 @@ function ProductVault({ productoId, setAlertModal }) {
                       <span style={{ color: 'var(--text-muted)' }}>Utilizado</span>
                     ) : (
                       <span style={{ color: 'var(--accent-success)' }}>Disponible</span>
+                    )}
+                  </td>
+                  <td style={{ padding: '8px', textAlign: 'center' }}>
+                    {c.usado ? (
+                      c.pedidos?.numero_pedido ? (
+                        <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>
+                          {c.pedidos.numero_pedido.startsWith('#') ? c.pedidos.numero_pedido : `#${c.pedidos.numero_pedido}`}
+                        </span>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)' }}>-</span>
+                      )
+                    ) : (
+                      <span style={{ color: 'var(--text-muted)' }}>-</span>
                     )}
                   </td>
                   <td style={{ padding: '8px', textAlign: 'center' }}>

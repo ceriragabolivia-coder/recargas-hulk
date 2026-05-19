@@ -924,7 +924,7 @@ export function useProductoCodigos(productoId) {
     setLoading(true)
     let query = supabase
       .from('producto_codigos')
-      .select('*')
+      .select('*, pedidos(numero_pedido)')
       .eq('producto_id', productoId)
       .order('created_at', { ascending: false })
 
