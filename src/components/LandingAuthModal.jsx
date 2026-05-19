@@ -225,7 +225,13 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
               <div className="form-group">
                 <label>Teléfono (WhatsApp)</label>
                 <div className="phone-input-container">
-                  <span className="phone-prefix" style={{ fontSize: '18px', padding: '10px 14px' }}>🇻🇪</span>
+                  <span className="phone-prefix" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 12px' }}>
+                    <img 
+                      src="/assets/venezuela_flag.png" 
+                      alt="Venezuela Flag" 
+                      style={{ width: '22px', height: 'auto', display: 'block', pointerEvents: 'none' }} 
+                    />
+                  </span>
                   <input
                     type="tel"
                     placeholder="Ej: 4120000000"

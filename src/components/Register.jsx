@@ -165,13 +165,19 @@ export default function Register({ onBackToLogin }) {
               <label className="form-label" style={{ fontSize: '13px' }}>Email</label>
               <input name="email" type="email" className="form-input" required value={formData.email} onChange={handleChange} />
             </div>
-            <div className="form-group">
+             <div className="form-group">
               <label className="form-label" style={{ fontSize: '13px' }}>WhatsApp</label>
               <div 
                 className="form-input" 
                 style={{ display: 'flex', alignItems: 'center', padding: '0 0 0 12px' }}
               >
-                <span style={{ fontSize: '18px', marginRight: '6px' }}>🇻🇪</span>
+                <span style={{ display: 'flex', alignItems: 'center', marginRight: '8px' }}>
+                  <img 
+                    src="/assets/venezuela_flag.png" 
+                    alt="Venezuela Flag" 
+                    style={{ width: '22px', height: 'auto', display: 'block', pointerEvents: 'none' }} 
+                  />
+                </span>
                 <input 
                   name="whatsapp" 
                   type="text" 
