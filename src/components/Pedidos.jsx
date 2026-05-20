@@ -793,12 +793,29 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   const fetchAdmins = async () => {
     setLoadingAdmins(true)
     try {
-      const { data, error } = await supabase
+      // El rol está en la tabla 'perfiles', no en 'clientes'
+      const { data: perfilesData, error: perfilesError } = await supabase
+        .from('perfiles')
+        .select('id, rol')
+        .in('rol', ['admin', 'administrador', 'empleado', 'trabajador'])
+        .neq('id', user.id) // excluir al super admin mismo
+
+      if (perfilesError) throw perfilesError
+
+      const adminIds = (perfilesData || []).map(p => p.id)
+      if (adminIds.length === 0) {
+        setAdminsList([])
+        return
+      }
+
+      // Ahora buscar los datos del perfil en 'clientes' por auth_user_id
+      const { data: clientesData, error: clientesError } = await supabase
         .from('clientes')
         .select('id, auth_user_id, nombres, apellidos, nickname, usuario')
-        .in('rol', ['admin', 'administrador', 'empleado', 'trabajador'])
-        .neq('auth_user_id', user.id) // excluir al super admin mismo
-      if (!error && data) setAdminsList(data)
+        .in('auth_user_id', adminIds)
+
+      if (clientesError) throw clientesError
+      setAdminsList(clientesData || [])
     } catch (e) {
       console.error('Error cargando admins:', e)
     } finally {
