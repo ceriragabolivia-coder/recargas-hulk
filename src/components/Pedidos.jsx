@@ -54,6 +54,12 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   const [cancelacionMensaje, setCancelacionMensaje] = useState("")
   const [busqueda, setBusqueda] = useState("")
   const [showFilterDropdown, setShowFilterDropdown] = useState(false)
+  // Super Admin: asignación y atribución de pedidos
+  const [showAsignarAdminModal, setShowAsignarAdminModal] = useState(false)
+  const [showAtribuirModal, setShowAtribuirModal] = useState(false)
+  const [adminsList, setAdminsList] = useState([])
+  const [loadingAdmins, setLoadingAdmins] = useState(false)
+  const [adminSeleccionado, setAdminSeleccionado] = useState(null)
 
 
   // Paginación
@@ -781,6 +787,251 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     });
   }
 
+  // ────────────────────────────────────────────────────
+  // SUPER ADMIN: Obtener lista de admins disponibles
+  // ────────────────────────────────────────────────────
+  const fetchAdmins = async () => {
+    setLoadingAdmins(true)
+    try {
+      const { data, error } = await supabase
+        .from('clientes')
+        .select('id, auth_user_id, nombres, apellidos, nickname, usuario')
+        .in('rol', ['admin', 'administrador', 'empleado', 'trabajador'])
+        .neq('auth_user_id', user.id) // excluir al super admin mismo
+      if (!error && data) setAdminsList(data)
+    } catch (e) {
+      console.error('Error cargando admins:', e)
+    } finally {
+      setLoadingAdmins(false)
+    }
+  }
+
+  const openAsignarAdminModal = () => {
+    setAdminSeleccionado(null)
+    fetchAdmins()
+    setShowAsignarAdminModal(true)
+  }
+
+  const openAtribuirModal = () => {
+    setAdminSeleccionado(null)
+    fetchAdmins()
+    setShowAtribuirModal(true)
+  }
+
+  // Asignar pedido a un admin para que lo procese
+  const handleAsignarAdmin = async () => {
+    if (!adminSeleccionado || !selectedPedido) return
+    const { error } = await supabase
+      .from('pedidos')
+      .update({
+        atendido_por_id: adminSeleccionado.auth_user_id,
+        estado: 'procesando',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', selectedPedido.id)
+    if (error) {
+      showAlert('Error al asignar pedido: ' + error.message, 'error')
+      return
+    }
+    const upd = { ...selectedPedido, atendido_por_id: adminSeleccionado.auth_user_id, atendido_por: adminSeleccionado, estado: 'procesando' }
+    setPedidos(prev => prev.map(p => p.id === selectedPedido.id ? upd : p))
+    setSelectedPedido(upd)
+    setShowAsignarAdminModal(false)
+    showAlert(`✅ Pedido asignado a ${adminSeleccionado.nombres} ${adminSeleccionado.apellidos || ''} correctamente.`, 'success')
+  }
+
+  // Decretar que un pedido fue procesado por un admin específico
+  // Llama a registrar_venta_rpc con el cliente_uuid del admin seleccionado
+  const updateEstadoConAdmin = async (pedidoId, nuevoEstado, adminTarget) => {
+    const { data: pedidoActual, error: fetchError } = await supabase
+      .from('pedidos')
+      .select('*, pedido_items(*, productos(entrega_automatica))')
+      .eq('id', pedidoId)
+      .maybeSingle()
+
+    if (fetchError || !pedidoActual) {
+      showAlert('No se pudo obtener el pedido: ' + (fetchError?.message || ''), 'error')
+      return
+    }
+
+    // Obtener el cliente_uuid del admin destino (para acreditarle el saldo operativo)
+    const { data: adminPerfil, error: adminError } = await supabase
+      .from('clientes')
+      .select('id, auth_user_id, cliente_uuid, owner_id')
+      .eq('auth_user_id', adminTarget.auth_user_id)
+      .maybeSingle()
+
+    if (adminError || !adminPerfil) {
+      showAlert('No se pudo obtener el perfil del administrador seleccionado.', 'error')
+      return
+    }
+
+    const now = new Date().toISOString()
+    const updateData = {
+      estado: nuevoEstado,
+      atendido_por_id: adminTarget.auth_user_id,
+      fecha_respuesta: now,
+      updated_at: now
+    }
+
+    if (nuevoEstado === 'completado' && !pedidoActual.venta_registrada) {
+      try {
+        for (const item of (pedidoActual.pedido_items || [])) {
+          const { data, error: rpcError } = await supabase.rpc('registrar_venta_rpc', {
+            p_producto_id: item.producto_id,
+            p_cantidad: item.cantidad,
+            p_notas: `Pedido #${pedidoActual.numero_pedido} (Atribuido a ${adminTarget.nombres || adminTarget.nombre || ''} por Super Admin)`,
+            p_cliente_id: pedidoActual.cliente_id,
+            p_metodo_pago_id: pedidoActual.metodo_pago_id,
+            p_referencia_pago: pedidoActual.referencia_pago,
+            p_player_id: item.player_id,
+            p_account_email: item.account_email,
+            p_account_password: item.account_password,
+            p_vendedor_id: adminPerfil.cliente_uuid,  // ⭐ Crédito al admin seleccionado
+            p_pedido_id: pedidoActual.id,
+            p_owner_id: adminPerfil.owner_id
+          })
+          if (rpcError) throw new Error(rpcError.message)
+          if (data?.error) throw new Error(data.error)
+
+          if (item.productos?.entrega_automatica) {
+            await supabase.rpc('asignar_codigo_pedido_item_rpc', { p_pedido_item_id: item.id })
+          }
+        }
+        updateData.venta_registrada = true
+      } catch (err) {
+        showAlert('Error al registrar venta: ' + err.message, 'error')
+        return
+      }
+    }
+
+    const { error } = await supabase.from('pedidos').update(updateData).eq('id', pedidoId)
+    if (error) {
+      showAlert('Error al actualizar pedido: ' + error.message, 'error')
+      return
+    }
+    playSuccessSound()
+    const upd = { ...selectedPedido, ...updateData, atendido_por: adminTarget }
+    setPedidos(prev => prev.map(p => p.id === pedidoId ? upd : p))
+    setSelectedPedido(upd)
+    setShowAtribuirModal(false)
+    showAlert(`✅ Pedido marcado como COMPLETADO y acreditado a ${adminTarget.nombres || ''}.`, 'success')
+  }
+
+  // Modal: Asignar pedido a un admin
+  const renderAsignarAdminModal = () => {
+    if (!showAsignarAdminModal) return null
+    return (
+      <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200, animation: 'fadeIn 0.2s ease' }}
+        onClick={() => setShowAsignarAdminModal(false)}
+      >
+        <div style={{ backgroundColor: '#1a1d21', width: '100%', maxWidth: '480px', borderRadius: '20px', padding: '28px', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 25px 60px rgba(0,0,0,0.6)' }}
+          onClick={e => e.stopPropagation()}
+        >
+          <div style={{ position: 'relative', marginBottom: '20px' }}>
+            <div style={{ height: '4px', background: 'linear-gradient(90deg,#8b5cf6,#00d2ff)', borderRadius: '4px 4px 0 0', position: 'absolute', top: '-28px', left: '-28px', right: '-28px' }}></div>
+            <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#fff', margin: 0 }}>📤 Asignar Pedido a Administrador</h2>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '6px' }}>Selecciona el operario que se hará cargo de este pedido. El estado cambiará a <strong style={{color:'#8b5cf6'}}>PROCESANDO</strong>.</p>
+          </div>
+          {loadingAdmins ? (
+            <div style={{ textAlign: 'center', padding: '30px' }}><div className="spinner" style={{ margin: '0 auto 10px' }}/><p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Cargando operarios...</p></div>
+          ) : adminsList.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>No hay administradores disponibles.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto', marginBottom: '20px' }}>
+              {adminsList.map(a => (
+                <button key={a.auth_user_id}
+                  onClick={() => setAdminSeleccionado(a)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 16px',
+                    borderRadius: '12px', border: adminSeleccionado?.auth_user_id === a.auth_user_id ? '2px solid #8b5cf6' : '1px solid rgba(255,255,255,0.07)',
+                    backgroundColor: adminSeleccionado?.auth_user_id === a.auth_user_id ? 'rgba(139,92,246,0.12)' : 'rgba(255,255,255,0.03)',
+                    cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s'
+                  }}
+                >
+                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg,#8b5cf6,#00d2ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '17px', flexShrink: 0 }}>👤</div>
+                  <div>
+                    <div style={{ fontWeight: 700, color: '#fff', fontSize: '14px' }}>{a.nombres} {a.apellidos || ''}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>@{a.usuario || a.nickname || 'operario'}</div>
+                  </div>
+                  {adminSeleccionado?.auth_user_id === a.auth_user_id && <span style={{ marginLeft: 'auto', color: '#8b5cf6', fontSize: '18px' }}>✓</span>}
+                </button>
+              ))}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={handleAsignarAdmin}
+              disabled={!adminSeleccionado}
+              style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', backgroundColor: adminSeleccionado ? '#8b5cf6' : 'rgba(255,255,255,0.1)', color: '#fff', fontWeight: 700, fontSize: '14px', cursor: adminSeleccionado ? 'pointer' : 'not-allowed', transition: 'all 0.2s' }}
+            >📤 Asignar Pedido</button>
+            <button onClick={() => setShowAsignarAdminModal(false)} style={{ padding: '12px 20px', borderRadius: '12px', border: '1px solid var(--border-color)', backgroundColor: 'transparent', color: 'var(--text-muted)', fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Modal: Atribuir pedido como procesado por un admin
+  const renderAtribuirModal = () => {
+    if (!showAtribuirModal) return null
+    return (
+      <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200, animation: 'fadeIn 0.2s ease' }}
+        onClick={() => setShowAtribuirModal(false)}
+      >
+        <div style={{ backgroundColor: '#1a1d21', width: '100%', maxWidth: '480px', borderRadius: '20px', padding: '28px', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 25px 60px rgba(0,0,0,0.6)' }}
+          onClick={e => e.stopPropagation()}
+        >
+          <div style={{ position: 'relative', marginBottom: '20px' }}>
+            <div style={{ height: '4px', background: 'linear-gradient(90deg,#22c55e,#00d2ff)', borderRadius: '4px 4px 0 0', position: 'absolute', top: '-28px', left: '-28px', right: '-28px' }}></div>
+            <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#fff', margin: 0 }}>✅ Atribuir como Procesado por...</h2>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '6px' }}>Selecciona el operario que processó este pedido. El monto <strong style={{color:'#22c55e'}}>se acreditará a su billetera operativa</strong>.</p>
+            <div style={{ marginTop: '10px', padding: '10px 14px', backgroundColor: 'rgba(255,171,0,0.08)', borderRadius: '10px', border: '1px solid rgba(255,171,0,0.25)', fontSize: '12px', color: '#ffab00' }}>
+              ⚠️ Esto marcará el pedido como <strong>COMPLETADO</strong> y registrará la venta bajo el operario elegido. Esta acción es irreversible.
+            </div>
+          </div>
+          {loadingAdmins ? (
+            <div style={{ textAlign: 'center', padding: '30px' }}><div className="spinner" style={{ margin: '0 auto 10px' }}/><p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Cargando operarios...</p></div>
+          ) : adminsList.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>No hay administradores disponibles.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '280px', overflowY: 'auto', marginBottom: '20px' }}>
+              {adminsList.map(a => (
+                <button key={a.auth_user_id}
+                  onClick={() => setAdminSeleccionado(a)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 16px',
+                    borderRadius: '12px', border: adminSeleccionado?.auth_user_id === a.auth_user_id ? '2px solid #22c55e' : '1px solid rgba(255,255,255,0.07)',
+                    backgroundColor: adminSeleccionado?.auth_user_id === a.auth_user_id ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.03)',
+                    cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s'
+                  }}
+                >
+                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg,#22c55e,#00d2ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '17px', flexShrink: 0 }}>👤</div>
+                  <div>
+                    <div style={{ fontWeight: 700, color: '#fff', fontSize: '14px' }}>{a.nombres} {a.apellidos || ''}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>@{a.usuario || a.nickname || 'operario'}</div>
+                  </div>
+                  {adminSeleccionado?.auth_user_id === a.auth_user_id && <span style={{ marginLeft: 'auto', color: '#22c55e', fontSize: '18px' }}>✓</span>}
+                </button>
+              ))}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={() => {
+                if (!adminSeleccionado) return
+                showAlert(`¿Confirmar que el pedido fue procesado por ${adminSeleccionado.nombres}? El monto se acreditará a su saldo operativo.`, 'confirm', () => updateEstadoConAdmin(selectedPedido.id, 'completado', adminSeleccionado))
+              }}
+              disabled={!adminSeleccionado}
+              style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', backgroundColor: adminSeleccionado ? '#22c55e' : 'rgba(255,255,255,0.1)', color: '#fff', fontWeight: 700, fontSize: '14px', cursor: adminSeleccionado ? 'pointer' : 'not-allowed', transition: 'all 0.2s' }}
+            >✅ Confirmar Atribución</button>
+            <button onClick={() => setShowAtribuirModal(false)} style={{ padding: '12px 20px', borderRadius: '12px', border: '1px solid var(--border-color)', backgroundColor: 'transparent', color: 'var(--text-muted)', fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const renderClientModal = () => {
     if (!showClientModal || !modalClient) return null;
     return (
@@ -1212,6 +1463,27 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
               >
                 💬 Iniciar Chat
               </button>
+              {/* Botones exclusivos del Super Admin */}
+              {isSuperAdmin && selectedPedido.estado !== 'completado' && (
+                <>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    style={{ padding: '4px 10px', fontSize: '11px', color: '#8b5cf6', border: '1px solid #8b5cf6', fontWeight: 700 }}
+                    title="Asignar este pedido a un operario específico"
+                    onClick={openAsignarAdminModal}
+                  >
+                    📤 Asignar a Operario
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    style={{ padding: '4px 10px', fontSize: '11px', color: '#22c55e', border: '1px solid #22c55e', fontWeight: 700 }}
+                    title="Decretar que este pedido fue procesado por un operario y acreditarle el monto"
+                    onClick={openAtribuirModal}
+                  >
+                    🏅 Atribuir a Operario
+                  </button>
+                </>
+              )}
               {/* Pedido CANCELADO: mostrar opciones de recuperación a cualquier admin */}
               {selectedPedido.estado === 'cancelado' ? (
                 <>
@@ -1332,6 +1604,8 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
 
         {renderClientModal()}
         {renderReembolsoModal()}
+        {renderAsignarAdminModal()}
+        {renderAtribuirModal()}
 
         <div className="pedidos-grid-responsive">
           {renderAlertModal()}
