@@ -871,10 +871,11 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
       return
     }
 
-    // Obtener el cliente_uuid del admin destino (para acreditarle el saldo operativo)
+    // Obtener el id (= cliente_uuid) del admin destino para acreditarle el saldo operativo
+    // En la tabla 'clientes', el campo 'id' es lo que se usa como cliente_uuid en el perfil del auth
     const { data: adminPerfil, error: adminError } = await supabase
       .from('clientes')
-      .select('id, auth_user_id, cliente_uuid, owner_id')
+      .select('id, auth_user_id, owner_id')
       .eq('auth_user_id', adminTarget.auth_user_id)
       .maybeSingle()
 
@@ -897,14 +898,14 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
           const { data, error: rpcError } = await supabase.rpc('registrar_venta_rpc', {
             p_producto_id: item.producto_id,
             p_cantidad: item.cantidad,
-            p_notas: `Pedido #${pedidoActual.numero_pedido} (Atribuido a ${adminTarget.nombres || adminTarget.nombre || ''} por Super Admin)`,
+            p_notas: `Pedido #${pedidoActual.numero_pedido} (Atribuido a ${adminTarget.nombres || ''} por Super Admin)`,
             p_cliente_id: pedidoActual.cliente_id,
             p_metodo_pago_id: pedidoActual.metodo_pago_id,
             p_referencia_pago: pedidoActual.referencia_pago,
             p_player_id: item.player_id,
             p_account_email: item.account_email,
             p_account_password: item.account_password,
-            p_vendedor_id: adminPerfil.cliente_uuid,  // ⭐ Crédito al admin seleccionado
+            p_vendedor_id: adminPerfil.id,  // ⭐ id de clientes = cliente_uuid del admin seleccionado
             p_pedido_id: pedidoActual.id,
             p_owner_id: adminPerfil.owner_id
           })
