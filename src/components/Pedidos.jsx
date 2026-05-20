@@ -1212,7 +1212,54 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
               >
                 💬 Iniciar Chat
               </button>
-              {!selectedPedido.atendido_por_id ? (
+              {/* Pedido CANCELADO: mostrar opciones de recuperación a cualquier admin */}
+              {selectedPedido.estado === 'cancelado' ? (
+                <>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    style={{ padding: '4px 10px', fontSize: '11px', color: '#facc15', border: '1px solid #facc15', fontWeight: 700 }}
+                    title="Liberar pedido: lo devuelve a estado pendiente sin asignación"
+                    onClick={() => handleLiberarPedido(selectedPedido)}
+                  >
+                    🔓 Liberar Pedido
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    style={{ padding: '4px 10px', fontSize: '11px', color: '#4ade80', border: '1px solid #4ade80', fontWeight: 700 }}
+                    title="Marcar el pedido como pendiente para que pueda ser retomado"
+                    onClick={() => showAlert('¿Deseas marcar este pedido como PENDIENTE para que pueda ser gestionado nuevamente?', 'confirm', async () => {
+                      const { error } = await supabase.from('pedidos').update({ estado: 'pendiente', atendido_por_id: null, updated_at: new Date().toISOString() }).eq('id', selectedPedido.id);
+                      if (!error) {
+                        const upd = { ...selectedPedido, estado: 'pendiente', atendido_por_id: null };
+                        setPedidos(prev => prev.map(p => p.id === selectedPedido.id ? upd : p));
+                        setSelectedPedido(upd);
+                        showAlert('✅ Pedido restablecido a PENDIENTE.', 'success');
+                      } else {
+                        showAlert('Error al cambiar estado: ' + error.message, 'error');
+                      }
+                    })}
+                  >
+                    ⏳ Marcar Pendiente
+                  </button>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    style={{ padding: '4px 10px', fontSize: '11px', backgroundColor: '#22c55e', borderColor: '#22c55e', fontWeight: 700 }}
+                    title="Marcar como completado directamente"
+                    onClick={() => showAlert('¿Confirmar que este pedido fue COMPLETADO?', 'confirm', () => updateEstado(selectedPedido.id, 'completado'))}
+                  >
+                    ✅ Completado
+                  </button>
+                  {selectedPedido.reembolso_billetera !== true && (
+                    <button
+                      className="btn btn-sm"
+                      style={{ padding: '4px 8px', fontSize: '11px', backgroundColor: 'rgba(224, 64, 251, 0.1)', color: '#e040fb', border: '1px solid #e040fb' }}
+                      onClick={() => handleReembolsoSelect(selectedPedido)}
+                    >
+                      💸 Devolver Fondo
+                    </button>
+                  )}
+                </>
+              ) : !selectedPedido.atendido_por_id ? (
                 <button
                   className="btn btn-primary btn-sm"
                   style={{ 
@@ -1228,7 +1275,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                 >
                   📥 Tomar pedido
                 </button>
-              ) : selectedPedido.atendido_por_id === user.id && (
+              ) : selectedPedido.atendido_por_id === user.id ? (
                 <>
                   {selectedPedido.estado !== 'pendiente' && (
                     <button className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', fontSize: '11px' }} onClick={() => updateEstado(selectedPedido.id, 'pendiente')}>
@@ -1255,7 +1302,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                       ❌ Cancelar
                     </button>
                   )}
-                  {/* Botón de reembolso - Mostrar en pedidos no completados ni previamente reembolsados y que no tengan el flag de reembolso_billetera */}
+                  {/* Botón de reembolso */}
                   {!['completado', 'reembolsado'].includes(selectedPedido.estado) && selectedPedido.reembolso_billetera !== true && (
                     <button
                       className="btn btn-sm"
@@ -1266,6 +1313,18 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                     </button>
                   )}
                 </>
+              ) : (
+                /* Pedido tomado por OTRO admin: solo super admin puede liberar */
+                isSuperAdmin && (
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    style={{ padding: '4px 10px', fontSize: '11px', color: '#facc15', border: '1px solid #facc15', fontWeight: 700 }}
+                    title="Super Admin: liberar pedido asignado a otro administrador"
+                    onClick={() => handleLiberarPedido(selectedPedido)}
+                  >
+                    🔓 Liberar (Super Admin)
+                  </button>
+                )
               )}
             </div>
           )}
