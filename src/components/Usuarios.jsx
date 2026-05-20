@@ -39,6 +39,9 @@ export default function Usuarios({ onNavigate }) {
   const [nuevoSaldoBs, setNuevoSaldoBs] = useState('')
   const [notaAjuste, setNotaAjuste] = useState('')
   const [ajusteMoneda, setAjusteMoneda] = useState('usd') // 'usd' or 'bs'
+  const [ajusteTipoBilletera, setAjusteTipoBilletera] = useState('general') // 'general' or 'operativa'
+  const [saldoOperativoUsd, setSaldoOperativoUsd] = useState(0)
+  const [saldoOperativoBs, setSaldoOperativoBs] = useState(0)
 
   // Estados para ver Historial (Billetera)
   const [viendoMovimientos, setViendoMovimientos] = useState(null)
@@ -135,47 +138,74 @@ export default function Usuarios({ onNavigate }) {
     }
   }
 
-  const handleAbrirAjuste = (cliente) => {
+  const handleAbrirAjuste = async (cliente) => {
     setAjustandoCliente(cliente)
     setNuevoSaldo(cliente.billetera_saldo || 0)
     setNuevoSaldoBs(cliente.billetera_saldo_bs || 0)
     setNotaAjuste('')
     setAjusteMoneda('usd')
+    setAjusteTipoBilletera('general')
+    
+    if (cliente.rol === 'admin') {
+      const { data } = await supabase.from('admin_saldos').select('saldo_usd, saldo_bs').eq('auth_user_id', cliente.auth_user_id).maybeSingle()
+      setSaldoOperativoUsd(data?.saldo_usd || 0)
+      setSaldoOperativoBs(data?.saldo_bs || 0)
+    }
   }
 
   const handleGuardarAjuste = async () => {
     const saldoActual = ajusteMoneda === 'bs' ? nuevoSaldoBs : nuevoSaldo;
-    if (saldoActual === '' || parseFloat(saldoActual) < 0) {
-      alert("Introduce un saldo válido mayor o igual a 0")
+    if (saldoActual === '') {
+      alert("Introduce un saldo válido")
       return;
     }
-    setSaving(true)
     const saldoNum = parseFloat(saldoActual);
+    setSaving(true)
+    
     try {
-      let result;
-      if (ajusteMoneda === 'bs') {
-        result = await ajustarSaldoWalletBs(
-          ajustandoCliente.auth_user_id, 
-          perfil.id, 
-          saldoNum, 
-          notaAjuste || `Ajuste manual de saldo Bs por administrador`
+      if (ajusteTipoBilletera === 'operativa') {
+        const campo = ajusteMoneda === 'usd' ? 'saldo_usd' : 'saldo_bs'
+        await supabase.from('admin_saldos').upsert(
+          { auth_user_id: ajustandoCliente.auth_user_id, [campo]: saldoNum, updated_at: new Date().toISOString() },
+          { onConflict: 'auth_user_id' }
         )
+        await supabase.from('admin_saldos_historial').insert({
+          admin_id: ajustandoCliente.auth_user_id,
+          tipo_movimiento: 'ajuste_admin',
+          moneda: ajusteMoneda,
+          monto: saldoNum,
+          notas: notaAjuste || 'Ajuste manual por administrador'
+        })
+        const label = ajusteMoneda === 'bs' ? formatBs(saldoNum) : formatUSD(saldoNum);
+        setAlertModal({ type: 'success', message: `Saldo Operativo ${ajusteMoneda === 'bs' ? 'Bs' : 'USD'} ajustado correctamente a ${label}` })
+        setAjustandoCliente(null)
+        await refetch()
       } else {
-        result = await ajustarSaldoWallet(
-          ajustandoCliente.auth_user_id, 
-          perfil.id, 
-          saldoNum, 
-          notaAjuste || `Ajuste manual por administrador`
-        )
+        let result;
+        if (ajusteMoneda === 'bs') {
+          result = await ajustarSaldoWalletBs(
+            ajustandoCliente.auth_user_id, 
+            perfil.id, 
+            saldoNum, 
+            notaAjuste || `Ajuste manual de saldo Bs por administrador`
+          )
+        } else {
+          result = await ajustarSaldoWallet(
+            ajustandoCliente.auth_user_id, 
+            perfil.id, 
+            saldoNum, 
+            notaAjuste || `Ajuste manual por administrador`
+          )
+        }
+        
+        if (result.error) throw result.error
+        if (!result.data) throw new Error("No se pudo ejecutar el ajuste.")
+        
+        const label = ajusteMoneda === 'bs' ? formatBs(saldoNum) : formatUSD(saldoNum);
+        setAlertModal({ type: 'success', message: `Saldo General ${ajusteMoneda === 'bs' ? 'Bs' : 'USD'} ajustado correctamente a ${label}` })
+        setAjustandoCliente(null)
+        await refetch()
       }
-      
-      if (result.error) throw result.error
-      if (!result.data) throw new Error("No se pudo ejecutar el ajuste.")
-      
-      const label = ajusteMoneda === 'bs' ? formatBs(saldoNum) : formatUSD(saldoNum);
-      setAlertModal({ type: 'success', message: `Saldo ${ajusteMoneda === 'bs' ? 'Bs' : 'USD'} ajustado correctamente a ${label}` })
-      setAjustandoCliente(null)
-      await refetch()
     } catch (err) {
       setAlertModal({ type: 'error', message: "Error al ajustar billetera: " + err.message })
     } finally {
@@ -694,6 +724,49 @@ export default function Usuarios({ onNavigate }) {
               Modificando fondo de: <strong style={{color: '#fff'}}>{ajustandoCliente.nombres} {ajustandoCliente.apellidos}</strong>
             </p>
 
+            {/* Selector de Tipo de Billetera (Solo si es admin) */}
+            {ajustandoCliente.rol === 'admin' && (
+              <div className="form-group mb-16">
+                <label className="form-label">Tipo de Billetera</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAjusteTipoBilletera('general')
+                      setNuevoSaldo(ajustandoCliente.billetera_saldo || 0)
+                      setNuevoSaldoBs(ajustandoCliente.billetera_saldo_bs || 0)
+                    }}
+                    style={{
+                      flex: 1, padding: '10px', borderRadius: '12px', cursor: 'pointer',
+                      backgroundColor: ajusteTipoBilletera === 'general' ? 'rgba(52, 152, 219, 0.15)' : 'var(--bg-panel)',
+                      border: `2px solid ${ajusteTipoBilletera === 'general' ? 'var(--accent-primary)' : 'var(--border-color)'}`,
+                      color: ajusteTipoBilletera === 'general' ? '#fff' : 'var(--text-muted)',
+                      fontWeight: 700, fontSize: '13px', transition: 'all 0.2s ease'
+                    }}
+                  >
+                    🛍️ General (Compras)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAjusteTipoBilletera('operativa')
+                      setNuevoSaldo(saldoOperativoUsd)
+                      setNuevoSaldoBs(saldoOperativoBs)
+                    }}
+                    style={{
+                      flex: 1, padding: '10px', borderRadius: '12px', cursor: 'pointer',
+                      backgroundColor: ajusteTipoBilletera === 'operativa' ? 'rgba(234, 179, 8, 0.15)' : 'var(--bg-panel)',
+                      border: `2px solid ${ajusteTipoBilletera === 'operativa' ? '#eab308' : 'var(--border-color)'}`,
+                      color: ajusteTipoBilletera === 'operativa' ? '#fff' : 'var(--text-muted)',
+                      fontWeight: 700, fontSize: '13px', transition: 'all 0.2s ease'
+                    }}
+                  >
+                    💼 Operativa (Comisiones)
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Selector de Moneda */}
             <div className="form-group mb-16">
               <label className="form-label">Moneda a Ajustar</label>
@@ -704,8 +777,8 @@ export default function Usuarios({ onNavigate }) {
                   style={{
                     flex: 1, padding: '10px', borderRadius: '12px', cursor: 'pointer',
                     backgroundColor: ajusteMoneda === 'usd' ? 'rgba(0, 210, 255, 0.15)' : 'var(--bg-panel)',
-                    border: `2px solid ${ajusteMoneda === 'usd' ? 'var(--accent-primary)' : 'var(--border-color)'}`,
-                    color: ajusteMoneda === 'usd' ? 'var(--accent-primary)' : 'var(--text-muted)',
+                    border: `2px solid ${ajusteMoneda === 'usd' ? 'var(--accent-success)' : 'var(--border-color)'}`,
+                    color: ajusteMoneda === 'usd' ? 'var(--accent-success)' : 'var(--text-muted)',
                     fontWeight: 700, fontSize: '13px', transition: 'all 0.2s ease'
                   }}
                 >
@@ -729,7 +802,13 @@ export default function Usuarios({ onNavigate }) {
 
             <div className="form-group mb-16">
               <label className="form-label">Saldo Actual ({ajusteMoneda === 'bs' ? 'Bs' : 'USD'})</label>
-              <input type="text" className="form-input" style={{ backgroundColor: 'rgba(0,0,0,0.2)', color: ajusteMoneda === 'bs' ? '#a855f7' : 'var(--accent-success)', fontWeight: 'bold' }} value={ajusteMoneda === 'bs' ? formatBs(ajustandoCliente.billetera_saldo_bs) : formatUSD(ajustandoCliente.billetera_saldo)} disabled />
+              <input type="text" className="form-input" style={{ backgroundColor: 'rgba(0,0,0,0.2)', color: ajusteMoneda === 'bs' ? '#a855f7' : 'var(--accent-success)', fontWeight: 'bold' }} 
+                value={
+                  ajusteMoneda === 'bs' 
+                    ? formatBs(ajusteTipoBilletera === 'general' ? ajustandoCliente.billetera_saldo_bs : saldoOperativoBs) 
+                    : formatUSD(ajusteTipoBilletera === 'general' ? ajustandoCliente.billetera_saldo : saldoOperativoUsd)
+                } 
+                disabled />
             </div>
 
             <div className="form-group mb-16">
