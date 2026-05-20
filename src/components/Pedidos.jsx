@@ -871,16 +871,13 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
       return
     }
 
-    // Obtener el id (= cliente_uuid) del admin destino para acreditarle el saldo operativo
-    // En la tabla 'clientes', el campo 'id' es lo que se usa como cliente_uuid en el perfil del auth
-    const { data: adminPerfil, error: adminError } = await supabase
-      .from('clientes')
-      .select('id, auth_user_id, owner_id')
-      .eq('auth_user_id', adminTarget.auth_user_id)
-      .maybeSingle()
+    // adminTarget ya viene de fetchAdmins con 'id' y 'auth_user_id' desde la tabla clientes
+    // adminTarget.id = el id de clientes = equivalente al cliente_uuid del perfil del admin
+    // No necesitamos una segunda consulta a la DB
+    const vendedorId = adminTarget.id   // ⭐ Crédito al admin seleccionado
 
-    if (adminError || !adminPerfil) {
-      showAlert('No se pudo obtener el perfil del administrador seleccionado.', 'error')
+    if (!vendedorId) {
+      showAlert('El administrador seleccionado no tiene un perfil válido para acreditar el saldo.', 'error')
       return
     }
 
@@ -905,9 +902,9 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
             p_player_id: item.player_id,
             p_account_email: item.account_email,
             p_account_password: item.account_password,
-            p_vendedor_id: adminPerfil.id,  // ⭐ id de clientes = cliente_uuid del admin seleccionado
+            p_vendedor_id: vendedorId,
             p_pedido_id: pedidoActual.id,
-            p_owner_id: adminPerfil.owner_id
+            p_owner_id: null  // Negocio principal
           })
           if (rpcError) throw new Error(rpcError.message)
           if (data?.error) throw new Error(data.error)
