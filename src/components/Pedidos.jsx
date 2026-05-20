@@ -933,6 +933,129 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     showAlert(`✅ Pedido marcado como COMPLETADO y acreditado a ${adminTarget.nombres || ''}.`, 'success')
   }
 
+  // ────────────────────────────────────────────────────────────────────
+  // SUPER ADMIN: Reversar un pedido COMPLETADO
+  // Revierte la venta, descuenta el saldo del operario (permite negativo)
+  // ────────────────────────────────────────────────────────────────────
+  const handleReversarCompletado = async (pedido) => {
+    showAlert(
+      `¿Reversar el pedido #${pedido.numero_pedido}? Esto revertirá el estado a PROCESANDO y descontará el crédito del operario (puede quedar en saldo negativo si no tiene suficiente saldo).`,
+      'confirm',
+      async () => {
+        try {
+          // 1. Buscar ventas registradas para este pedido
+          const { data: ventas, error: ventasError } = await supabase
+            .from('ventas')
+            .select('id, precio_venta_usd, precio_venta_bs, vendedor_id')
+            .eq('pedido_id', pedido.id)
+
+          if (ventasError) throw new Error('Error al buscar las ventas: ' + ventasError.message)
+
+          // 2. Para cada venta: revertir saldo operativo y registrar reverso
+          for (const venta of (ventas || [])) {
+            if (!venta.vendedor_id) continue
+
+            // 2a. Buscar el auth_user_id del admin por su cliente.id (= vendedor_id)
+            const { data: adminCliente } = await supabase
+              .from('clientes')
+              .select('auth_user_id')
+              .eq('id', venta.vendedor_id)
+              .maybeSingle()
+
+            const adminAuthId = adminCliente?.auth_user_id
+            if (!adminAuthId) continue
+
+            // 2b. Restar saldo USD (permite negativo via fallback manual)
+            const montoUsd = Number(venta.precio_venta_usd) || 0
+            const montoBs  = Number(venta.precio_venta_bs)  || 0
+            await insertarReversoManual(adminAuthId, montoUsd, montoBs, pedido)
+
+            // 2c. Eliminar la venta de la tabla ventas
+            await supabase.from('ventas').delete().eq('id', venta.id)
+          }
+
+          // 3. Revertir estado del pedido
+          const { error: updateError } = await supabase
+            .from('pedidos')
+            .update({
+              estado: 'procesando',
+              venta_registrada: false,
+              fecha_respuesta: null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', pedido.id)
+
+          if (updateError) throw new Error('Error al revertir el pedido: ' + updateError.message)
+
+          const upd = { ...pedido, estado: 'procesando', venta_registrada: false, fecha_respuesta: null }
+          setPedidos(prev => prev.map(p => p.id === pedido.id ? upd : p))
+          setSelectedPedido(upd)
+          showAlert(`✅ Pedido #${pedido.numero_pedido} reversado. El saldo del operario fue ajustado (puede quedar negativo).`, 'success')
+
+        } catch (err) {
+          console.error('Error reversando pedido:', err)
+          showAlert('Error al reversar: ' + err.message, 'error')
+        }
+      }
+    )
+  }
+
+  // Descuenta el saldo operativo de un admin directamente en admin_saldos
+  // y registra el reverso en admin_saldos_historial (permite saldo negativo)
+  const insertarReversoManual = async (adminAuthId, montoUsd, montoBs, pedido) => {
+    try {
+      if (montoUsd > 0) {
+        const { data: row } = await supabase
+          .from('admin_saldos')
+          .select('saldo_usd')
+          .eq('auth_user_id', adminAuthId)
+          .maybeSingle()
+
+        const nuevoSaldo = (Number(row?.saldo_usd) || 0) - montoUsd  // Permite negativo
+
+        await supabase.from('admin_saldos').upsert(
+          { auth_user_id: adminAuthId, saldo_usd: nuevoSaldo, updated_at: new Date().toISOString() },
+          { onConflict: 'auth_user_id' }
+        )
+
+        await supabase.from('admin_saldos_historial').insert({
+          admin_id: adminAuthId,
+          tipo_movimiento: 'reverso_venta',
+          moneda: 'usd',
+          monto: montoUsd,
+          notas: `Reverso de Pedido #${pedido.numero_pedido} por Super Admin`,
+          pedido_id: pedido.id
+        })
+      }
+
+      if (montoBs > 0) {
+        const { data: row } = await supabase
+          .from('admin_saldos')
+          .select('saldo_bs')
+          .eq('auth_user_id', adminAuthId)
+          .maybeSingle()
+
+        const nuevoSaldo = (Number(row?.saldo_bs) || 0) - montoBs  // Permite negativo
+
+        await supabase.from('admin_saldos').upsert(
+          { auth_user_id: adminAuthId, saldo_bs: nuevoSaldo, updated_at: new Date().toISOString() },
+          { onConflict: 'auth_user_id' }
+        )
+
+        await supabase.from('admin_saldos_historial').insert({
+          admin_id: adminAuthId,
+          tipo_movimiento: 'reverso_venta',
+          moneda: 'bs',
+          monto: montoBs,
+          notas: `Reverso de Pedido #${pedido.numero_pedido} por Super Admin`,
+          pedido_id: pedido.id
+        })
+      }
+    } catch (e) {
+      console.error('Error en reverso manual de saldo admin:', e)
+    }
+  }
+
   // Modal: Asignar pedido a un admin
   const renderAsignarAdminModal = () => {
     if (!showAsignarAdminModal) return null
@@ -1498,6 +1621,17 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                     🏅 Atribuir a Operario
                   </button>
                 </>
+              )}
+              {/* Botón Reversar: solo para super admin en pedidos COMPLETADOS */}
+              {isSuperAdmin && selectedPedido.estado === 'completado' && (
+                <button
+                  className="btn btn-ghost btn-sm"
+                  style={{ padding: '4px 10px', fontSize: '11px', color: '#ff5252', border: '1px solid #ff5252', fontWeight: 700 }}
+                  title="Reversar el pedido: revierte el estado a PROCESANDO y descuenta el saldo del operario (puede quedar negativo)"
+                  onClick={() => handleReversarCompletado(selectedPedido)}
+                >
+                  🔄 Reversar Completado
+                </button>
               )}
               {/* Pedido CANCELADO: mostrar opciones de recuperación a cualquier admin */}
               {selectedPedido.estado === 'cancelado' ? (
