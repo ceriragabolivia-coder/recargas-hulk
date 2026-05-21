@@ -943,44 +943,9 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
       'confirm',
       async () => {
         try {
-          // 1. Buscar en admin_saldos_historial los créditos registrados para este pedido
-          //    Esto es la fuente de verdad: qué moneda y qué monto se acreditó exactamente
-          const { data: creditos, error: creditosError } = await supabase
-            .from('admin_saldos_historial')
-            .select('id, admin_id, moneda, monto')
-            .eq('pedido_id', pedido.id)
-            .eq('tipo_movimiento', 'credito_venta')
-
-          if (creditosError) throw new Error('Error al buscar créditos: ' + creditosError.message)
-
-          // 2. Reversar exactamente cada crédito encontrado (solo la moneda acreditada)
-          for (const credito of (creditos || [])) {
-            await insertarReversoManual(credito.admin_id, credito.moneda, credito.monto, pedido)
-          }
-
-          // 3. Si no hay historial (venta antigua), buscar en tabla ventas como fallback
-          if (!creditos || creditos.length === 0) {
-            const { data: ventas } = await supabase
-              .from('ventas')
-              .select('id, precio_venta_usd, precio_venta_bs, vendedor_id')
-              .eq('pedido_id', pedido.id)
-
-            for (const venta of (ventas || [])) {
-              if (!venta.vendedor_id) continue
-              const { data: adminCliente } = await supabase
-                .from('clientes')
-                .select('auth_user_id')
-                .eq('id', venta.vendedor_id)
-                .maybeSingle()
-              const adminAuthId = adminCliente?.auth_user_id
-              if (!adminAuthId) continue
-
-              // En el fallback: solo descontamos Bs (moneda local usada en la operativa)
-              // porque precio_venta_usd es solo una conversión referencial
-              const montoBs = Number(venta.precio_venta_bs) || 0
-              if (montoBs > 0) await insertarReversoManual(adminAuthId, 'bs', montoBs, pedido)
-            }
-          }
+          // 1. Ya no hacemos la deducción manual porque el trigger en BD (trig_act_saldos_admin)
+          // se encarga automáticamente de revertir el saldo al cambiar el estado del pedido
+          // de 'completado' a 'procesando'.
 
           // 4. Eliminar las ventas de la tabla ventas
           await supabase.from('ventas').delete().eq('pedido_id', pedido.id)
