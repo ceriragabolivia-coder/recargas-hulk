@@ -1370,24 +1370,16 @@ export default function Landing({ onNavigate }) {
                     <h4>Información de {selectedJuego.nombre}</h4>
                   </div>
                   <div className="info-body">
-                    {selectedJuego.caracteristicas_nota ? (
-                      <div className="rich-text" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedJuego.caracteristicas_nota.replace(/\n/g, '<br/>')) }} />
-                    ) : (
-                      <p>Para adquirir recargas de {selectedJuego.nombre}, solo necesitas proporcionar tu ID de jugador. La entrega es inmediata una vez verificado el pago.</p>
+                    {selectedJuego.caracteristicas_nota && (
+                      <div className="rich-text" style={{ marginBottom: '16px' }} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedJuego.caracteristicas_nota.replace(/\n/g, '<br/>')) }} />
                     )}
                     
-                    {selectedJuego.instrucciones_recarga ? (
+                    {selectedJuego.instrucciones_recarga && (
                       <div className="rich-text" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedJuego.instrucciones_recarga.replace(/\n/g, '<br/>')) }} />
-                    ) : (
-                      <>
-                        <h5>¿Cómo recargar?</h5>
-                        <ul>
-                          <li>Selecciona el paquete que deseas adquirir.</li>
-                          <li>Inicia sesión o regístrate en nuestra plataforma.</li>
-                          <li>Completa el pago mediante tu método favorito (Pago Móvil, Binance, PayPal).</li>
-                          <li>¡Listo! Tu recarga llegará en minutos.</li>
-                        </ul>
-                      </>
+                    )}
+
+                    {!selectedJuego.caracteristicas_nota && !selectedJuego.instrucciones_recarga && (
+                      <p style={{ color: 'var(--text-muted)' }}>No hay información adicional disponible para este producto.</p>
                     )}
                   </div>
                 </div>
