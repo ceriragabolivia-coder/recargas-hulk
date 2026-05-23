@@ -1985,8 +1985,6 @@ export default function Configuracion() {
                     </div>
                   </div>
 
-                   </div>
-
                   {/* Productos en el Footer */}
                   <div style={{ padding: '24px', backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px', flexWrap: 'wrap', gap: '12px' }}>
