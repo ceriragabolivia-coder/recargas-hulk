@@ -14,12 +14,12 @@ export default function GestionLanding() {
 
   const [bannersList, setBannersList] = useState([])
 
-  // Local state for form fields to avoid constant context updates during typing
   const [form, setForm] = useState({
     landing_titulo: config?.landing_titulo || '',
     landing_subtitulo: config?.landing_subtitulo || '',
     landing_logo: config?.landing_logo || '',
     landing_featured_games: config?.landing_featured_games || '',
+    landing_seo_texto: config?.landing_seo_texto || '',
     landing_enabled: config?.landing_enabled === '1',
     landing_auth_icon: config?.landing_auth_icon || '⚡',
     landing_auth_logo_size: config?.landing_auth_logo_size || '100px',
@@ -36,6 +36,7 @@ export default function GestionLanding() {
         landing_subtitulo: config.landing_subtitulo || '',
         landing_logo: config.landing_logo || '',
         landing_featured_games: config.landing_featured_games || '',
+        landing_seo_texto: config.landing_seo_texto || '',
         landing_enabled: config.landing_enabled === '1',
         landing_auth_icon: config.landing_auth_icon || '⚡',
         landing_auth_logo_size: config.landing_auth_logo_size || '100px',
@@ -232,6 +233,7 @@ export default function GestionLanding() {
         updateConfig('landing_logo', form.landing_logo, true),
         updateConfig('landing_banners_json', JSON.stringify(bannersList), true),
         updateConfig('landing_featured_games', form.landing_featured_games, true),
+        updateConfig('landing_seo_texto', form.landing_seo_texto, true),
         updateConfig('landing_enabled', form.landing_enabled ? '1' : '0', false),
         updateConfig('landing_auth_icon', form.landing_auth_icon, true),
         updateConfig('landing_auth_logo_size', form.landing_auth_logo_size, true),
@@ -355,7 +357,20 @@ export default function GestionLanding() {
               className="form-input"
               value={form.landing_featured_games}
               onChange={(e) => setForm({...form, landing_featured_games: e.target.value})}
-              placeholder="1, 2, 5, 8"
+          </div>
+
+          <div className="form-group full-width" style={{ marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
+            <label className="form-label">Texto SEO Global (Para Buscadores)</label>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+              Este texto aparecerá al final de la página principal para mejorar el posicionamiento. Puedes incluir palabras clave sobre recargas de juegos (Soporta HTML básico).
+            </p>
+            <textarea 
+              className="form-input"
+              rows={5}
+              value={form.landing_seo_texto}
+              onChange={(e) => setForm({...form, landing_seo_texto: e.target.value})}
+              placeholder="Ej: Somos la mejor plataforma para recargar diamantes en Free Fire, Netflix..."
+              style={{ resize: 'vertical', minHeight: '100px' }}
             />
           </div>
           </>

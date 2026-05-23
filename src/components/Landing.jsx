@@ -1542,6 +1542,21 @@ export default function Landing({ onNavigate }) {
             </section>
           </>
         )}
+
+        {!selectedJuego && !showCheckout && !showOrders && !showRuleta && !showWallet && !showProfile && config?.landing_seo_texto && (
+          <section className="landing-section landing-container" style={{ marginTop: '40px', paddingBottom: '20px' }}>
+            <div className="info-content-section" style={{ background: 'var(--bg-card)', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+              <div className="info-tab-header" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'rgba(0,0,0,0.2)' }}>
+                <h4 style={{ margin: 0, fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '20px' }}>ℹ️</span> Información Adicional
+                </h4>
+              </div>
+              <div className="info-body" style={{ padding: '24px' }}>
+                <div className="rich-text" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(config.landing_seo_texto.replace(/\n/g, '<br/>')) }} />
+              </div>
+            </div>
+          </section>
+        )}
       </main>
 
       <footer className="landing-footer">
