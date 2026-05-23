@@ -1439,7 +1439,7 @@ export default function Landing({ onNavigate }) {
 
             {/* HERO SLIDER (En Detalle abajo) */}
             <section className="landing-hero" style={{ marginTop: '40px', padding: 0 }}>
-              <div className="hero-slider" style={{ height: '300px', borderRadius: '16px' }}>
+              <div className="hero-slider">
                 {banners.map((banner, idx) => (
                   <div 
                     key={idx} 
