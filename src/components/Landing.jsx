@@ -578,7 +578,16 @@ export default function Landing({ onNavigate }) {
   // Pero permitimos que el Header y el Hero (con fallbacks) se vean de inmediato.
 
   return (
-    <div className={`landing-page ${darkMode ? 'dark' : ''}`}>
+    <div 
+      className={`landing-page ${darkMode ? 'dark' : ''}`}
+      style={{
+        backgroundImage: config?.fondo_global_url ? `url(${config.fondo_global_url})` : 'none',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
       {/* TOAST NOTIFICATION */}
       {activeToast && (
         <div 
