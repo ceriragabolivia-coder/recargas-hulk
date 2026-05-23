@@ -357,6 +357,8 @@ export default function GestionLanding() {
               className="form-input"
               value={form.landing_featured_games}
               onChange={(e) => setForm({...form, landing_featured_games: e.target.value})}
+              placeholder="1, 2, 5, 8"
+            />
           </div>
 
           <div className="form-group full-width" style={{ marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
