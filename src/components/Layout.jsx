@@ -647,8 +647,8 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
               playOrderNotificationSound()
             }
           } else if (payload.eventType === 'UPDATE') {
-            // Check if it was assigned to ME
-            if (payload.new && payload.new.atendido_por_id === user?.id) {
+            // Check if it was assigned to ME and is actively being processed
+            if (payload.new && payload.new.atendido_por_id === user?.id && payload.new.estado === 'procesando') {
                // Verify we haven't notified for this specific assignment yet
                const assignKey = `assigned_${payload.new.id}_to_${user?.id}`
                if (!notifiedAssignments.has(assignKey)) {
