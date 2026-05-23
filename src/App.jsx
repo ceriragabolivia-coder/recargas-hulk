@@ -443,6 +443,23 @@ export default function App() {
     }
   }, [config?.favicon_url])
 
+  // Aplicar fondo global
+  React.useEffect(() => {
+    if (config?.fondo_global_url) {
+      document.body.style.backgroundImage = `url(${config.fondo_global_url})`
+      document.body.style.backgroundSize = 'cover'
+      document.body.style.backgroundPosition = 'center'
+      document.body.style.backgroundAttachment = 'fixed'
+      document.body.style.backgroundRepeat = 'no-repeat'
+    } else {
+      document.body.style.backgroundImage = ''
+      document.body.style.backgroundSize = ''
+      document.body.style.backgroundPosition = ''
+      document.body.style.backgroundAttachment = ''
+      document.body.style.backgroundRepeat = ''
+    }
+  }, [config?.fondo_global_url])
+
    // Guardamos en localStorage cada vez que cambia la página
   React.useEffect(() => {
     localStorage.setItem('lastPage', currentPage)

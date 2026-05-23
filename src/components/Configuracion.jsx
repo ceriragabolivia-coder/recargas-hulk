@@ -57,6 +57,8 @@ export default function Configuracion() {
   const [bgFloatingSize, setBgFloatingSize] = useState('80')
   const [bgFloatingOpacity, setBgFloatingOpacity] = useState('0.4')
   const [bgFloatingImages, setBgFloatingImages] = useState([])
+  const [bgGlobalUrl, setBgGlobalUrl] = useState('')
+  const bgGlobalFileInputRef = useRef(null)
   
   // Estados para Horario de Atención
   const [showHorarioPopup, setShowHorarioPopup] = useState(false)
@@ -94,6 +96,9 @@ export default function Configuracion() {
       } catch (e) {
         setBgFloatingImages([])
       }
+
+      // Fondo Global
+      setBgGlobalUrl(config.fondo_global_url || '')
 
       // Horario
       setShowHorarioPopup(config.show_horario_popup === 'true')
@@ -295,6 +300,38 @@ export default function Configuracion() {
       setAlertModal({ type: 'success', message: 'Logo del panel actualizado correctamente' })
     } catch (err) {
       console.error('Error subiendo logo:', err)
+      setAlertModal({ type: 'error', message: 'Error subiendo la imagen: ' + err.message })
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
+  const handleBgGlobalUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    setUploadingImage(true)
+    try {
+      // Use original file for background to preserve quality and since it might not be a logo with white background
+      const fileName = `bg-global-${Date.now()}.${file.name.split('.').pop()}`
+      const filePath = `system/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('logos')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('logos')
+        .getPublicUrl(filePath)
+
+      await updateConfig('fondo_global_url', publicUrl, true)
+      setBgGlobalUrl(publicUrl)
+      refetchConfig()
+      setAlertModal({ type: 'success', message: 'Fondo global actualizado correctamente' })
+    } catch (err) {
+      console.error('Error subiendo fondo:', err)
       setAlertModal({ type: 'error', message: 'Error subiendo la imagen: ' + err.message })
     } finally {
       setUploadingImage(false)
@@ -794,6 +831,60 @@ export default function Configuracion() {
                           ✓ Guardar Textos
                         </button>
                       </div>
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '24px', backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)', marginTop: '24px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>Fondo Global de la Aplicación</h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px' }}>
+                      Sube una imagen para usarla como fondo en toda la plataforma (Landing y Panel). Se adaptará a cualquier pantalla.
+                    </p>
+                    
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '24px', flexWrap: 'wrap' }}>
+                       <div style={{ 
+                         width: '100%', maxWidth: '280px', height: '160px', borderRadius: '12px', backgroundColor: '#000', 
+                         border: '2px solid rgba(255,255,255,0.1)', overflow: 'hidden', display: 'flex', 
+                         alignItems: 'center', justifyContent: 'center' 
+                       }}>
+                         {bgGlobalUrl ? (
+                           <img src={bgGlobalUrl} alt="Fondo Global" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                         ) : (
+                           <span style={{ fontSize: '28px' }}>🖼️</span>
+                         )}
+                       </div>
+                       
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                         <input 
+                           type="file" 
+                           ref={bgGlobalFileInputRef} 
+                           style={{ display: 'none' }} 
+                           accept="image/*"
+                           onChange={handleBgGlobalUpload}
+                         />
+                         <button 
+                           className="btn btn-primary" 
+                           onClick={() => bgGlobalFileInputRef.current?.click()}
+                           disabled={uploadingImage}
+                         >
+                           {uploadingImage ? 'Subiendo...' : '📤 Subir Fondo Global'}
+                         </button>
+                         {bgGlobalUrl && (
+                           <>
+                             <span style={{ fontSize: '12px', color: 'var(--accent-success)' }}>
+                               ✓ Fondo activo detectado
+                             </span>
+                             <button 
+                               className="btn btn-danger btn-sm" 
+                               onClick={async () => {
+                                 await updateConfig('fondo_global_url', '', true);
+                                 setBgGlobalUrl('');
+                               }}
+                             >
+                               Eliminar Fondo
+                             </button>
+                           </>
+                         )}
+                       </div>
                     </div>
                   </div>
 
