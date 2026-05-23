@@ -620,6 +620,8 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
           }
         })
         .subscribe()
+      const notifiedAssignments = new Set()
+      
       channelAdminPedidos = supabase
         .channel('pedidos_realtime_admin')
         .on('postgres_changes', {
@@ -643,6 +645,41 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
               }
               setToasts(prev => [orderToast, ...prev].slice(0, 3))
               playOrderNotificationSound()
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            // Check if it was assigned to ME
+            if (payload.new && payload.new.operario_id === user?.id) {
+               // Verify we haven't notified for this specific assignment yet
+               const assignKey = `assigned_${payload.new.id}_to_${user?.id}`
+               if (!notifiedAssignments.has(assignKey)) {
+                 notifiedAssignments.add(assignKey)
+                 
+                 // Sound
+                 try {
+                   const audio = new Audio('/assign-sound.mp3');
+                   audio.play().catch(e => console.error("No se pudo reproducir el sonido:", e));
+                 } catch (err) {}
+                 
+                 // Push Noti
+                 if (Notification.permission === 'granted') {
+                   new Notification('Nuevo Pedido Asignado', {
+                     body: `Se te ha asignado el pedido #${payload.new.numero_pedido || payload.new.id.substring(0,6)}`,
+                   });
+                 } else if (Notification.permission !== 'denied') {
+                   Notification.requestPermission();
+                 }
+
+                 // Toast
+                 const orderToast = {
+                   id: Date.now() + Math.random(),
+                   db_id: payload.new.id,
+                   type: 'assigned_order',
+                   titulo: `👨‍💻 ¡PEDIDO ASIGNADO!`,
+                   mensaje: `Se te ha asignado el pedido #${payload.new.numero_pedido || payload.new.id.substring(0,6)}.`,
+                   order_id: payload.new.id
+                 }
+                 setToasts(prev => [orderToast, ...prev].slice(0, 3))
+               }
             }
           }
           fetchCounts()

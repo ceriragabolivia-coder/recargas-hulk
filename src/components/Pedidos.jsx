@@ -187,30 +187,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   useEffect(() => {
     const channel = supabase
       .channel('admin_pedidos_list')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, (payload) => {
-        if (payload.eventType === 'UPDATE') {
-          // Si el pedido me fue asignado a mi (y antes no lo estaba)
-          if (payload.new.operario_id === user?.id && payload.old?.operario_id !== user?.id) {
-            try {
-              const audio = new Audio('/assign-sound.mp3');
-              audio.play().catch(e => console.error("No se pudo reproducir el sonido:", e));
-            } catch (err) {}
-            
-            if (Notification.permission === 'granted') {
-              new Notification('Nuevo Pedido Asignado', {
-                body: `Se te ha asignado el pedido #${payload.new.numero_pedido || payload.new.id.substring(0,6)}`,
-              });
-            } else if (Notification.permission !== 'denied') {
-              Notification.requestPermission();
-            }
-            
-            setAlertModal({
-              title: 'Nuevo Pedido Asignado',
-              message: `Se te ha asignado el pedido #${payload.new.numero_pedido || payload.new.id.substring(0,6)}.`,
-              type: 'success'
-            });
-          }
-        }
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, () => {
         fetchPedidos();
       })
       .subscribe();
