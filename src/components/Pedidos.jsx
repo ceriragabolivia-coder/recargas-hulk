@@ -854,6 +854,13 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     setPedidos(prev => prev.map(p => p.id === selectedPedido.id ? upd : p))
     setSelectedPedido(upd)
     setShowAsignarAdminModal(false)
+    
+    // Play sound locally for the assigner to confirm action
+    try {
+      const audio = new Audio('/assign-sound.mp3');
+      audio.play().catch(e => console.error("No se pudo reproducir el sonido:", e));
+    } catch (err) {}
+
     showAlert(`✅ Pedido asignado a ${adminSeleccionado.nombres} ${adminSeleccionado.apellidos || ''} correctamente.`, 'success')
   }
 

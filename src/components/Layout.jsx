@@ -648,7 +648,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
             }
           } else if (payload.eventType === 'UPDATE') {
             // Check if it was assigned to ME
-            if (payload.new && payload.new.operario_id === user?.id) {
+            if (payload.new && payload.new.atendido_por_id === user?.id) {
                // Verify we haven't notified for this specific assignment yet
                const assignKey = `assigned_${payload.new.id}_to_${user?.id}`
                if (!notifiedAssignments.has(assignKey)) {
