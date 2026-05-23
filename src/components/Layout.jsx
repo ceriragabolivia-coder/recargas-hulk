@@ -524,9 +524,47 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
           })
         }
       }
+
+      // Check liquidations for admins on login
+      if (isAdmin || isNegocio) {
+        const { data: liqData } = await supabase.from('admin_saldos_historial')
+          .select('*')
+          .eq('admin_id', userId)
+          .eq('tipo_movimiento', 'liquidacion')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (liqData && liqData.length > 0) {
+          const liq = liqData[0];
+          const seenKey = `liq_seen_${liq.id}`;
+          if (!localStorage.getItem(seenKey)) {
+            localStorage.setItem(seenKey, 'true');
+            
+            try {
+              const audio = new Audio('/liquidation-sound.mp3');
+              audio.play().catch(e => console.error("No se pudo reproducir sonido de liquidación", e));
+            } catch(err) {}
+
+            const montoStr = liq.moneda === 'usd' ? formatUSD(liq.monto) : formatBs(liq.monto);
+
+            if (Notification.permission === 'granted') {
+              new Notification('💰 Saldo Liquidado', { body: `Se ha liquidado tu saldo por ${montoStr}.` });
+            }
+
+            const toast = {
+              id: Date.now() + Math.random(),
+              db_id: liq.id,
+              type: 'liquidacion',
+              titulo: '💰 Saldo Liquidado',
+              mensaje: `Se ha liquidado tu saldo por ${montoStr}.`
+            };
+            setToasts(prev => [toast, ...prev].slice(0, 3));
+          }
+        }
+      }
     }
     loadHistory()
-  }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user?.id, isAdmin, isNegocio]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Suscripción Realtime para Notificaciones Push y Nuevos Pedidos
   // Espera a que el perfil esté COMPLETAMENTE cargado para no re-suscribirse
@@ -643,6 +681,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
           fetchCounts()
         })
         .subscribe()
+
       // 2c. Suscripción a CHATS de Soporte (Admin)
       const channelAdminChat = supabase
         .channel('chat_realtime_admin')
@@ -671,6 +710,45 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
             setToasts(prev => [chatToast, ...prev].slice(0, 3))
             playBellSound()
             fetchCounts()
+          }
+        })
+        .subscribe()
+
+      // 2d. Suscripción a Liquidaciones Propias (Admin)
+      const channelAdminLiq = supabase
+        .channel(`liq_realtime_${user.id}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'admin_saldos_historial',
+          filter: `admin_id=eq.${user.id}`
+        }, payload => {
+          if (payload.new && payload.new.tipo_movimiento === 'liquidacion') {
+            const liq = payload.new;
+            const seenKey = `liq_seen_${liq.id}`;
+            localStorage.setItem(seenKey, 'true');
+
+            try {
+              const audio = new Audio('/liquidation-sound.mp3');
+              audio.play().catch(e => console.error("No se pudo reproducir sonido de liquidación", e));
+            } catch (err) {}
+
+            const montoStr = liq.moneda === 'usd' ? formatUSD(liq.monto) : formatBs(liq.monto);
+
+            if (Notification.permission === 'granted') {
+              new Notification('💰 Saldo Liquidado', { body: `Se ha liquidado tu saldo por ${montoStr}.` });
+            } else if (Notification.permission !== 'denied') {
+              Notification.requestPermission();
+            }
+
+            const toast = {
+              id: Date.now() + Math.random(),
+              db_id: liq.id,
+              type: 'liquidacion',
+              titulo: '💰 Saldo Liquidado',
+              mensaje: `Se ha liquidado tu saldo por ${montoStr}.`
+            };
+            setToasts(prev => [toast, ...prev].slice(0, 3));
           }
         })
         .subscribe()
@@ -794,6 +872,12 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
       if (channelUserPedidos) supabase.removeChannel(channelUserPedidos)
       if (channelUserBilletera) supabase.removeChannel(channelUserBilletera)
       if (channelUserChat) supabase.removeChannel(channelUserChat)
+      // Remove liq channel if exists
+      supabase.getChannels().forEach(ch => {
+        if (ch.topic === `realtime:liq_realtime_${user?.id}`) {
+          supabase.removeChannel(ch)
+        }
+      })
     }
   }, [isReady]) // eslint-disable-line react-hooks/exhaustive-deps
 
