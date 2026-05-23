@@ -1604,7 +1604,14 @@ export default function Landing({ onNavigate }) {
             <div className="footer-col-products">
               <div style={{ fontSize: '11px', fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Productos</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                {juegos.slice(0, 8).map(j => (
+                {(() => {
+                    let ids = []
+                    try { ids = JSON.parse(config?.footer_productos_ids || '[]') } catch(e) {}
+                    const footerJuegos = ids.length > 0
+                      ? ids.map(id => juegos.find(j => j.id === id)).filter(Boolean)
+                      : juegos.slice(0, 8)
+                    return footerJuegos
+                  })().map(j => (
                   <button
                     key={j.id}
                     onClick={() => handleSelectJuego(j)}

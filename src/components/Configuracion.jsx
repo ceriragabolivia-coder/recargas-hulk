@@ -64,6 +64,11 @@ export default function Configuracion() {
   const [showHorarioPopup, setShowHorarioPopup] = useState(false)
   const [horarioAtencionTexto, setHorarioAtencionTexto] = useState('Lunes a Domingo: 8:00 AM - 10:00 PM')
   const [horarioFlyerUrl, setHorarioFlyerUrl] = useState('')
+
+  // Estados para selección de productos en Footer
+  const [juegosLista, setJuegosLista] = useState([])
+  const [footerProductosIds, setFooterProductosIds] = useState([])
+  const [savingFooterProductos, setSavingFooterProductos] = useState(false)
   
   // Ref para evitar que las actualizaciones de Realtime sobrescriban lo que el admin está escribiendo
   const initialized = useRef(false)
@@ -105,9 +110,41 @@ export default function Configuracion() {
       setHorarioAtencionTexto(config.horario_atencion_texto || 'Lunes a Domingo: 8:00 AM - 10:00 PM')
       setHorarioFlyerUrl(config.horario_flyer_url || '')
 
+      // Footer productos
+      try {
+        setFooterProductosIds(JSON.parse(config.footer_productos_ids || '[]'))
+      } catch (e) {
+        setFooterProductosIds([])
+      }
+
       initialized.current = true
     }
   }, [config, configLoading])
+
+  // Cargar juegos al entrar a la pestaña footer
+  React.useEffect(() => {
+    if (activeTab === 'footer' && juegosLista.length === 0) {
+      supabase
+        .from('juegos')
+        .select('id, nombre, icono_url, activo')
+        .is('owner_id', null)
+        .order('nombre')
+        .then(({ data }) => setJuegosLista(data || []))
+    }
+  }, [activeTab])
+
+  const toggleFooterProducto = (id) => {
+    setFooterProductosIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
+  }
+
+  const handleSaveFooterProductos = async () => {
+    setSavingFooterProductos(true)
+    await updateConfig('footer_productos_ids', JSON.stringify(footerProductosIds), true)
+    setSavingFooterProductos(false)
+    setAlertModal({ type: 'success', message: `✅ Productos del footer actualizados (${footerProductosIds.length} seleccionados)` })
+  }
 
   const handleEdit = (metodo) => {
     setCurrentMetodo(metodo)
@@ -1946,6 +1983,111 @@ export default function Configuracion() {
                         💡 Los cambios se guardan automáticamente al salir de cada campo. Si configuras al menos una red social, aparecerá la sección "¡Síguenos en nuestras redes!" en el pie de página.
                       </p>
                     </div>
+                  </div>
+
+                   </div>
+
+                  {/* Productos en el Footer */}
+                  <div style={{ padding: '24px', backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px', flexWrap: 'wrap', gap: '12px' }}>
+                      <div>
+                        <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0 }}>🎮 Productos en el Pie de Página</h3>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '6px', marginBottom: 0 }}>
+                          Selecciona cuáles servicios aparecen en la columna de Productos del footer.
+                          {footerProductosIds.length > 0 && (
+                            <span style={{ marginLeft: '8px', color: 'var(--accent-primary)', fontWeight: 700 }}>
+                              ({footerProductosIds.length} seleccionados)
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={handleSaveFooterProductos}
+                        disabled={savingFooterProductos}
+                        style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+                      >
+                        {savingFooterProductos ? '⏳ Guardando...' : '💾 Guardar selección'}
+                      </button>
+                    </div>
+
+                    {juegosLista.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', fontSize: '13px' }}>
+                        <div style={{ fontSize: '32px', marginBottom: '8px' }}>⏳</div>
+                        Cargando servicios...
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ display: 'flex', gap: '8px', marginBottom: '14px', marginTop: '16px' }}>
+                          <button
+                            className="btn btn-ghost btn-xs"
+                            style={{ fontSize: '11px', padding: '4px 10px' }}
+                            onClick={() => setFooterProductosIds(juegosLista.filter(j => j.activo).map(j => j.id))}
+                          >
+                            ✅ Seleccionar todos los activos
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-xs"
+                            style={{ fontSize: '11px', padding: '4px 10px', color: 'var(--accent-error)' }}
+                            onClick={() => setFooterProductosIds([])}
+                          >
+                            🗑️ Limpiar selección
+                          </button>
+                        </div>
+
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+                          gap: '8px',
+                          maxHeight: '420px',
+                          overflowY: 'auto',
+                          paddingRight: '4px'
+                        }}>
+                          {juegosLista.map(j => {
+                            const selected = footerProductosIds.includes(j.id)
+                            return (
+                              <div
+                                key={j.id}
+                                onClick={() => toggleFooterProducto(j.id)}
+                                style={{
+                                  display: 'flex', alignItems: 'center', gap: '10px',
+                                  padding: '10px 12px', borderRadius: '10px',
+                                  border: selected ? '1px solid var(--accent-primary)' : '1px solid rgba(255,255,255,0.07)',
+                                  backgroundColor: selected ? 'rgba(0,210,255,0.08)' : 'rgba(255,255,255,0.03)',
+                                  cursor: 'pointer', transition: 'all 0.15s', userSelect: 'none',
+                                  opacity: j.activo ? 1 : 0.45
+                                }}
+                              >
+                                <div style={{
+                                  width: '18px', height: '18px', borderRadius: '5px', flexShrink: 0,
+                                  border: selected ? '2px solid var(--accent-primary)' : '2px solid rgba(255,255,255,0.2)',
+                                  backgroundColor: selected ? 'var(--accent-primary)' : 'transparent',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  fontSize: '11px', color: '#000', fontWeight: 900, transition: 'all 0.15s'
+                                }}>
+                                  {selected && '✓'}
+                                </div>
+                                {j.icono_url ? (
+                                  <img src={j.icono_url} alt="" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover', flexShrink: 0 }} />
+                                ) : (
+                                  <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'linear-gradient(135deg,#7b2ff7,#00d2ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>🎮</div>
+                                )}
+                                <div style={{ flex: 1, overflow: 'hidden' }}>
+                                  <div style={{ fontSize: '12px', fontWeight: 600, color: selected ? '#fff' : '#c8d6e8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {j.nombre}
+                                  </div>
+                                  {!j.activo && <div style={{ fontSize: '10px', color: 'var(--accent-error)' }}>Inactivo</div>}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+
+                        <div style={{ marginTop: '14px', padding: '10px 14px', backgroundColor: 'rgba(0,210,255,0.06)', borderRadius: '8px', border: '1px solid rgba(0,210,255,0.15)', fontSize: '12px', color: 'var(--text-muted)' }}>
+                          💡 Si no seleccionas ninguno, el footer mostrará automáticamente los primeros 8 servicios del catálogo. Presiona "Guardar selección" para aplicar los cambios.
+                        </div>
+                      </>
+                    )}
                   </div>
 
                 </div>
