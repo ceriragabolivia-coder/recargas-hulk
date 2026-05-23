@@ -298,7 +298,9 @@ export default function Catalogo() {
                 <span style={{ color: '#ffffff', textAlign: 'right', fontWeight: 800, fontSize: '18px', letterSpacing: '1px', textShadow: '0 2px 10px rgba(0,210,255,0.4)' }}>
                   {(() => {
                     const pendingEffectiveMetodo = (pendingItem.p.tipo_producto === 'gift_card') ? 'entrega_codigo' : (pendingItem.selectedJuego.metodo_recarga || 'sin_datos');
-                    return pendingEffectiveMetodo === 'cuenta_completa' 
+                    return pendingEffectiveMetodo === 'solo_correo' 
+                      ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Correo:</span><br/>{pendingItem.localRechargeData.account_email}</>
+                      : pendingEffectiveMetodo === 'cuenta_completa' 
                       ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Correo:</span><br/>{pendingItem.localRechargeData.account_email}<br/><div style={{height:8}}></div><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Clave:</span><br/>{pendingItem.localRechargeData.account_password}</>
                       : pendingEffectiveMetodo === 'usuario_clave'
                       ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Usuario:</span><br/>{pendingItem.localRechargeData.account_user}<br/><div style={{height:8}}></div><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Clave:</span><br/>{pendingItem.localRechargeData.account_password}</>
@@ -532,6 +534,22 @@ export default function Catalogo() {
                 <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
                   Recibirás tu código de canje en tu panel de pedidos. No requieres ingresar datos de cuenta.
                 </p>
+              </div>
+            ) : effectiveMetodoRecarga === 'solo_correo' ? (
+              <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 200px' }}>
+                  <label className="form-label" style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    📧 Correo Electrónico
+                  </label>
+                  <input 
+                    type="email" 
+                    className="form-input" 
+                    placeholder="ejemplo@correo.com"
+                    value={localRechargeData.account_email}
+                    onChange={e => setLocalRechargeData({...localRechargeData, account_email: e.target.value})}
+                    style={{ backgroundColor: 'var(--bg-card)', padding: '16px', fontSize: '15px' }}
+                  />
+                </div>
               </div>
             ) : effectiveMetodoRecarga === 'cuenta_completa' ? (
               <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
@@ -910,6 +928,11 @@ export default function Catalogo() {
 
                         if (prodEffectiveMetodo === 'sin_datos') {
                           // No validation needed
+                        } else if (prodEffectiveMetodo === 'solo_correo') {
+                          if (!localRechargeData.account_email.trim()) {
+                            alert('Por favor introduce el correo electrónico primero.')
+                            return
+                          }
                         } else if (prodEffectiveMetodo === 'cuenta_completa') {
                           if (!localRechargeData.account_email.trim() || !localRechargeData.account_password.trim()) {
                             alert('Por favor introduce el correo y clave primero.')

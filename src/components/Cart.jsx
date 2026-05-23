@@ -74,7 +74,11 @@ export default function Cart({ onGoToCheckout }) {
                     <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{item.juego}</div>
                     
                     <div style={{ marginTop: '6px', fontSize: '11px', padding: '6px', backgroundColor: 'var(--bg-primary)', borderRadius: '6px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      {item.metodo_recarga === 'cuenta_completa' ? (
+                      {item.metodo_recarga === 'solo_correo' ? (
+                        <>
+                          <div style={{ color: 'var(--text-muted)' }}><span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Correo:</span> <span style={{ fontFamily: 'monospace' }}>{item.account_email || 'No proporcionado'}</span></div>
+                        </>
+                      ) : item.metodo_recarga === 'cuenta_completa' ? (
                         <>
                           <div style={{ color: 'var(--text-muted)' }}><span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Correo:</span> <span style={{ fontFamily: 'monospace' }}>{item.account_email || 'No proporcionado'}</span></div>
                           <div style={{ color: 'var(--text-muted)' }}><span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Clave:</span> <span style={{ fontFamily: 'monospace' }}>{item.account_password || 'No proporcionada'}</span></div>

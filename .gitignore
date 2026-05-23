@@ -41,3 +41,5 @@ tmp_dump.txt
 tmp_dump2.txt
 test.js
 test_config.js
+
+.vercel

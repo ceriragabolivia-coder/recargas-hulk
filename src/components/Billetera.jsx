@@ -931,7 +931,9 @@ export default function Billetera({ onNavigate }) {
                       
                       {/* Información de Recarga */}
                       <div style={{ marginTop: '12px', padding: '12px', backgroundColor: 'rgba(0, 210, 255, 0.05)', borderRadius: '12px', fontSize: '14px', color: 'var(--accent-primary)', fontWeight: 500 }}>
-                        {item.metodo_recarga === 'id_jugador' ? (
+                        {item.metodo_recarga === 'solo_correo' ? (
+                          <>📧 Correo: {item.account_email}</>
+                        ) : item.metodo_recarga === 'id_jugador' ? (
                           <>🆔 ID del Jugador: {item.player_id}</>
                         ) : item.metodo_recarga === 'id_zone' ? (
                           <>🆔 ID: {item.player_id} | 🌐 ZONE ID: {item.zone_id}</>

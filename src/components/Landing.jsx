@@ -970,6 +970,19 @@ export default function Landing({ onNavigate }) {
                             <p style={{ fontSize: '14px', color: 'var(--text)', fontWeight: 600, margin: 0 }}>🎁 Entrega de Código</p>
                             <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>Recibirás un código de Gift Card tras la compra.</p>
                           </div>
+                        ) : effectiveMetodoRecarga === 'solo_correo' ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div>
+                              <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>📧 Correo Electrónico</label>
+                              <input 
+                                type="email" 
+                                className="form-input" 
+                                placeholder="ejemplo@correo.com"
+                                value={localRechargeData.account_email}
+                                onChange={e => setLocalRechargeData({...localRechargeData, account_email: e.target.value})}
+                              />
+                            </div>
+                          </div>
                         ) : effectiveMetodoRecarga === 'cuenta_completa' ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <div>
@@ -1261,6 +1274,11 @@ export default function Landing({ onNavigate }) {
 
                             if (prodEffectiveMetodo === 'sin_datos') {
                               // OK
+                            } else if (prodEffectiveMetodo === 'solo_correo') {
+                              if (!localRechargeData.account_email.trim()) {
+                                alert('Por favor introduce el correo arriba primero.')
+                                return
+                              }
                             } else if (prodEffectiveMetodo === 'cuenta_completa') {
                               if (!localRechargeData.account_email.trim() || !localRechargeData.account_password.trim()) {
                                 alert('Por favor introduce el correo y clave arriba primero.')
@@ -1568,6 +1586,10 @@ export default function Landing({ onNavigate }) {
                         <div style={{ fontSize: '14px', color: '#fff', fontWeight: 600 }}>⚡ Entrega Inmediata (Sin Datos)</div>
                       ) : pendingEffectiveMetodo === 'entrega_codigo' ? (
                         <div style={{ fontSize: '14px', color: '#fff', fontWeight: 600 }}>🎁 Entrega de Código (Manual)</div>
+                      ) : pendingEffectiveMetodo === 'solo_correo' ? (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Correo:</span> <strong style={{ color: '#fff' }}>{pendingItem.localRechargeData.account_email}</strong></div>
+                      </>
                       ) : pendingEffectiveMetodo === 'cuenta_completa' ? (
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Correo:</span> <strong style={{ color: '#fff' }}>{pendingItem.localRechargeData.account_email}</strong></div>
