@@ -442,6 +442,15 @@ export default function Configuracion() {
           </button>
           {!isNegocio && (
             <button 
+              className={`btn ${activeTab === 'footer' ? 'btn-primary' : 'btn-ghost'}`}
+              style={{ justifyContent: 'flex-start', textAlign: 'left' }}
+              onClick={() => setActiveTab('footer')}
+            >
+              🌐 Pie de Página
+            </button>
+          )}
+          {!isNegocio && (
+            <button 
               className={`btn ${activeTab === 'mobile' ? 'btn-primary' : 'btn-ghost'}`}
               style={{ justifyContent: 'flex-start', textAlign: 'left' }}
               onClick={() => setActiveTab('mobile')}
@@ -1870,6 +1879,71 @@ export default function Configuracion() {
                       
                       <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
                         Nota: Al subir un nuevo archivo, el botón "Descargar App" se actualizará automáticamente con la nueva versión para todos los clientes.
+                      </p>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'footer' && !isNegocio && (
+            <>
+              <div className="card-header">
+                <h2 className="card-title">🌐 Configuración del Pie de Página</h2>
+              </div>
+              <div style={{ padding: '24px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', maxWidth: '640px' }}>
+
+                  {/* Descripción del footer */}
+                  <div style={{ padding: '24px', backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '6px' }}>📝 Texto Descriptivo</h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '16px' }}>
+                      Pequeño texto que aparece debajo del logo en el pie de página.
+                    </p>
+                    <textarea
+                      className="form-input"
+                      rows={3}
+                      defaultValue={config?.footer_descripcion || ''}
+                      placeholder="Ej: Recargas, gift cards y servicios digitales al instante."
+                      onBlur={e => updateConfig('footer_descripcion', e.target.value, true)}
+                      style={{ resize: 'vertical', fontSize: '13px' }}
+                    />
+                  </div>
+
+                  {/* Redes Sociales */}
+                  <div style={{ padding: '24px', backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '6px' }}>📣 Redes Sociales</h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '20px' }}>
+                      Ingresa la URL completa de cada perfil. Deja en blanco los que no apliquen (el botón no aparecerá en el footer).
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                      {[
+                        { key: 'footer_instagram', label: 'Instagram', icon: '📸', placeholder: 'https://instagram.com/tucuenta' },
+                        { key: 'footer_tiktok',    label: 'TikTok',    icon: '🎵', placeholder: 'https://tiktok.com/@tucuenta' },
+                        { key: 'footer_youtube',   label: 'YouTube',   icon: '▶️', placeholder: 'https://youtube.com/@tucanal' },
+                        { key: 'footer_whatsapp',  label: 'WhatsApp',  icon: '💬', placeholder: '+584121234567 (solo número, sin +)' },
+                        { key: 'footer_facebook',  label: 'Facebook',  icon: '👥', placeholder: 'https://facebook.com/tupagina' },
+                        { key: 'footer_twitter',   label: 'X (Twitter)', icon: '🐦', placeholder: 'https://x.com/tucuenta' },
+                      ].map(({ key, label, icon, placeholder }) => (
+                        <div key={key} className="form-group" style={{ marginBottom: 0 }}>
+                          <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>{icon}</span> {label}
+                          </label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            defaultValue={config?.[key] || ''}
+                            placeholder={placeholder}
+                            onBlur={e => updateConfig(key, e.target.value, true)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ marginTop: '20px', padding: '12px', backgroundColor: 'rgba(0,210,255,0.06)', borderRadius: '8px', border: '1px solid rgba(0,210,255,0.15)' }}>
+                      <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                        💡 Los cambios se guardan automáticamente al salir de cada campo. Si configuras al menos una red social, aparecerá la sección "¡Síguenos en nuestras redes!" en el pie de página.
                       </p>
                     </div>
                   </div>

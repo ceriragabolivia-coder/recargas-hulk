@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate, useSearchParams, useLocation, useParams } from 'react-router-dom'
 import PaginaEstatica from './PaginaEstatica'
 import { supabase } from '../lib/supabase'
-import { useConfiguracion, useAuth, useCart, useCuentasGuardadas } from '../hooks/useData'
+import { useConfiguracion, useAuth, useCart, useCuentasGuardadas, useMetodosPago } from '../hooks/useData'
 import { formatUSD, formatBs, calcularPrecioVenta, playClientOrderSuccessSound, playClientWelcomeSound } from '../utils/helpers'
 import LandingAuthModal from './LandingAuthModal'
 import Checkout from './Checkout'
@@ -22,6 +22,7 @@ export default function Landing({ onNavigate }) {
   const { config, loading: configLoading } = useConfiguracion()
   const { user, perfil, logout } = useAuth()
   const { cart, addToCart, clearCart } = useCart()
+  const { metodos } = useMetodosPago()
   const isRevendedor = user?.role === 'revendedor'
   
   // Modal State
@@ -1560,47 +1561,140 @@ export default function Landing({ onNavigate }) {
       </main>
 
       <footer className="landing-footer">
-        <div className="landing-container footer-content">
-          <div className="footer-brand">
-            <div className="landing-logo-container" onClick={() => handleSelectJuego(null)}>
-              {config?.landing_logo ? (
-                <img src={config.landing_logo} alt="Logo" style={{ width: '40px', height: '40px', borderRadius: '10px', objectFit: 'contain' }} />
-              ) : (
-                <div className="landing-logo-icon">⚡</div>
-              )}
-              <span className="landing-logo-text">{config?.landing_titulo || 'Ceriraga'}</span>
+        {/* Top accent line */}
+        <div style={{ height: '3px', background: 'linear-gradient(90deg, var(--accent), #00d2ff, var(--accent))' }} />
+
+        <div className="landing-container" style={{ padding: '56px 20px 40px' }}>
+          <div className="footer-grid-new">
+
+            {/* Col 1: Brand */}
+            <div className="footer-col-brand">
+              <div className="landing-logo-container" onClick={() => handleSelectJuego(null)} style={{ marginBottom: '16px' }}>
+                {config?.landing_logo ? (
+                  <img src={config.landing_logo} alt="Logo" style={{ width: '44px', height: '44px', borderRadius: '12px', objectFit: 'contain' }} />
+                ) : (
+                  <div className="landing-logo-icon">⚡</div>
+                )}
+                <span className="landing-logo-text">{config?.landing_titulo || 'Ceriraga'}</span>
+              </div>
+              <p style={{ fontSize: '13px', lineHeight: '1.7', color: '#8a9bb5', maxWidth: '240px', margin: '0 0 20px 0' }}>
+                {config?.footer_descripcion || 'Recargas, gift cards y servicios digitales al instante.'}
+              </p>
+
+              {/* Ayuda links */}
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>Ayuda</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 20px' }}>
+                  {paginasFooter.filter(p => p.categoria === 'Soporte').length > 0
+                    ? paginasFooter.filter(p => p.categoria === 'Soporte').map(p => (
+                        <a key={p.id} href="#" onClick={(e) => { e.preventDefault(); onNavigate('p/' + p.slug); }} className="footer-link-small">{p.titulo}</a>
+                      ))
+                    : <>
+                        <a href="#" className="footer-link-small">FAQ</a>
+                        <a href="#" className="footer-link-small">Privacidad</a>
+                        <a href="#" className="footer-link-small">Términos</a>
+                        <a href="#" className="footer-link-small">Reembolso</a>
+                      </>
+                  }
+                </div>
+              </div>
             </div>
-            <p>Tu plataforma líder en recargas y servicios digitales en Venezuela. Seguridad, rapidez y los mejores precios.</p>
-          </div>
-          <div className="footer-links">
-            <h4>Empresa</h4>
-            {paginasFooter.filter(p => p.categoria === 'Empresa').map(p => (
-              <a key={p.id} href="#" onClick={(e) => { e.preventDefault(); onNavigate('p/' + p.slug); }}>{p.titulo}</a>
-            ))}
-            {paginasFooter.filter(p => p.categoria === 'Empresa').length === 0 && (
-              <>
-                <a href="#">Nosotros</a>
-                <a href="#">Términos y Condiciones</a>
-                <a href="#">Privacidad</a>
-              </>
-            )}
-          </div>
-          <div className="footer-links">
-            <h4>Soporte</h4>
-            {paginasFooter.filter(p => p.categoria === 'Soporte').map(p => (
-              <a key={p.id} href="#" onClick={(e) => { e.preventDefault(); onNavigate('p/' + p.slug); }}>{p.titulo}</a>
-            ))}
-            {paginasFooter.filter(p => p.categoria === 'Soporte').length === 0 && (
-              <>
-                <a href="#">Preguntas Frecuentes</a>
-                <a href="#">Contacto WhatsApp</a>
-                <a href="#">Estado del Sistema</a>
-              </>
-            )}
+
+            {/* Col 2: Productos (juegos del catálogo) */}
+            <div className="footer-col-products">
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Productos</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                {juegos.slice(0, 8).map(j => (
+                  <button
+                    key={j.id}
+                    onClick={() => handleSelectJuego(j)}
+                    className="footer-product-btn"
+                  >
+                    {j.icono_url ? (
+                      <img src={j.icono_url} alt="" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover', flexShrink: 0 }} />
+                    ) : (
+                      <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'linear-gradient(135deg, var(--accent), #00d2ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>🎮</div>
+                    )}
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#c8d6e8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{j.nombre}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Col 3: Social + Métodos de Pago */}
+            <div className="footer-col-social">
+              {/* Redes Sociales */}
+              {(config?.footer_instagram || config?.footer_tiktok || config?.footer_youtube || config?.footer_whatsapp || config?.footer_twitter || config?.footer_facebook) && (
+                <div className="footer-social-box">
+                  <div style={{ fontSize: '14px', fontWeight: 800, color: '#fff', marginBottom: '14px', textAlign: 'center' }}>¡Síguenos en nuestras redes!</div>
+                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                    {config?.footer_youtube && (
+                      <a href={config.footer_youtube} target="_blank" rel="noopener noreferrer" className="footer-social-icon" style={{ '--sc': '#FF0000' }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                      </a>
+                    )}
+                    {config?.footer_instagram && (
+                      <a href={config.footer_instagram} target="_blank" rel="noopener noreferrer" className="footer-social-icon" style={{ '--sc': '#E1306C' }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                      </a>
+                    )}
+                    {config?.footer_tiktok && (
+                      <a href={config.footer_tiktok} target="_blank" rel="noopener noreferrer" className="footer-social-icon" style={{ '--sc': '#fff' }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.74a4.85 4.85 0 0 1-1.01-.05z"/></svg>
+                      </a>
+                    )}
+                    {config?.footer_whatsapp && (
+                      <a href={`https://wa.me/${config.footer_whatsapp.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer" className="footer-social-icon" style={{ '--sc': '#25D366' }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+                      </a>
+                    )}
+                    {config?.footer_facebook && (
+                      <a href={config.footer_facebook} target="_blank" rel="noopener noreferrer" className="footer-social-icon" style={{ '--sc': '#1877F2' }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                      </a>
+                    )}
+                    {config?.footer_twitter && (
+                      <a href={config.footer_twitter} target="_blank" rel="noopener noreferrer" className="footer-social-icon" style={{ '--sc': '#000' }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.258 5.63 5.906-5.63Zm-1.161 17.52h1.833L7.084 4.126H5.117Z"/></svg>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Métodos de Pago */}
+              {metodos && metodos.filter(m => m.activo).length > 0 && (
+                <div style={{ marginTop: '20px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: '#8a9bb5', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '10px' }}>Métodos de Pago</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {metodos.filter(m => m.activo).map(m => (
+                      <div key={m.id} className="footer-payment-badge">
+                        {m.icono_url
+                          ? <img src={m.icono_url} alt={m.nombre} style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
+                          : <span style={{ fontSize: '12px' }}>💳</span>
+                        }
+                        <span>{m.nombre}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
-        <div className="footer-bottom">
-          <p>© 2024 Ceriraga. Todos los derechos reservados.</p>
+
+        {/* Bottom bar */}
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '20px', textAlign: 'center' }}>
+          <p style={{ fontSize: '12px', color: '#5a6a7e', margin: 0 }}>
+            © {new Date().getFullYear()} {config?.landing_titulo || 'Ceriraga'}. Todos los derechos reservados.
+            {paginasFooter.filter(p => p.categoria === 'Empresa').map(p => (
+              <span key={p.id}>
+                {' · '}
+                <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('p/' + p.slug); }} style={{ color: '#5a6a7e', textDecoration: 'none' }} onMouseEnter={e => e.target.style.color='#00d2ff'} onMouseLeave={e => e.target.style.color='#5a6a7e'}>{p.titulo}</a>
+              </span>
+            ))}
+          </p>
         </div>
       </footer>
 
@@ -2780,43 +2874,92 @@ export default function Landing({ onNavigate }) {
 
         .landing-footer {
           margin-top: 60px;
-          background: #1a1d21;
-          color: #a0aec0;
-          padding: 80px 0 40px;
+          background: #0d1117;
+          color: #8a9bb5;
+          border-top: 1px solid rgba(255,255,255,0.05);
         }
-        .footer-content {
+        .footer-grid-new {
           display: grid;
-          grid-template-columns: 2fr 1fr 1fr;
-          gap: 60px;
+          grid-template-columns: 1.2fr 1.2fr 1fr;
+          gap: 48px;
+          align-items: start;
         }
-        .footer-brand {
-          max-width: 400px;
-        }
-        .footer-brand p {
-          margin-top: 20px;
-          line-height: 1.6;
-        }
-        .footer-links h4 {
-          color: white;
-          margin-bottom: 24px;
-          font-size: 18px;
-        }
-        .footer-links a {
+        .footer-col-brand {}
+        .footer-col-products {}
+        .footer-col-social {}
+        .footer-link-small {
           display: block;
-          color: #a0aec0;
+          color: #8a9bb5;
           text-decoration: none;
-          margin-bottom: 12px;
+          font-size: 13px;
+          padding: 3px 0;
           transition: color 0.2s;
         }
-        .footer-links a:hover {
-          color: #00d2ff;
+        .footer-link-small:hover { color: #00d2ff; }
+        .footer-product-btn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 10px;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.07);
+          border-radius: 10px;
+          cursor: pointer;
+          text-align: left;
+          transition: all 0.2s;
+          overflow: hidden;
+          width: 100%;
         }
-        .footer-bottom {
-          margin-top: 60px;
-          padding-top: 30px;
-          border-top: 1px solid rgba(255,255,255,0.05);
-          text-align: center;
-          font-size: 13px;
+        .footer-product-btn:hover {
+          background: rgba(0, 210, 255, 0.08);
+          border-color: rgba(0, 210, 255, 0.25);
+          transform: translateY(-1px);
+        }
+        .footer-social-box {
+          background: linear-gradient(135deg, rgba(var(--accent-rgb, 123,47,247), 0.15), rgba(0, 210, 255, 0.1));
+          border: 1px solid rgba(0, 210, 255, 0.2);
+          border-radius: 16px;
+          padding: 20px;
+        }
+        .footer-social-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 42px;
+          height: 42px;
+          background: rgba(255,255,255,0.08);
+          border-radius: 10px;
+          color: #fff;
+          text-decoration: none;
+          transition: all 0.2s;
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+        .footer-social-icon:hover {
+          background: var(--sc, rgba(0,210,255,0.3));
+          border-color: var(--sc, #00d2ff);
+          transform: translateY(-3px) scale(1.05);
+          box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        .footer-payment-badge {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 8px;
+          padding: 5px 10px;
+          font-size: 11px;
+          font-weight: 600;
+          color: #c8d6e8;
+          white-space: nowrap;
+        }
+        @media (max-width: 900px) {
+          .footer-grid-new { grid-template-columns: 1fr 1fr; }
+          .footer-col-social { grid-column: 1 / -1; }
+        }
+        @media (max-width: 600px) {
+          .footer-grid-new { grid-template-columns: 1fr; gap: 32px; }
+          .footer-col-social { grid-column: auto; }
         }
 
         .landing-loading {
