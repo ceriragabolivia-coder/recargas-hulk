@@ -503,7 +503,7 @@ export default function Landing({ onNavigate }) {
     const juegoIdQuery = searchParams.get('juego')
     if (juegos.length > 0 && juegoIdQuery) {
       const found = juegos.find(j => String(j.id) === juegoIdQuery || j.nombre.toLowerCase().replace(/\s+/g, '-') === juegoIdQuery)
-      if (found && (!selectedJuego || selectedJuego.id !== found.id)) {
+      if (found && selectedJuego !== found) {
         setSelectedJuego(found)
       }
     } else if (!juegoIdQuery && selectedJuego) {
