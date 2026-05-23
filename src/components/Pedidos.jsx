@@ -40,6 +40,16 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     return val.split(' ')[0] + ' ***';
   }
   const isSuperAdmin = user?.email?.toLowerCase() === 'ceriraga@gmail.com'
+
+  const esElOperador = (pedido) => {
+    if (!pedido || !pedido.atendido_por_id) return false;
+    const uid = String(user?.id).toLowerCase();
+    const pid = String(perfil?.cliente_uuid).toLowerCase();
+    const pid_perfil = String(perfil?.id).toLowerCase();
+    const aid = String(pedido.atendido_por_id).toLowerCase();
+    return aid === uid || aid === pid || aid === pid_perfil;
+  };
+
   const [pedidos, setPedidos] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedPedido, setSelectedPedido] = useState(null)
@@ -1660,7 +1670,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                 >
                   📥 Tomar pedido
                 </button>
-              ) : selectedPedido.atendido_por_id === user.id ? (
+              ) : esElOperador(selectedPedido) ? (
                 <>
                   {selectedPedido.estado !== 'pendiente' && (
                     <button className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', fontSize: '11px' }} onClick={() => updateEstado(selectedPedido.id, 'pendiente')}>
@@ -1921,14 +1931,14 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                   </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span style={{ fontWeight: 700, color: 'var(--accent-primary)', textTransform: 'capitalize' }}>
-                      {selectedPedido.atendido_por_id === user.id ? 
+                      {esElOperador(selectedPedido) ? 
                         (perfil.nickname || perfil.nombres || perfil.usuario || 'Tú') : 
                         (selectedPedido.atendido_por?.nickname || selectedPedido.atendido_por?.nombres || 'Otro Admin')
                       }
                     </span>
 
                     {/* Botón Liberar Pedido */}
-                    {isAdmin && selectedPedido.atendido_por_id === user.id && selectedPedido.estado === 'procesando' && (
+                    {isAdmin && esElOperador(selectedPedido) && selectedPedido.estado === 'procesando' && (
                       <button
                         onClick={() => handleLiberarPedido(selectedPedido)}
                         style={{
@@ -2092,7 +2102,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
 
 
                 {/* Status Ocupado */}
-                {selectedPedido.atendido_por_id && selectedPedido.atendido_por_id !== user.id && (
+                {selectedPedido.atendido_por_id && !esElOperador(selectedPedido) && (
                   <div style={{ textAlign: 'center', padding: '10px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: '6px', color: 'var(--accent-error)', fontSize: '11px', marginTop: '8px', textTransform: 'capitalize' }}>
                     🚫 En proceso por {selectedPedido.atendido_por?.nickname || selectedPedido.atendido_por?.nombres || 'otro administrador'}
                   </div>
@@ -2145,7 +2155,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                        <span className="product-item-price">{formatBs(item.precio_bs)}</span>
 
                        {/* BOTONES ADMIN */}
-                       {isAdmin && selectedPedido.atendido_por_id === user.id && selectedPedido.estado === 'procesando' && (
+                       {isAdmin && esElOperador(selectedPedido) && selectedPedido.estado === 'procesando' && (
                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', marginTop: '6px' }}>
                             <button
                                onClick={() => updateItemEstado(item.id, item.estado === 'completado' ? 'pendiente' : 'completado', null)}
@@ -2167,7 +2177,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                   </div>
 
                   {/* CAJA DE REFERENCIA (ADMIN -> CLIENTE) */}
-                  {isAdmin && selectedPedido.atendido_por_id === user.id && selectedPedido.estado === 'procesando' ? (
+                  {isAdmin && esElOperador(selectedPedido) && selectedPedido.estado === 'procesando' ? (
                      <div style={{ marginBottom: '8px' }}>
                         <input 
                            type="text" 
