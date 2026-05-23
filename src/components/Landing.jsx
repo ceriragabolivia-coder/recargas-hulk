@@ -982,7 +982,12 @@ export default function Landing({ onNavigate }) {
                         ) : effectiveMetodoRecarga === 'solo_correo' ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <div>
-                              <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>📧 Correo Electrónico</label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                <label className="form-label" style={{ fontSize: '12px', margin: 0 }}>📧 Correo Electrónico</label>
+                                {selectedJuego?.guia_id_url && (
+                                  <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent-primary)', color:'#fff', width:'16px', height:'16px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:'bold' }} title="Ver guía">?</div>
+                                )}
+                              </div>
                               <input 
                                 type="email" 
                                 className="form-input" 
@@ -995,7 +1000,12 @@ export default function Landing({ onNavigate }) {
                         ) : effectiveMetodoRecarga === 'cuenta_completa' ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <div>
-                              <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>📧 Correo</label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                <label className="form-label" style={{ fontSize: '12px', margin: 0 }}>📧 Correo</label>
+                                {selectedJuego?.guia_id_url && (
+                                  <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent-primary)', color:'#fff', width:'16px', height:'16px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:'bold' }} title="Ver guía">?</div>
+                                )}
+                              </div>
                               <input 
                                 type="email" 
                                 className="form-input" 
@@ -1018,7 +1028,12 @@ export default function Landing({ onNavigate }) {
                         ) : effectiveMetodoRecarga === 'usuario_clave' ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <div>
-                              <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>👤 Usuario</label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                <label className="form-label" style={{ fontSize: '12px', margin: 0 }}>👤 Usuario</label>
+                                {selectedJuego?.guia_id_url && (
+                                  <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent-primary)', color:'#fff', width:'16px', height:'16px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:'bold' }} title="Ver guía">?</div>
+                                )}
+                              </div>
                               <input 
                                 type="text" 
                                 className="form-input" 
@@ -1041,7 +1056,12 @@ export default function Landing({ onNavigate }) {
                         ) : (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <div>
-                              <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>🆔 ID del Jugador</label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>🆔 ID del Jugador</label>
+                                {selectedJuego?.guia_id_url && (
+                                  <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent-primary)', color:'#fff', width:'18px', height:'18px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:'bold' }} title="Ver guía">?</div>
+                                )}
+                              </div>
                               <input 
                                 type="text" 
                                 className="form-input" 
