@@ -1389,12 +1389,12 @@ export default function Landing({ onNavigate }) {
                               <div 
                                 onClick={(e) => { e.stopPropagation(); setInfoProductModal(prod); }} 
                                 style={{ 
-                                  position: 'absolute', top: '8px', right: '8px',
+                                  position: 'absolute', top: '4px', right: '4px',
                                   backgroundColor: '#ff2a2a', color: '#ffffff', 
-                                  fontSize: '16px', fontWeight: '900', cursor: 'pointer', 
-                                  borderRadius: '50%', width: '28px', height: '28px', 
+                                  fontSize: '11px', fontWeight: '900', cursor: 'pointer', 
+                                  borderRadius: '50%', width: '18px', height: '18px', 
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  boxShadow: '0 4px 12px rgba(255, 42, 42, 0.6)', border: '2px solid #ffffff',
+                                  boxShadow: '0 4px 12px rgba(255, 42, 42, 0.6)', border: '1px solid #ffffff',
                                   transition: 'all 0.2s', zIndex: 2
                                 }}
                                 onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.15)'}
