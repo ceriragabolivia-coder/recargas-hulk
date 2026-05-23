@@ -456,7 +456,23 @@ export default function Checkout({ onFinish, embedded = false }) {
       // Actualizar el perfil para reflejar el nuevo saldo de la billetera
       refreshPerfil();
       
+      // Reproducir sonido de caja (original)
       playCashRegisterSound()
+      
+      // Reproducir nuevo sonido de voz y mostrar notificación push (Solo para el cliente que lo crea)
+      try {
+        const audio = new Audio('/order-created-sound.mp3');
+        audio.play().catch(e => console.error("No se pudo reproducir sonido de pedido creado", e));
+      } catch (err) {}
+      
+      if (Notification.permission === 'granted') {
+        new Notification('¡Pedido Registrado!', {
+          body: `Tu pedido ha sido creado exitosamente y está siendo verificado.`,
+        });
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission();
+      }
+
       setIsAutomaticResult(isGratis || currentIsWalletOnly || currentIsWalletBsOnly)
       setCreatedPedidoData(pedidoResult.data)
       setOrderFinished(true)
