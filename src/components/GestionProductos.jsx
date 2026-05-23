@@ -1061,6 +1061,7 @@ export default function GestionProductos() {
               onChange={e => setFormData({ ...formData, tipo_producto: e.target.value })}
             >
               <option value="recarga">Recarga (Juego/Puntos)</option>
+              <option value="paquete">Paquetes</option>
               <option value="gift_card">Gift Card / Código</option>
             </select>
           </div>

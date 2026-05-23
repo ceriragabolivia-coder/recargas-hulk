@@ -72,11 +72,22 @@ export default function Landing({ onNavigate }) {
   const [notificaciones, setNotificaciones] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
 
-  const hasRecargas = productosJuego.some(p => p.tipo_producto !== 'gift_card');
+  const hasRecargas = productosJuego.some(p => p.tipo_producto === 'recarga' || !p.tipo_producto);
   const hasGiftCards = productosJuego.some(p => p.tipo_producto === 'gift_card');
-  const showTabs = hasRecargas && hasGiftCards;
-  const isGiftCardView = showTabs ? activeProductType === 'gift_card' : (!hasRecargas && hasGiftCards);
-  const effectiveMetodoRecarga = isGiftCardView ? 'entrega_codigo' : (selectedJuego?.metodo_recarga || 'sin_datos');
+  const hasPaquetes = productosJuego.some(p => p.tipo_producto === 'paquete');
+  
+  const showTabs = (hasRecargas ? 1 : 0) + (hasGiftCards ? 1 : 0) + (hasPaquetes ? 1 : 0) > 1;
+
+  let currentViewType = activeProductType;
+  if (currentViewType === 'recarga' && !hasRecargas) {
+    currentViewType = hasPaquetes ? 'paquete' : 'gift_card';
+  } else if (currentViewType === 'paquete' && !hasPaquetes) {
+    currentViewType = hasRecargas ? 'recarga' : 'gift_card';
+  } else if (currentViewType === 'gift_card' && !hasGiftCards) {
+    currentViewType = hasRecargas ? 'recarga' : 'paquete';
+  }
+
+  const effectiveMetodoRecarga = currentViewType === 'gift_card' ? 'entrega_codigo' : (selectedJuego?.metodo_recarga || 'sin_datos');
 
   const [showNotiDropdown, setShowNotiDropdown] = useState(false)
   const [activeToast, setActiveToast] = useState(null)
@@ -1254,38 +1265,58 @@ export default function Landing({ onNavigate }) {
                   ) : (
                     <>
                       {(() => {
-                        const filteredProducts = showTabs 
-                          ? productosJuego.filter(p => activeProductType === 'gift_card' ? p.tipo_producto === 'gift_card' : p.tipo_producto !== 'gift_card')
-                          : productosJuego;
+                        const filteredProducts = productosJuego.filter(p => {
+                          if (currentViewType === 'gift_card') return p.tipo_producto === 'gift_card';
+                          if (currentViewType === 'paquete') return p.tipo_producto === 'paquete';
+                          return p.tipo_producto === 'recarga' || !p.tipo_producto;
+                        });
 
                         return (
                           <>
                             {showTabs && (
-                              <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-                                <button 
-                                  onClick={() => setActiveProductType('recarga')}
-                                  style={{
-                                    flex: 1, padding: '10px', borderRadius: '12px', border: 'none',
-                                    backgroundColor: activeProductType === 'recarga' ? 'rgba(0, 210, 255, 0.15)' : 'transparent',
-                                    color: activeProductType === 'recarga' ? 'var(--accent-primary)' : 'var(--text-muted)',
-                                    border: activeProductType === 'recarga' ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
-                                    fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
-                                  }}
-                                >
-                                  Recarga Interna
-                                </button>
-                                <button 
-                                  onClick={() => setActiveProductType('gift_card')}
-                                  style={{
-                                    flex: 1, padding: '10px', borderRadius: '12px', border: 'none',
-                                    backgroundColor: activeProductType === 'gift_card' ? 'rgba(255, 171, 0, 0.15)' : 'transparent',
-                                    color: activeProductType === 'gift_card' ? 'var(--accent-warning)' : 'var(--text-muted)',
-                                    border: activeProductType === 'gift_card' ? '1px solid var(--accent-warning)' : '1px solid var(--border-color)',
-                                    fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
-                                  }}
-                                >
-                                  Gift Cards
-                                </button>
+                              <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }}>
+                                {hasRecargas && (
+                                  <button 
+                                    onClick={() => setActiveProductType('recarga')}
+                                    style={{
+                                      flex: 1, padding: '10px', borderRadius: '12px', border: 'none',
+                                      backgroundColor: currentViewType === 'recarga' ? 'rgba(0, 210, 255, 0.15)' : 'transparent',
+                                      color: currentViewType === 'recarga' ? 'var(--accent-primary)' : 'var(--text-muted)',
+                                      border: currentViewType === 'recarga' ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                                      fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', minWidth: '120px'
+                                    }}
+                                  >
+                                    Recarga Interna
+                                  </button>
+                                )}
+                                {hasPaquetes && (
+                                  <button 
+                                    onClick={() => setActiveProductType('paquete')}
+                                    style={{
+                                      flex: 1, padding: '10px', borderRadius: '12px', border: 'none',
+                                      backgroundColor: currentViewType === 'paquete' ? 'rgba(156, 39, 176, 0.15)' : 'transparent',
+                                      color: currentViewType === 'paquete' ? '#e040fb' : 'var(--text-muted)',
+                                      border: currentViewType === 'paquete' ? '1px solid #e040fb' : '1px solid var(--border-color)',
+                                      fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', minWidth: '120px'
+                                    }}
+                                  >
+                                    Paquetes
+                                  </button>
+                                )}
+                                {hasGiftCards && (
+                                  <button 
+                                    onClick={() => setActiveProductType('gift_card')}
+                                    style={{
+                                      flex: 1, padding: '10px', borderRadius: '12px', border: 'none',
+                                      backgroundColor: currentViewType === 'gift_card' ? 'rgba(255, 171, 0, 0.15)' : 'transparent',
+                                      color: currentViewType === 'gift_card' ? 'var(--accent-warning)' : 'var(--text-muted)',
+                                      border: currentViewType === 'gift_card' ? '1px solid var(--accent-warning)' : '1px solid var(--border-color)',
+                                      fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', minWidth: '120px'
+                                    }}
+                                  >
+                                    Gift Cards
+                                  </button>
+                                )}
                               </div>
                             )}
                             <div className="products-grid">
