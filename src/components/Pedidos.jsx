@@ -208,6 +208,8 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     const handleReset = () => {
       console.log("♻️ Reseteando vista de pedidos desde navegación lateral");
       setSelectedPedido(null);
+      setFiltroEstado('todos');
+      setCurrentPage(1);
     };
     window.addEventListener('reset-pedidos', handleReset);
     return () => window.removeEventListener('reset-pedidos', handleReset);
