@@ -388,6 +388,10 @@ export default function Checkout({ onFinish, embedded = false }) {
         }
       }
       let finalMetodoId = selectedMetodoId
+      if (isBinancePay) {
+        const binanceMethod = metodosDisponibles.find(m => m.nombre.toLowerCase().includes('binance') && m.id !== 'binance_pay_auto');
+        finalMetodoId = binanceMethod ? binanceMethod.id : null;
+      }
       let finalReferencia = referencia
 
       // SI ES PAGO TOTAL CON BILLETERA, GENERAR REFERENCIA AUTOMÁTICA
