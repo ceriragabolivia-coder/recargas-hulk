@@ -60,17 +60,7 @@ export default function Checkout({ onFinish, embedded = false }) {
   const { metodos, cancelarPedidosExpirados, loading: loadingMetodos } = useMetodosPago()
   
   const metodosDisponibles = useMemo(() => {
-    return [
-      ...metodos.filter(m => m.activo),
-      {
-        id: 'binance_pay_auto',
-        nombre: 'Binance Pay Automático',
-        icono_url: 'https://upload.wikimedia.org/wikipedia/commons/e/e8/Binance_Logo.svg',
-        datos: '',
-        qr_url: null,
-        activo: true
-      }
-    ];
+    return metodos.filter(m => m.activo);
   }, [metodos]);
   const { perfil, user, isCliente, refreshPerfil } = useAuth()
   const { wallet } = useWallet()
@@ -259,7 +249,8 @@ export default function Checkout({ onFinish, embedded = false }) {
   }, [metodosDisponibles, selectedMetodoId, isWalletOnly, isWalletBsOnly])
 
   const isBinanceSelected = useMemo(() => {
-    return selectedMetodo?.id === 'binance_pay_auto' || selectedMetodo?.nombre?.toLowerCase().includes('binance');
+    const nombre = selectedMetodo?.nombre?.toLowerCase().trim();
+    return nombre === 'binance pay automático' || nombre?.includes('binance');
   }, [selectedMetodo]);
 
   const handleToggleWalletPartial = () => {
@@ -339,7 +330,7 @@ export default function Checkout({ onFinish, embedded = false }) {
   }
 
   const handleFinalizar = async () => {
-    const isBinancePay = selectedMetodoId === 'binance_pay_auto';
+    const isBinancePay = selectedMetodo?.nombre?.toLowerCase().trim() === 'binance pay automático';
     
     if (!isWalletOnly && !isWalletBsOnly && !isBinancePay && !referencia.trim() && !isGratis) {
       setAlertModal({ type: 'warning', message: 'Por favor ingresa el número de referencia de tu pago.' })
@@ -388,10 +379,6 @@ export default function Checkout({ onFinish, embedded = false }) {
         }
       }
       let finalMetodoId = selectedMetodoId
-      if (isBinancePay) {
-        const binanceMethod = metodosDisponibles.find(m => m.nombre.toLowerCase().includes('binance') && m.id !== 'binance_pay_auto');
-        finalMetodoId = binanceMethod ? binanceMethod.id : null;
-      }
       let finalReferencia = referencia
 
       // SI ES PAGO TOTAL CON BILLETERA, GENERAR REFERENCIA AUTOMÁTICA
