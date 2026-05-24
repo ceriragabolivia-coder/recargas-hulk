@@ -258,6 +258,10 @@ export default function Checkout({ onFinish, embedded = false }) {
     return metodosDisponibles.find(m => m.id === selectedMetodoId)
   }, [metodosDisponibles, selectedMetodoId, isWalletOnly, isWalletBsOnly])
 
+  const isBinanceSelected = useMemo(() => {
+    return selectedMetodo?.id === 'binance_pay_auto' || selectedMetodo?.nombre?.toLowerCase().includes('binance');
+  }, [selectedMetodo]);
+
   const handleToggleWalletPartial = () => {
     if (!hasAnySaldo) return
     const newVal = !useWalletPartial
@@ -935,19 +939,22 @@ export default function Checkout({ onFinish, embedded = false }) {
                           }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
                               <span style={{ color: 'var(--text-muted)' }}>Monto del Pedido:</span>
-                              <span style={{ fontWeight: 600 }}>{formatBs(discountedTotalBs)}</span>
+                              <span style={{ fontWeight: 600 }}>{isBinanceSelected ? formatUSD(discountedTotalUSD) : formatBs(discountedTotalBs)}</span>
                             </div>
-                            {useWalletBs && (
+                            {((isBinanceSelected && useWalletPartial) || (!isBinanceSelected && useWalletBs)) && (
                               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px', color: '#a855f7' }}>
                                 <span style={{ fontWeight: 700 }}>🏦 Saldo Billetera:</span>
-                                <span style={{ fontWeight: 800 }}>-{formatBs(Math.min(walletSaldoBs, discountedTotalBs))}</span>
+                                <span style={{ fontWeight: 800 }}>-{isBinanceSelected ? formatUSD(Math.min(walletSaldo, discountedTotalUSD)) : formatBs(Math.min(walletSaldoBs, discountedTotalBs))}</span>
                               </div>
                             )}
                             <div style={{ borderTop: '1px solid rgba(168, 85, 247, 0.2)', marginTop: '8px', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <span style={{ fontWeight: 800, fontSize: '14px' }}>Resta por Pagar:</span>
                               <div style={{ textAlign: 'right' }}>
                                 <div style={{ color: '#a855f7', fontSize: '20px', fontWeight: 900 }}>
-                                  {formatBs(Math.max(0, discountedTotalBs - (useWalletBs ? walletSaldoBs : 0)))}
+                                  {isBinanceSelected 
+                                    ? formatUSD(Math.max(0, discountedTotalUSD - (useWalletPartial ? walletSaldo : 0)))
+                                    : formatBs(Math.max(0, discountedTotalBs - (useWalletBs ? walletSaldoBs : 0)))
+                                  }
                                 </div>
                               </div>
                             </div>
