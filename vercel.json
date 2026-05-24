@@ -5,6 +5,10 @@
       "destination": "https://pay.neteasegames.com/gameclub/bloodstrike/-1/login-role"
     },
     {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

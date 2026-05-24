@@ -58,6 +58,20 @@ export default function Checkout({ onFinish, embedded = false }) {
   const { cart, removeFromCart, clearCart, checkout, totalUSD, totalBs } = useCart()
   const { registrarVenta, verificarYRegistrarReferencia } = useVentas()
   const { metodos, cancelarPedidosExpirados, loading: loadingMetodos } = useMetodosPago()
+  
+  const metodosDisponibles = useMemo(() => {
+    return [
+      ...metodos.filter(m => m.activo),
+      {
+        id: 'binance_pay_auto',
+        nombre: 'Binance Pay Automático',
+        icono_url: 'https://public.bnbstatic.com/image/cms/article/body/202209/78f219dcc1bf8a602db0cc6fb0f75727.png',
+        datos: null,
+        qr_url: null,
+        activo: true
+      }
+    ];
+  }, [metodos]);
   const { perfil, user, isCliente, refreshPerfil } = useAuth()
   const { wallet } = useWallet()
   const { config } = useConfiguracion()
@@ -239,10 +253,10 @@ export default function Checkout({ onFinish, embedded = false }) {
   const isWalletBsOnly = selectedMetodoId === 'wallet_bs'
 
   const selectedMetodo = useMemo(() => {
-    if (isWalletOnly) return { nombre: 'Billetera USD', icono: '💼', datos: 'Pago instantáneo con tu saldo USD disponible.' }
-    if (isWalletBsOnly) return { nombre: 'Billetera Bs', icono: '🏦', datos: 'Pago instantáneo con tu saldo Bs disponible.' }
-    return metodos.find(m => m.id === selectedMetodoId)
-  }, [metodos, selectedMetodoId, isWalletOnly, isWalletBsOnly])
+    if (isWalletOnly) return { id: 'wallet', nombre: 'Billetera USD', icono: '💼', datos: 'Pago instantáneo con tu saldo USD disponible.' }
+    if (isWalletBsOnly) return { id: 'wallet_bs', nombre: 'Billetera Bs', icono: '🏦', datos: 'Pago instantáneo con tu saldo Bs disponible.' }
+    return metodosDisponibles.find(m => m.id === selectedMetodoId)
+  }, [metodosDisponibles, selectedMetodoId, isWalletOnly, isWalletBsOnly])
 
   const handleToggleWalletPartial = () => {
     if (!hasAnySaldo) return
@@ -321,7 +335,9 @@ export default function Checkout({ onFinish, embedded = false }) {
   }
 
   const handleFinalizar = async () => {
-    if (!isWalletOnly && !isWalletBsOnly && !referencia.trim() && !isGratis) {
+    const isBinancePay = selectedMetodoId === 'binance_pay_auto';
+    
+    if (!isWalletOnly && !isWalletBsOnly && !isBinancePay && !referencia.trim() && !isGratis) {
       setAlertModal({ type: 'warning', message: 'Por favor ingresa el número de referencia de tu pago.' })
       return
     }
@@ -337,11 +353,12 @@ export default function Checkout({ onFinish, embedded = false }) {
     const amountBsToDeduct = walletBsAmountToUse;
     const currentIsWalletOnly = isWalletOnly;
     const currentIsWalletBsOnly = isWalletBsOnly;
+    const currentRemainingUSD = remainingUSD;
 
     setIsProcessing(true)
     try {
-      // 1. Validar referencia duplicada (Si no es pago con billetera o gratis)
-      if (!currentIsWalletOnly && !currentIsWalletBsOnly && !isGratis) {
+      // 1. Validar referencia duplicada (Si no es pago con billetera o gratis o binance)
+      if (!currentIsWalletOnly && !currentIsWalletBsOnly && !isGratis && !isBinancePay) {
         try {
           await verificarYRegistrarReferencia(referencia, remainingBs || remainingBsFromWallet, 'pedido')
         } catch (err) {
@@ -435,6 +452,10 @@ export default function Checkout({ onFinish, embedded = false }) {
         }
       }
 
+      if (isBinancePay) {
+        finalReferencia = 'PENDIENTE_BINANCE_PAY';
+      }
+
       const results = await checkout(registrarVenta, user?.id || perfil?.id, finalMetodoId, finalReferencia, null, activeRuletaDesc, createdPedidoId, comprobanteUrl, true)
       
       const pedidoResult = results.find(r => r.id === 'pedido')
@@ -448,6 +469,23 @@ export default function Checkout({ onFinish, embedded = false }) {
       const pedidoId = pedidoResult.data.id;
       
       if (!targetUserId) throw new Error('No se pudo identificar al usuario para la transacción.');
+
+      if (isBinancePay) {
+        // Llamar a la Serverless Function de Binance Pay
+        const res = await fetch('/api/binance/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pedidoId: pedidoId, amount: currentRemainingUSD > 0 ? currentRemainingUSD : totalUSD })
+        });
+        const data = await res.json();
+        
+        if (data.checkoutUrl) {
+          window.location.href = data.checkoutUrl;
+          return; // Redirige y no ejecuta más código
+        } else {
+          throw new Error('Error al crear la orden en Binance Pay: ' + (data.error || 'Desconocido'));
+        }
+      }
 
       if (activeRuletaDesc) {
         await supabase.from('ruleta_descuentos_pendientes').update({ usado: true, pedido_id: pedidoId }).eq('id', activeRuletaDesc.id)
@@ -986,28 +1024,30 @@ export default function Checkout({ onFinish, embedded = false }) {
                             </div>
                           )}
 
-                          <div className="form-group mb-16">
-                            <label className="form-label" style={{ color: 'var(--accent-success)', fontWeight: 700, fontSize: '13px', marginBottom: '8px', display: 'block' }}>
-                              Número de Referencia <span style={{ fontSize: '10px', opacity: 0.8 }}>(Últimos 6 dígitos)</span>
-                            </label>
-                            <input 
-                              type="text" 
-                              className="form-input" 
-                              placeholder="Últimos 6 dígitos de la referencia..."
-                              value={referencia} 
-                              onChange={e => {
-                                // Detener en 6 dígitos y no desplazar
-                                const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-                                setReferencia(val);
-                              }}
-                              onPaste={e => {
-                                e.preventDefault();
-                                const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
-                                setReferencia(pasteData);
-                              }}
-                              style={{ border: '1px solid var(--accent-success)', borderRadius: '12px', height: '48px', padding: '0 16px' }}
-                            />
-                          </div>
+                          {selectedMetodoId !== 'binance_pay_auto' && (
+                            <div className="form-group mb-16">
+                              <label className="form-label" style={{ color: 'var(--accent-success)', fontWeight: 700, fontSize: '13px', marginBottom: '8px', display: 'block' }}>
+                                Número de Referencia <span style={{ fontSize: '10px', opacity: 0.8 }}>(Últimos 6 dígitos)</span>
+                              </label>
+                              <input 
+                                type="text" 
+                                className="form-input" 
+                                placeholder="Últimos 6 dígitos de la referencia..."
+                                value={referencia} 
+                                onChange={e => {
+                                  // Detener en 6 dígitos y no desplazar
+                                  const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                  setReferencia(val);
+                                }}
+                                onPaste={e => {
+                                  e.preventDefault();
+                                  const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+                                  setReferencia(pasteData);
+                                }}
+                                style={{ border: '1px solid var(--accent-success)', borderRadius: '12px', height: '48px', padding: '0 16px' }}
+                              />
+                            </div>
+                          )}
 
                           {/* ── BOTÓN CONFIRMAR justo bajo la referencia ── */}
                           <button
@@ -1018,7 +1058,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                               boxShadow: '0 8px 24px rgba(0, 180, 255, 0.4)', border: 'none', color: 'white',
                               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: isProcessing ? 'default' : 'pointer'
                             }}
-                            disabled={isProcessing || (!isGratis && !isWalletOnly && !isWalletBsOnly && selectedMetodoId && !referencia.trim())}
+                            disabled={isProcessing || (!isGratis && !isWalletOnly && !isWalletBsOnly && selectedMetodoId !== 'binance_pay_auto' && selectedMetodoId && !referencia.trim())}
                             onClick={handleFinalizar}
                             onMouseEnter={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(-2px)')}
                             onMouseLeave={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(0)')}
@@ -1047,7 +1087,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                       ) : (
                         <div className="payment-methods-grid">
                           <label className="form-label" style={{ gridColumn: '1 / -1', marginBottom: '4px', textAlign: 'center', fontSize: '13px', fontWeight: 700 }}>Selecciona un Método de Pago</label>
-                          {metodos.filter(m => m.activo).map(m => (
+                          {metodosDisponibles.map(m => (
                             <button key={m.id} onClick={() => handleSelectMetodo(m.id)} className={`payment-method-btn ${selectedMetodoId === m.id ? 'active' : ''}`} style={{ borderRadius: '16px', padding: '8px 4px' }}>
                               <div style={{ width: 48, height: 48, borderRadius: '12px', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 6px', padding: '6px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                                 <img src={m.icono_url || ''} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
