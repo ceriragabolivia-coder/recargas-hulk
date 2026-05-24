@@ -713,7 +713,7 @@ export default function Landing({ onNavigate }) {
                           setSearch('');
                         }}
                       >
-                        <img src={juego.icono_url || 'https://via.placeholder.com/40'} alt={juego.nombre} />
+                        <img src={juego.icono_url ? (juego.icono_url.includes('?') ? `${juego.icono_url}&v=3` : `${juego.icono_url}?v=3`) : 'https://via.placeholder.com/40'} alt={juego.nombre} />
                         <div className="result-info">
                           <div className="result-name">{juego.nombre}</div>
                           <div className="result-cat">{juego.categoria}</div>
@@ -944,7 +944,7 @@ export default function Landing({ onNavigate }) {
                       />
                     </div>
                   ) : (
-                    <img src={selectedJuego.icono_url} alt="" className="detail-header-icon" />
+                    <img src={selectedJuego.icono_url ? (selectedJuego.icono_url.includes('?') ? `${selectedJuego.icono_url}&v=3` : `${selectedJuego.icono_url}?v=3`) : ''} alt="" className="detail-header-icon" />
                   )}
                   <div className="detail-header-info">
                     <h1>{selectedJuego.nombre}</h1>
@@ -1380,7 +1380,7 @@ export default function Landing({ onNavigate }) {
                               } 
                             })
                           }}>
-                            {prod.icono_url && <img src={prod.icono_url} alt="" className="product-icon" />}
+                            {prod.icono_url && <img src={prod.icono_url.includes('?') ? `${prod.icono_url}&v=3` : `${prod.icono_url}?v=3`} alt="" className="product-icon" />}
                             <div className="product-name">{prod.nombre}</div>
                             <div className="product-price">
                               <span className="price-primary">{formatBs(pricing.venta_bs)}</span>
@@ -1618,7 +1618,7 @@ export default function Landing({ onNavigate }) {
                     className="footer-product-btn"
                   >
                     {j.icono_url ? (
-                      <img src={j.icono_url} alt="" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover', flexShrink: 0 }} />
+                      <img src={j.icono_url ? (j.icono_url.includes('?') ? `${j.icono_url}&v=3` : `${j.icono_url}?v=3`) : ''} alt="" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover', flexShrink: 0 }} />
                     ) : (
                       <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'linear-gradient(135deg, var(--accent), #00d2ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>🎮</div>
                     )}
@@ -3126,7 +3126,7 @@ function GameCard({ juego, onSelect }) {
       {juego.etiqueta_descuento && <div className="badge-discount">{juego.etiqueta_descuento}</div>}
       <div className="game-image-container">
         <img 
-          src={juego.icono_url || 'https://via.placeholder.com/200x250?text=' + juego.nombre} 
+          src={juego.icono_url ? (juego.icono_url.includes('?') ? `${juego.icono_url}&v=3` : `${juego.icono_url}?v=3`) : 'https://via.placeholder.com/200x250?text=' + juego.nombre} 
           alt={juego.nombre} 
           className="game-image" 
           fetchpriority="high"
