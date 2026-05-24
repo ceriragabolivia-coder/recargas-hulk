@@ -531,6 +531,11 @@ export default function Landing({ onNavigate }) {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
+      const rootEl = document.getElementById('root');
+      if (rootEl) {
+        rootEl.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        rootEl.scrollTop = 0;
+      }
     };
     
     forceScroll();
@@ -556,6 +561,8 @@ export default function Landing({ onNavigate }) {
     setShowProfile(false)
     setShowRuleta(false)
     window.scrollTo(0, 0)
+    const rootEl = document.getElementById('root');
+    if (rootEl) rootEl.scrollTop = 0;
     if (juego) {
       setSearchParams({ juego: juego.nombre.toLowerCase().replace(/\s+/g, '-') })
     } else {
