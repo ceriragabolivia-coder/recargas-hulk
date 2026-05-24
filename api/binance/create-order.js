@@ -74,13 +74,13 @@ export default async function handler(req, res) {
       // Actualizar el pedido en la base de datos para registrar la referencia de Binance
       await supabase
         .from('pedidos')
-        .update({ referencia: merchantTradeNo })
+        .update({ referencia_pago: merchantTradeNo })
         .eq('id', pedidoId);
         
       // También actualizar las ventas asociadas
       await supabase
         .from('ventas')
-        .update({ referencia: merchantTradeNo })
+        .update({ referencia_pago: merchantTradeNo })
         .eq('pedido_id', pedidoId);
         
       return res.status(200).json({

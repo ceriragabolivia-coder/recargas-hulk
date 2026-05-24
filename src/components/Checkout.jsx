@@ -480,18 +480,25 @@ export default function Checkout({ onFinish, embedded = false }) {
 
       if (isBinancePay) {
         // Llamar a la Serverless Function de Binance Pay
-        const res = await fetch('/api/binance/create-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pedidoId: pedidoId, amount: currentRemainingUSD > 0 ? currentRemainingUSD : totalUSD })
-        });
-        const data = await res.json();
-        
-        if (data.checkoutUrl) {
-          window.location.href = data.checkoutUrl;
-          return; // Redirige y no ejecuta más código
-        } else {
-          throw new Error('Error al crear la orden en Binance Pay: ' + (data.error || 'Desconocido'));
+        try {
+          const res = await fetch('/api/binance/create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pedidoId: pedidoId, amount: currentRemainingUSD > 0 ? currentRemainingUSD : totalUSD })
+          });
+          const data = await res.json();
+          
+          if (data.checkoutUrl) {
+            window.location.href = data.checkoutUrl;
+            return; // Redirige y no ejecuta más código
+          } else {
+            throw new Error(data.error || 'Desconocido');
+          }
+        } catch (error) {
+          // Si falla Binance, eliminamos el pedido recién creado para no dejar basura pendiente
+          await supabase.from('pedido_items').delete().eq('pedido_id', pedidoId);
+          await supabase.from('pedidos').delete().eq('id', pedidoId);
+          throw new Error('Error al conectar con Binance Pay: Verifica que tus API Keys tengan permisos de "Merchant" y sean correctas. Detalle: ' + error.message);
         }
       }
 
