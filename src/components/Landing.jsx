@@ -525,17 +525,28 @@ export default function Landing({ onNavigate }) {
 
   // EFECTO DE SCROLL AL TOP: Forzar siempre al cambiar de vista o seleccionar juego
   useEffect(() => {
+    let isMounted = true;
     const forceScroll = () => {
+      if (!isMounted) return;
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
     };
     
     forceScroll();
-    // Re-intentar brevemente después por si hay cambios de layout
-    const t = setTimeout(forceScroll, 100);
-    return () => clearTimeout(t);
-  }, [selectedJuego, showCheckout, showOrders, showRuleta, showWallet, showProfile]);
+    // Re-intentar varias veces para asegurar que el navegador no restaure el scroll anterior
+    const t1 = setTimeout(forceScroll, 10);
+    const t2 = setTimeout(forceScroll, 100);
+    const t3 = setTimeout(forceScroll, 300);
+    const t4 = setTimeout(forceScroll, 600);
+    return () => {
+      isMounted = false;
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
+    };
+  }, [searchParams.get('juego'), selectedJuego?.id, showCheckout, showOrders, showRuleta, showWallet, showProfile]);
 
   const handleSelectJuego = (juego) => {
     setActiveProductType('recarga')
