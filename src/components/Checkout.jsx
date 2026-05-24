@@ -65,8 +65,8 @@ export default function Checkout({ onFinish, embedded = false }) {
       {
         id: 'binance_pay_auto',
         nombre: 'Binance Pay Automático',
-        icono_url: 'https://public.bnbstatic.com/image/cms/article/body/202209/78f219dcc1bf8a602db0cc6fb0f75727.png',
-        datos: null,
+        icono_url: 'https://upload.wikimedia.org/wikipedia/commons/e/e8/Binance_Logo.svg',
+        datos: '',
         qr_url: null,
         activo: true
       }
@@ -972,7 +972,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                           )}
 
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
-                            {selectedMetodo?.datos.split('\n').filter(l => l.trim()).map((line, i) => {
+                            {selectedMetodo?.datos && typeof selectedMetodo.datos === 'string' && selectedMetodo.datos.split('\n').filter(l => l.trim()).map((line, i) => {
                               const [label, ...valParts] = line.split(':');
                               const value = valParts.join(':').trim();
                               
