@@ -664,10 +664,10 @@ export default function App() {
       const isLandingEnabled = config?.landing_enabled !== '0'
       return (
         <Routes>
-          <Route path="/" element={isLandingEnabled ? <Landing /> : <Login onGoToRegister={() => navigate('/register')} />} />
+          <Route path="/" element={isLandingEnabled ? <Landing onNavigate={handleNavigate} /> : <Login onGoToRegister={() => navigate('/register')} />} />
           <Route path="/login" element={<Login onGoToRegister={() => navigate('/register')} />} />
           <Route path="/register" element={<Register onBackToLogin={() => navigate('/login')} />} />
-          <Route path="/p/:slug" element={<Landing />} />
+          <Route path="/p/:slug" element={<Landing onNavigate={handleNavigate} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       )

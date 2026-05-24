@@ -12,6 +12,7 @@ export default function PaginaEstatica({ slug: slugProp }) {
 
   useEffect(() => {
     async function fetchPagina() {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
       setLoading(true)
       const cleanSlug = slug?.trim()
       const { data, error } = await supabase
