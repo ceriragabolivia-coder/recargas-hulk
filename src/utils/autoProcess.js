@@ -36,17 +36,13 @@ export async function processAutoDeliveryOrder(pedidoId) {
 
     for (const item of pedido.pedido_items) {
       if (item.productos?.entrega_automatica) {
-        // Check if there is an available code
-        const { data: codes, error: codeFetchError } = await supabase
-          .from('producto_codigos')
-          .select('id')
-          .eq('producto_id', item.producto_id)
-          .eq('usado', false)
-          .order('created_at', { ascending: true })
-          .limit(1);
+        // Intentamos asignar el código primero. El RPC bypassa el RLS gracias a SECURITY DEFINER.
+        const { data: codeData, error: assignError } = await supabase.rpc('asignar_codigo_pedido_item_rpc', {
+          p_pedido_item_id: item.id
+        });
 
-        if (!codeFetchError && codes && codes.length > 0) {
-          // 1. Register Sale
+        if (!assignError && codeData) {
+          // Se logró asignar código. Registramos la venta.
           const { error: rpcError } = await supabase.rpc('registrar_venta_rpc', {
             p_producto_id: item.producto_id,
             p_cantidad: item.cantidad,
@@ -63,20 +59,13 @@ export async function processAutoDeliveryOrder(pedidoId) {
           });
 
           if (!rpcError) {
-            // 2. Assign code
-            const { data: codeData, error: assignError } = await supabase.rpc('asignar_codigo_pedido_item_rpc', {
-              p_pedido_item_id: item.id
-            });
-            if (assignError || !codeData) {
-              allProcessed = false;
-            } else {
-              anySaleRegistered = true;
-            }
+            anySaleRegistered = true;
           } else {
             console.error('Error in auto registrar_venta_rpc:', rpcError);
             allProcessed = false;
           }
         } else {
+          // No hay stock o hubo un error asignando
           allProcessed = false;
         }
       } else {
