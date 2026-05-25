@@ -2350,6 +2350,10 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
           .pedido-row-modern:hover {
             background-color: rgba(255,255,255,0.03) !important;
           }
+          .pedido-row-modern.assigned-to-me {
+            background-color: rgba(139, 92, 246, 0.08) !important;
+            border-left: 3px solid #8b5cf6 !important;
+          }
           .orders-table td {
             padding: 8px 10px !important;
             color: #fff !important;
@@ -2385,6 +2389,11 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
             background: var(--bg-card) !important;
             border-radius: 12px !important;
             padding: 10px !important;
+          }
+          .pedido-row-modern.assigned-to-me {
+            border: 2px solid #8b5cf6 !important;
+            background: rgba(139, 92, 246, 0.06) !important;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.15) !important;
           }
         }
       `}</style>
@@ -2558,10 +2567,25 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                         <tr 
                           key={pedido.id} 
                           onClick={() => handleOpenPedido(pedido)}
-                          className="pedido-row-modern"
+                          className={`pedido-row-modern ${esElOperador(pedido) ? 'assigned-to-me' : ''}`}
                         >
                           <td data-label="ID" style={{ fontWeight: 800, color: 'var(--accent-primary)' }}>
-                            #{pedido.numero_pedido}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
+                              <span>#{pedido.numero_pedido}</span>
+                              {pedido.atendido_por && (
+                                <span style={{
+                                  fontSize: '9px',
+                                  padding: '2px 6px',
+                                  borderRadius: '4px',
+                                  backgroundColor: esElOperador(pedido) ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                                  color: esElOperador(pedido) ? '#d8b4fe' : '#a1a1aa',
+                                  border: `1px solid ${esElOperador(pedido) ? 'rgba(139, 92, 246, 0.5)' : 'rgba(255, 255, 255, 0.1)'}`,
+                                  whiteSpace: 'nowrap'
+                                }}>
+                                  👤 {esElOperador(pedido) ? 'Asignado a ti' : (pedido.atendido_por.nombres || 'Admin')}
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td data-label="Fecha" className="desktop-only" style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px' }}>
                             {formatFecha(pedido.created_at)}

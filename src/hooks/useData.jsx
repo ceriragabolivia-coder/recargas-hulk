@@ -559,23 +559,21 @@ export function useClientes() {
   }
 
   async function updateProfileRoleAndDiscount(authUserId, updates) {
-    const { error: errorProfile } = await supabase
-      .from('perfiles')
-      .upsert({ id: authUserId, ...updates })
+    const { data, error } = await supabase.rpc('admin_update_profile_role', {
+      p_user_id: authUserId,
+      p_rol: updates.rol,
+      p_estado: updates.estado || null,
+      p_porcentaje_descuento: updates.porcentaje_descuento || 0,
+      p_config_modulos: updates.config_modulos || []
+    })
     
-    if (!errorProfile && updates.estado) {
-      await supabase
-        .from('clientes')
-        .update({ estado: updates.estado })
-        .eq('auth_user_id', authUserId)
-    }
+    if (error) return { error }
+    if (data && !data.success) return { error: new Error(data.message) }
 
-    if (!errorProfile) {
-      setClientes(prev => prev.map(c => 
-        c.auth_user_id === authUserId ? { ...c, ...updates } : c
-      ))
-    }
-    return { error: errorProfile }
+    setClientes(prev => prev.map(c => 
+      c.auth_user_id === authUserId ? { ...c, ...updates } : c
+    ))
+    return { error: null }
   }
 
   async function updateProfileStatus(cliente, newStatus) {
