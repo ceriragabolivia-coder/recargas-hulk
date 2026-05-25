@@ -397,7 +397,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
             p_account_email: item.account_email,
             p_account_password: item.account_password,
             p_vendedor_id: perfil?.cliente_uuid,
-            p_pedido_id: pedidoActual.id,
+            p_pedido_id: null,
             p_owner_id: perfil?.owner_id // Agregado para aislamiento de negocios
           })
           if (rpcError) {
