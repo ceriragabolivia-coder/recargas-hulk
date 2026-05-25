@@ -1771,7 +1771,7 @@ export default function Landing({ onNavigate }) {
                       {pendingEffectiveMetodo === 'sin_datos' ? (
                         <div style={{ fontSize: '14px', color: '#fff', fontWeight: 600 }}>⚡ Entrega Inmediata (Sin Datos)</div>
                       ) : pendingEffectiveMetodo === 'entrega_codigo' ? (
-                        <div style={{ fontSize: '14px', color: '#fff', fontWeight: 600 }}>🎁 Entrega de Código (Manual)</div>
+                        <div style={{ fontSize: '14px', color: '#fff', fontWeight: 600 }}>🎁 Entrega de Código (Gift Card)</div>
                       ) : pendingEffectiveMetodo === 'solo_correo' ? (
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Correo:</span> <strong style={{ color: '#fff' }}>{pendingItem.localRechargeData.account_email}</strong></div>

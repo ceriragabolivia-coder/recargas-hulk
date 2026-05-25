@@ -1235,7 +1235,7 @@ export default function GestionProductos() {
               <option value="usuario_clave">👤 Usuario y Clave</option>
               <option value="solo_correo">📧 Solo Correo</option>
               <option value="sin_datos">📥 Sin Datos (Entrega Automática)</option>
-              <option value="entrega_codigo">🎁 Entrega de Código (Manual)</option>
+              <option value="entrega_codigo">🎁 Entrega de Código (Gift Card)</option>
             </select>
             <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
               {formGame.metodo_recarga === 'id_jugador'
