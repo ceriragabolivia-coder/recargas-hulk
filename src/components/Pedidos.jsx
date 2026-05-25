@@ -82,7 +82,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     setLoading(true)
     let query = supabase
       .from('pedidos')
-      .select('*, pedido_items(*, productos(icono_url))')
+      .select('*, pedido_items(*, productos(*))')
       .order('created_at', { ascending: false })
 
     if (normalizedParams.userId) {
@@ -175,12 +175,18 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
         for (const item of selectedPedido.pedido_items) {
           const prod = item.productos || item.producto || (Array.isArray(item.productos) ? item.productos[0] : null);
           if (prod?.entrega_automatica && !item.codigo_entregado && counts[prod.id] === undefined) {
-            const { count } = await supabase
+            const { count, error } = await supabase
               .from('producto_codigos')
               .select('*', { count: 'exact', head: true })
               .eq('producto_id', prod.id)
               .eq('usado', false);
-            counts[prod.id] = count || 0;
+            if (error) {
+               console.error('Error fetching stock for product', prod.id, error);
+               counts[prod.id] = 0;
+            } else {
+               console.log(`Stock for product ${prod.id}: ${count}`);
+               counts[prod.id] = count || 0;
+            }
             updated = true;
           }
         }
@@ -381,7 +387,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     // 1. Obtener el pedido actual con manejo de errores
     const { data: pedidoActual, error: fetchError } = await supabase
       .from('pedidos')
-      .select('*, pedido_items(*, productos(entrega_automatica))')
+      .select('*, pedido_items(*, productos(*))')
       .eq('id', pedidoId)
       .maybeSingle()
 
@@ -536,7 +542,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     if (selectedPedido?.id === pedidoId) {
       const { data: updatedPedido } = await supabase
         .from('pedidos')
-        .select('*, pedido_items(*, productos(icono_url, entrega_automatica))')
+        .select('*, pedido_items(*, productos(*))')
         .eq('id', pedidoId)
         .single()
       if (updatedPedido) {
@@ -717,7 +723,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
         .from('pedidos')
         .update({ pago_verificado: true, updated_at: new Date().toISOString() })
         .eq('id', pedido.id)
-        .select('*, pedido_items(*, productos(icono_url))')
+        .select('*, pedido_items(*, productos(*))')
         .single();
 
       if (error) {
@@ -737,7 +743,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
           if (processed) {
             console.log('Pedido auto-procesado tras verificación manual');
             // Fetch nuevamente para actualizar la UI (el estado cambió a completado en DB)
-            supabase.from('pedidos').select('*, pedido_items(*, productos(icono_url))').eq('id', data.id).single()
+            supabase.from('pedidos').select('*, pedido_items(*, productos(*))').eq('id', data.id).single()
               .then(({data: updData}) => {
                 if(updData) {
                   const finalPed = { ...updData, cliente: pedido.cliente, atendido_por: pedido.atendido_por };
@@ -808,7 +814,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
         updated_at: new Date().toISOString()
       })
       .eq('id', pedido.id)
-      .select('*, pedido_items(*, productos(icono_url))')
+      .select('*, pedido_items(*, productos(*))')
       .single();
 
     if (error) {
@@ -923,7 +929,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   const updateEstadoConAdmin = async (pedidoId, nuevoEstado, adminTarget) => {
     const { data: pedidoActual, error: fetchError } = await supabase
       .from('pedidos')
-      .select('*, pedido_items(*, productos(entrega_automatica))')
+      .select('*, pedido_items(*, productos(*))')
       .eq('id', pedidoId)
       .maybeSingle()
 
