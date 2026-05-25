@@ -1,6 +1,7 @@
 import React, { useState, useEffect, createContext, useContext, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
+import { processAutoDeliveryOrder } from '../utils/autoProcess'
 
 const CartContext = createContext()
 
@@ -134,6 +135,14 @@ export function CartProvider({ children }) {
       if (itemsError) throw itemsError
 
       clearCart()
+
+      if (isAutomatic) {
+        // Ejecutamos en background
+        processAutoDeliveryOrder(pedido.id).then(processed => {
+          if (processed) console.log('Pedido auto-procesado correctamente');
+        }).catch(err => console.error(err));
+      }
+
       return [{ id: 'pedido', data: pedido, error: null }]
 
     } catch (err) {

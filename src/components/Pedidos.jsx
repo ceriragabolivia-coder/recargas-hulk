@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth, useConfiguracion } from '../hooks/useData'
 import AlertModal from './AlertModal'
 import { playSuccessSound, playCashRegisterSound, playErrorSound, formatBs, formatUSD } from '../utils/helpers'
+import { processAutoDeliveryOrder } from '../utils/autoProcess'
 
 const DEFAULT_CANCEL_MESSAGE = (num) => `Tu Pedido #${num} se ha cancelado motivado a que la referencia de pago que colocaste no ha podido ser encontrado en nuestro banco, es decir, el pago no pudo ser verificado y esto se debe a alguno de los siguientes motivos:
 
@@ -705,6 +706,22 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
         setSelectedPedido(pedFinal);
         setPedidos(prev => prev.map(p => p.id === data.id ? pedFinal : p));
         playCashRegisterSound();
+
+        // Intentar autoprocesamiento en background si hay códigos
+        processAutoDeliveryOrder(data.id).then(processed => {
+          if (processed) {
+            console.log('Pedido auto-procesado tras verificación manual');
+            // Fetch nuevamente para actualizar la UI (el estado cambió a completado en DB)
+            supabase.from('pedidos').select('*, pedido_items(*, productos(icono_url))').eq('id', data.id).single()
+              .then(({data: updData}) => {
+                if(updData) {
+                  const finalPed = { ...updData, cliente: pedido.cliente, atendido_por: pedido.atendido_por };
+                  setSelectedPedido(prev => prev?.id === data.id ? finalPed : prev);
+                  setPedidos(prev => prev.map(p => p.id === data.id ? finalPed : p));
+                }
+              });
+          }
+        }).catch(console.error);
       }
     } else {
       // Si se rechaza el pago
