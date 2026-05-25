@@ -1319,6 +1319,28 @@ function OrderTracking({ pedidoInitial, onBack }) {
                       📌 Ref: {item.referencia_admin}
                     </div>
                   )}
+                  {item.codigo_entregado && (
+                    <div style={{ 
+                      marginTop: '8px', 
+                      padding: '8px', 
+                      backgroundColor: 'rgba(34, 197, 94, 0.1)', 
+                      border: '1px dashed #22c55e', 
+                      borderRadius: '8px',
+                      color: '#22c55e',
+                      fontSize: '13px',
+                      fontWeight: 800,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(item.codigo_entregado);
+                      alert('¡Código copiado al portapapeles!');
+                    }}>
+                      🎁 Código: {item.codigo_entregado} 📋
+                    </div>
+                  )}
                 </div>
               </div>
               <div style={{ color: item.estado === 'completado' ? '#22c55e' : 'var(--text-muted)', fontSize: '12px', fontWeight: 800 }}>

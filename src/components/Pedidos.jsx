@@ -54,6 +54,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   const [pedidos, setPedidos] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedPedido, setSelectedPedido] = useState(null)
+  const [stockCounts, setStockCounts] = useState({})
   const [filtroEstado, setFiltroEstado] = useState(incomingFilterKey === 'ordenes_pendientes' ? 'pendiente' : (incomingFilterKey || 'todos'))
   const [uploading, setUploading] = useState(false)
   const [showClientModal, setShowClientModal] = useState(false)
@@ -165,6 +166,30 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
       setSelectedPedido(null) // Regresar a la lista al cambiar de sección
     }
   }, [incomingFilterKey])
+  // Efecto para buscar el stock de los items de entrega automática
+  useEffect(() => {
+    if (selectedPedido && selectedPedido.pedido_items) {
+      const fetchStock = async () => {
+        const counts = { ...stockCounts };
+        let updated = false;
+        for (const item of selectedPedido.pedido_items) {
+          const prod = item.productos || item.producto || (Array.isArray(item.productos) ? item.productos[0] : null);
+          if (prod?.entrega_automatica && !item.codigo_entregado && counts[prod.id] === undefined) {
+            const { count } = await supabase
+              .from('producto_codigos')
+              .select('*', { count: 'exact', head: true })
+              .eq('producto_id', prod.id)
+              .eq('usado', false);
+            counts[prod.id] = count || 0;
+            updated = true;
+          }
+        }
+        if (updated) setStockCounts(counts);
+      };
+      fetchStock();
+    }
+  }, [selectedPedido]);
+
   useEffect(() => {
     // Escuchar cambios en el ID de pedido (ej. desde notificaciones)
     if (targetOrderId || targetOrderNumber) {
@@ -2189,8 +2214,11 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                     </div>
                   </div>
 
-                <div style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>
+                <div style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
                     🎮 {item.juego_nombre} · Cantidad: {item.cantidad}
+                    {((item.productos || item.producto || (Array.isArray(item.productos) ? item.productos[0] : null))?.entrega_automatica) && !item.codigo_entregado && stockCounts[(item.productos || item.producto || (Array.isArray(item.productos) ? item.productos[0] : null))?.id] === 0 && (
+                      <span style={{ backgroundColor: '#ef4444', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 800 }}>⚠️ Sin Stock en Baúl</span>
+                    )}
                   </div>
 
                   {/* CAJA DE REFERENCIA (ADMIN -> CLIENTE) */}
