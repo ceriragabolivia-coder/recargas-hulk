@@ -2546,8 +2546,8 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                       <th style={{ width: '70px' }}>ID</th>
                       <th className="desktop-only" style={{ width: '120px' }}>Fecha</th>
                       <th style={{ textAlign: 'left', width: '150px', paddingLeft: '15px !important' }}>Cliente</th>
-                      <th className="desktop-only" style={{ width: '90px' }}>Juego</th>
-                      <th className="desktop-only" style={{ width: '130px' }}>Paquete</th>
+                      <th style={{ width: '90px' }}>Juego</th>
+                      <th style={{ width: '130px' }}>Paquete</th>
                       <th className="desktop-only" style={{ width: '90px' }}>Ref</th>
                       <th style={{ width: '80px' }}>Total</th>
                       <th className="desktop-only" style={{ width: '90px' }}>Admin</th>
@@ -2596,10 +2596,10 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                               '-'
                             }
                           </td>
-                          <td data-label="Juego" className="desktop-only" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px' }}>
+                          <td data-label="Juego" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px' }}>
                             {juegos[0] || '-'}
                           </td>
-                          <td data-label="Paquete" className="desktop-only" style={{ maxWidth: '160px' }}>
+                          <td data-label="Paquete" style={{ maxWidth: '160px' }}>
                             <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', color: 'rgba(255,255,255,0.7)', fontSize: '11px' }}>
                               {paquetes[0] || '-'}
                             </div>
