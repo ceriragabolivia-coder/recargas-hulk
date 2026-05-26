@@ -490,8 +490,13 @@ export default function Dashboard() {
 
   const handleSaveTasa = async () => {
     if (!nuevaTasa) return
+    const tasaNum = parseFloat(nuevaTasa)
+    if (isNaN(tasaNum) || tasaNum <= 0) {
+      alert('Por favor ingresa una tasa válida mayor a 0.')
+      return
+    }
     setSavingTasa(true)
-    const { error } = await updateConfig('tasa_dolar', nuevaTasa)
+    const { error } = await updateConfig('tasa_dolar', tasaNum)
     setSavingTasa(false)
     if (error) {
       alert('Error al guardar la tasa: ' + error.message)
