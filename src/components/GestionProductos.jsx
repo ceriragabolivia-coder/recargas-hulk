@@ -1621,8 +1621,236 @@ export default function GestionProductos() {
   )
 }
 
+// ─── Componente: Lista de códigos del baúl con Drag & Drop ───────────────────
+function VaultCodesList({ codigos, loading, pedidoLoading, reorderCodigos, deleteCodigo, deleteCodigoUsado, handleVerPedido }) {
+  const available = codigos.filter(c => !c.usado).sort((a, b) => {
+    if (a.orden != null && b.orden != null) return a.orden - b.orden
+    if (a.orden != null) return -1
+    if (b.orden != null) return 1
+    return new Date(a.created_at) - new Date(b.created_at)
+  })
+  const used = codigos.filter(c => c.usado).sort((a, b) => new Date(b.usado_at || b.created_at) - new Date(a.usado_at || a.created_at))
+  const allRows = [...available, ...used]
+
+  const [dragOverId, setDragOverId] = useState(null)
+  const dragItem = useRef(null)
+  const [editingOrderId, setEditingOrderId] = useState(null)
+  const [editOrderVal, setEditOrderVal] = useState('')
+
+  const handleDragStart = (e, codigo) => {
+    if (codigo.usado) return
+    dragItem.current = codigo
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragOver = (e, targetCodigo) => {
+    if (!dragItem.current || targetCodigo.usado) return
+    e.preventDefault()
+    setDragOverId(targetCodigo.id)
+  }
+
+  const handleDrop = (e, targetCodigo) => {
+    e.preventDefault()
+    setDragOverId(null)
+    if (!dragItem.current || targetCodigo.id === dragItem.current.id || targetCodigo.usado) return
+
+    const newAvailable = [...available]
+    const fromIdx = newAvailable.findIndex(c => c.id === dragItem.current.id)
+    const toIdx = newAvailable.findIndex(c => c.id === targetCodigo.id)
+    if (fromIdx === -1 || toIdx === -1) return
+
+    const [moved] = newAvailable.splice(fromIdx, 1)
+    newAvailable.splice(toIdx, 0, moved)
+    reorderCodigos(newAvailable)
+    dragItem.current = null
+  }
+
+  const handleDragEnd = () => {
+    dragItem.current = null
+    setDragOverId(null)
+  }
+
+  const handleOrderInputBlur = (codigo) => {
+    const num = parseInt(editOrderVal, 10)
+    if (!isNaN(num) && num >= 1 && num <= available.length) {
+      const newAvailable = [...available]
+      const fromIdx = newAvailable.findIndex(c => c.id === codigo.id)
+      if (fromIdx !== -1) {
+        const [moved] = newAvailable.splice(fromIdx, 1)
+        newAvailable.splice(num - 1, 0, moved)
+        reorderCodigos(newAvailable)
+      }
+    }
+    setEditingOrderId(null)
+    setEditOrderVal('')
+  }
+
+  if (loading || pedidoLoading) {
+    return <div style={{ padding: '20px', textAlign: 'center' }}><div className="spinner-small"></div></div>
+  }
+
+  if (codigos.length === 0) {
+    return <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>El baúl está vacío</div>
+  }
+
+  return (
+    <div style={{ marginTop: '16px' }}>
+      {available.length > 0 && (
+        <p style={{ fontSize: '10px', color: 'var(--text-muted)', margin: '0 0 6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span>⠿</span> Arrastra para reordenar · Haz clic en el número para editar la posición
+        </p>
+      )}
+      <div style={{ maxHeight: '260px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+        <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse' }}>
+          <thead style={{ position: 'sticky', top: 0, backgroundColor: 'var(--bg-panel)', borderBottom: '1px solid var(--border-color)', zIndex: 1 }}>
+            <tr>
+              <th style={{ padding: '6px 4px', textAlign: 'center', width: '24px', color: 'var(--text-muted)' }}></th>
+              <th style={{ padding: '6px 8px', textAlign: 'left' }}>Código</th>
+              <th style={{ padding: '6px 8px', textAlign: 'center' }}>Estado</th>
+              <th style={{ padding: '6px 8px', textAlign: 'center', width: '60px' }}>Pos.</th>
+              <th style={{ padding: '6px 8px', textAlign: 'center', width: '40px' }}>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {allRows.map((c, visIdx) => {
+              const pos = available.findIndex(a => a.id === c.id)
+              const isDragging = dragItem.current?.id === c.id
+              const isOver = dragOverId === c.id
+              return (
+                <tr
+                  key={c.id}
+                  draggable={!c.usado}
+                  onDragStart={e => handleDragStart(e, c)}
+                  onDragOver={e => handleDragOver(e, c)}
+                  onDrop={e => handleDrop(e, c)}
+                  onDragEnd={handleDragEnd}
+                  style={{
+                    borderBottom: '1px solid rgba(255,255,255,0.03)',
+                    backgroundColor: isOver
+                      ? 'rgba(99,102,241,0.18)'
+                      : isDragging
+                      ? 'rgba(255,255,255,0.04)'
+                      : 'transparent',
+                    opacity: isDragging ? 0.5 : 1,
+                    transition: 'background-color 0.15s',
+                    cursor: c.usado ? 'default' : 'grab',
+                  }}
+                >
+                  {/* Handle drag */}
+                  <td style={{ padding: '6px 4px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px', userSelect: 'none' }}>
+                    {!c.usado && <span title="Arrastra para reordenar">⠿</span>}
+                  </td>
+                  {/* Código */}
+                  <td style={{ padding: '6px 8px', fontFamily: 'monospace', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {c.codigo}
+                  </td>
+                  {/* Estado */}
+                  <td style={{ padding: '6px 8px', textAlign: 'center' }}>
+                    {c.usado ? (
+                      c.pedidos?.numero_pedido ? (
+                        <span
+                          onClick={() => handleVerPedido(c.pedido_id)}
+                          style={{ color: 'var(--accent-primary)', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline', fontSize: '10px' }}
+                          title="Ver pedido"
+                        >
+                          #{String(c.pedidos.numero_pedido).replace('#', '')}
+                        </span>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)', fontSize: '10px' }}>Utilizado</span>
+                      )
+                    ) : (
+                      <span style={{ color: 'var(--accent-success)', fontSize: '10px' }}>Disponible</span>
+                    )}
+                  </td>
+                  {/* Posición editable */}
+                  <td style={{ padding: '6px 8px', textAlign: 'center' }}>
+                    {!c.usado ? (
+                      editingOrderId === c.id ? (
+                        <input
+                          type="number"
+                          min="1"
+                          max={available.length}
+                          autoFocus
+                          value={editOrderVal}
+                          onChange={e => setEditOrderVal(e.target.value)}
+                          onBlur={() => handleOrderInputBlur(c)}
+                          onKeyDown={e => { if (e.key === 'Enter') handleOrderInputBlur(c); if (e.key === 'Escape') { setEditingOrderId(null); setEditOrderVal('') } }}
+                          style={{
+                            width: '40px', padding: '2px 4px', fontSize: '11px',
+                            background: 'rgba(99,102,241,0.15)', border: '1px solid var(--accent-primary)',
+                            borderRadius: '4px', color: '#fff', textAlign: 'center'
+                          }}
+                        />
+                      ) : (
+                        <span
+                          onClick={() => { setEditingOrderId(c.id); setEditOrderVal(String(pos + 1)) }}
+                          title="Clic para editar posición"
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                            width: '24px', height: '24px', borderRadius: '50%',
+                            background: 'rgba(99,102,241,0.2)', color: 'var(--accent-primary)',
+                            fontWeight: 700, fontSize: '11px', cursor: 'pointer',
+                            border: '1px solid rgba(99,102,241,0.4)',
+                            transition: 'background 0.15s'
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(99,102,241,0.4)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(99,102,241,0.2)'}
+                        >
+                          {pos + 1}
+                        </span>
+                      )
+                    ) : (
+                      <span style={{ color: 'var(--text-muted)', fontSize: '10px' }}>-</span>
+                    )}
+                  </td>
+                  {/* Acción */}
+                  <td style={{ padding: '6px 8px', textAlign: 'center' }}>
+                    {c.usado ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`¿Eliminar permanentemente este código utilizado?\n\nCódigo: ${c.codigo}`)) {
+                            deleteCodigoUsado(c.id)
+                          }
+                        }}
+                        style={{
+                          background: 'none', border: '1px solid rgba(239,68,68,0.3)',
+                          borderRadius: '4px', color: '#ef4444', cursor: 'pointer',
+                          fontSize: '12px', padding: '2px 5px', opacity: 0.6, transition: 'opacity 0.2s'
+                        }}
+                        title="Eliminar código usado del historial"
+                        onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                        onMouseLeave={e => e.currentTarget.style.opacity = '0.6'}
+                      >🗑️</button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => deleteCodigo(c.id)}
+                        style={{
+                          background: 'none', border: 'none',
+                          color: '#ef4444', cursor: 'pointer',
+                          fontSize: '14px', padding: '2px 5px', opacity: 0.7, transition: 'opacity 0.2s'
+                        }}
+                        title="Eliminar código disponible"
+                        onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                        onMouseLeave={e => e.currentTarget.style.opacity = '0.7'}
+                      >🗑️</button>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function ProductVault({ productoId, setAlertModal }) {
-  const { codigos, loading, addCodigos, deleteCodigo, deleteCodigoUsado } = useProductoCodigos(productoId)
+
+  const { codigos, loading, addCodigos, deleteCodigo, deleteCodigoUsado, reorderCodigos } = useProductoCodigos(productoId)
   const [newCodesText, setNewCodesText] = useState('')
   const [adding, setAdding] = useState(false)
   const [selectedPedidoDetalle, setSelectedPedidoDetalle] = useState(null)
@@ -1750,97 +1978,17 @@ function ProductVault({ productoId, setAlertModal }) {
         </button>
       </div>
 
-      <div style={{ marginTop: '16px', maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
-        {loading || pedidoLoading ? (
-          <div style={{ padding: '20px', textAlign: 'center' }}><div className="spinner-small"></div></div>
-        ) : codigos.length === 0 ? (
-          <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>El baúl está vacío</div>
-        ) : (
-          <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse' }}>
-            <thead style={{ position: 'sticky', top: 0, backgroundColor: 'var(--bg-panel)', borderBottom: '1px solid var(--border-color)' }}>
-              <tr>
-                <th style={{ padding: '8px', textAlign: 'left' }}>Código</th>
-                <th style={{ padding: '8px', textAlign: 'center' }}>Estado</th>
-                <th style={{ padding: '8px', textAlign: 'center' }}>Orden</th>
-                <th style={{ padding: '8px', textAlign: 'center' }}>Acción</th>
-              </tr>
-            </thead>
-            <tbody>
-              {codigos.map(c => (
-                <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                  <td style={{ padding: '8px', fontFamily: 'monospace' }}>{c.codigo}</td>
-                  <td style={{ padding: '8px', textAlign: 'center' }}>
-                    {c.usado ? (
-                      <span style={{ color: 'var(--text-muted)' }}>Utilizado</span>
-                    ) : (
-                      <span style={{ color: 'var(--accent-success)' }}>Disponible</span>
-                    )}
-                  </td>
-                  <td style={{ padding: '8px', textAlign: 'center' }}>
-                    {c.usado ? (
-                      c.pedidos?.numero_pedido ? (
-                        <span 
-                          onClick={() => handleVerPedido(c.pedido_id)}
-                          style={{ 
-                            color: 'var(--accent-primary)', 
-                            fontWeight: 'bold', 
-                            cursor: 'pointer', 
-                            textDecoration: 'underline' 
-                          }}
-                          title="Ver resumen del pedido"
-                        >
-                          {c.pedidos.numero_pedido.startsWith('#') ? c.pedidos.numero_pedido : `#${c.pedidos.numero_pedido}`}
-                        </span>
-                      ) : (
-                        <span style={{ color: 'var(--text-muted)' }}>-</span>
-                      )
-                    ) : (
-                      <span style={{ color: 'var(--text-muted)' }}>-</span>
-                    )}
-                  </td>
-                  <td style={{ padding: '8px', textAlign: 'center' }}>
-                    {c.usado ? (
-                      <button 
-                        type="button" 
-                        className="btn btn-ghost btn-sm" 
-                        onClick={() => {
-                          if (window.confirm(`¿Eliminar permanentemente este código utilizado? Esta acción no se puede deshacer.\n\nCódigo: ${c.codigo}\nOrden: ${c.pedidos?.numero_pedido ? '#' + c.pedidos.numero_pedido : 'N/A'}`)) {
-                            deleteCodigoUsado(c.id)
-                          }
-                        }}
-                        style={{ 
-                          padding: '2px 4px', 
-                          fontSize: '10px',
-                          color: '#ef4444',
-                          opacity: 0.6,
-                          border: '1px solid rgba(239,68,68,0.3)',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          transition: 'opacity 0.2s'
-                        }}
-                        title="Eliminar código utilizado del historial"
-                        onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-                        onMouseLeave={e => e.currentTarget.style.opacity = '0.6'}
-                      >
-                        🗑️
-                      </button>
-                    ) : (
-                      <button 
-                        type="button" 
-                        className="btn btn-ghost btn-sm text-danger" 
-                        onClick={() => deleteCodigo(c.id)}
-                        style={{ padding: '2px 4px', fontSize: '10px' }}
-                      >
-                        🗑️
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {/* TABLA DEL BAÚL CON DRAG-AND-DROP */}
+      <VaultCodesList
+        codigos={codigos}
+        loading={loading}
+        pedidoLoading={pedidoLoading}
+        reorderCodigos={reorderCodigos}
+        deleteCodigo={deleteCodigo}
+        deleteCodigoUsado={deleteCodigoUsado}
+        handleVerPedido={handleVerPedido}
+      />
+
 
       {/* MODAL DETALLES DEL PEDIDO */}
       {selectedPedidoDetalle && (

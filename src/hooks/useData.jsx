@@ -971,11 +971,28 @@ export function useProductoCodigos(productoId) {
     return { error }
   }
 
+  async function reorderCodigos(newOrder) {
+    // newOrder: array of { id, orden } for available codes only
+    const updates = newOrder.map((item, idx) => ({ id: item.id, orden: idx + 1 }))
+    // Optimistic update
+    setCodigos(prev => {
+      const map = new Map(updates.map(u => [u.id, u.orden]))
+      return prev.map(c => map.has(c.id) ? { ...c, orden: map.get(c.id) } : c)
+    })
+    const { error } = await supabase.rpc('actualizar_orden_codigos_rpc', { p_updates: updates })
+    if (error) {
+      console.error('Error updating order:', error)
+      // Revert on error
+      fetchCodigos()
+    }
+    return { error }
+  }
+
   useEffect(() => {
     fetchCodigos()
   }, [productoId])
 
-  return { codigos, loading, addCodigos, deleteCodigo, deleteCodigoUsado, refetch: fetchCodigos }
+  return { codigos, loading, addCodigos, deleteCodigo, deleteCodigoUsado, reorderCodigos, refetch: fetchCodigos }
 }
 
 export { useClientes as useUsuarios }
