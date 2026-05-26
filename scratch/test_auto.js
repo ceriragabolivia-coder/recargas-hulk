@@ -7,7 +7,8 @@ const key = env.match(/VITE_SUPABASE_ANON_KEY=(.*)/)[1].trim();
 const supabase = createClient(url, key);
 
 async function check() {
-  const { data: itemData, error: itemError } = await supabase.from('pedido_items').select('id, pedido_id, producto_id').limit(1);
-  console.log("pedido_items ID:", itemData);
+  const { data, error } = await supabase.rpc('debug_sql', { query: "SELECT id, estado, pago_verificado FROM public.pedidos WHERE numero_pedido = 522" });
+  console.log("522 DATA:", data);
+  console.log("522 ERROR:", error);
 }
 check();

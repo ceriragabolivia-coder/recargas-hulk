@@ -1,3 +1,73 @@
+-- 1. Restaurar las funciones de pago con billetera a su estado original correcto (solo descuento)
+-- El ingreso al superadmin se maneja automáticamente por el trigger `trig_act_saldos_admin` 
+-- cuando el pedido pasa a estado 'completado'.
+
+CREATE OR REPLACE FUNCTION public.pagar_con_billetera_rpc(
+    p_user_id UUID,
+    p_amount NUMERIC,
+    p_pedido_id UUID,
+    p_description TEXT
+) RETURNS BOOLEAN AS $$
+DECLARE
+    v_current_balance NUMERIC;
+BEGIN
+    SELECT saldo INTO v_current_balance
+    FROM public.billeteras
+    WHERE auth_user_id = p_user_id
+    FOR UPDATE;
+
+    IF v_current_balance IS NULL OR v_current_balance < p_amount THEN
+        RETURN FALSE;
+    END IF;
+
+    -- Descontar del usuario
+    UPDATE public.billeteras
+    SET saldo = saldo - p_amount, updated_at = now()
+    WHERE auth_user_id = p_user_id;
+
+    -- Registro del usuario
+    INSERT INTO public.billetera_transacciones (auth_user_id, monto, tipo, descripcion, referencia_id, moneda)
+    VALUES (p_user_id, -p_amount, 'pago_pedido', p_description, p_pedido_id, 'usd');
+
+    RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+CREATE OR REPLACE FUNCTION public.pagar_con_billetera_bs_rpc(
+    p_user_id UUID,
+    p_amount NUMERIC,
+    p_pedido_id UUID,
+    p_description TEXT
+) RETURNS BOOLEAN AS $$
+DECLARE
+    v_current_balance NUMERIC;
+BEGIN
+    SELECT saldo_bs INTO v_current_balance
+    FROM public.billeteras
+    WHERE auth_user_id = p_user_id
+    FOR UPDATE;
+
+    IF v_current_balance IS NULL OR v_current_balance < p_amount THEN
+        RETURN FALSE;
+    END IF;
+
+    -- Descontar del usuario
+    UPDATE public.billeteras
+    SET saldo_bs = saldo_bs - p_amount, updated_at = now()
+    WHERE auth_user_id = p_user_id;
+
+    -- Registro del usuario
+    INSERT INTO public.billetera_transacciones (auth_user_id, monto, tipo, descripcion, referencia_id, moneda)
+    VALUES (p_user_id, -p_amount, 'pago_pedido', p_description, p_pedido_id, 'bs');
+
+    RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 2. Corregir procesar_pedido_automatico_rpc para evitar el crasheo de tipo (INT vs UUID)
+-- Esto permitirá que se complete la orden, entregue el código y active el trigger de saldo.
+
 CREATE OR REPLACE FUNCTION public.procesar_pedido_automatico_rpc(p_pedido_id UUID)
 RETURNS JSON AS $$
 DECLARE
@@ -18,7 +88,7 @@ BEGIN
         RETURN json_build_object('success', FALSE, 'message', 'Pedido no válido para proceso automático');
     END IF;
 
-    -- Obtener el UUID del super admin para la venta
+    -- CORRECCIÓN: Obtener el UUID (auth_user_id) de auth.users, NO el ID (INT) de clientes.
     SELECT u.id INTO v_superadmin_id 
     FROM auth.users u 
     WHERE LOWER(u.email) = 'ceriraga@gmail.com' LIMIT 1;
@@ -64,7 +134,7 @@ BEGIN
 
                     UPDATE public.pedido_items 
                     SET codigo_entregado = v_codigo_asignado,
-                        estado = 'completado' 
+                        estado = 'completado'
                     WHERE id = v_item.id;
                     
                     v_alguna_venta_registrada := TRUE;
@@ -80,6 +150,8 @@ BEGIN
         END IF;
     END LOOP;
 
+    -- Al pasar a 'completado', se disparará automáticamente el trigger `trig_act_saldos_admin` 
+    -- que sumará el saldo de la venta al monedero operativo del superadmin.
     IF v_todos_procesados AND v_alguna_venta_registrada THEN
         UPDATE public.pedidos 
         SET estado = 'completado', 

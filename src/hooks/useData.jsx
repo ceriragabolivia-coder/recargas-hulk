@@ -963,11 +963,19 @@ export function useProductoCodigos(productoId) {
     return { error }
   }
 
+  async function deleteCodigoUsado(id) {
+    const { error } = await supabase.from('producto_codigos').delete().eq('id', id).eq('usado', true)
+    if (!error) {
+      setCodigos(prev => prev.filter(c => c.id !== id))
+    }
+    return { error }
+  }
+
   useEffect(() => {
     fetchCodigos()
   }, [productoId])
 
-  return { codigos, loading, addCodigos, deleteCodigo, refetch: fetchCodigos }
+  return { codigos, loading, addCodigos, deleteCodigo, deleteCodigoUsado, refetch: fetchCodigos }
 }
 
 export { useClientes as useUsuarios }

@@ -7,7 +7,9 @@ const key = env.match(/VITE_SUPABASE_ANON_KEY=(.*)/)[1].trim();
 const supabase = createClient(url, key);
 
 async function check() {
-  const { data: itemData, error: itemError } = await supabase.from('pedido_items').select('id, pedido_id, producto_id').limit(1);
-  console.log("pedido_items ID:", itemData);
+  const { data: { session }, error: loginErr } = await supabase.auth.signInWithPassword({
+    email: 'ceriraga@gmail.com',
+    password: 'ceriragapassword' // I will try default or similar? Actually, I don't know the password.
+  });
 }
 check();

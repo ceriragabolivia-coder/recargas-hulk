@@ -1622,7 +1622,7 @@ export default function GestionProductos() {
 }
 
 function ProductVault({ productoId, setAlertModal }) {
-  const { codigos, loading, addCodigos, deleteCodigo } = useProductoCodigos(productoId)
+  const { codigos, loading, addCodigos, deleteCodigo, deleteCodigoUsado } = useProductoCodigos(productoId)
   const [newCodesText, setNewCodesText] = useState('')
   const [adding, setAdding] = useState(false)
   const [selectedPedidoDetalle, setSelectedPedidoDetalle] = useState(null)
@@ -1799,7 +1799,32 @@ function ProductVault({ productoId, setAlertModal }) {
                     )}
                   </td>
                   <td style={{ padding: '8px', textAlign: 'center' }}>
-                    {!c.usado && (
+                    {c.usado ? (
+                      <button 
+                        type="button" 
+                        className="btn btn-ghost btn-sm" 
+                        onClick={() => {
+                          if (window.confirm(`¿Eliminar permanentemente este código utilizado? Esta acción no se puede deshacer.\n\nCódigo: ${c.codigo}\nOrden: ${c.pedidos?.numero_pedido ? '#' + c.pedidos.numero_pedido : 'N/A'}`)) {
+                            deleteCodigoUsado(c.id)
+                          }
+                        }}
+                        style={{ 
+                          padding: '2px 4px', 
+                          fontSize: '10px',
+                          color: '#ef4444',
+                          opacity: 0.6,
+                          border: '1px solid rgba(239,68,68,0.3)',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          transition: 'opacity 0.2s'
+                        }}
+                        title="Eliminar código utilizado del historial"
+                        onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                        onMouseLeave={e => e.currentTarget.style.opacity = '0.6'}
+                      >
+                        🗑️
+                      </button>
+                    ) : (
                       <button 
                         type="button" 
                         className="btn btn-ghost btn-sm text-danger" 

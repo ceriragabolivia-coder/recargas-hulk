@@ -1,10 +1,10 @@
--- Eliminar TODAS las sobrecargas posibles de pagar_con_billetera_bs_rpc y pagar_con_billetera_rpc
+-- Eliminar las sobrecargas posibles 
 DROP FUNCTION IF EXISTS public.pagar_con_billetera_bs_rpc(uuid, numeric, integer, text);
 DROP FUNCTION IF EXISTS public.pagar_con_billetera_bs_rpc(uuid, numeric, uuid, text);
 DROP FUNCTION IF EXISTS public.pagar_con_billetera_rpc(uuid, numeric, integer, text);
 DROP FUNCTION IF EXISTS public.pagar_con_billetera_rpc(uuid, numeric, uuid, text);
 
--- Crear la función para USD
+-- Función para pagos en USD
 CREATE OR REPLACE FUNCTION public.pagar_con_billetera_rpc(
     p_user_id UUID,
     p_amount NUMERIC,
@@ -24,7 +24,7 @@ BEGIN
         RETURN FALSE;
     END IF;
 
-    -- Descontar del usuario
+    -- Descontar de la billetera general del usuario
     UPDATE public.billeteras
     SET saldo = saldo - p_amount, updated_at = now()
     WHERE auth_user_id = p_user_id;
@@ -38,19 +38,16 @@ BEGIN
     FROM auth.users u 
     WHERE LOWER(u.email) = 'ceriraga@gmail.com' LIMIT 1;
 
-    -- Si existe, acreditarle el dinero
+    -- Acreditar al saldo OPERATIVO del super admin
     IF v_superadmin_id IS NOT NULL AND v_superadmin_id != p_user_id THEN
-        -- Crear billetera si no tiene
-        INSERT INTO public.billeteras (auth_user_id, saldo, saldo_bs)
-        VALUES (v_superadmin_id, 0, 0)
-        ON CONFLICT (auth_user_id) DO NOTHING;
+        INSERT INTO public.admin_saldos (auth_user_id, saldo_usd, saldo_bs)
+        VALUES (v_superadmin_id, p_amount, 0)
+        ON CONFLICT (auth_user_id) DO UPDATE
+        SET saldo_usd = public.admin_saldos.saldo_usd + p_amount,
+            updated_at = now();
 
-        UPDATE public.billeteras
-        SET saldo = saldo + p_amount, updated_at = now()
-        WHERE auth_user_id = v_superadmin_id;
-
-        INSERT INTO public.billetera_transacciones (auth_user_id, monto, tipo, descripcion, referencia_id, moneda)
-        VALUES (v_superadmin_id, p_amount, 'ajuste_admin', 'Ingreso por pago de pedido con billetera (USD)', p_pedido_id, 'usd');
+        INSERT INTO public.admin_saldos_historial (admin_id, pedido_id, tipo_movimiento, moneda, monto, notas)
+        VALUES (v_superadmin_id, p_pedido_id, 'credito_venta', 'usd', p_amount, 'Ingreso por pago de pedido con billetera (USD)');
     END IF;
 
     RETURN TRUE;
@@ -58,7 +55,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 
--- Crear la función para Bs
+-- Función para pagos en Bolívares
 CREATE OR REPLACE FUNCTION public.pagar_con_billetera_bs_rpc(
     p_user_id UUID,
     p_amount NUMERIC,
@@ -78,7 +75,7 @@ BEGIN
         RETURN FALSE;
     END IF;
 
-    -- Descontar del usuario
+    -- Descontar de la billetera general del usuario
     UPDATE public.billeteras
     SET saldo_bs = saldo_bs - p_amount, updated_at = now()
     WHERE auth_user_id = p_user_id;
@@ -92,19 +89,16 @@ BEGIN
     FROM auth.users u 
     WHERE LOWER(u.email) = 'ceriraga@gmail.com' LIMIT 1;
 
-    -- Si existe, acreditarle el dinero
+    -- Acreditar al saldo OPERATIVO del super admin
     IF v_superadmin_id IS NOT NULL AND v_superadmin_id != p_user_id THEN
-        -- Crear billetera si no tiene
-        INSERT INTO public.billeteras (auth_user_id, saldo, saldo_bs)
-        VALUES (v_superadmin_id, 0, 0)
-        ON CONFLICT (auth_user_id) DO NOTHING;
+        INSERT INTO public.admin_saldos (auth_user_id, saldo_usd, saldo_bs)
+        VALUES (v_superadmin_id, 0, p_amount)
+        ON CONFLICT (auth_user_id) DO UPDATE
+        SET saldo_bs = public.admin_saldos.saldo_bs + p_amount,
+            updated_at = now();
 
-        UPDATE public.billeteras
-        SET saldo_bs = saldo_bs + p_amount, updated_at = now()
-        WHERE auth_user_id = v_superadmin_id;
-
-        INSERT INTO public.billetera_transacciones (auth_user_id, monto, tipo, descripcion, referencia_id, moneda)
-        VALUES (v_superadmin_id, p_amount, 'ajuste_admin', 'Ingreso por pago de pedido con billetera (Bs)', p_pedido_id, 'bs');
+        INSERT INTO public.admin_saldos_historial (admin_id, pedido_id, tipo_movimiento, moneda, monto, notas)
+        VALUES (v_superadmin_id, p_pedido_id, 'credito_venta', 'bs', p_amount, 'Ingreso por pago de pedido con billetera (Bs)');
     END IF;
 
     RETURN TRUE;
