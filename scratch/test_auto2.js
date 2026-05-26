@@ -7,9 +7,8 @@ const key = env.match(/VITE_SUPABASE_ANON_KEY=(.*)/)[1].trim();
 const supabase = createClient(url, key);
 
 async function check() {
-  const { data: { session }, error: loginErr } = await supabase.auth.signInWithPassword({
-    email: 'ceriraga@gmail.com',
-    password: 'ceriragapassword' // I will try default or similar? Actually, I don't know the password.
-  });
+  const { data, error } = await supabase.rpc('debug_sql', { query: "SELECT prosrc FROM pg_proc WHERE proname = 'guardar_historial_tasas'" });
+  console.log("Trigger Code:", data);
+  console.log("ERROR:", error);
 }
 check();

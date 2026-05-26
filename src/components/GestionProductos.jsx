@@ -1825,7 +1825,11 @@ function VaultCodesList({ codigos, loading, pedidoLoading, reorderCodigos, delet
                     ) : (
                       <button
                         type="button"
-                        onClick={() => deleteCodigo(c.id)}
+                        onClick={() => {
+                          if (window.confirm(`¿Eliminar este código disponible del baúl?\n\nCódigo: ${c.codigo}`)) {
+                            deleteCodigo(c.id)
+                          }
+                        }}
                         style={{
                           background: 'none', border: 'none',
                           color: '#ef4444', cursor: 'pointer',
