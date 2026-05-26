@@ -1636,6 +1636,7 @@ function VaultCodesList({ codigos, loading, pedidoLoading, reorderCodigos, delet
   const dragItem = useRef(null)
   const [editingOrderId, setEditingOrderId] = useState(null)
   const [editOrderVal, setEditOrderVal] = useState('')
+  const [codigoToDelete, setCodigoToDelete] = useState(null)
 
   const handleDragStart = (e, codigo) => {
     if (codigo.usado) return
@@ -1808,11 +1809,7 @@ function VaultCodesList({ codigos, loading, pedidoLoading, reorderCodigos, delet
                     {c.usado ? (
                       <button
                         type="button"
-                        onClick={() => {
-                          if (window.confirm(`¿Eliminar permanentemente este código utilizado?\n\nCódigo: ${c.codigo}`)) {
-                            deleteCodigoUsado(c.id)
-                          }
-                        }}
+                        onClick={() => setCodigoToDelete(c)}
                         style={{
                           background: 'none', border: '1px solid rgba(239,68,68,0.3)',
                           borderRadius: '4px', color: '#ef4444', cursor: 'pointer',
@@ -1825,11 +1822,7 @@ function VaultCodesList({ codigos, loading, pedidoLoading, reorderCodigos, delet
                     ) : (
                       <button
                         type="button"
-                        onClick={() => {
-                          if (window.confirm(`¿Eliminar este código disponible del baúl?\n\nCódigo: ${c.codigo}`)) {
-                            deleteCodigo(c.id)
-                          }
-                        }}
+                        onClick={() => setCodigoToDelete(c)}
                         style={{
                           background: 'none', border: 'none',
                           color: '#ef4444', cursor: 'pointer',
@@ -1847,6 +1840,77 @@ function VaultCodesList({ codigos, loading, pedidoLoading, reorderCodigos, delet
           </tbody>
         </table>
       </div>
+
+      {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN */}
+      {codigoToDelete && (
+        <div 
+          className="modal-overlay" 
+          style={{ 
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+            backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 13000, 
+            display: 'flex', justifyContent: 'center', alignItems: 'center', 
+            backdropFilter: 'blur(6px)', padding: '16px' 
+          }}
+          onClick={() => setCodigoToDelete(null)}
+        >
+          <div 
+            className="card" 
+            style={{ 
+              width: '100%', maxWidth: '400px', backgroundColor: '#13151a', 
+              border: '1px solid var(--border-color)', borderRadius: '16px', 
+              padding: '24px', boxShadow: '0 20px 60px rgba(0,0,0,0.7)', 
+              color: '#fff', textAlign: 'center'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ fontSize: '40px', marginBottom: '16px' }}>⚠️</div>
+            <h3 style={{ margin: '0 0 16px', fontSize: '18px', fontWeight: 'bold' }}>
+              Confirmar Eliminación
+            </h3>
+            <p style={{ margin: '0 0 12px', fontSize: '14px', color: 'var(--text-muted)' }}>
+              ¿Estás seguro de que deseas eliminar permanentemente este código del baúl?
+            </p>
+            <div style={{ 
+              backgroundColor: 'rgba(255,255,255,0.05)', padding: '12px', 
+              borderRadius: '8px', fontFamily: 'monospace', fontSize: '16px', 
+              color: 'var(--accent-primary)', marginBottom: '24px', wordBreak: 'break-all'
+            }}>
+              {codigoToDelete.codigo}
+            </div>
+            {codigoToDelete.usado && (
+              <p style={{ margin: '0 0 24px', fontSize: '12px', color: '#ef4444' }}>
+                Este código está marcado como utilizado. Eliminarlo borrará el registro del historial.
+              </p>
+            )}
+            
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button 
+                type="button" 
+                className="btn btn-ghost" 
+                onClick={() => setCodigoToDelete(null)}
+                style={{ flex: 1 }}
+              >
+                Cancelar
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-primary" 
+                onClick={() => {
+                  if (codigoToDelete.usado) {
+                    deleteCodigoUsado(codigoToDelete.id)
+                  } else {
+                    deleteCodigo(codigoToDelete.id)
+                  }
+                  setCodigoToDelete(null)
+                }}
+                style={{ flex: 1, backgroundColor: '#ef4444', borderColor: '#ef4444', color: 'white' }}
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
