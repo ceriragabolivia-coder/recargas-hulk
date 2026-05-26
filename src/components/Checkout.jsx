@@ -389,13 +389,13 @@ export default function Checkout({ onFinish, embedded = false }) {
       }
 
       // 1. Procesar débitos de billetera ANTES de crear el pedido para garantizar el pago
-      if (useWalletPartial && amountUSDToDeduct > 0) {
+      if ((useWalletPartial || currentIsWalletOnly) && amountUSDToDeduct > 0) {
         if (currentIsWalletOnly) finalMetodoId = null; // EVITAR ERROR UUID
         try {
           const { data: walletRes, error: walletError } = await supabase.rpc('pagar_con_billetera_rpc', {
             p_user_id: targetUserId,
             p_amount: amountUSDToDeduct,
-            p_pedido_id: 0, 
+            p_pedido_id: null, 
             p_description: `Reserva para pedido en proceso - USD`
           })
 
@@ -411,13 +411,13 @@ export default function Checkout({ onFinish, embedded = false }) {
         }
       }
 
-      if (useWalletBs && amountBsToDeduct > 0) {
+      if ((useWalletBs || currentIsWalletBsOnly) && amountBsToDeduct > 0) {
         if (currentIsWalletBsOnly) finalMetodoId = null; // EVITAR ERROR UUID
         try {
           const { data: walletBsRes, error: walletErrorBs } = await supabase.rpc('pagar_con_billetera_bs_rpc', {
             p_user_id: targetUserId,
             p_amount: amountBsToDeduct,
-            p_pedido_id: 0,
+            p_pedido_id: null,
             p_description: `Pago Billetera Bs - Monto: ${amountBsToDeduct}`
           })
 
