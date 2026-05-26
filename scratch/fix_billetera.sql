@@ -1,5 +1,10 @@
--- Actualización de los RPCs de pago con billetera para que el dinero vaya al super admin
+-- Eliminar TODAS las sobrecargas posibles de pagar_con_billetera_bs_rpc y pagar_con_billetera_rpc
+DROP FUNCTION IF EXISTS public.pagar_con_billetera_bs_rpc(uuid, numeric, integer, text);
+DROP FUNCTION IF EXISTS public.pagar_con_billetera_bs_rpc(uuid, numeric, uuid, text);
+DROP FUNCTION IF EXISTS public.pagar_con_billetera_rpc(uuid, numeric, integer, text);
+DROP FUNCTION IF EXISTS public.pagar_con_billetera_rpc(uuid, numeric, uuid, text);
 
+-- Crear la función para USD
 CREATE OR REPLACE FUNCTION public.pagar_con_billetera_rpc(
     p_user_id UUID,
     p_amount NUMERIC,
@@ -53,6 +58,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 
+-- Crear la función para Bs
 CREATE OR REPLACE FUNCTION public.pagar_con_billetera_bs_rpc(
     p_user_id UUID,
     p_amount NUMERIC,

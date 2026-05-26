@@ -399,8 +399,8 @@ export default function Checkout({ onFinish, embedded = false }) {
             p_description: `Reserva para pedido en proceso - USD`
           })
 
-          if (walletError || !walletRes?.success) {
-            alert(`ERROR COBRO USD: ${walletError?.message || walletRes?.message}`);
+          if (walletError || walletRes === false) {
+            alert(`ERROR COBRO USD: ${walletError?.message || 'Fondos insuficientes'}`);
             setIsProcessing(false);
             return;
           }
@@ -421,8 +421,8 @@ export default function Checkout({ onFinish, embedded = false }) {
             p_description: `Pago Billetera Bs - Monto: ${amountBsToDeduct}`
           })
 
-          if (walletErrorBs || !walletBsRes?.success) {
-            alert(`ERROR COBRO BS: ${walletErrorBs?.message || walletBsRes?.message}`);
+          if (walletErrorBs || walletBsRes === false) {
+            alert(`ERROR COBRO BS: ${walletErrorBs?.message || 'Fondos insuficientes'}`);
             setIsProcessing(false);
             return;
           }
