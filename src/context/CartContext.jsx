@@ -56,6 +56,10 @@ export function CartProvider({ children }) {
   const checkout = async (registrarVenta, clienteId, metodoPagoId, referencia, whatsapp, ruletaDesc, existingPedidoId, comprobanteUrl, shouldUpdate) => {
     if (!user || cart.length === 0) return [{ id: 'pedido', error: 'Carrito vacío o sesión no iniciada' }]
 
+    if (perfil && ['baneado', 'suspendido', 'rechazado'].includes(perfil.estado?.toLowerCase())) {
+      return [{ id: 'pedido', error: 'Tu cuenta no tiene permisos para realizar pedidos (Baneada/Suspendida).' }]
+    }
+
     try {
       const totalUSD = cart.reduce((acc, item) => acc + (item.venta_usd * item.quantity), 0)
       const totalBs = cart.reduce((acc, item) => acc + (item.venta_bs * item.quantity), 0)

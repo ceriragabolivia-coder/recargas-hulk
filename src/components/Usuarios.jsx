@@ -84,14 +84,20 @@ export default function Usuarios({ onNavigate }) {
       porcentaje_descuento: cliente.porcentaje_descuento || 0,
       whatsapp: cliente.whatsapp || '',
       estado: cliente.estado || 'pendiente',
+      motivo_estado: cliente.motivo_estado || '',
       config_modulos: cliente.config_modulos || []
     })
   }
 
   const handleQuickStatus = async (cliente, newStatus) => {
+    let motivo = null;
+    if (['rechazado', 'suspendido', 'baneado'].includes(newStatus)) {
+      motivo = window.prompt(`Ingresa el motivo/observación para marcar al usuario como ${newStatus}:`);
+      if (motivo === null) return; // Action cancelled
+    }
     setSaving(true)
     try {
-      const { error } = await updateProfileStatus(cliente, newStatus)
+      const { error } = await updateProfileStatus(cliente, newStatus, motivo)
       if (error) throw error
       await refetch()
     } catch (error) {
@@ -116,6 +122,7 @@ export default function Usuarios({ onNavigate }) {
           rol: editingData.rol,
           porcentaje_descuento: editingData.rol === 'revendedor' ? parseFloat(editingData.porcentaje_descuento || 0) : 0,
           estado: editingData.estado,
+          motivo_estado: editingData.motivo_estado || null,
           config_modulos: editingData.rol === 'negocio' ? editingData.config_modulos : []
         })
         if (errorProfile) throw errorProfile
@@ -302,7 +309,7 @@ export default function Usuarios({ onNavigate }) {
     <div className="page-content" style={{ maxWidth: '100%', padding: '0 24px', margin: '0 auto' }}>
       <div className="page-header mb-24" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 className="page-title">Gestión de Usuarios</h1>
+          <h1 className="page-title">Gestión de Usuarios (v2)</h1>
           <p className="page-subtitle">Administra los roles, permisos y descuentos de los miembros de la plataforma</p>
         </div>
         <div style={{ position: 'relative', width: '100%', maxWidth: '300px' }}>
@@ -409,18 +416,28 @@ export default function Usuarios({ onNavigate }) {
 
                       <td>
                         {isEditing ? (
-                          <select 
-                            className="form-input" 
-                            style={{ padding: '6px', fontSize: '12px', width: '120px' }}
-                            value={editingData.estado}
-                            onChange={(e) => setEditingData({...editingData, estado: e.target.value})}
-                          >
-                            <option value="aprobado">🟢 Aprobado</option>
-                            <option value="pendiente">⏳ Pendiente</option>
-                            <option value="rechazado">🔴 Rechazado</option>
-                            <option value="suspendido">🚫 Suspendido</option>
-                            <option value="baneado">💀 Baneado</option>
-                          </select>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <select 
+                              className="form-input" 
+                              style={{ padding: '6px', fontSize: '12px', width: '120px' }}
+                              value={editingData.estado}
+                              onChange={(e) => setEditingData({...editingData, estado: e.target.value})}
+                            >
+                              <option value="aprobado">🟢 Aprobado</option>
+                              <option value="pendiente">⏳ Pendiente</option>
+                              <option value="rechazado">🔴 Rechazado</option>
+                              <option value="suspendido">🚫 Suspendido</option>
+                              <option value="baneado">💀 Baneado</option>
+                            </select>
+                            <textarea
+                              className="form-input"
+                              style={{ padding: '6px', fontSize: '11px', width: '120px', minHeight: '50px', resize: 'vertical', backgroundColor: 'rgba(0,0,0,0.2)' }}
+                              value={editingData.motivo_estado}
+                              onChange={(e) => setEditingData({...editingData, motivo_estado: e.target.value})}
+                              placeholder="Notas / Observación"
+                              title="Nota visible solo para administradores (O motivo de bloqueo)"
+                            />
+                          </div>
                         ) : (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span style={{ 
@@ -449,6 +466,11 @@ export default function Usuarios({ onNavigate }) {
                                cliente.estado === 'rechazado' ? 'Rechazado' : 
                                cliente.estado === 'suspendido' ? 'Suspendido' : 'Baneado'}
                             </span>
+                            {cliente.motivo_estado && (
+                              <span title={cliente.motivo_estado} style={{ cursor: 'help', fontSize: '12px' }}>
+                                ℹ️
+                              </span>
+                            )}
                             
                             {!isEditing && cliente.estado === 'pendiente' && (
                               <div style={{ display: 'flex', gap: '4px' }}>

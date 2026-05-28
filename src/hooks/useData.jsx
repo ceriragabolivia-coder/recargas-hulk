@@ -516,7 +516,7 @@ export function useClientes() {
         .order('fecha_registro', { ascending: false }),
       supabase
         .from('perfiles')
-        .select('id, rol, estado, porcentaje_descuento, config_modulos'),
+        .select('id, rol, estado, porcentaje_descuento, config_modulos, motivo_estado'),
       supabase
         .from('billeteras')
         .select('auth_user_id, saldo, saldo_bs')
@@ -534,6 +534,7 @@ export function useClientes() {
           estado: p?.estado || c.estado || 'pendiente',
           porcentaje_descuento: p?.porcentaje_descuento || 0,
           config_modulos: p?.config_modulos || [],
+          motivo_estado: p?.motivo_estado || null,
           billetera_saldo: billeterasMap.get(c.auth_user_id)?.saldo || 0,
           billetera_saldo_bs: billeterasMap.get(c.auth_user_id)?.saldo_bs || 0
         }
@@ -564,7 +565,8 @@ export function useClientes() {
       p_rol: updates.rol,
       p_estado: updates.estado || null,
       p_porcentaje_descuento: updates.porcentaje_descuento || 0,
-      p_config_modulos: updates.config_modulos || []
+      p_config_modulos: updates.config_modulos || [],
+      p_motivo: updates.motivo_estado || null
     })
     
     if (error) return { error }
@@ -576,19 +578,20 @@ export function useClientes() {
     return { error: null }
   }
 
-  async function updateProfileStatus(cliente, newStatus) {
+  async function updateProfileStatus(cliente, newStatus, motivo = null) {
     if (!cliente.auth_user_id) return { error: new Error('El cliente no tiene un ID de autenticación vinculado.') }
 
     const { data, error } = await supabase.rpc('rpc_aprobar_usuario', {
       p_user_id: cliente.auth_user_id,
-      p_status: newStatus
+      p_status: newStatus,
+      p_motivo: motivo
     })
 
     if (error) return { error }
     if (data && !data.success) return { error: new Error(data.message) }
 
     setClientes(prev => prev.map(c => 
-      c.id === cliente.id ? { ...c, estado: newStatus } : c
+      c.id === cliente.id ? { ...c, estado: newStatus, motivo_estado: motivo } : c
     ))
     return { error: null }
   }

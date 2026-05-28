@@ -242,13 +242,18 @@ const PendingView = ({ onLogout, onRefresh }) => (
   </div>
 )
 
-const RejectedView = ({ onLogout, onRefresh }) => (
+const RejectedView = ({ onLogout, onRefresh, motivo }) => (
   <div className="login-container">
     <div className="login-card" style={{ textAlign: 'center', maxWidth: '450px' }}>
       <div style={{ fontSize: '64px', marginBottom: '24px' }}>❌</div>
       <h2 className="login-title">Acceso Denegado</h2>
       <p style={{ color: 'var(--text-muted)', marginBottom: '32px', lineHeight: '1.6' }}>
         Lo sentimos, tu solicitud de acceso ha sido rechazada por el administrador.
+        {motivo && (
+          <span style={{ display: 'block', marginTop: '16px', padding: '12px', backgroundColor: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: '12px', border: '1px solid rgba(239,68,68,0.2)' }}>
+            <strong>Motivo:</strong> {motivo}
+          </span>
+        )}
       </p>
 
       <button
@@ -266,7 +271,7 @@ const RejectedView = ({ onLogout, onRefresh }) => (
   </div>
 )
 
-const SuspendedView = ({ onLogout, onRefresh, type = 'suspendido' }) => (
+const SuspendedView = ({ onLogout, onRefresh, type = 'suspendido', motivo }) => (
   <div className="login-container">
     <div className="login-card" style={{ textAlign: 'center', maxWidth: '450px' }}>
       <div style={{ fontSize: '64px', marginBottom: '24px' }}>🚫</div>
@@ -275,6 +280,12 @@ const SuspendedView = ({ onLogout, onRefresh, type = 'suspendido' }) => (
         {type === 'baneado'
           ? 'Tu Cuenta Ha Sido Baneada Por Administración, Si Crees Que Ha Sido Un Error Comunícate Con Ellos'
           : 'Tu cuenta ha sido temporalmente suspendida. Por favor, contacta al soporte para más información.'}
+          
+        {motivo && (
+          <span style={{ display: 'block', marginTop: '16px', padding: '12px', backgroundColor: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: '12px', border: '1px solid rgba(239,68,68,0.2)' }}>
+            <strong>Motivo:</strong> {motivo}
+          </span>
+        )}
       </p>
 
       {type === 'baneado' && (
@@ -674,11 +685,43 @@ export default function App() {
     }
 
     if (user) {
-      const estado = perfil?.estado?.toLowerCase() || 'aprobado'
+      // Prevent access while perfil is loading or null
+      if (!perfil || loading) {
+        return (
+          <div className="loading-screen-modern">
+            <div className="spinner" style={{ marginBottom: '20px' }}></div>
+            <div className="loading-text-dynamic">Verificando sesión...</div>
+          </div>
+        )
+      }
+
+      const estado = perfil?.estado?.toLowerCase()
+      
+      if (estado === 'cargando') {
+        if (forceLoad) {
+           return (
+             <div className="login-container">
+               <div className="login-card" style={{ textAlign: 'center' }}>
+                 <h2>Error de Conexión</h2>
+                 <p>No se pudo verificar el estado de tu cuenta de forma segura.</p>
+                 <button className="btn btn-primary" onClick={refetch} style={{width: '100%', marginBottom: '12px'}}>Reintentar</button>
+                 <button className="btn btn-ghost" onClick={logout} style={{width: '100%'}}>Cerrar Sesión</button>
+               </div>
+             </div>
+           )
+        }
+        return (
+          <div className="loading-screen-modern">
+            <div className="spinner" style={{ marginBottom: '20px' }}></div>
+            <div className="loading-text-dynamic">Verificando conexión...</div>
+          </div>
+        )
+      }
+
       if (estado === 'pendiente') return <PendingView onLogout={logout} onRefresh={refetch} />
-      if (estado === 'rechazado') return <RejectedView onLogout={logout} onRefresh={refetch} />
-      if (estado === 'suspendido') return <SuspendedView onLogout={logout} onRefresh={refetch} type="suspendido" />
-      if (estado === 'baneado') return <SuspendedView onLogout={logout} onRefresh={refetch} type="baneado" />
+      if (estado === 'rechazado') return <RejectedView onLogout={logout} onRefresh={refetch} motivo={perfil?.motivo_estado} />
+      if (estado === 'suspendido') return <SuspendedView onLogout={logout} onRefresh={refetch} type="suspendido" motivo={perfil?.motivo_estado} />
+      if (estado === 'baneado') return <SuspendedView onLogout={logout} onRefresh={refetch} type="baneado" motivo={perfil?.motivo_estado} />
     }
 
     return (
