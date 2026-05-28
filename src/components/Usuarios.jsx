@@ -51,6 +51,9 @@ export default function Usuarios({ onNavigate }) {
   // Estados para ver Pedidos (Movimientos)
   const [viendoPedidosUsuario, setViendoPedidosUsuario] = useState(null)
   
+  // Estado para ver nota de usuario
+  const [viendoNotaUsuario, setViendoNotaUsuario] = useState(null)
+  
   // Estados para Restablecer Contraseña
   const [reseteandoPassword, setReseteandoPassword] = useState(null)
   const [newPassword, setNewPassword] = useState('')
@@ -467,7 +470,11 @@ export default function Usuarios({ onNavigate }) {
                                cliente.estado === 'suspendido' ? 'Suspendido' : 'Baneado'}
                             </span>
                             {cliente.motivo_estado && (
-                              <span title={cliente.motivo_estado} style={{ cursor: 'help', fontSize: '12px' }}>
+                              <span 
+                                onClick={() => setViendoNotaUsuario(cliente)}
+                                title="Ver nota/observación" 
+                                style={{ cursor: 'pointer', fontSize: '14px', marginLeft: '6px' }}
+                              >
                                 ℹ️
                               </span>
                             )}
@@ -1009,6 +1016,36 @@ export default function Usuarios({ onNavigate }) {
           onConfirm={() => setAlertModal(null)}
           onCancel={() => setAlertModal(null)}
         />
+      )}
+
+      {/* Modal para Ver Nota de Usuario */}
+      {viendoNotaUsuario && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 10000, animation: 'fadeIn 0.2s ease'
+        }}>
+          <div style={{ backgroundColor: '#1a1d21', borderRadius: '24px', width: '100%', maxWidth: '450px', padding: '32px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <h3 style={{ fontSize: '20px', marginBottom: '16px' }}>Nota de {viendoNotaUsuario.nombres}</h3>
+            <div style={{ 
+              backgroundColor: 'rgba(0,0,0,0.3)', 
+              padding: '16px', 
+              borderRadius: '12px', 
+              border: '1px solid var(--border-color)', 
+              marginBottom: '24px', 
+              color: 'var(--text-primary)', 
+              whiteSpace: 'pre-wrap', 
+              lineHeight: '1.5',
+              maxHeight: '300px',
+              overflowY: 'auto'
+            }}>
+              {viendoNotaUsuario.motivo_estado}
+            </div>
+            <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => setViendoNotaUsuario(null)}>
+              Cerrar
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Modal Configuración de Módulos para Negocio */}
