@@ -1027,6 +1027,24 @@ export default function Landing({ onNavigate }) {
                               />
                             </div>
                           </div>
+                        ) : effectiveMetodoRecarga === 'solo_usuario' ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                <label className="form-label" style={{ fontSize: '12px', margin: 0 }}>👤 Usuario (@)</label>
+                                {selectedJuego?.guia_id_url && (
+                                  <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent-primary)', color:'#fff', width:'16px', height:'16px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:'bold' }} title="Ver guía">?</div>
+                                )}
+                              </div>
+                              <input 
+                                type="text" 
+                                className="form-input" 
+                                placeholder="@Usuario"
+                                value={localRechargeData.account_user || ''}
+                                onChange={e => setLocalRechargeData({...localRechargeData, account_user: e.target.value})}
+                              />
+                            </div>
+                          </div>
                         ) : effectiveMetodoRecarga === 'cuenta_completa' ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <div>
@@ -1775,6 +1793,10 @@ export default function Landing({ onNavigate }) {
                       ) : pendingEffectiveMetodo === 'solo_correo' ? (
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Correo:</span> <strong style={{ color: '#fff' }}>{pendingItem.localRechargeData.account_email}</strong></div>
+                      </>
+                      ) : pendingEffectiveMetodo === 'solo_usuario' ? (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Usuario:</span> <strong style={{ color: '#fff' }}>{pendingItem.localRechargeData.account_user}</strong></div>
                       </>
                       ) : pendingEffectiveMetodo === 'cuenta_completa' ? (
                   <>

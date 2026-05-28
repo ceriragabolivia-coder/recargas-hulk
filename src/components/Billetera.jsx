@@ -933,6 +933,8 @@ export default function Billetera({ onNavigate }) {
                       <div style={{ marginTop: '12px', padding: '12px', backgroundColor: 'rgba(0, 210, 255, 0.05)', borderRadius: '12px', fontSize: '14px', color: 'var(--accent-primary)', fontWeight: 500 }}>
                         {item.metodo_recarga === 'solo_correo' ? (
                           <>📧 Correo: {item.account_email}</>
+                        ) : item.metodo_recarga === 'solo_usuario' ? (
+                          <>👤 Usuario: {item.account_user}</>
                         ) : item.metodo_recarga === 'id_jugador' ? (
                           <>🆔 ID del Jugador: {item.player_id}</>
                         ) : item.metodo_recarga === 'id_zone' ? (

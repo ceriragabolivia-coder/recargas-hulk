@@ -300,6 +300,8 @@ export default function Catalogo() {
                     const pendingEffectiveMetodo = (pendingItem.p.tipo_producto === 'gift_card') ? 'entrega_codigo' : (pendingItem.selectedJuego.metodo_recarga || 'sin_datos');
                     return pendingEffectiveMetodo === 'solo_correo' 
                       ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Correo:</span><br/>{pendingItem.localRechargeData.account_email}</>
+                      : pendingEffectiveMetodo === 'solo_usuario' 
+                      ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Usuario:</span><br/>{pendingItem.localRechargeData.account_user}</>
                       : pendingEffectiveMetodo === 'cuenta_completa' 
                       ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Correo:</span><br/>{pendingItem.localRechargeData.account_email}<br/><div style={{height:8}}></div><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Clave:</span><br/>{pendingItem.localRechargeData.account_password}</>
                       : pendingEffectiveMetodo === 'usuario_clave'
@@ -547,6 +549,22 @@ export default function Catalogo() {
                     placeholder="ejemplo@correo.com"
                     value={localRechargeData.account_email}
                     onChange={e => setLocalRechargeData({...localRechargeData, account_email: e.target.value})}
+                    style={{ backgroundColor: 'var(--bg-card)', padding: '16px', fontSize: '15px' }}
+                  />
+                </div>
+              </div>
+            ) : effectiveMetodoRecarga === 'solo_usuario' ? (
+              <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 200px' }}>
+                  <label className="form-label" style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    👤 Usuario (@)
+                  </label>
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    placeholder="@Usuario"
+                    value={localRechargeData.account_user || ''}
+                    onChange={e => setLocalRechargeData({...localRechargeData, account_user: e.target.value})}
                     style={{ backgroundColor: 'var(--bg-card)', padding: '16px', fontSize: '15px' }}
                   />
                 </div>
@@ -931,6 +949,11 @@ export default function Catalogo() {
                         } else if (prodEffectiveMetodo === 'solo_correo') {
                           if (!localRechargeData.account_email.trim()) {
                             alert('Por favor introduce el correo electrónico primero.')
+                            return
+                          }
+                        } else if (prodEffectiveMetodo === 'solo_usuario') {
+                          if (!localRechargeData.account_user?.trim()) {
+                            alert('Por favor introduce el usuario primero.')
                             return
                           }
                         } else if (prodEffectiveMetodo === 'cuenta_completa') {

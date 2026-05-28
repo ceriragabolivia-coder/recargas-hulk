@@ -630,8 +630,30 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
         ? { estado: 'reembolsado', reembolso_billetera: true, updated_at: new Date().toISOString() }
         : { reembolso_billetera: true, updated_at: new Date().toISOString() };
       
-      setPedidos(prev => prev.map(p => p.id === pedido.id ? { ...p, ...updateData } : p));
-      setSelectedPedido(prev => ({ ...prev, ...updateData }));
+      setPedidos(prev => prev.map(p => {
+        if (p.id === pedido.id) {
+          const updatedPedido = { ...p, ...updateData };
+          if (cambiarEstado && updatedPedido.pedido_items) {
+            updatedPedido.pedido_items = updatedPedido.pedido_items.map(item => ({
+              ...item,
+              codigo_entregado: null
+            }));
+          }
+          return updatedPedido;
+        }
+        return p;
+      }));
+      
+      setSelectedPedido(prev => {
+        const updatedPedido = { ...prev, ...updateData };
+        if (cambiarEstado && updatedPedido.pedido_items) {
+          updatedPedido.pedido_items = updatedPedido.pedido_items.map(item => ({
+            ...item,
+            codigo_entregado: null
+          }));
+        }
+        return updatedPedido;
+      });
     }
     setLoading(false);
   }
@@ -2268,6 +2290,10 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                     {item.metodo_recarga === 'solo_correo' ? (
                       <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
                         <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>📧 {item.account_email}</div>
+                      </div>
+                    ) : item.metodo_recarga === 'solo_usuario' ? (
+                      <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
+                        <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>👤 {item.account_user}</div>
                       </div>
                     ) : item.metodo_recarga === 'cuenta_completa' ? (
                       <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
