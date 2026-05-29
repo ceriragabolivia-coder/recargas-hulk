@@ -633,18 +633,25 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
           if (payload.eventType === 'INSERT') {
             const newOrder = payload.new
             if (newOrder) {
-              const numero = newOrder.numero_pedido || 'N/A'
-              const total = Number(newOrder.total_bs || 0).toLocaleString('es-VE')
-              const orderToast = {
-                id: Date.now() + Math.random(),
-                db_id: newOrder.id,
-                type: 'new_order',
-                titulo: `🚀 ¡NUEVO PEDIDO #${numero}!`,
-                mensaje: `Se ha recibido una nueva orden por un total de Bs ${total}. Haz clic para gestionarla.`,
-                order_id: newOrder.id
+              // Validar que el pedido sea realmente nuevo (creado hace menos de 2 minutos)
+              // Esto evita que actualizaciones de RLS (cuando otro admin procesa) disparen un INSERT
+              const orderDate = new Date(newOrder.created_at).getTime()
+              const isActuallyNew = (Date.now() - orderDate) < 120000
+
+              if (isActuallyNew) {
+                const numero = newOrder.numero_pedido || 'N/A'
+                const total = Number(newOrder.total_bs || 0).toLocaleString('es-VE')
+                const orderToast = {
+                  id: Date.now() + Math.random(),
+                  db_id: newOrder.id,
+                  type: 'new_order',
+                  titulo: `🚀 ¡NUEVO PEDIDO #${numero}!`,
+                  mensaje: `Se ha recibido una nueva orden por un total de Bs ${total}. Haz clic para gestionarla.`,
+                  order_id: newOrder.id
+                }
+                setToasts(prev => [orderToast, ...prev].slice(0, 3))
+                playOrderNotificationSound()
               }
-              setToasts(prev => [orderToast, ...prev].slice(0, 3))
-              playOrderNotificationSound()
             }
           } else if (payload.eventType === 'UPDATE') {
             // Check if it was assigned to ME and is actively being processed
