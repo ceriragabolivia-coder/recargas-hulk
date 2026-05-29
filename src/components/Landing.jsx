@@ -1323,7 +1323,7 @@ export default function Landing({ onNavigate }) {
                                       fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', minWidth: '120px'
                                     }}
                                   >
-                                    Recarga Interna
+                                    {selectedJuego?.metodo_recarga === 'cuenta_completa' || selectedJuego?.metodo_recarga === 'usuario_clave' ? 'Recarga Interna' : selectedJuego?.metodo_recarga === 'solo_usuario' ? 'Recarga por Usuario' : selectedJuego?.metodo_recarga === 'solo_correo' ? 'Recarga por Correo' : 'Recarga por ID'}
                                   </button>
                                 )}
                                 {hasPaquetes && (
