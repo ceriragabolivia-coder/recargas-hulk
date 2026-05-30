@@ -2530,6 +2530,7 @@ export default function Landing({ onNavigate }) {
           display: flex;
           flex-direction: column;
           margin-top: 25px; /* Espacio para el gancho */
+          height: calc(100% - 25px); /* Restar margin-top para que cuadre perfecto en el grid */
         }
         .game-image-container {
           width: 100%;
@@ -2537,6 +2538,7 @@ export default function Landing({ onNavigate }) {
           overflow: hidden; /* El clipping se hace aquí */
           border-radius: 16px 16px 0 0;
           position: relative;
+          flex-shrink: 0;
         }
         .game-card:hover {
           transform: translateY(-8px);
@@ -2545,6 +2547,7 @@ export default function Landing({ onNavigate }) {
         }
         .game-image {
           width: 100%;
+          height: 100%;
           aspect-ratio: 1/1;
           object-fit: cover;
           display: block;
@@ -2554,22 +2557,31 @@ export default function Landing({ onNavigate }) {
           transform: scale(1.1);
         }
         .game-info {
-          padding: 10px 12px 6px;
+          padding: 10px 12px 10px;
+          flex-grow: 1;
+          display: flex;
+          flex-direction: column;
+          justify-content: center; /* Centrar el nombre verticalmente si es muy corto */
         }
         .game-name {
           font-weight: 600;
-          font-size: 15px;
-          white-space: nowrap;
+          font-size: 14px;
+          display: -webkit-box;
+          -webkit-line-clamp: 2; /* Limitar a 2 líneas */
+          -webkit-box-orient: vertical;
           overflow: hidden;
           text-overflow: ellipsis;
-          margin-bottom: 2px;
+          line-height: 1.3;
+          text-align: center;
         }
         .game-meta {
           display: flex;
           align-items: center;
+          justify-content: center;
           gap: 6px;
           font-size: 12px;
           color: var(--text-muted);
+          margin-top: 4px;
         }
         .rating {
           color: #f59e0b;
