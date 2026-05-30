@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { compressImage } from '../utils/imageCompression'
 import { useAuth, useConfiguracion } from '../hooks/useData'
 import AlertModal from './AlertModal'
-import { playSuccessSound, playCashRegisterSound, playErrorSound, formatBs, formatUSD } from '../utils/helpers'
+import { playSuccessSound, playCashRegisterSound, playErrorSound, formatBs, formatUSD, calcularPrecioVenta, getEstadoStyle, getMonedaBadge, maskSensitive } from '../utils/helpers'
 import { processAutoDeliveryOrder } from '../utils/autoProcess'
 
 const DEFAULT_CANCEL_MESSAGE = (num) => `Tu Pedido #${num} se ha cancelado motivado a que la referencia de pago que colocaste no ha podido ser encontrado en nuestro banco, es decir, el pago no pudo ser verificado y esto se debe a alguno de los siguientes motivos:
@@ -1492,12 +1493,12 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   const handleUploadImage = async (file) => {
     if (!file || !selectedPedido) return
     setUploading(true)
-    const ext = file.name?.split('.').pop() || 'png'
-    const fileName = `pedido_${selectedPedido.id}_${Date.now()}.${ext}`
+    file = await compressImage(file)
+    const fileName = `pedido_${selectedPedido.id}_${Date.now()}-${file.name}`
 
     const { error } = await supabase.storage
       .from('pedidos-adjuntos')
-      .upload(fileName, file, { upsert: true })
+      .upload(fileName, file, { cacheControl: '31536000', upsert: true })
 
     if (!error) {
       const { data: { publicUrl } } = supabase.storage

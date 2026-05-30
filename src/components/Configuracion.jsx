@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react'
 import { useMetodosPago, useConfiguracion, useMensajesSistema, useNotificacionesPush, useAuth } from '../hooks/useData'
 import { supabase } from '../lib/supabase'
+import { compressImage } from '../utils/imageCompression'
 import { removeWhiteBackground } from '../utils/helpers'
 import AlertModal from './AlertModal'
 
@@ -165,7 +166,7 @@ export default function Configuracion() {
     try {
       const pngBlob = await removeWhiteBackground(file)
       const path = `payment-icons/${Date.now()}.png`
-      const { error: uploadError } = await supabase.storage.from('logos').upload(path, pngBlob, { contentType: 'image/png' })
+      const { error: uploadError } = await supabase.storage.from('logos').upload(path, await compressImage(pngBlob), { cacheControl: '31536000', upsert: true })
       if (uploadError) throw uploadError
       const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(path)
       setCurrentMetodo(prev => ({ ...prev, icono_url: publicUrl }))
@@ -183,7 +184,7 @@ export default function Configuracion() {
     try {
       // Para el QR no removemos fondo blanco, lo subimos tal cual para asegurar legibilidad
       const path = `qr-codes/${Date.now()}-${file.name}`
-      const { error: uploadError } = await supabase.storage.from('logos').upload(path, file)
+      const { error: uploadError } = await supabase.storage.from('logos').upload(path, await compressImage(file), { cacheControl: '31536000', upsert: true })
       if (uploadError) throw uploadError
       const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(path)
       setCurrentMetodo(prev => ({ ...prev, qr_url: publicUrl }))
@@ -201,7 +202,7 @@ export default function Configuracion() {
     try {
       const pngBlob = await removeWhiteBackground(file)
       const path = `floating-bg/${Date.now()}.png`
-      const { error: uploadError } = await supabase.storage.from('logos').upload(path, pngBlob, { contentType: 'image/png' })
+      const { error: uploadError } = await supabase.storage.from('logos').upload(path, await compressImage(pngBlob), { cacheControl: '31536000', upsert: true })
       if (uploadError) throw uploadError
       const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(path)
       
@@ -251,7 +252,7 @@ export default function Configuracion() {
       
       const { error: uploadError } = await supabase.storage
         .from('logos')
-        .upload(fileName, pngBlob, { contentType: 'image/png' })
+        .upload(fileName, await compressImage(pngBlob), { cacheControl: '31536000', upsert: true })
 
       if (uploadError) throw uploadError
 
@@ -281,7 +282,7 @@ export default function Configuracion() {
 
       const { error: uploadError } = await supabase.storage
         .from('logos')
-        .upload(filePath, pngBlob, { contentType: 'image/png' })
+        .upload(filePath, await compressImage(pngBlob), { cacheControl: '31536000', upsert: true })
 
       if (uploadError) throw uploadError
 
@@ -324,7 +325,7 @@ export default function Configuracion() {
 
       const { error: uploadError } = await supabase.storage
         .from('logos')
-        .upload(filePath, pngBlob, { contentType: 'image/png' })
+        .upload(filePath, await compressImage(pngBlob), { cacheControl: '31536000', upsert: true })
 
       if (uploadError) throw uploadError
 
@@ -355,7 +356,7 @@ export default function Configuracion() {
 
       const { error: uploadError } = await supabase.storage
         .from('logos')
-        .upload(filePath, file)
+        .upload(filePath, await compressImage(file), { cacheControl: '31536000', upsert: true })
 
       if (uploadError) throw uploadError
 
@@ -1213,7 +1214,7 @@ export default function Configuracion() {
                               setUploadingImage(true)
                               try {
                                 const path = `popups/${Date.now()}.png`
-                                const { error: uploadError } = await supabase.storage.from('logos').upload(path, file)
+                                const { error: uploadError } = await supabase.storage.from('logos').upload(path, await compressImage(file), { cacheControl: '31536000', upsert: true })
                                 if (uploadError) throw uploadError
                                 const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(path)
                                 setCurrentMensaje(prev => ({ ...prev, imagen_url: publicUrl }))
@@ -1476,7 +1477,7 @@ export default function Configuracion() {
                           setUploadingImage(true)
                           try {
                             const path = `notificaciones/${Date.now()}.png`
-                            const { error: uploadError } = await supabase.storage.from('logos').upload(path, file)
+                            const { error: uploadError } = await supabase.storage.from('logos').upload(path, await compressImage(file), { cacheControl: '31536000', upsert: true })
                             if (uploadError) throw uploadError
                             const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(path)
                             setFormNoti(prev => ({ ...prev, imagen_url: publicUrl }))
@@ -1663,7 +1664,7 @@ export default function Configuracion() {
                         setUploadingImage(true)
                         try {
                           const path = `system/horario_flyer_${Date.now()}.png`
-                          const { error: uploadError } = await supabase.storage.from('logos').upload(path, file)
+                          const { error: uploadError } = await supabase.storage.from('logos').upload(path, await compressImage(file), { cacheControl: '31536000', upsert: true })
                           if (uploadError) throw uploadError
                           const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(path)
                           setHorarioFlyerUrl(publicUrl)
@@ -1890,7 +1891,7 @@ export default function Configuracion() {
                               const fileName = `apps/ceriraga-v${Date.now()}.apk`
                               const { error: uploadError } = await supabase.storage
                                 .from('logos')
-                                .upload(fileName, file)
+                                .upload(fileName, await compressImage(file), { cacheControl: '31536000', upsert: true })
 
                               if (uploadError) throw uploadError
 

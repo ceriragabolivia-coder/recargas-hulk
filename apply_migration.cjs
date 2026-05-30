@@ -7,7 +7,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function runMigration() {
   try {
-    const sql = fs.readFileSync('./supabase/migrations/128_procesar_pedido_automatico.sql', 'utf8');
+    const sql = fs.readFileSync('./add_motivo_estado.sql', 'utf8');
     console.log("Running SQL Migration...");
     const { data, error } = await supabase.rpc('exec_sql', { p_sql: sql });
     if (error) {

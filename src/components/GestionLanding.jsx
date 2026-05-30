@@ -3,6 +3,7 @@ import { useConfiguracion } from '../hooks/useData'
 import { supabase } from '../lib/supabase'
 import AlertModal from './AlertModal'
 import { ToastContainer, toast } from 'react-toastify'
+import { compressImage } from '../utils/imageCompression'
 
 export default function GestionLanding() {
   const { config, updateConfig, loading } = useConfiguracion()
@@ -182,7 +183,7 @@ export default function GestionLanding() {
 
   const handleUploadBanner = async (e, bannerNumber) => {
     try {
-      const file = e.target.files[0]
+      let file = e.target.files[0]
       if (!file) return
       
       if (file.size > 5 * 1024 * 1024) {
@@ -192,11 +193,12 @@ export default function GestionLanding() {
 
       setSaving(true)
       
-      const fileName = `banner-${bannerNumber}-${Date.now()}.${file.name.split('.').pop()}`
+      file = await compressImage(file)
+      const fileName = `banner-${bannerNumber}-${Date.now()}-${file.name}`
       
       const { error: uploadError } = await supabase.storage
         .from('logos') // Usamos el bucket público existente
-        .upload(fileName, file)
+        .upload(fileName, file, { cacheControl: '31536000', upsert: true })
 
       if (uploadError) throw uploadError
 

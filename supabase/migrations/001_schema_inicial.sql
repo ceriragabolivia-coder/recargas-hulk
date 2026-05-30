@@ -126,7 +126,7 @@ CREATE TABLE IF NOT EXISTS historial_tasas (
 );
 
 -- 8. VISTAS
-CREATE OR REPLACE VIEW ganancias_diarias AS
+CREATE OR REPLACE VIEW ganancias_diarias WITH (security_invoker = on) AS
 SELECT 
     v.fecha,
     j.nombre AS juego,
@@ -140,7 +140,7 @@ JOIN juegos j ON v.juego_id = j.id
 GROUP BY v.fecha, j.nombre, j.categoria_id
 ORDER BY v.fecha DESC;
 
-CREATE OR REPLACE VIEW resumen_diario AS
+CREATE OR REPLACE VIEW resumen_diario WITH (security_invoker = on) AS
 SELECT 
     fecha,
     SUM(ganancia_usd) AS ganancias_totales,

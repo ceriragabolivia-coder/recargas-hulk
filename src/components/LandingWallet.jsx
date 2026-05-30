@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { useWallet, useAuth, useMetodosPago, useVentas } from '../hooks/useData'
 import { formatUSD, formatBs } from '../utils/helpers'
 import { supabase } from '../lib/supabase'
+import { compressImage } from '../utils/imageCompression'
 
 export default function LandingWallet({ onClose }) {
   const { wallet, adminSalesBalance, recargas, transacciones, loading, solicitarRecarga, refetch } = useWallet()
@@ -73,15 +74,15 @@ export default function LandingWallet({ onClose }) {
   }, [user?.id]);
 
   const handleFileUpload = async (e) => {
-    const file = e.target.files[0]
+    let file = e.target.files[0]
     if (!file) return
     setUploading(true)
     try {
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${Date.now()}_receipt.${fileExt}`
+      file = await compressImage(file)
+      const fileName = `${Date.now()}_receipt-${file.name}`
       const { error: uploadError } = await supabase.storage
         .from('logos')
-        .upload(`receipts/${fileName}`, file)
+        .upload(`receipts/${fileName}`, file, { cacheControl: '31536000', upsert: true })
 
       if (uploadError) throw uploadError
 

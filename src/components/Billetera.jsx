@@ -3,6 +3,7 @@ import { useWallet, useAuth, useMetodosPago, useVentas } from '../hooks/useData'
 import { formatUSD, formatBs } from '../utils/helpers'
 import { supabase } from '../lib/supabase'
 import AlertModal from './AlertModal'
+import { compressImage } from '../utils/imageCompression'
 
 export default function Billetera({ onNavigate }) {
   const { wallet, adminSalesBalance, recargas, transacciones, loading, solicitarRecarga, refetch } = useWallet()
@@ -120,20 +121,21 @@ export default function Billetera({ onNavigate }) {
   }, [isCliente])
 
   const handleFileUpload = async (e) => {
-    const file = e.target.files[0]
+    let file = e.target.files[0]
     if (!file) return
+
     setUploading(true)
     try {
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${Date.now()}_receipt.${fileExt}`
+      file = await compressImage(file)
+      const fileName = `${Date.now()}-${file.name}`
       const { error: uploadError } = await supabase.storage
-        .from('logos')
-        .upload(`receipts/${fileName}`, file)
+        .from('comprobantes')
+        .upload(`receipts/${fileName}`, file, { cacheControl: '31536000', upsert: true })
 
       if (uploadError) throw uploadError
 
       const { data: { publicUrl } } = supabase.storage
-        .from('logos')
+        .from('comprobantes')
         .getPublicUrl(`receipts/${fileName}`)
       
       setComprobanteUrl(publicUrl)

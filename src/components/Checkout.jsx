@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useConfiguracion } from '../hooks/useData'
 import AlertModal from './AlertModal'
 import FloatingBackground from './FloatingBackground'
+import { compressImage } from '../utils/imageCompression'
 
 // ============================================================
 // CountdownTimer - FUERA del componente Checkout
@@ -310,15 +311,15 @@ export default function Checkout({ onFinish, embedded = false }) {
   }, [cancelarPedidosExpirados])
 
   const handleComprobanteUpload = async (e) => {
-    const file = e.target.files[0]
+    let file = e.target.files[0]
     if (!file) return
     setUploadingComprobante(true)
     try {
-      const ext = file.name.split('.').pop()
-      const fileName = `pedidos/${Date.now()}_${createdPedidoId || 'tmp'}.${ext}`
+      file = await compressImage(file)
+      const fileName = `pedidos/${Date.now()}_${createdPedidoId || 'tmp'}-${file.name}`
       const { error: uploadError } = await supabase.storage
         .from('logos')
-        .upload(fileName, file, { upsert: true })
+        .upload(fileName, file, { cacheControl: '31536000', upsert: true })
       if (uploadError) throw uploadError
       const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(fileName)
       setComprobanteUrl(publicUrl)

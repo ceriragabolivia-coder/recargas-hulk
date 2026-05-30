@@ -3,6 +3,7 @@ import { useJuegos, useProductos, useConfiguracion, useProductoCodigos } from '.
 import { useAuth } from '../context/AuthContext'
 import { calcularPrecioVenta, formatUSD, formatBs, removeWhiteBackground } from '../utils/helpers'
 import { supabase } from '../lib/supabase'
+import { compressImage } from '../utils/imageCompression'
 import AlertModal from './AlertModal'
 
 
@@ -315,7 +316,7 @@ export default function GestionProductos() {
         const fileName = `prod-new-${Date.now()}${shouldRemoveBg ? '.png' : ''}`
         const { error: uploadError } = await supabase.storage
           .from('logos')
-          .upload(fileName, finalFile, { contentType })
+          .upload(fileName, await compressImage(finalFile), { cacheControl: '31536000', upsert: true })
 
         if (uploadError) throw new Error('Error subiendo ícono: ' + uploadError.message)
 
@@ -327,7 +328,7 @@ export default function GestionProductos() {
         const fileName = `prod-extra-${Date.now()}-${newInfoFile.name.replace(/\.[^/.]+$/, "")}.png`
         const { error: uploadErrorInfo } = await supabase.storage
           .from('logos')
-          .upload(fileName, newInfoFile)
+          .upload(fileName, await compressImage(newInfoFile), { cacheControl: '31536000', upsert: true })
         
         if (uploadErrorInfo) throw new Error('Error subiendo imagen extra: ' + uploadErrorInfo.message)
 
@@ -456,7 +457,7 @@ export default function GestionProductos() {
       const fileName = `prod-${prodId}-${Date.now()}${shouldRemoveBg ? '.png' : ''}`
       const { error: uploadError } = await supabase.storage
         .from('logos')
-        .upload(fileName, finalFile, { contentType })
+        .upload(fileName, await compressImage(finalFile), { cacheControl: '31536000', upsert: true })
       if (uploadError) {
         setAlertModal({ type: 'error', message: 'Error subiendo imagen: ' + uploadError.message })
         setSaving(false)
@@ -513,7 +514,7 @@ export default function GestionProductos() {
 
       const { error: uploadError } = await supabase.storage
         .from('logos')
-        .upload(filePath, finalFile, { contentType })
+        .upload(filePath, await compressImage(finalFile), { cacheControl: '31536000', upsert: true })
 
       if (uploadError) {
         setAlertModal({ type: 'error', message: 'Error subiendo imagen al storage: ' + uploadError.message })
@@ -1168,7 +1169,7 @@ export default function GestionProductos() {
                     contentType = 'image/png'
                   }
                   const fileName = `game-${Date.now()}${shouldRemoveBg ? '.png' : ''}`
-                  const { error: uploadError } = await supabase.storage.from('logos').upload(fileName, finalFile, { contentType })
+                  const { error: uploadError } = await supabase.storage.from('logos').upload(fileName, await compressImage(finalFile), { cacheControl: '31536000', upsert: true })
                   if (uploadError) throw uploadError
                   const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(fileName)
                   setFormGame(prev => ({ ...prev, icono_url: publicUrl }))
@@ -1286,7 +1287,7 @@ export default function GestionProductos() {
                     setSaving(true)
                     try {
                       const fileName = `guia-${Date.now()}.png`
-                      const { error: uploadError } = await supabase.storage.from('logos').upload(fileName, file)
+                      const { error: uploadError } = await supabase.storage.from('logos').upload(fileName, await compressImage(file), { cacheControl: '31536000', upsert: true })
                       if (uploadError) throw uploadError
                       const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(fileName)
                       setFormGame(prev => ({ ...prev, guia_id_url: publicUrl }))
@@ -1429,7 +1430,7 @@ export default function GestionProductos() {
                     setSaving(true)
                     try {
                       const fileName = `video-${Date.now()}-${file.name}`
-                      const { error: uploadError } = await supabase.storage.from('logos').upload(fileName, file)
+                      const { error: uploadError } = await supabase.storage.from('logos').upload(fileName, await compressImage(file), { cacheControl: '31536000', upsert: true })
                       if (uploadError) throw uploadError
                       const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(fileName)
                       setFormGame(prev => ({ ...prev, tutorial_video_url: publicUrl }))
@@ -1502,7 +1503,7 @@ export default function GestionProductos() {
                     setSaving(true)
                     try {
                       const fileName = `banner-${Date.now()}.png`
-                      const { error: uploadError } = await supabase.storage.from('logos').upload(fileName, file)
+                      const { error: uploadError } = await supabase.storage.from('logos').upload(fileName, await compressImage(file), { cacheControl: '31536000', upsert: true })
                       if (uploadError) throw uploadError
                       const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(fileName)
                       setFormGame(prev => ({ ...prev, tutorial_banner_img: publicUrl }))

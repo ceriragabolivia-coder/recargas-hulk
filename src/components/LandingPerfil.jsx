@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth, useClientes } from '../hooks/useData'
 import AvatarEditor from './AvatarEditor'
+import { compressImage } from '../utils/imageCompression'
 
 export default function LandingPerfil({ onClose }) {
   const { user, perfil, updatePassword, refetch } = useAuth()
@@ -87,11 +88,12 @@ export default function LandingPerfil({ onClose }) {
       setAlert(null)
       setImageToCrop(null)
 
-      const fileName = `${user.id}-${Date.now()}.jpg`
+      const compressedBlob = await compressImage(blob)
+      const fileName = `${user.id}-${Date.now()}.webp`
       
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, blob)
+        .upload(fileName, compressedBlob, { cacheControl: '31536000', upsert: true })
 
       if (uploadError) throw uploadError
 
