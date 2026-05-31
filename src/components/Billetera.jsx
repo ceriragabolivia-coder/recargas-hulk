@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useWallet, useAuth, useMetodosPago, useVentas } from '../hooks/useData'
-import { formatUSD, formatBs } from '../utils/helpers'
+import { formatUSD, formatBs, getOptimizedImageUrl } from '../utils/helpers'
 import { supabase } from '../lib/supabase'
 import AlertModal from './AlertModal'
 import { compressImage } from '../utils/imageCompression'
@@ -644,7 +644,7 @@ export default function Billetera({ onNavigate }) {
                         display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
                       }}>
                         {m.icono_url ? (
-                          <img src={m.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                          <img src={getOptimizedImageUrl(m.icono_url, 150)} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                         ) : (
                           <span style={{ fontSize: '18px' }}>
                             {m.nombre.toLowerCase().includes('zelle') ? '🟣' :
@@ -680,7 +680,7 @@ export default function Billetera({ onNavigate }) {
                         display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0
                       }}>
                         {selected.icono_url ? (
-                          <img src={selected.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                          <img src={getOptimizedImageUrl(selected.icono_url, 150)} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                         ) : (
                           <span style={{ fontSize: '16px' }}>💳</span>
                         )}
@@ -782,7 +782,7 @@ export default function Billetera({ onNavigate }) {
                   position: 'relative'
                 }}>
                   {comprobanteUrl ? (
-                    <img src={comprobanteUrl} alt="Comprobante" style={{ maxHeight: '100px', margin: '0 auto' }} />
+                    <img src={getOptimizedImageUrl(comprobanteUrl, 400)} alt="Comprobante" style={{ maxHeight: '100px', margin: '0 auto' }} />
                   ) : (
                     <>
                       <div style={{ fontSize: '24px', marginBottom: '8px' }}>📤</div>

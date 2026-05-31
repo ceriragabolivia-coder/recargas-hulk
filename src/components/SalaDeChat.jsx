@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import AlertModal from './AlertModal'
+import { getOptimizedImageUrl } from '../utils/helpers'
 
 export default function SalaDeChat({ perfil, params, onNavigate }) {
   const [chats, setChats] = useState([])
@@ -986,7 +987,7 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
                         {m.archivo_url && (
                           <div className="message-media">
                             {m.tipo_archivo === 'imagen' && (
-                              <img src={m.archivo_url} alt="Adjunto" className="message-image" onClick={() => window.open(m.archivo_url, '_blank')} />
+                              <img src={getOptimizedImageUrl(m.archivo_url, 400)} alt="Adjunto" className="message-image" onClick={() => window.open(m.archivo_url, '_blank')} />
                             )}
                             {m.tipo_archivo === 'video' && (
                               <video src={m.archivo_url} controls className="message-video" />

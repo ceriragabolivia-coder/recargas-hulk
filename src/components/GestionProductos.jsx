@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react'
 import { useJuegos, useProductos, useConfiguracion, useProductoCodigos } from '../hooks/useData'
 import { useAuth } from '../context/AuthContext'
-import { calcularPrecioVenta, formatUSD, formatBs, removeWhiteBackground } from '../utils/helpers'
+import { calcularPrecioVenta, formatUSD, formatBs, removeWhiteBackground, getOptimizedImageUrl } from '../utils/helpers'
 import { supabase } from '../lib/supabase'
 import { compressImage } from '../utils/imageCompression'
 import AlertModal from './AlertModal'
@@ -622,7 +622,7 @@ export default function GestionProductos() {
             onClick={() => document.getElementById('game-logo-upload').click()}
           >
             {selectedJuego.icono_url ? (
-              <img src={selectedJuego.icono_url} alt={selectedJuego.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={getOptimizedImageUrl(selectedJuego.icono_url, 200)} alt={selectedJuego.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
               <span style={{ fontSize: 24, color: 'var(--text-muted)' }}>🎮</span>
             )}
@@ -758,7 +758,7 @@ export default function GestionProductos() {
                           onClick={() => document.getElementById(`prod-icon-${prod.id}`).click()}
                         >
                           {prod.icono_url ? (
-                            <img src={prod.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                            <img src={getOptimizedImageUrl(prod.icono_url, 150)} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                           ) : (
                             <span style={{ fontSize: 8, color: 'var(--text-muted)' }}>📦</span>
                           )}
@@ -1012,7 +1012,7 @@ export default function GestionProductos() {
                   {newInfoFile ? (
                     <img src={URL.createObjectURL(newInfoFile)} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : formData.info_adicional_imagen_url ? (
-                    <img src={formData.info_adicional_imagen_url} alt="info" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={getOptimizedImageUrl(formData.info_adicional_imagen_url, 600)} alt="info" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     <span style={{ fontSize: 24, opacity: 0.3 }}>🖼️</span>
                   )}
@@ -1139,7 +1139,7 @@ export default function GestionProductos() {
               }}
             >
               {formGame.icono_url ? (
-                <img src={formGame.icono_url} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={getOptimizedImageUrl(formGame.icono_url, 200)} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 <div style={{ textAlign: 'center' }}>
                   <span style={{ fontSize: 32, display: 'block' }}>🎮</span>
@@ -1270,7 +1270,7 @@ export default function GestionProductos() {
                 alignItems: 'center', justifyContent: 'center'
               }}>
                 {formGame.guia_id_url ? (
-                  <img src={formGame.guia_id_url} alt="Guia" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={getOptimizedImageUrl(formGame.guia_id_url, 600)} alt="Guia" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <span style={{ fontSize: 24, opacity: 0.3 }}>🖼️</span>
                 )}
@@ -1486,7 +1486,7 @@ export default function GestionProductos() {
                 alignItems: 'center', justifyContent: 'center'
               }}>
                 {formGame.tutorial_banner_img ? (
-                  <img src={formGame.tutorial_banner_img} alt="Banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={getOptimizedImageUrl(formGame.tutorial_banner_img, 600)} alt="Banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <span style={{ fontSize: 18, opacity: 0.3 }}>🖼️</span>
                 )}

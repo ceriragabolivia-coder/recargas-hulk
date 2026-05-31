@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth, useClientes } from '../hooks/useData'
 import AvatarEditor from './AvatarEditor'
 import { compressImage } from '../utils/imageCompression'
+import { getOptimizedImageUrl } from '../utils/helpers'
 
 export default function LandingPerfil({ onClose }) {
   const { user, perfil, updatePassword, refetch } = useAuth()
@@ -138,7 +139,7 @@ export default function LandingPerfil({ onClose }) {
           <div className="avatar-section-card">
             <div className="avatar-wrapper">
               {localAvatar ? (
-                <img src={localAvatar} alt="Avatar" className="avatar-img" />
+                <img src={getOptimizedImageUrl(localAvatar, 150)} alt="Avatar" className="avatar-img" />
               ) : (
                 <div className="avatar-placeholder">{user?.email?.[0].toUpperCase()}</div>
               )}

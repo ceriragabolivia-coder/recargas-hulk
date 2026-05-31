@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { compressImage } from '../utils/imageCompression'
 import { useAuth, useConfiguracion } from '../hooks/useData'
 import AlertModal from './AlertModal'
-import { playSuccessSound, playCashRegisterSound, playErrorSound, formatBs, formatUSD } from '../utils/helpers'
+import { playSuccessSound, playCashRegisterSound, playErrorSound, formatBs, formatUSD, getOptimizedImageUrl } from '../utils/helpers'
 import { processAutoDeliveryOrder } from '../utils/autoProcess'
 
 const DEFAULT_CANCEL_MESSAGE = (num) => `Tu Pedido #${num} se ha cancelado motivado a que la referencia de pago que colocaste no ha podido ser encontrado en nuestro banco, es decir, el pago no pudo ser verificado y esto se debe a alguno de los siguientes motivos:
@@ -1973,7 +1973,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                     onClick={() => window.open(selectedPedido.comprobante_url, '_blank')}
                   >
                     <img
-                      src={selectedPedido.comprobante_url}
+                      src={getOptimizedImageUrl(selectedPedido.comprobante_url, 600)}
                       alt="Comprobante"
                       style={{ width: '100%', maxHeight: '200px', objectFit: 'contain', backgroundColor: 'var(--bg-panel)', display: 'block' }}
                     />
@@ -2089,7 +2089,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                           onClick={() => window.open(url, '_blank')}
                         >
                           <img 
-                            src={url} 
+                            src={getOptimizedImageUrl(url, 400)} 
                             alt={`Entrega ${idx + 1}`} 
                             style={{ width: '100%', height: '90px', objectFit: 'cover', display: 'block', transition: 'transform 0.3s' }} 
                             onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
@@ -2199,7 +2199,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
 
                         return (
                           <img 
-                            src={iconUrl} 
+                            src={getOptimizedImageUrl(iconUrl, 150)} 
                             alt="Icono" 
                             style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--border-color)' }}
                             onError={(e) => { e.currentTarget.style.display = 'none'; }}

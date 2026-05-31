@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import AlertModal from './AlertModal'
+import { getOptimizedImageUrl } from '../utils/helpers'
 
 export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, isPage = false, isEmbedded = false }) {
   const [isOpen, setIsOpen] = useState(isPage || isEmbedded)
@@ -881,7 +882,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                               {m.archivo_url && (
                                 <div className="message-media" style={{ marginBottom: '8px' }}>
                                   {m.tipo_archivo === 'imagen' && (
-                                    <img src={m.archivo_url} alt="Adjunto" style={{ width: '100%', borderRadius: '8px', display: 'block', cursor: 'pointer' }} onClick={() => window.open(m.archivo_url, '_blank')} />
+                                    <img src={getOptimizedImageUrl(m.archivo_url, 400)} alt="Adjunto" style={{ width: '100%', borderRadius: '8px', display: 'block', cursor: 'pointer' }} onClick={() => window.open(m.archivo_url, '_blank')} />
                                   )}
                                   {m.tipo_archivo === 'video' && (
                                     <video src={m.archivo_url} controls style={{ width: '100%', borderRadius: '8px', display: 'block' }} />
