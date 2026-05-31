@@ -999,6 +999,18 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
           .mobile-no-border-left { border-left: none !important; padding-left: 0 !important; }
           .wallet-widget-hover { padding: 4px 10px !important; gap: 6px !important; }
           .topbar { padding: 0 12px !important; gap: 4px !important; }
+          .notification-bar {
+            display: grid !important;
+            grid-template-columns: repeat(2, auto) !important;
+            gap: 4px !important;
+          }
+          .notification-item {
+            padding: 4px 6px !important;
+            gap: 4px !important;
+          }
+          .notification-item span {
+            font-size: 11px !important;
+          }
         }
         @media (max-width: 480px) {
           .wallet-widget-hover span:not(.desktop-only) { font-size: 11px !important; }
