@@ -1418,8 +1418,11 @@ export default function Landing({ onNavigate }) {
                           }}>
                             {prod.icono_url && <img src={prod.icono_url.includes('?') ? `${prod.icono_url}&v=3` : `${prod.icono_url}?v=3`} alt="" className="product-icon" />}
                             <div className="product-name">{prod.nombre}</div>
-                            <div className="product-price">
+                            <div className="product-price" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                               <span className="price-primary">{formatBs(pricing.venta_bs)}</span>
+                              {selectedJuego.mostrar_precio_dual && (
+                                <span style={{ fontSize: '12px', opacity: 0.8, marginTop: '2px', fontWeight: 600 }}>{formatUSD(pricing.venta_usd)}</span>
+                              )}
                             </div>
                             
                             {(prod.info_adicional_texto || prod.info_adicional_imagen_url) && (

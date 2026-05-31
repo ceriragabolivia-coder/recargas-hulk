@@ -1009,7 +1009,7 @@ export default function Catalogo() {
                       
                       <div translate="no" className="notranslate" style={{ display: 'flex', flexDirection: 'column' }}>
                         <span style={{ fontSize: '20px', fontWeight: 900, lineHeight: 1 }}>{formatBs(finalPrice.venta_bs)}</span>
-                        {!isCliente && (
+                        {(!isCliente || selectedJuego.mostrar_precio_dual) && (
                           <span style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px', fontWeight: 600 }}>{formatUSD(finalPrice.venta_usd)}</span>
                         )}
                       </div>

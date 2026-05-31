@@ -72,7 +72,8 @@ export default function GestionProductos() {
       tutorial_banner_img: '',
       icono_url: null,
       verificacion_api_activa: false,
-      verificacion_api_url: ''
+      verificacion_api_url: '',
+      mostrar_precio_dual: false
     })
     setIsGameModalOpen(true)
   }
@@ -98,7 +99,8 @@ export default function GestionProductos() {
       verificacion_api_activa: selectedJuego.verificacion_api_activa === undefined 
         ? (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('blood strike'))
         : !!selectedJuego.verificacion_api_activa,
-      verificacion_api_url: selectedJuego.verificacion_api_url || ''
+      verificacion_api_url: selectedJuego.verificacion_api_url || '',
+      mostrar_precio_dual: !!selectedJuego.mostrar_precio_dual
     })
     setIsGameModalOpen(true)
   }
@@ -125,7 +127,8 @@ export default function GestionProductos() {
         tutorial_banner_img: formGame.tutorial_banner_img,
         icono_url: formGame.icono_url,
         verificacion_api_activa: formGame.verificacion_api_activa,
-        verificacion_api_url: formGame.verificacion_api_url
+        verificacion_api_url: formGame.verificacion_api_url,
+        mostrar_precio_dual: formGame.mostrar_precio_dual
       })
       if (!res.error) {
         // useJuegos hook will refresh the 'juegos' list automatically
@@ -1400,6 +1403,27 @@ export default function GestionProductos() {
               </p>
             </div>
           )}
+
+          <hr style={{ margin: '24px 0', borderColor: 'var(--border-color)' }} />
+          <h3 style={{ fontSize: 13, textTransform: 'uppercase', color: 'var(--accent-primary)', marginBottom: 12 }}>Visualización de Precios</h3>
+          
+          <div className="form-group" style={{ marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <input
+                type="checkbox"
+                id="mostrar_precio_dual"
+                checked={!!formGame.mostrar_precio_dual}
+                onChange={e => setFormGame({ ...formGame, mostrar_precio_dual: e.target.checked })}
+                style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--accent-primary)' }}
+              />
+              <label htmlFor="mostrar_precio_dual" className="form-label" style={{ margin: 0, cursor: 'pointer', fontWeight: 700 }}>
+                Mostrar Precio Dual al Cliente (Bs. y USD)
+              </label>
+            </div>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+              Si se activa, el cliente verá ambos precios. Útil para Zinli o Wally Tech.
+            </p>
+          </div>
 
           <hr style={{ margin: '24px 0', borderColor: 'var(--border-color)' }} />
           <h3 style={{ fontSize: 13, textTransform: 'uppercase', color: 'var(--accent-primary)', marginBottom: 12 }}>Configuración de Video Tutorial</h3>
