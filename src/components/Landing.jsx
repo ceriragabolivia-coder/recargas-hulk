@@ -600,7 +600,7 @@ export default function Landing({ onNavigate }) {
       const ids = config.landing_featured_games.split(',').map(id => id.trim())
       return juegos.filter(j => ids.includes(String(j.id)))
     }
-    return juegos.slice(0, 20)
+    return juegos // Mostrar todos los juegos en lugar de limitar a 20
   }, [juegos, config])
 
   // Ya no bloqueamos toda la página con un spinner. 
