@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate, useSearchParams, useLocation, useParams } from 'react-router-dom'
 import PaginaEstatica from './PaginaEstatica'
 import { supabase } from '../lib/supabase'
-import { useConfiguracion, useAuth, useCart, useCuentasGuardadas, useMetodosPago } from '../hooks/useData'
+import { useConfiguracion, useAuth, useCart, useCuentasGuardadas, useMetodosPago, useWallet } from '../hooks/useData'
 import { formatUSD, formatBs, calcularPrecioVenta, playClientOrderSuccessSound, playClientWelcomeSound } from '../utils/helpers'
 import LandingAuthModal from './LandingAuthModal'
 import Checkout from './Checkout'
@@ -21,6 +21,7 @@ export default function Landing({ onNavigate }) {
   const [searchParams, setSearchParams] = useSearchParams()
   const { config, loading: configLoading } = useConfiguracion()
   const { user, perfil, logout } = useAuth()
+  const { wallet } = useWallet()
   const { cart, addToCart, clearCart } = useCart()
   const { metodos } = useMetodosPago()
   const isRevendedor = user?.role === 'revendedor'
@@ -678,29 +679,7 @@ export default function Landing({ onNavigate }) {
             
             <nav className="landing-nav hidden-mobile">
               <a href="#" className="nav-link active" onClick={(e) => { e.preventDefault(); handleSelectJuego(null); }}>Home</a>
-              <div className="nav-dropdown">
-                <span className="nav-link">Servicios <i>▾</i></span>
-                <div className="dropdown-content">
-                  {categorias.map(cat => (
-                    <a 
-                      key={cat.id} 
-                      href="#all-games" 
-                      onClick={(e) => { 
-                        e.preventDefault(); 
-                        setActiveCategory(cat.nombre); 
-                        handleSelectJuego(null);
-                        // Usar setTimeout para esperar a que el catálogo se renderice si estábamos en detalle
-                        setTimeout(() => {
-                          const element = document.getElementById('all-games');
-                          if (element) element.scrollIntoView({ behavior: 'smooth' });
-                        }, 100);
-                      }}
-                    >
-                      {cat.nombre}
-                    </a>
-                  ))}
-                </div>
-              </div>
+              {/* Servicios removido según solicitud del usuario */}
               <a href="#" className={`nav-link ${showRuleta ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('/Ruleta'); }}>Ruleta</a>
               <a href="#" className="nav-link">Ayuda</a>
             </nav>
@@ -746,9 +725,41 @@ export default function Landing({ onNavigate }) {
               )}
             </div>
             
+            {/* BILLETERA (Siempre visible) */}
+            {user && (
+              <div
+                className="header-wallet"
+                onClick={() => {
+                  setShowWallet(true);
+                  setShowCheckout(false);
+                  setShowRuleta(false);
+                  setSelectedJuego(null);
+                  window.scrollTo(0, 0);
+                }}
+                style={{ 
+                  cursor: 'pointer', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px', 
+                  background: 'rgba(255,255,255,0.1)', 
+                  padding: '6px 12px', 
+                  borderRadius: '20px',
+                  marginRight: '8px'
+                }}
+                title="Billetera"
+              >
+                <span style={{ fontSize: '18px' }}>💰</span>
+                <span style={{ fontWeight: 'bold', fontSize: '14px', color: 'var(--accent-success)' }}>
+                  {formatUSD(wallet?.saldo || 0)}
+                </span>
+              </div>
+            )}
+
+            {/* CARRITO (Solo Desktop) */}
             {user && (
               <div 
-                style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }} 
+                className="hidden-mobile"
+                style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center', marginRight: '8px' }} 
                 onClick={() => {
                   setShowCheckout(true);
                   setShowRuleta(false);
@@ -766,9 +777,9 @@ export default function Landing({ onNavigate }) {
               </div>
             )}
 
-            {/* CAMPANA DE NOTIFICACIONES */}
+            {/* CAMPANA DE NOTIFICACIONES (Solo Desktop) */}
             {user && (
-              <div className="nav-dropdown" style={{ position: 'relative' }}>
+              <div className="nav-dropdown hidden-mobile" style={{ position: 'relative', marginRight: '8px' }}>
                 <div 
                   className="noti-bell-container" 
                   onClick={() => setShowNotiDropdown(!showNotiDropdown)}
@@ -836,6 +847,24 @@ export default function Landing({ onNavigate }) {
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Conectado como</div>
                     <div style={{ fontWeight: '600', fontSize: '14px' }}>{user.email}</div>
                   </div>
+                  
+                  {/* Carrito y Notificaciones en Móvil */}
+                  <a href="#" className="visible-mobile" onClick={(e) => { 
+                    e.preventDefault(); 
+                    setShowCheckout(true);
+                    setShowRuleta(false);
+                    setSelectedJuego(null);
+                    window.scrollTo(0, 0); 
+                  }}>
+                    🛒 Carrito {cart.length > 0 && <span style={{ background: '#ef4444', color: 'white', borderRadius: '10px', padding: '2px 6px', fontSize: '10px', marginLeft: '4px' }}>{cart.length}</span>}
+                  </a>
+                  <a href="#" className="visible-mobile" onClick={(e) => { 
+                    e.preventDefault(); 
+                    setShowNotiDropdown(!showNotiDropdown);
+                  }}>
+                    🔔 Notificaciones {unreadCount > 0 && <span style={{ background: '#ef4444', color: 'white', borderRadius: '10px', padding: '2px 6px', fontSize: '10px', marginLeft: '4px' }}>{unreadCount}</span>}
+                  </a>
+
                   {(user?.role === 'admin' || user?.role === 'negocio' || perfil?.rol === 'admin' || perfil?.rol === 'negocio' || perfil?.rol === 'administrador') && (
                     <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Dashboard') }} style={{ color: 'var(--accent)', fontWeight: 'bold' }}>Panel de Control</a>
                   )}
