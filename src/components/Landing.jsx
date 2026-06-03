@@ -744,12 +744,13 @@ export default function Landing({ onNavigate }) {
                   background: 'rgba(255,255,255,0.1)', 
                   padding: '6px 12px', 
                   borderRadius: '20px',
-                  marginRight: '8px'
+                  marginRight: '8px',
+                  flexShrink: 0
                 }}
                 title="Billetera"
               >
                 <span style={{ fontSize: '18px' }}>💰</span>
-                <span style={{ fontWeight: 'bold', fontSize: '14px', color: 'var(--accent-success)' }}>
+                <span style={{ fontWeight: 'bold', fontSize: '14px', color: 'var(--accent-success)', whiteSpace: 'nowrap' }}>
                   {formatUSD(wallet?.saldo || 0)}
                 </span>
               </div>
