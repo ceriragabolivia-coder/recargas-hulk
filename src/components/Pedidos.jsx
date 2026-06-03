@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { compressImage } from '../utils/imageCompression'
 import { useAuth, useConfiguracion } from '../hooks/useData'
@@ -43,7 +43,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   }
   const isSuperAdmin = user?.email?.toLowerCase() === 'ceriraga@gmail.com'
 
-  const motivosRechazoArray = React.useMemo(() => {
+  const motivosRechazoArray = useMemo(() => {
     try {
       const parsed = JSON.parse(config?.motivos_rechazo || '[]');
       if (parsed.length > 0) return parsed;
