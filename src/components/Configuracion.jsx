@@ -71,6 +71,12 @@ export default function Configuracion() {
   const [footerProductosIds, setFooterProductosIds] = useState([])
   const [savingFooterProductos, setSavingFooterProductos] = useState(false)
   
+  // Estados para Motivos de Rechazo
+  const [motivosRechazo, setMotivosRechazo] = useState([])
+  const [showMotivoForm, setShowMotivoForm] = useState(false)
+  const [isEditingMotivo, setIsEditingMotivo] = useState(false)
+  const [currentMotivo, setCurrentMotivo] = useState({ id: '', titulo: '', mensaje: '' })
+
   // Ref para evitar que las actualizaciones de Realtime sobrescriban lo que el admin está escribiendo
   const initialized = useRef(false)
 
@@ -116,6 +122,26 @@ export default function Configuracion() {
         setFooterProductosIds(JSON.parse(config.footer_productos_ids || '[]'))
       } catch (e) {
         setFooterProductosIds([])
+      }
+
+      // Motivos de rechazo
+      try {
+        const mrParsed = JSON.parse(config.motivos_rechazo || '[]');
+        if (mrParsed.length > 0) {
+          setMotivosRechazo(mrParsed);
+        } else {
+          setMotivosRechazo([
+            { id: '1', titulo: "ID de Jugador Inválido", mensaje: "El ID proporcionado no corresponde a ninguna cuenta válida." },
+            { id: '2', titulo: "Región Incorrecta", mensaje: "El ID proporcionado pertenece a otra región. Por favor verifica los datos de tu cuenta." },
+            { id: '3', titulo: "Cuenta No Encontrada", mensaje: "No pudimos encontrar una cuenta con el ID y Nickname proporcionados en este juego." },
+            { id: '4', titulo: "Datos de Cuenta Incorrectos", mensaje: "El usuario y/o contraseña proporcionados para el acceso a la cuenta son incorrectos." },
+            { id: '5', titulo: "Problema con la Transacción", mensaje: "El pago ha sido revertido o se ha detectado un problema con la transacción, no se puede realizar la recarga." },
+            { id: '6', titulo: "Paquete No Disponible", mensaje: "El paquete solicitado no está disponible temporalmente para recargas en esta región." },
+            { id: '7', titulo: "Mantenimiento del Juego", mensaje: "Mantenimiento en los servidores del juego. Por favor intenta crear un nuevo pedido más tarde." }
+          ]);
+        }
+      } catch (e) {
+        setMotivosRechazo([]);
       }
 
       initialized.current = true
@@ -447,6 +473,13 @@ export default function Configuracion() {
                 onClick={() => setActiveTab('mensajes')}
               >
                 📢 Mensajes Pop-up
+              </button>
+              <button 
+                className={`btn ${activeTab === 'rechazos' ? 'btn-primary' : 'btn-ghost'}`}
+                style={{ justifyContent: 'flex-start', textAlign: 'left' }}
+                onClick={() => setActiveTab('rechazos')}
+              >
+                ❌ Motivos de Fallo
               </button>
               <button 
                 className={`btn ${activeTab === 'notificaciones' ? 'btn-primary' : 'btn-ghost'}`}
@@ -1340,6 +1373,115 @@ export default function Configuracion() {
                                 onConfirm: () => {
                                   deleteMensaje(m.id)
                                   setAlertModal(null)
+                                }
+                              })
+                            }}>🗑️</button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {activeTab === 'rechazos' && (
+            <>
+              <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h2 className="card-title">Motivos de Fallo (Plantillas)</h2>
+                {!showMotivoForm && (
+                  <button className="btn btn-primary btn-sm" onClick={() => {
+                    setCurrentMotivo({ id: Date.now().toString(), titulo: '', mensaje: '' })
+                    setIsEditingMotivo(false)
+                    setShowMotivoForm(true)
+                  }}>
+                    + Nuevo Motivo
+                  </button>
+                )}
+              </div>
+
+              <div style={{ padding: '24px' }}>
+                {showMotivoForm ? (
+                  <form onSubmit={async (e) => {
+                    e.preventDefault()
+                    let updatedList = [...motivosRechazo];
+                    if (isEditingMotivo) {
+                      updatedList = updatedList.map(m => m.id === currentMotivo.id ? currentMotivo : m);
+                    } else {
+                      updatedList.push(currentMotivo);
+                    }
+                    setMotivosRechazo(updatedList);
+                    await updateConfig('motivos_rechazo', JSON.stringify(updatedList), true);
+                    setShowMotivoForm(false);
+                  }} className="fade-in">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '600px' }}>
+                      <div className="form-group">
+                        <label className="form-label">Título Corto (Para el Admin)</label>
+                        <input 
+                          type="text" 
+                          className="form-input" 
+                          value={currentMotivo.titulo}
+                          onChange={(e) => setCurrentMotivo({...currentMotivo, titulo: e.target.value})}
+                          required
+                          placeholder="Ej: ID Inválido"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">Mensaje Largo (Para el Cliente)</label>
+                        <textarea 
+                          className="form-input" 
+                          style={{ minHeight: '100px' }}
+                          value={currentMotivo.mensaje}
+                          onChange={(e) => setCurrentMotivo({...currentMotivo, mensaje: e.target.value})}
+                          required
+                          placeholder="Ej: El ID proporcionado no existe en esta región..."
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                        <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
+                          {isEditingMotivo ? 'Actualizar' : 'Añadir Motivo'}
+                        </button>
+                        <button type="button" className="btn btn-ghost" onClick={() => setShowMotivoForm(false)} style={{ flex: 1 }}>
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {motivosRechazo.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', border: '1px dashed var(--border-color)', borderRadius: '12px' }}>
+                        No hay motivos de rechazo configurados.
+                      </div>
+                    ) : (
+                      motivosRechazo.map(m => (
+                        <div key={m.id} className="card" style={{ 
+                          padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                          backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border-color)'
+                        }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ fontWeight: 'bold' }}>{m.titulo}</div>
+                            <div style={{ fontSize: '13px', color: 'var(--text-muted)', whiteSpace: 'pre-line' }}>{m.mensaje}</div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button className="btn btn-ghost btn-sm" onClick={() => {
+                              setCurrentMotivo(m)
+                              setIsEditingMotivo(true)
+                              setShowMotivoForm(true)
+                            }}>Editar</button>
+                            <button className="btn btn-ghost btn-sm btn-icon" onClick={() => {
+                              setAlertModal({
+                                type: 'confirm',
+                                title: 'Eliminar Motivo',
+                                message: '¿Estás seguro de eliminar este motivo de rechazo?',
+                                onConfirm: async () => {
+                                  const updatedList = motivosRechazo.filter(x => x.id !== m.id);
+                                  setMotivosRechazo(updatedList);
+                                  await updateConfig('motivos_rechazo', JSON.stringify(updatedList), true);
+                                  setAlertModal(null);
                                 }
                               })
                             }}>🗑️</button>

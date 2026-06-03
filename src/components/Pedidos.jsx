@@ -43,6 +43,23 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   }
   const isSuperAdmin = user?.email?.toLowerCase() === 'ceriraga@gmail.com'
 
+  const motivosRechazoArray = React.useMemo(() => {
+    try {
+      const parsed = JSON.parse(config?.motivos_rechazo || '[]');
+      if (parsed.length > 0) return parsed;
+    } catch (e) {
+      // ignore
+    }
+    return [
+      { id: '1', titulo: "ID de Jugador Inválido", mensaje: "El ID proporcionado no corresponde a ninguna cuenta válida." },
+      { id: '2', titulo: "Región Incorrecta", mensaje: "El ID proporcionado pertenece a otra región. Por favor verifica los datos de tu cuenta." },
+      { id: '3', titulo: "Cuenta No Encontrada", mensaje: "No pudimos encontrar una cuenta con el ID y Nickname proporcionados en este juego." },
+      { id: '4', titulo: "Datos de Cuenta Incorrectos", mensaje: "El usuario y/o contraseña proporcionados para el acceso a la cuenta son incorrectos." },
+      { id: '5', titulo: "Problema con la Transacción", mensaje: "El pago ha sido revertido o se ha detectado un problema con la transacción, no se puede realizar la recarga." },
+      { id: '6', titulo: "Paquete No Disponible", mensaje: "El paquete solicitado no está disponible temporalmente para recargas en esta región." },
+      { id: '7', titulo: "Mantenimiento del Juego", mensaje: "Mantenimiento en los servidores del juego. Por favor intenta crear un nuevo pedido más tarde." }
+    ];
+  }, [config?.motivos_rechazo]);
   const esElOperador = (pedido) => {
     if (!pedido || !pedido.atendido_por_id) return false;
     const uid = String(user?.id).toLowerCase();
@@ -2349,11 +2366,23 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                   {rechazandoItem === item.id && isAdmin && (
                      <div style={{ marginTop: '12px', padding: '16px', backgroundColor: 'rgba(239, 68, 68, 0.08)', borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.3)', animation: 'fadeIn 0.2s' }}>
                        <label style={{ display: 'block', fontSize: '12px', color: '#ef4444', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px' }}>Motivo del Fallo de Recarga:</label>
+                       
+                       <select
+                          value={motivosRechazoArray.map(m => m.mensaje).includes(motivoRechazo) ? motivoRechazo : ""}
+                          onChange={(e) => setMotivoRechazo(e.target.value)}
+                          style={{ width: '100%', marginBottom: '8px', padding: '10px', borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.5)', border: '1px solid rgba(239, 68, 68, 0.4)', color: 'white', fontSize: '14px', outline: 'none', cursor: 'pointer' }}
+                       >
+                          <option value="">-- Seleccionar un motivo rápido --</option>
+                          {motivosRechazoArray.map(m => (
+                            <option key={m.id} value={m.mensaje}>{m.titulo}</option>
+                          ))}
+                       </select>
+
                        <textarea 
                           placeholder="Ej: El ID proporcionado no corresponde a ninguna cuenta en la región especificada..." 
                           value={motivoRechazo} 
                           onChange={(e) => setMotivoRechazo(e.target.value)}
-                          style={{ width: '100%', height: '60px', borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(239, 68, 68, 0.4)', color: 'white', padding: '10px', fontSize: '14px', outline: 'none' }}
+                          style={{ width: '100%', height: '60px', borderRadius: '8px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(239, 68, 68, 0.4)', color: 'white', padding: '10px', fontSize: '14px', outline: 'none', resize: 'vertical' }}
                        />
                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
                           <button onClick={() => setRechazandoItem(null)} style={{ padding: '6px 16px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontWeight: 600 }}>Cancelar</button>
