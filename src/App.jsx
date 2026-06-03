@@ -4,7 +4,6 @@ import Layout from './components/Layout'
 import Login from './components/Login'
 import Register from './components/Register'
 import { useAuth, useConfiguracion } from './hooks/useData'
-import { WalletProvider } from './context/WalletContext'
 import { supabase } from './lib/supabase'
 
 // Componentes estáticos (carga inmediata)
@@ -725,7 +724,7 @@ export default function App() {
     }
 
     return (
-      <WalletProvider>
+      <>
         {isLandingRoute ? (
           currentPath === '/checkout' ? (
             <Checkout onFinish={() => navigate('/')} />
@@ -746,7 +745,7 @@ export default function App() {
             </Layout>
           </>
         )}
-      </WalletProvider>
+      </>
     )
   }
 

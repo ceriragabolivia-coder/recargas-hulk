@@ -10,6 +10,7 @@ import { SpeedInsights } from '@vercel/speed-insights/react'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import { ConfigProvider } from './context/ConfigContext'
+import { WalletProvider } from './context/WalletContext'
 
 
 // Error Boundary simple para producción
@@ -48,9 +49,11 @@ if (!rootElement) {
         <AuthProvider>
           <ConfigProvider>
             <CartProvider>
-              <App />
-              <Analytics />
-              <SpeedInsights />
+              <WalletProvider>
+                <App />
+                <Analytics />
+                <SpeedInsights />
+              </WalletProvider>
             </CartProvider>
           </ConfigProvider>
         </AuthProvider>
