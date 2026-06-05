@@ -112,6 +112,23 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
         throw new Error('El número de teléfono debe tener al menos 10 dígitos (ej: 4120000000)')
       }
 
+      const { data: checkData, error: checkError } = await supabase.rpc('check_registration_data', {
+        p_email: regEmail,
+        p_whatsapp: formattedPhone
+      })
+
+      if (checkError) {
+        throw new Error('Ocurrió un error al verificar los datos de registro. Por favor, intenta de nuevo.')
+      }
+
+      if (checkData?.email_exists) {
+        throw new Error('Este correo electrónico ya está registrado en nuestro sistema (activo o suspendido). Por favor, utiliza otro.')
+      }
+
+      if (checkData?.whatsapp_exists) {
+        throw new Error('Este número de WhatsApp ya se encuentra asociado a otra cuenta.')
+      }
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: regEmail,
         password: regPassword,
