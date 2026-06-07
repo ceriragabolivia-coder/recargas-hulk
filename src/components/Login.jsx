@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useData'
 
 export default function Login({ onGoToRegister }) {
@@ -7,6 +7,14 @@ export default function Login({ onGoToRegister }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
   const isSubmitLoading = authLoading
+
+  useEffect(() => {
+    const reason = sessionStorage.getItem('logout_reason')
+    if (reason === 'security_timeout') {
+      setError('Tu sesión fue cerrada automáticamente por medidas de seguridad debido a inactividad. Por favor, vuelve a iniciar sesión.')
+      sessionStorage.removeItem('logout_reason')
+    }
+  }, [])
 
   async function handleSubmit(e) {
     if (isSubmitLoading) return

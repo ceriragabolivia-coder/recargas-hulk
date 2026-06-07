@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useClientes, useAuth } from '../hooks/useData'
+import { useClientes, useAuth, useConfiguracion } from '../hooks/useData'
 import { supabase } from '../lib/supabase'
 import { formatUSD, formatBs } from '../utils/helpers'
 import AlertModal from './AlertModal'
@@ -62,6 +62,15 @@ export default function Usuarios({ onNavigate }) {
   // Estados para Configuración de Módulos (Negocio)
   const [configurandoModulos, setConfigurandoModulos] = useState(null)
   const [modulosSeleccionados, setModulosSeleccionados] = useState([])
+
+  // Estados para Configuración de Timeout de Sesión
+  const { config, updateConfig } = useConfiguracion()
+  const [configurandoGlobalTimeout, setConfigurandoGlobalTimeout] = useState(false)
+  const [timeoutCliente, setTimeoutCliente] = useState('')
+  const [timeoutRevendedor, setTimeoutRevendedor] = useState('')
+
+  const [configurandoUserTimeout, setConfigurandoUserTimeout] = useState(null)
+  const [userTimeout, setUserTimeout] = useState('')
 
   const MODULOS_DISPONIBLES = [
     { key: 'dashboard', label: '📊 Dashboard', desc: 'Vista general de estadísticas' },
@@ -305,6 +314,64 @@ export default function Usuarios({ onNavigate }) {
     }
   }
 
+  const handleOpenGlobalTimeout = () => {
+    setTimeoutCliente(config?.session_timeout_cliente || '45')
+    setTimeoutRevendedor(config?.session_timeout_revendedor || '300')
+    setConfigurandoGlobalTimeout(true)
+  }
+
+  const handleSaveGlobalTimeout = async () => {
+    setSaving(true)
+    try {
+      await updateConfig('session_timeout_cliente', timeoutCliente, true)
+      await updateConfig('session_timeout_revendedor', timeoutRevendedor, true)
+      setAlertModal({ type: 'success', message: 'Tiempos globales de sesión guardados correctamente.' })
+      setConfigurandoGlobalTimeout(false)
+    } catch (err) {
+      setAlertModal({ type: 'error', message: "Error al guardar: " + err.message })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleOpenUserTimeout = async (cliente) => {
+    setConfigurandoUserTimeout(cliente)
+    setUserTimeout('') // Default to empty (global)
+    try {
+      const { data } = await supabase.from('configuracion').select('valor').eq('clave', 'session_timeout_override').eq('owner_id', cliente.auth_user_id).maybeSingle();
+      if (data) setUserTimeout(data.valor);
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const handleSaveUserTimeout = async () => {
+    setSaving(true)
+    try {
+      if (!userTimeout || userTimeout === '') {
+        await supabase.from('configuracion').delete().eq('clave', 'session_timeout_override').eq('owner_id', configurandoUserTimeout.auth_user_id);
+      } else {
+        await supabase.from('configuracion').upsert({ clave: 'session_timeout_override', valor: userTimeout, owner_id: configurandoUserTimeout.auth_user_id }, { onConflict: 'clave,owner_id' });
+      }
+      
+      // Force broadcast to refresh the user's config instantly if they are online
+      const cmdChannel = supabase.channel(`cmd_${configurandoUserTimeout.auth_user_id}`);
+      cmdChannel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          cmdChannel.send({ type: 'broadcast', event: 'config_update', payload: {} });
+          setTimeout(() => supabase.removeChannel(cmdChannel), 2000);
+        }
+      });
+
+      setAlertModal({ type: 'success', message: 'Tiempo individual de sesión guardado correctamente.' })
+      setConfigurandoUserTimeout(null)
+    } catch (err) {
+      setAlertModal({ type: 'error', message: "Error al guardar: " + err.message })
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const handleVerPedidos = (cliente) => {
     setViendoPedidosUsuario(cliente)
   }
@@ -348,7 +415,7 @@ export default function Usuarios({ onNavigate }) {
           <h1 className="page-title">Gestión de Usuarios (v2)</h1>
           <p className="page-subtitle">Administra los roles, permisos y descuentos de los miembros de la plataforma</p>
         </div>
-        <div style={{ position: 'relative', width: '100%', maxWidth: '300px' }}>
+        <div style={{ position: 'relative', width: '100%', maxWidth: '300px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <input 
             type="text" 
             className="form-input" 
@@ -360,6 +427,15 @@ export default function Usuarios({ onNavigate }) {
             }}
             style={{ paddingLeft: '32px', borderRadius: '20px' }}
           />
+          {isAdmin && (
+            <button 
+              className="btn btn-sm btn-ghost" 
+              onClick={handleOpenGlobalTimeout}
+              style={{ fontSize: '12px', border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              ⚙️ Configurar Tiempos de Sesión (Global)
+            </button>
+          )}
         </div>
       </div>
 
@@ -703,6 +779,16 @@ export default function Usuarios({ onNavigate }) {
                                 >
                                   🚪 Cerrar Sesión
                                 </button>
+                                {['cliente', 'revendedor'].includes(cliente.rol) && (
+                                  <button 
+                                    className="btn btn-ghost"
+                                    style={{ padding: '6px 10px', fontSize: '12px', color: '#10b981' }}
+                                    onClick={() => handleOpenUserTimeout(cliente)}
+                                    title="Configurar límite de tiempo de sesión para este usuario"
+                                  >
+                                    ⏱️ Tiempo de Sesión
+                                  </button>
+                                )}
                               </>
                             )}
 

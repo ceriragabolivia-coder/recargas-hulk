@@ -403,6 +403,7 @@ export default function App() {
   const [currentParams, setCurrentParams] = useState(null)
   const [isRegistering, setIsRegistering] = useState(false)
   const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [individualTimeout, setIndividualTimeout] = useState(null)
   
   // Sincronizar isRegistering con la ruta para compatibilidad
   useEffect(() => {
@@ -530,9 +531,84 @@ export default function App() {
     }
   }
 
+  // Fetch individual timeout override
+  useEffect(() => {
+    if (user && !isAdmin && !isEmpleado) {
+      supabase.from('configuracion')
+        .select('valor')
+        .eq('clave', 'session_timeout_override')
+        .eq('owner_id', user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) setIndividualTimeout(data.valor);
+        });
+    }
+  }, [user, isAdmin, isEmpleado]);
 
+  // Sistema de Auto-Logout por Inactividad
+  useEffect(() => {
+    if (!user || loading || !perfil || isAdmin) return;
 
-  // Sistema de Estadísticas: Latido y Actividad
+    let activityTimer;
+    
+    const updateActivity = () => {
+      localStorage.setItem(`last_activity_${user.id}`, Date.now().toString());
+    };
+
+    // Inicializar actividad si no existe
+    if (!localStorage.getItem(`last_activity_${user.id}`)) {
+      updateActivity();
+    }
+
+    const checkTimeout = () => {
+      const lastActivityStr = localStorage.getItem(`last_activity_${user.id}`);
+      if (!lastActivityStr) return;
+      
+      const lastActivity = parseInt(lastActivityStr, 10);
+      const elapsedMinutes = (Date.now() - lastActivity) / 1000 / 60;
+      
+      const baseTimeout = perfil.rol?.toLowerCase() === 'revendedor' 
+        ? Number(config?.session_timeout_revendedor || 300) 
+        : Number(config?.session_timeout_cliente || 45);
+        
+      const effectiveTimeoutMinutes = individualTimeout !== null ? Number(individualTimeout) : baseTimeout;
+      
+      if (elapsedMinutes >= effectiveTimeoutMinutes) {
+        sessionStorage.setItem('logout_reason', 'security_timeout');
+        if (logout) {
+          logout().then(() => {
+            window.location.href = '/login';
+          });
+        }
+      }
+    };
+
+    // Throttle updateActivity para no saturar localStorage
+    let isThrottled = false;
+    const handleActivity = () => {
+      if (!isThrottled) {
+        updateActivity();
+        isThrottled = true;
+        setTimeout(() => { isThrottled = false; }, 5000);
+      }
+    };
+
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('keydown', handleActivity);
+    window.addEventListener('click', handleActivity);
+    window.addEventListener('touchstart', handleActivity);
+
+    // Revisar cada 1 minuto
+    activityTimer = setInterval(checkTimeout, 60000);
+
+    return () => {
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+      window.removeEventListener('click', handleActivity);
+      window.removeEventListener('touchstart', handleActivity);
+      clearInterval(activityTimer);
+    };
+  }, [user, loading, perfil, isAdmin, config, individualTimeout, logout]);
   React.useEffect(() => {
     if (user?.id) {
       const sessionId = Math.random().toString(36).substring(7);
@@ -608,8 +684,20 @@ export default function App() {
       .on('broadcast', { event: 'force_logout' }, () => {
          if (logout) {
            logout().then(() => {
-             window.location.href = '/';
+             window.location.href = '/login';
            });
+         }
+      })
+      .on('broadcast', { event: 'config_update' }, () => {
+         if (user && !isAdmin && !isEmpleado) {
+           supabase.from('configuracion')
+             .select('valor')
+             .eq('clave', 'session_timeout_override')
+             .eq('owner_id', user.id)
+             .maybeSingle()
+             .then(({ data }) => {
+               setIndividualTimeout(data ? data.valor : null);
+             });
          }
       })
       .subscribe()
