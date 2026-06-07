@@ -405,6 +405,10 @@ export default function App() {
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [individualTimeout, setIndividualTimeout] = useState(null)
   
+  const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
+  const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
+  const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
+
   // Sincronizar isRegistering con la ruta para compatibilidad
   useEffect(() => {
     if (location.pathname === '/register') setIsRegistering(true)
@@ -709,10 +713,6 @@ export default function App() {
     // Solo re-suscribir si cambia el ID de usuario o si el perfil (que define nickname/avatar) cambia de nulo a algo
     // Usamos el ID del perfil para evitar re-suscripciones por cambios menores en el objeto perfil
   }, [user?.id, !!perfil])
-
-   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
-  const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
-  const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
 
   // Solo redirigimos automáticamente la PRIMERA vez que cargamos el perfil
   const hasRedirectedRef = React.useRef(false)
