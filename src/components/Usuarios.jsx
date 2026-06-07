@@ -1147,6 +1147,124 @@ export default function Usuarios({ onNavigate }) {
         />
       )}
 
+      {/* Modal Configuración Tiempo Global */}
+      {configurandoGlobalTimeout && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999, animation: 'fadeIn 0.2s ease'
+        }}>
+          <div style={{ backgroundColor: '#0d0d2b', borderRadius: '16px', width: '100%', maxWidth: '400px', padding: '24px', border: '1px solid var(--border-color)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+            <h3 style={{ marginBottom: '16px', color: 'var(--text-primary)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px', marginTop: 0 }}>
+              ⚙️ Tiempos Globales de Inactividad
+            </h3>
+            
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '24px' }}>
+              Define el tiempo de inactividad permitido (en minutos) antes de que el sistema cierre automáticamente la sesión de los usuarios.
+            </p>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                👤 Tiempo para Clientes (minutos)
+              </label>
+              <input 
+                type="number"
+                className="form-input"
+                value={timeoutCliente}
+                onChange={(e) => setTimeoutCliente(e.target.value)}
+                placeholder="45"
+              />
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                ⭐ Tiempo para Revendedores (minutos)
+              </label>
+              <input 
+                type="number"
+                className="form-input"
+                value={timeoutRevendedor}
+                onChange={(e) => setTimeoutRevendedor(e.target.value)}
+                placeholder="300"
+              />
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Ej: 300 = 5 horas</span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button 
+                className="btn btn-ghost" 
+                onClick={() => setConfigurandoGlobalTimeout(false)}
+                disabled={saving}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={handleSaveGlobalTimeout}
+                disabled={saving}
+              >
+                {saving ? 'Guardando...' : 'Guardar Cambios'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Configuración Tiempo Individual */}
+      {configurandoUserTimeout && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999, animation: 'fadeIn 0.2s ease'
+        }}>
+          <div style={{ backgroundColor: '#0d0d2b', borderRadius: '16px', width: '100%', maxWidth: '400px', padding: '24px', border: '1px solid var(--border-color)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+            <h3 style={{ marginBottom: '16px', color: 'var(--text-primary)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px', marginTop: 0 }}>
+              ⏱️ Tiempo de Sesión Individual
+            </h3>
+            
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+              Configura el límite de inactividad específico para el usuario <strong>{configurandoUserTimeout.nombres}</strong>. 
+            </p>
+            
+            <div style={{ marginBottom: '24px', backgroundColor: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '8px' }}>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>
+                Si dejas este campo en blanco, el usuario usará el límite global de su rol ({configurandoUserTimeout.rol === 'revendedor' ? `${config?.session_timeout_revendedor || '300'} mins` : `${config?.session_timeout_cliente || '45'} mins`}).
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                Tiempo en minutos (Dejar vacío para usar Global)
+              </label>
+              <input 
+                type="number"
+                className="form-input"
+                value={userTimeout}
+                onChange={(e) => setUserTimeout(e.target.value)}
+                placeholder="Ej. 120"
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button 
+                className="btn btn-ghost" 
+                onClick={() => setConfigurandoUserTimeout(null)}
+                disabled={saving}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={handleSaveUserTimeout}
+                disabled={saving}
+              >
+                {saving ? 'Guardando...' : 'Guardar Cambios'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal para Ver Nota de Usuario */}
       {viendoNotaUsuario && (
         <div style={{
