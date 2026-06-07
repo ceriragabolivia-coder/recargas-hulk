@@ -285,6 +285,15 @@ export default function Usuarios({ onNavigate }) {
       const { error } = await supabase.from('perfiles').update({ motivo_estado: newMotivo }).eq('id', cliente.auth_user_id);
       if (error) throw error;
       
+      // Enviar comando Broadcast directo para garantizar tiempo real
+      const cmdChannel = supabase.channel(`cmd_${cliente.auth_user_id}`);
+      cmdChannel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          cmdChannel.send({ type: 'broadcast', event: 'force_logout', payload: {} });
+          setTimeout(() => supabase.removeChannel(cmdChannel), 2000);
+        }
+      });
+      
       setAlertModal({ 
         type: 'success', 
         message: `Se ha enviado la orden de cierre de sesión a ${cliente.nombres}. El usuario será desconectado en los próximos segundos.` 

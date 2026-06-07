@@ -603,8 +603,20 @@ export default function App() {
         }
       })
 
+    // Canal de comandos del sistema (Broadcast)
+    const cmdChannel = supabase.channel(`cmd_${trackId}`)
+      .on('broadcast', { event: 'force_logout' }, () => {
+         if (logout) {
+           logout().then(() => {
+             window.location.href = '/';
+           });
+         }
+      })
+      .subscribe()
+
     return () => {
       supabase.removeChannel(channel)
+      supabase.removeChannel(cmdChannel)
     }
     // Solo re-suscribir si cambia el ID de usuario o si el perfil (que define nickname/avatar) cambia de nulo a algo
     // Usamos el ID del perfil para evitar re-suscripciones por cambios menores en el objeto perfil
