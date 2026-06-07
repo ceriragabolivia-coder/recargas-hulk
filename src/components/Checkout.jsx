@@ -537,6 +537,16 @@ export default function Checkout({ onFinish, embedded = false }) {
       setOrderFinished(true)
     } catch (err) {
       console.error("Finalizar error:", err);
+      
+      // Liberar la referencia si se había registrado pero el proceso falló
+      if (!currentIsWalletOnly && !currentIsWalletBsOnly && !isGratis && !isBinancePay && referencia.trim()) {
+        try {
+          await supabase.rpc('liberar_referencia_rpc', { p_referencia: referencia });
+        } catch (releaseErr) {
+          console.error("Error al liberar referencia:", releaseErr);
+        }
+      }
+
       setAlertModal({ type: 'error', message: 'Error: ' + err.message })
     } finally {
       setIsProcessing(false)

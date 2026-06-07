@@ -154,10 +154,12 @@ export default function Billetera({ onNavigate }) {
     }
 
     setIsProcessing(true)
+    let referenciaRegistrada = false;
     try {
       // Validar referencia duplicada
       try {
         await verificarYRegistrarReferencia(referencia, monto, 'recarga')
+        referenciaRegistrada = true;
       } catch (err) {
         if (err.message === 'Referencia Duplicada') {
           setAlertModal({ 
@@ -189,6 +191,13 @@ export default function Billetera({ onNavigate }) {
       setMetodoId('')
       setComprobanteUrl(null)
     } catch (err) {
+      if (referenciaRegistrada && referencia) {
+        try {
+          await supabase.rpc('liberar_referencia_rpc', { p_referencia: referencia });
+        } catch (releaseErr) {
+          console.error("Error al liberar referencia:", releaseErr);
+        }
+      }
       setAlertModal({ type: 'error', message: 'Error al enviar solicitud: ' + err.message })
     } finally {
       setIsProcessing(false)

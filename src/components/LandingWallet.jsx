@@ -106,10 +106,12 @@ export default function LandingWallet({ onClose }) {
     }
 
     setIsProcessing(true)
+    let referenciaRegistrada = false;
     try {
       // Validar referencia
       try {
         await verificarYRegistrarReferencia(referencia, monto, 'recarga')
+        referenciaRegistrada = true;
       } catch (err) {
         if (err.message === 'Referencia Duplicada') {
           setAlert({ type: 'error', message: 'Esta referencia ya ha sido utilizada.' })
@@ -129,6 +131,13 @@ export default function LandingWallet({ onClose }) {
       setComprobanteUrl(null)
       refetch()
     } catch (err) {
+      if (referenciaRegistrada && referencia) {
+        try {
+          await supabase.rpc('liberar_referencia_rpc', { p_referencia: referencia });
+        } catch (releaseErr) {
+          console.error("Error al liberar referencia:", releaseErr);
+        }
+      }
       setAlert({ type: 'error', message: 'Error al enviar solicitud: ' + err.message })
     } finally {
       setIsProcessing(false)
