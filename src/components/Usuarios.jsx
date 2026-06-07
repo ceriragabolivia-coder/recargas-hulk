@@ -272,6 +272,30 @@ export default function Usuarios({ onNavigate }) {
     }
   }
 
+  const handleForceLogout = async (cliente) => {
+    if (!window.confirm(`¿Estás seguro de que deseas cerrar forzadamente la sesión de ${cliente.nombres}? Esto lo expulsará de la página en tiempo real y tendrá que volver a iniciar sesión.`)) {
+      return
+    }
+    setSaving(true)
+    try {
+      const { data: pData } = await supabase.from('perfiles').select('motivo_estado').eq('id', cliente.auth_user_id).single();
+      const currentMotivo = pData?.motivo_estado || '';
+      const newMotivo = currentMotivo ? `${currentMotivo} __FORCE_LOGOUT__` : '__FORCE_LOGOUT__';
+      
+      const { error } = await supabase.from('perfiles').update({ motivo_estado: newMotivo }).eq('id', cliente.auth_user_id);
+      if (error) throw error;
+      
+      setAlertModal({ 
+        type: 'success', 
+        message: `Se ha enviado la orden de cierre de sesión a ${cliente.nombres}. El usuario será desconectado en los próximos segundos.` 
+      })
+    } catch (err) {
+      setAlertModal({ type: 'error', message: "Error al forzar cierre de sesión: " + err.message })
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const handleVerPedidos = (cliente) => {
     setViendoPedidosUsuario(cliente)
   }
@@ -652,15 +676,25 @@ export default function Usuarios({ onNavigate }) {
                               </>
                             )}
 
-                             {!isEmpleado && (
-                              <button 
-                                className="btn btn-ghost"
-                                style={{ padding: '6px 10px', fontSize: '12px' }}
-                                onClick={() => handleEditClick(cliente)}
-                                title="Editar usuario"
-                              >
-                                ✏️ Editar
-                              </button>
+                            {!isEmpleado && (
+                              <>
+                                <button 
+                                  className="btn btn-ghost"
+                                  style={{ padding: '6px 10px', fontSize: '12px' }}
+                                  onClick={() => handleEditClick(cliente)}
+                                  title="Editar usuario"
+                                >
+                                  ✏️ Editar
+                                </button>
+                                <button 
+                                  className="btn btn-ghost"
+                                  style={{ padding: '6px 10px', fontSize: '12px', color: '#f97316' }}
+                                  onClick={() => handleForceLogout(cliente)}
+                                  title="Forzar cierre de sesión (Desloguear) de este usuario en tiempo real"
+                                >
+                                  🚪 Cerrar Sesión
+                                </button>
+                              </>
                             )}
 
                             {isAdmin && cliente.auth_user_id !== perfil.id && (

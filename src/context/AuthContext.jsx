@@ -90,6 +90,15 @@ export function AuthProvider({ children }) {
         let clienteData = resC.data
         const walletData = resB.data
         
+        // Intercepción para Forzar Cierre de Sesión (__FORCE_LOGOUT__)
+        if (perfilData?.motivo_estado && perfilData.motivo_estado.includes('__FORCE_LOGOUT__')) {
+            const newMotivo = perfilData.motivo_estado.replace('__FORCE_LOGOUT__', '').trim();
+            await supabase.from('perfiles').update({ motivo_estado: newMotivo || null }).eq('id', userId);
+            await supabase.auth.signOut();
+            window.location.href = '/';
+            return null;
+        }
+        
         // Auto-creación de perfil si no existe
         if (!perfilData && u) {
           const { data: nuevoPerfil } = await supabase.from('perfiles').insert({
@@ -143,7 +152,18 @@ export function AuthProvider({ children }) {
         .channel(`auth_perfil_${userId}`)
         .on('postgres_changes', { 
           event: 'UPDATE', schema: 'public', table: 'perfiles', filter: `id=eq.${userId}` 
-        }, payload => setPerfil(prev => ({ ...prev, ...payload.new })))
+        }, payload => {
+           if (payload.new?.motivo_estado && payload.new.motivo_estado.includes('__FORCE_LOGOUT__')) {
+               const newMotivo = payload.new.motivo_estado.replace('__FORCE_LOGOUT__', '').trim();
+               supabase.from('perfiles').update({ motivo_estado: newMotivo || null }).eq('id', userId).then(() => {
+                   supabase.auth.signOut().then(() => {
+                       window.location.href = '/';
+                   });
+               });
+           } else {
+               setPerfil(prev => ({ ...prev, ...payload.new }))
+           }
+        })
         .subscribe()
     }
 
