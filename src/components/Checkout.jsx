@@ -56,7 +56,7 @@ function CountdownTimer({ expiryDate, onExpire }) {
 }
 
 export default function Checkout({ onFinish, embedded = false }) {
-  const { cart, removeFromCart, clearCart, checkout, totalUSD, totalBs } = useCart()
+  const { cart, removeFromCart, clearCart, checkout, totalUSD, totalBs, validateCartPrices } = useCart()
   const { registrarVenta, verificarYRegistrarReferencia } = useVentas()
   const { metodos, cancelarPedidosExpirados, loading: loadingMetodos } = useMetodosPago()
   
@@ -159,6 +159,24 @@ export default function Checkout({ onFinish, embedded = false }) {
     setNotificaciones(prev => prev.map(n => n.id === id ? { ...n, leido: true } : n))
     setUnreadCount(prev => Math.max(0, prev - 1))
   }
+
+  // Validar los precios del carrito cuando se abre el checkout o cambia la tasa/configuración
+  useEffect(() => {
+    let mounted = true;
+    if (cart.length > 0 && config) {
+      validateCartPrices(config, perfil).then(changed => {
+        if (mounted && changed) {
+          if (currentStep !== 1) setCurrentStep(1);
+          setAlertModal({ 
+            type: 'warning', 
+            title: 'Precios Actualizados',
+            message: 'Los precios de algunos productos en tu carrito han sido actualizados según la tasa de cambio o precio actual vigente.\n\nPor favor, verifica el nuevo monto total antes de continuar.' 
+          });
+        }
+      });
+    }
+    return () => { mounted = false; };
+  }, [config, perfil, currentStep]); // Dependencia currentStep para poder resetearlo si estamos en paso > 1
 
   useEffect(() => {
     window.scrollTo(0, 0);

@@ -2,6 +2,7 @@ import React, { useState, useEffect, createContext, useContext, useMemo } from '
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
 import { processAutoDeliveryOrder } from '../utils/autoProcess'
+import { calcularPrecioVenta } from '../utils/helpers'
 
 const CartContext = createContext()
 
@@ -52,6 +53,53 @@ export function CartProvider({ children }) {
   }
 
   const clearCart = () => setCart([])
+
+  const validateCartPrices = async (currentConfig, currentUserProfile) => {
+    if (cart.length === 0) return false;
+    try {
+      const productIds = [...new Set(cart.map(item => item.id))];
+      const { data: dbProducts, error } = await supabase
+        .from('productos')
+        .select('*, juegos(*)')
+        .in('id', productIds);
+      
+      if (error || !dbProducts) return false;
+
+      let changed = false;
+      const updatedCart = cart.map(item => {
+        const dbProd = dbProducts.find(p => p.id === item.id);
+        if (!dbProd) return item; // Producto no encontrado
+
+        // Encontrar el juego específico (puede ser un arreglo o un objeto dependiendo de Supabase)
+        let dbJuego = null;
+        if (Array.isArray(dbProd.juegos)) {
+          dbJuego = dbProd.juegos.find(j => j.nombre === item.juego);
+        } else if (dbProd.juegos && dbProd.juegos.nombre === item.juego) {
+          dbJuego = dbProd.juegos;
+        }
+
+        // Si no encontramos el juego exacto, probamos con dbProd como juego por defecto (para retrocompatibilidad)
+        if (!dbJuego) dbJuego = dbProd; 
+
+        const newPrice = calcularPrecioVenta(dbProd, dbJuego, currentConfig, currentUserProfile);
+
+        if (newPrice.venta_usd !== item.venta_usd || newPrice.venta_bs !== item.venta_bs) {
+          changed = true;
+          return { ...item, venta_usd: newPrice.venta_usd, venta_bs: newPrice.venta_bs };
+        }
+        return item;
+      });
+
+      if (changed) {
+        setCart(updatedCart);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Error validating cart prices:', err);
+      return false;
+    }
+  };
 
   const checkout = async (registrarVenta, clienteId, metodoPagoId, referencia, whatsapp, ruletaDesc, existingPedidoId, comprobanteUrl, shouldUpdate) => {
     if (!user || cart.length === 0) return [{ id: 'pedido', error: 'Carrito vacío o sesión no iniciada' }]
@@ -162,7 +210,7 @@ export function CartProvider({ children }) {
   const totalBs = useMemo(() => Math.round(cart.reduce((acc, item) => acc + (item.venta_bs * item.quantity), 0)), [cart])
 
   const value = useMemo(() => ({ 
-    cart, addToCart, removeFromCart, updateQuantity, clearCart, checkout, 
+    cart, addToCart, removeFromCart, updateQuantity, clearCart, checkout, validateCartPrices,
     totalItems, totalUSD, totalBs,
     isCartOpen, setIsCartOpen
   }), [cart, totalItems, totalUSD, totalBs, isCartOpen])
