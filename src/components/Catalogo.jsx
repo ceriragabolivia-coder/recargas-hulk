@@ -60,13 +60,7 @@ export default function Catalogo() {
 
   const [activeProductType, setActiveProductType] = useState('recarga')
 
-  const [localRechargeData, setLocalRechargeData] = useState({
-    player_id: '',
-    zone_id: '',
-    account_email: '',
-    account_password: '',
-    account_user: ''
-  })
+
   
   const hasRecargas = useMemo(() => {
     if (!selectedJuego || !selectedJuego.productos) return false
