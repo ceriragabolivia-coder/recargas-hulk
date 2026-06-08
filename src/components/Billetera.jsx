@@ -960,10 +960,9 @@ export default function Billetera({ onNavigate }) {
                         ) : item.metodo_recarga === 'id_zone' ? (
                           <>🆔 ID: {item.player_id} | 🌐 ZONE ID: {item.zone_id}</>
                         ) : item.metodo_recarga === 'cuenta_completa' ? (
-                          <>
-                            📧 {item.account_email} <br/>
-                            🔑 {item.account_password}
-                          </>
+                          <>📧 {item.account_email} | 🔑 {item.account_password}</>
+                        ) : item.metodo_recarga === 'cuenta_nueva' ? (
+                          <>✨ Cuenta Nueva (Nosotros la proporcionamos)</>
                         ) : (
                           <>
                             👤 {item.account_user} <br/>

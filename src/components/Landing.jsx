@@ -58,7 +58,7 @@ export default function Landing({ onNavigate }) {
   const { cuentas, guardarCuenta, eliminarCuenta } = useCuentasGuardadas(selectedJuego?.id || null)
   const [buyMode, setBuyMode] = useState('single')
   const [localRechargeData, setLocalRechargeData] = useState({
-    player_id: '', zone_id: '', account_email: '', account_password: '', account_user: ''
+    player_id: '', zone_id: '', account_email: '', account_password: '', account_user: '', cuentaOpcion: 'propia'
   })
   const [shouldSaveData, setShouldSaveData] = useState(false)
   const [showGuideModal, setShowGuideModal] = useState(false)
@@ -179,7 +179,8 @@ export default function Landing({ onNavigate }) {
       zone_id: '',
       account_email: '',
       account_password: '',
-      account_user: ''
+      account_user: '',
+      cuentaOpcion: 'propia'
     })
     setVerificacionResultado(null)
     setShouldSaveData(false)
@@ -191,7 +192,8 @@ export default function Landing({ onNavigate }) {
       zone_id: cuenta.zone_id || '',
       account_email: cuenta.email || '',
       account_password: cuenta.password || '',
-      account_user: cuenta.username || ''
+      account_user: cuenta.username || '',
+      cuentaOpcion: 'propia'
     })
     if (cuenta.player_id !== localRechargeData.player_id) {
       setVerificacionResultado(null)
@@ -264,13 +266,19 @@ export default function Landing({ onNavigate }) {
     if (!pendingItem) return
     const { p, selectedJuego, finalPrice, localRechargeData } = pendingItem
     
+    // Clonar el juego para evitar mutaciones indeseadas y resolver 'opcional_cuenta'
+    let resolvedJuego = { ...selectedJuego }
+    if (resolvedJuego.metodo_recarga === 'opcional_cuenta') {
+      resolvedJuego.metodo_recarga = localRechargeData.cuentaOpcion === 'nueva' ? 'cuenta_nueva' : 'cuenta_completa'
+    }
+
     if (buyMode === 'single') {
       clearCart() // Limpiar carrito antes de compra directa
-      addToCart(p, selectedJuego, finalPrice, localRechargeData)
+      addToCart(p, resolvedJuego, finalPrice, localRechargeData)
 
-      if (shouldSaveData) {
+      if (shouldSaveData && localRechargeData.cuentaOpcion !== 'nueva') {
         await guardarCuenta({
-          tipo_dato: selectedJuego.metodo_recarga || 'id',
+          tipo_dato: resolvedJuego.metodo_recarga || 'id',
           player_id: localRechargeData.player_id,
           zone_id: localRechargeData.zone_id,
           email: localRechargeData.account_email,
@@ -284,11 +292,11 @@ export default function Landing({ onNavigate }) {
       setShowCheckout(true)
       window.scrollTo(0, 0)
     } else {
-      addToCart(p, selectedJuego, finalPrice, localRechargeData)
+      addToCart(p, resolvedJuego, finalPrice, localRechargeData)
       
-      if (shouldSaveData) {
+      if (shouldSaveData && localRechargeData.cuentaOpcion !== 'nueva') {
         await guardarCuenta({
-          tipo_dato: selectedJuego.metodo_recarga || 'id',
+          tipo_dato: resolvedJuego.metodo_recarga || 'id',
           player_id: localRechargeData.player_id,
           zone_id: localRechargeData.zone_id,
           email: localRechargeData.account_email,
@@ -1104,32 +1112,75 @@ export default function Landing({ onNavigate }) {
                             </div>
                           </div>
                         ) : effectiveMetodoRecarga === 'usuario_clave' ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                <label className="form-label" style={{ fontSize: '12px', margin: 0 }}>👤 Usuario</label>
-                                {selectedJuego?.guia_id_url && (
-                                  <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent-primary)', color:'#fff', width:'16px', height:'16px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:'bold' }} title="Ver guía">?</div>
+                          <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                            <div style={{ flex: '1 1 200px' }}>
+                              <label className="form-label" style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                👤 Nombre de usuario
+                                {selectedJuego.guia_id_url && (
+                                  <span 
+                                    onClick={() => setShowGuideModal(true)}
+                                    style={{ 
+                                      cursor: 'pointer', backgroundColor: 'var(--accent-primary)', color: '#000', 
+                                      width: '18px', height: '18px', borderRadius: '50%', display: 'flex', 
+                                      alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold' 
+                                    }}
+                                    title="Ver dónde obtener esta información"
+                                  >?</span>
                                 )}
-                              </div>
+                              </label>
                               <input 
                                 type="text" 
                                 className="form-input" 
-                                placeholder="Tu usuario"
+                                placeholder="Tu nombre de usuario en el juego"
                                 value={localRechargeData.account_user || ''}
                                 onChange={e => setLocalRechargeData({...localRechargeData, account_user: e.target.value})}
+                                style={{ backgroundColor: 'var(--bg-card)', padding: '16px', fontSize: '15px' }}
                               />
                             </div>
-                            <div>
-                              <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>🔑 Contraseña</label>
+                            <div style={{ flex: '1 1 200px' }}>
+                              <label className="form-label" style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px' }}>
+                                🔑 Contraseña
+                              </label>
                               <input 
                                 type="password" 
                                 className="form-input" 
                                 placeholder="********"
                                 value={localRechargeData.account_password}
                                 onChange={e => setLocalRechargeData({...localRechargeData, account_password: e.target.value})}
+                                style={{ backgroundColor: 'var(--bg-card)', padding: '16px', fontSize: '15px' }}
                               />
                             </div>
+                          </div>
+                        ) : effectiveMetodoRecarga === 'opcional_cuenta' ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                               <button 
+                                  onClick={() => setLocalRechargeData({...localRechargeData, cuentaOpcion: 'propia'})}
+                                  style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid ' + (localRechargeData.cuentaOpcion === 'propia' ? 'var(--accent-primary)' : 'var(--border-color)'), backgroundColor: localRechargeData.cuentaOpcion === 'propia' ? 'rgba(0, 210, 255, 0.1)' : 'var(--bg-card)', color: localRechargeData.cuentaOpcion === 'propia' ? 'var(--accent-primary)' : 'var(--text-muted)', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
+                               >🏠 Activar en mi propia cuenta</button>
+                               <button 
+                                  onClick={() => setLocalRechargeData({...localRechargeData, cuentaOpcion: 'nueva'})}
+                                  style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid ' + (localRechargeData.cuentaOpcion === 'nueva' ? 'var(--accent-primary)' : 'var(--border-color)'), backgroundColor: localRechargeData.cuentaOpcion === 'nueva' ? 'rgba(0, 210, 255, 0.1)' : 'var(--bg-card)', color: localRechargeData.cuentaOpcion === 'nueva' ? 'var(--accent-primary)' : 'var(--text-muted)', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
+                               >✨ Quiero una cuenta nueva</button>
+                            </div>
+                            {localRechargeData.cuentaOpcion === 'propia' ? (
+                              <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap', animation: 'fadeIn 0.3s' }}>
+                                 <div style={{ flex: '1 1 200px' }}>
+                                   <label className="form-label" style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px' }}>📧 Correo de la cuenta</label>
+                                   <input type="email" className="form-input" placeholder="ejemplo@correo.com" value={localRechargeData.account_email} onChange={e => setLocalRechargeData({...localRechargeData, account_email: e.target.value})} style={{ backgroundColor: 'var(--bg-card)', padding: '16px', fontSize: '15px' }} />
+                                 </div>
+                                 <div style={{ flex: '1 1 200px' }}>
+                                   <label className="form-label" style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px' }}>🔑 Clave de acceso</label>
+                                   <input type="password" className="form-input" placeholder="********" value={localRechargeData.account_password} onChange={e => setLocalRechargeData({...localRechargeData, account_password: e.target.value})} style={{ backgroundColor: 'var(--bg-card)', padding: '16px', fontSize: '15px' }} />
+                                 </div>
+                              </div>
+                            ) : (
+                              <div style={{ padding: '16px', backgroundColor: 'rgba(0, 210, 255, 0.05)', borderRadius: '12px', border: '1px dashed var(--accent-primary)', textAlign: 'center', animation: 'fadeIn 0.3s' }}>
+                                 <div style={{ fontSize: '24px', marginBottom: '8px' }}>📺</div>
+                                 <p style={{ color: 'var(--accent-primary)', fontWeight: 'bold', margin: '0 0 4px 0', fontSize: '16px' }}>Nosotros te proveeremos una cuenta</p>
+                                 <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0, lineHeight: 1.4 }}>No necesitas ingresar ningún dato. Una vez procesado el pedido, te enviaremos el correo y la contraseña de tu nueva cuenta con el servicio activado.</p>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -1824,9 +1875,13 @@ export default function Landing({ onNavigate }) {
                       ) : pendingEffectiveMetodo === 'entrega_codigo' ? (
                         <div style={{ fontSize: '14px', color: '#fff', fontWeight: 600 }}>🎁 Entrega de Código (Gift Card)</div>
                       ) : pendingEffectiveMetodo === 'solo_correo' ? (
-                  <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Correo:</span> <strong style={{ color: '#fff' }}>{pendingItem.localRechargeData.account_email}</strong></div>
-                      </>
+                        <>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Correo:</span> <strong style={{ color: '#fff' }}>{pendingItem.localRechargeData.account_email}</strong></div>
+                        </>
+                      ) : pendingEffectiveMetodo === 'cuenta_nueva' || pendingItem.localRechargeData.cuentaOpcion === 'nueva' ? (
+                        <>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Tipo de Servicio:</span> <strong style={{ color: '#fff' }}>✨ Cuenta Nueva (Nuestra)</strong></div>
+                        </>
                       ) : pendingEffectiveMetodo === 'solo_usuario' ? (
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: 'var(--text-muted)' }}>Usuario:</span> <strong style={{ color: '#fff' }}>{pendingItem.localRechargeData.account_user}</strong></div>

@@ -2317,6 +2317,11 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                         <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>👤 {item.account_user}</div>
                         <div style={{ color: 'var(--accent-primary)', marginTop: '4px', fontFamily: 'monospace' }}>🔑 {item.account_password}</div>
                       </div>
+                    ) : item.metodo_recarga === 'cuenta_nueva' ? (
+                      <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
+                        <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>✨ Cuenta Nueva</div>
+                        <div style={{ color: 'var(--text-muted)', marginTop: '4px', fontSize: '12px' }}>Nosotros proporcionaremos la cuenta</div>
+                      </div>
                     ) : item.metodo_recarga === 'id_zone' ? (
                       <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)', color: 'var(--accent-primary)', fontWeight: 'bold' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>

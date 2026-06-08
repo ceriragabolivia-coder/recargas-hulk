@@ -821,6 +821,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                           : item.metodo_recarga === 'solo_usuario' ? `👤 ${item.account_user}`
                           : item.metodo_recarga === 'cuenta_completa' ? `📧 ${item.account_email}` 
                           : item.metodo_recarga === 'usuario_clave' ? `👤 ${item.account_user}` 
+                          : item.metodo_recarga === 'cuenta_nueva' ? `✨ Cuenta Nueva`
                           : item.metodo_recarga === 'id_zone' ? `🆔 ${item.player_id} (${item.zone_id})` 
                           : item.metodo_recarga === 'entrega_codigo' ? `🎁 Entrega de Código`
                           : item.metodo_recarga === 'sin_datos' ? `📥 Entrega Automática`

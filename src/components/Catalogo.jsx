@@ -97,13 +97,23 @@ export default function Catalogo() {
     setShouldSaveData(false)
   }
 
+  const [localRechargeData, setLocalRechargeData] = useState({
+    player_id: '',
+    zone_id: '',
+    account_email: '',
+    account_password: '',
+    account_user: '',
+    cuentaOpcion: 'propia'
+  })
+
   const handleSelectCuenta = (cuenta) => {
     setLocalRechargeData({
       player_id: cuenta.player_id || '',
       zone_id: cuenta.zone_id || '',
       account_email: cuenta.email || '',
       account_password: cuenta.password || '',
-      account_user: cuenta.username || ''
+      account_user: cuenta.username || '',
+      cuentaOpcion: 'propia'
     })
     if (cuenta.player_id !== localRechargeData.player_id) {
       setVerificacionResultado(null)
@@ -185,14 +195,20 @@ export default function Catalogo() {
     if (!pendingItem) return
     const { p, selectedJuego, finalPrice, localRechargeData } = pendingItem
     
+    // Clonar el juego para evitar mutaciones indeseadas y resolver 'opcional_cuenta'
+    let resolvedJuego = { ...selectedJuego }
+    if (resolvedJuego.metodo_recarga === 'opcional_cuenta') {
+      resolvedJuego.metodo_recarga = localRechargeData.cuentaOpcion === 'nueva' ? 'cuenta_nueva' : 'cuenta_completa'
+    }
+
     if (buyMode === 'single') {
       clearCart() // Opción B: Limpiar carrito antes de compra directa
-      addToCart(p, selectedJuego, finalPrice, localRechargeData)
+      addToCart(p, resolvedJuego, finalPrice, localRechargeData)
 
-      if (shouldSaveData) {
+      if (shouldSaveData && localRechargeData.cuentaOpcion !== 'nueva') {
         console.log('💾 Guardando cuenta en base de datos...')
         await guardarCuenta({
-          tipo_dato: selectedJuego.metodo_recarga || 'id',
+          tipo_dato: resolvedJuego.metodo_recarga || 'id',
           player_id: localRechargeData.player_id,
           zone_id: localRechargeData.zone_id,
           email: localRechargeData.account_email,
@@ -205,12 +221,12 @@ export default function Catalogo() {
       setPendingItem(null)
       navigate('/Checkout')
     } else {
-      addToCart(p, selectedJuego, finalPrice, localRechargeData)
+      addToCart(p, resolvedJuego, finalPrice, localRechargeData)
       
-      if (shouldSaveData) {
+      if (shouldSaveData && localRechargeData.cuentaOpcion !== 'nueva') {
         console.log('💾 Guardando cuenta en base de datos...')
         await guardarCuenta({
-          tipo_dato: selectedJuego.metodo_recarga || 'id',
+          tipo_dato: resolvedJuego.metodo_recarga || 'id',
           player_id: localRechargeData.player_id,
           zone_id: localRechargeData.zone_id,
           email: localRechargeData.account_email,
@@ -310,6 +326,8 @@ export default function Catalogo() {
                       ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>ID:</span> {pendingItem.localRechargeData.player_id}<br/><div style={{height:4}}></div><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>ZONE ID:</span> {pendingItem.localRechargeData.zone_id}</>
                       : pendingEffectiveMetodo === 'entrega_codigo'
                       ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Entrega:</span><br/>Código de Canje (Vía Baúl/Manual)</>
+                      : pendingEffectiveMetodo === 'cuenta_nueva' || pendingItem.localRechargeData.cuentaOpcion === 'nueva'
+                      ? <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>Tipo de Servicio:</span><br/>✨ Cuenta Nueva (Proporcionada por nosotros)</>
                       : <><span style={{color:'var(--accent-primary)', fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase'}}>ID/UID:</span><br/>{pendingItem.localRechargeData.player_id}</>
                   })()}
                 </span>
@@ -648,6 +666,37 @@ export default function Catalogo() {
                     style={{ backgroundColor: 'var(--bg-card)', padding: '16px', fontSize: '15px' }}
                   />
                 </div>
+              </div>
+            ) : effectiveMetodoRecarga === 'opcional_cuenta' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                   <button 
+                      onClick={() => setLocalRechargeData({...localRechargeData, cuentaOpcion: 'propia'})}
+                      style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid ' + (localRechargeData.cuentaOpcion === 'propia' ? 'var(--accent-primary)' : 'var(--border-color)'), backgroundColor: localRechargeData.cuentaOpcion === 'propia' ? 'rgba(0, 210, 255, 0.1)' : 'var(--bg-card)', color: localRechargeData.cuentaOpcion === 'propia' ? 'var(--accent-primary)' : 'var(--text-muted)', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
+                   >🏠 Activar en mi propia cuenta</button>
+                   <button 
+                      onClick={() => setLocalRechargeData({...localRechargeData, cuentaOpcion: 'nueva'})}
+                      style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid ' + (localRechargeData.cuentaOpcion === 'nueva' ? 'var(--accent-primary)' : 'var(--border-color)'), backgroundColor: localRechargeData.cuentaOpcion === 'nueva' ? 'rgba(0, 210, 255, 0.1)' : 'var(--bg-card)', color: localRechargeData.cuentaOpcion === 'nueva' ? 'var(--accent-primary)' : 'var(--text-muted)', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
+                   >✨ Quiero una cuenta nueva</button>
+                </div>
+                {localRechargeData.cuentaOpcion === 'propia' ? (
+                  <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap', animation: 'fadeIn 0.3s' }}>
+                     <div style={{ flex: '1 1 200px' }}>
+                       <label className="form-label" style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px' }}>📧 Correo de la cuenta</label>
+                       <input type="email" className="form-input" placeholder="ejemplo@correo.com" value={localRechargeData.account_email} onChange={e => setLocalRechargeData({...localRechargeData, account_email: e.target.value})} style={{ backgroundColor: 'var(--bg-card)', padding: '16px', fontSize: '15px' }} />
+                     </div>
+                     <div style={{ flex: '1 1 200px' }}>
+                       <label className="form-label" style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px' }}>🔑 Clave de acceso</label>
+                       <input type="password" className="form-input" placeholder="********" value={localRechargeData.account_password} onChange={e => setLocalRechargeData({...localRechargeData, account_password: e.target.value})} style={{ backgroundColor: 'var(--bg-card)', padding: '16px', fontSize: '15px' }} />
+                     </div>
+                  </div>
+                ) : (
+                  <div style={{ padding: '16px', backgroundColor: 'rgba(0, 210, 255, 0.05)', borderRadius: '12px', border: '1px dashed var(--accent-primary)', textAlign: 'center', animation: 'fadeIn 0.3s' }}>
+                     <div style={{ fontSize: '24px', marginBottom: '8px' }}>📺</div>
+                     <p style={{ color: 'var(--accent-primary)', fontWeight: 'bold', margin: '0 0 4px 0', fontSize: '16px' }}>Nosotros te proveeremos una cuenta</p>
+                     <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0, lineHeight: 1.4 }}>No necesitas ingresar ningún dato. Una vez procesado el pedido, te enviaremos el correo y la contraseña de tu nueva cuenta con el servicio activado.</p>
+                  </div>
+                )}
               </div>
             ) : (
               <>
