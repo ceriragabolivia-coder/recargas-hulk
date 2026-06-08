@@ -105,6 +105,11 @@ export default function LandingWallet({ onClose }) {
       return
     }
 
+    if (referencia.trim().length !== 6) {
+      setAlert({ type: 'warning', message: 'La referencia debe contener exactamente los últimos 6 dígitos del comprobante.' })
+      return
+    }
+
     setIsProcessing(true)
     let referenciaRegistrada = false;
     try {
@@ -358,14 +363,23 @@ export default function LandingWallet({ onClose }) {
               )}
 
               <div className="form-group">
-                <label>Número de Referencia</label>
+                <label>Número de Referencia <span style={{ fontSize: '10px', opacity: 0.8 }}>(Últimos 6 dígitos)</span></label>
                 <input 
                   type="text" 
-                  placeholder="Últimos 6 dígitos"
+                  placeholder="Escribe los 6 últimos dígitos aquí..."
                   value={referencia}
-                  onChange={e => setReferencia(e.target.value.replace(/\D/g, '').slice(-6))}
+                  onChange={e => setReferencia(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onPaste={e => {
+                    e.preventDefault();
+                    const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+                    setReferencia(pasteData);
+                  }}
+                  style={{ letterSpacing: '2px', fontSize: '16px', fontWeight: 600 }}
                   required
                 />
+                <div style={{ fontSize: '11px', color: 'var(--accent-warning)', marginTop: '6px', fontWeight: 600 }}>
+                  ⚠️ Recuerda que debes colocar exactamente los 6 últimos números de la referencia del pago.
+                </div>
               </div>
 
               <div className="form-group">
@@ -389,7 +403,11 @@ export default function LandingWallet({ onClose }) {
                 </div>
               )}
 
-              <button type="submit" className="btn-submit-recharge" disabled={isProcessing}>
+              <button 
+                type="submit" 
+                className="btn-submit-recharge" 
+                disabled={isProcessing || (referencia.trim().length !== 6)}
+              >
                 {isProcessing ? 'Procesando...' : 'Enviar Reporte'}
               </button>
             </form>

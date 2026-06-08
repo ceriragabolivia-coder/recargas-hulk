@@ -351,9 +351,15 @@ export default function Checkout({ onFinish, embedded = false }) {
   const handleFinalizar = async () => {
     const isBinancePay = selectedMetodo?.nombre?.toLowerCase().trim() === 'binance pay automático';
     
-    if (!isWalletOnly && !isWalletBsOnly && !isBinancePay && !referencia.trim() && !isGratis) {
-      setAlertModal({ type: 'warning', message: 'Por favor ingresa el número de referencia de tu pago.' })
-      return
+    if (!isWalletOnly && !isWalletBsOnly && !isBinancePay && !isGratis) {
+      if (!referencia.trim()) {
+        setAlertModal({ type: 'warning', message: 'Por favor ingresa el número de referencia de tu pago.' })
+        return
+      }
+      if (referencia.trim().length !== 6) {
+        setAlertModal({ type: 'warning', message: 'La referencia debe contener exactamente los últimos 6 dígitos del comprobante.' })
+        return
+      }
     }
 
     const targetUserId = user?.id || perfil?.cliente_uuid || perfil?.id;
@@ -1067,7 +1073,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                               <input 
                                 type="text" 
                                 className="form-input" 
-                                placeholder="Últimos 6 dígitos de la referencia..."
+                                placeholder="Escribe los 6 últimos dígitos aquí..."
                                 value={referencia} 
                                 onChange={e => {
                                   // Detener en 6 dígitos y no desplazar
@@ -1079,8 +1085,11 @@ export default function Checkout({ onFinish, embedded = false }) {
                                   const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
                                   setReferencia(pasteData);
                                 }}
-                                style={{ border: '1px solid var(--accent-success)', borderRadius: '12px', height: '48px', padding: '0 16px' }}
+                                style={{ border: '1px solid var(--accent-success)', borderRadius: '12px', height: '48px', padding: '0 16px', letterSpacing: '2px', fontSize: '16px', fontWeight: 600 }}
                               />
+                              <div style={{ fontSize: '11px', color: 'var(--accent-warning)', marginTop: '6px', fontWeight: 600 }}>
+                                ⚠️ Recuerda que debes colocar exactamente los 6 últimos números de la referencia del pago.
+                              </div>
                             </div>
                           )}
 
@@ -1093,7 +1102,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                               boxShadow: '0 8px 24px rgba(0, 180, 255, 0.4)', border: 'none', color: 'white',
                               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: isProcessing ? 'default' : 'pointer'
                             }}
-                            disabled={isProcessing || (!isGratis && !isWalletOnly && !isWalletBsOnly && selectedMetodoId !== 'binance_pay_auto' && selectedMetodoId && !referencia.trim())}
+                            disabled={isProcessing || (!isGratis && !isWalletOnly && !isWalletBsOnly && selectedMetodoId !== 'binance_pay_auto' && selectedMetodoId && (referencia.trim().length !== 6))}
                             onClick={handleFinalizar}
                             onMouseEnter={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(-2px)')}
                             onMouseLeave={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(0)')}
