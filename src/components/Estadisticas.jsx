@@ -13,6 +13,7 @@ export default function Estadisticas() {
     registros: [],
     logins: [],
     pedidos: [],
+    tracking: [],
     totales: { usuarios: 0, pedidos: 0, hoy: 0 }
   });
 
@@ -48,10 +49,16 @@ export default function Estadisticas() {
         p_agrupacion: range.agrupacion
       });
 
+      // 3. Tracking Data
+      const { data: trackingData } = await supabase.rpc('get_tracking_stats', {
+        p_fecha_inicio: inicioDate
+      });
+
       setStats({
         registros: chartData?.registros || [],
         logins: chartData?.logins || [],
         pedidos: chartData?.pedidos || [],
+        tracking: trackingData || [],
         totales: {
           usuarios: chartData?.total_usuarios || 0, // Ahora viene del RPC sincronizado
           pedidos: resOrders.count || 0,
@@ -200,6 +207,64 @@ export default function Estadisticas() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </div>
+      </div>
+
+      {/* TRACKING MODULE */}
+      <div style={{ marginTop: '32px' }}>
+        <h2 style={{ color: 'white', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          🎯 Páginas y Servicios Más Visitados
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+          
+          {/* Top Global */}
+          <div className="card" style={{ padding: '24px' }}>
+            <h3 style={{ color: 'var(--accent-primary)', marginBottom: '16px', fontSize: '16px' }}>🏆 Top Global</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {stats.tracking && stats.tracking.length > 0 ? [...stats.tracking].sort((a,b) => b.total_count - a.total_count).slice(0, 5).map((t, idx) => (
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'rgba(0, 210, 255, 0.05)', borderRadius: '12px', border: '1px solid rgba(0, 210, 255, 0.1)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent-primary)', width: '20px' }}>{idx+1}.</span>
+                    <span style={{ fontWeight: 600, fontSize: '14px' }}>{t.item_nombre}</span>
+                  </div>
+                  <span style={{ fontWeight: 800, background: 'var(--accent-primary)', color: '#000', padding: '4px 10px', borderRadius: '20px', fontSize: '12px' }}>{t.total_count}</span>
+                </div>
+              )) : <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No hay datos suficientes en este rango.</div>}
+            </div>
+          </div>
+
+          {/* Top Logged In */}
+          <div className="card" style={{ padding: '24px' }}>
+            <h3 style={{ color: '#22c55e', marginBottom: '16px', fontSize: '16px' }}>👤 Top Usuarios Logueados</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {stats.tracking && stats.tracking.length > 0 ? [...stats.tracking].sort((a,b) => b.logged_count - a.logged_count).slice(0, 5).map((t, idx) => (
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'rgba(34, 197, 94, 0.05)', borderRadius: '12px', border: '1px solid rgba(34, 197, 94, 0.1)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '18px', fontWeight: 800, color: '#22c55e', width: '20px' }}>{idx+1}.</span>
+                    <span style={{ fontWeight: 600, fontSize: '14px' }}>{t.item_nombre}</span>
+                  </div>
+                  <span style={{ fontWeight: 800, background: '#22c55e', color: '#000', padding: '4px 10px', borderRadius: '20px', fontSize: '12px' }}>{t.logged_count}</span>
+                </div>
+              )) : <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No hay datos suficientes en este rango.</div>}
+            </div>
+          </div>
+
+          {/* Top Guests */}
+          <div className="card" style={{ padding: '24px' }}>
+            <h3 style={{ color: '#a855f7', marginBottom: '16px', fontSize: '16px' }}>👀 Top Visitantes (No Registrados)</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {stats.tracking && stats.tracking.length > 0 ? [...stats.tracking].sort((a,b) => b.guest_count - a.guest_count).slice(0, 5).map((t, idx) => (
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'rgba(168, 85, 247, 0.05)', borderRadius: '12px', border: '1px solid rgba(168, 85, 247, 0.1)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '18px', fontWeight: 800, color: '#a855f7', width: '20px' }}>{idx+1}.</span>
+                    <span style={{ fontWeight: 600, fontSize: '14px' }}>{t.item_nombre}</span>
+                  </div>
+                  <span style={{ fontWeight: 800, background: '#a855f7', color: '#fff', padding: '4px 10px', borderRadius: '20px', fontSize: '12px' }}>{t.guest_count}</span>
+                </div>
+              )) : <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No hay datos suficientes en este rango.</div>}
+            </div>
+          </div>
+
         </div>
       </div>
     </div>

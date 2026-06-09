@@ -625,6 +625,56 @@ export default function Landing({ onNavigate }) {
     return juegos // Mostrar todos los juegos en lugar de limitar a 20
   }, [juegos, config])
 
+  // TRACKING DE VISITAS
+  const trackingDebounceRef = React.useRef(null)
+  useEffect(() => {
+    let item_nombre = 'Home'
+    let item_tipo = 'pagina'
+
+    if (showRuleta) {
+      item_nombre = 'Ruleta'
+      item_tipo = 'servicio'
+    } else if (showCheckout) {
+      item_nombre = 'Checkout'
+      item_tipo = 'pagina'
+    } else if (showOrders) {
+      item_nombre = 'Mis Pedidos'
+      item_tipo = 'pagina'
+    } else if (showWallet) {
+      item_nombre = 'Billetera'
+      item_tipo = 'pagina'
+    } else if (showProfile) {
+      item_nombre = 'Mi Perfil'
+      item_tipo = 'pagina'
+    } else if (slug) {
+      item_nombre = `Página: ${slug}`
+      item_tipo = 'pagina'
+    } else if (selectedJuego) {
+      item_nombre = selectedJuego.nombre
+      item_tipo = 'juego'
+    }
+
+    if (trackingDebounceRef.current) clearTimeout(trackingDebounceRef.current);
+    
+    trackingDebounceRef.current = setTimeout(async () => {
+      // Excluir administradores de las estadísticas para no ensuciar los datos
+      if (perfil?.rol === 'admin' || perfil?.rol === 'administrador') return;
+
+      try {
+        await supabase.from('visitas_tracking').insert([{
+          item_nombre,
+          item_tipo,
+          user_id: user?.id || null,
+          is_guest: !user
+        }]);
+      } catch (e) {
+        // Error silencioso, el tracking no debe afectar al usuario
+      }
+    }, 2000); // Requiere permanecer al menos 2 segundos en la vista
+
+    return () => clearTimeout(trackingDebounceRef.current);
+  }, [showRuleta, showCheckout, showOrders, showWallet, showProfile, slug, selectedJuego, user, perfil]);
+
   // Ya no bloqueamos toda la página con un spinner. 
   // Las secciones internas (como productos o juegos) ya tienen sus propios esqueletos/spinners locales si es necesario.
   // Pero permitimos que el Header y el Hero (con fallbacks) se vean de inmediato.
