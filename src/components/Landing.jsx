@@ -48,6 +48,19 @@ export default function Landing({ onNavigate }) {
   const [loadingProductos, setLoadingProductos] = useState(false)
   const [currentBanner, setCurrentBanner] = useState(0)
   const [showCheckout, setShowCheckout] = useState(false)
+  
+  const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador';
+
+  const hasWalletUSD = useMemo(() => {
+    if (isAdmin) return true;
+    if (perfil?.rol === 'revendedor') return !(perfil.config_modulos || []).includes('disable_wallet_usd');
+    return (perfil?.config_modulos || []).includes('enable_wallet_usd');
+  }, [isAdmin, perfil]);
+
+  const hasWalletBs = useMemo(() => {
+    if (isAdmin) return true;
+    return !(perfil?.config_modulos || []).includes('disable_wallet_bs');
+  }, [isAdmin, perfil]);
   const [showOrders, setShowOrders] = useState(false)
   const [showWallet, setShowWallet] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
@@ -757,10 +770,22 @@ export default function Landing({ onNavigate }) {
                 }}
                 title="Billetera"
               >
-                <span style={{ fontSize: '18px' }}>💰</span>
-                <span style={{ fontWeight: 'bold', fontSize: '14px', color: 'var(--accent-success)', whiteSpace: 'nowrap' }}>
-                  {formatUSD(wallet?.saldo || 0)}
-                </span>
+                {hasWalletUSD && (
+                  <>
+                    <span style={{ fontSize: '18px' }}>💵</span>
+                    <span style={{ fontWeight: 'bold', fontSize: '14px', color: 'var(--accent-success)', whiteSpace: 'nowrap' }}>
+                      {formatUSD(wallet?.saldo || 0)}
+                    </span>
+                  </>
+                )}
+                {!hasWalletUSD && hasWalletBs && (
+                  <>
+                    <span style={{ fontSize: '18px' }}>🏦</span>
+                    <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#a855f7', whiteSpace: 'nowrap' }}>
+                      {formatBs(wallet?.saldo_bs || 0)}
+                    </span>
+                  </>
+                )}
               </div>
             )}
 
