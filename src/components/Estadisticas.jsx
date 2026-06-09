@@ -19,6 +19,7 @@ export default function Estadisticas() {
   });
 
   const [timeRange, setTimeRange] = useState('30d');
+  const [trackingRange, setTrackingRange] = useState('today');
   const [range, setRange] = useState({
     inicio: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     fin: new Date().toISOString().split('T')[0],
@@ -50,9 +51,25 @@ export default function Estadisticas() {
         p_agrupacion: range.agrupacion
       });
 
+      let trackingInicioDate = null;
+      const tDate = new Date();
+      if (trackingRange === 'today') {
+        tDate.setHours(0,0,0,0);
+        trackingInicioDate = tDate.toISOString();
+      } else if (trackingRange === 'week') {
+        const first = tDate.getDate() - tDate.getDay() + (tDate.getDay() === 0 ? -6 : 1); // Monday
+        const monday = new Date(tDate.setDate(first));
+        monday.setHours(0,0,0,0);
+        trackingInicioDate = monday.toISOString();
+      } else if (trackingRange === 'month') {
+        const firstDay = new Date(tDate.getFullYear(), tDate.getMonth(), 1);
+        firstDay.setHours(0,0,0,0);
+        trackingInicioDate = firstDay.toISOString();
+      }
+
       // 3. Tracking Data
       const { data: trackingData } = await supabase.rpc('get_tracking_stats', {
-        p_fecha_inicio: inicioDate
+        p_fecha_inicio: trackingInicioDate
       });
 
       // 4. Tracking Timeline
@@ -92,7 +109,7 @@ export default function Estadisticas() {
       window.removeEventListener('online-users-update', handleOnlineUpdate);
       clearInterval(interval);
     };
-  }, [timeRange, range.agrupacion, perfil?.id]);
+  }, [timeRange, range.agrupacion, trackingRange, perfil?.id]);
 
   const formatFecha = (str) => {
     if (!str) return '';
@@ -242,9 +259,25 @@ export default function Estadisticas() {
 
       {/* TRACKING MODULE */}
       <div style={{ marginTop: '32px' }}>
-        <h2 style={{ color: 'white', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          🎯 Páginas y Servicios Más Visitados
-        </h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
+          <h2 style={{ color: 'white', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+            🎯 Páginas y Servicios Más Visitados
+          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '6px 16px', borderRadius: '12px' }}>
+            <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Filtro:</span>
+            <select 
+              value={trackingRange} 
+              onChange={e => setTrackingRange(e.target.value)}
+              className="input-search"
+              style={{ width: '130px', background: 'transparent', border: 'none', padding: 0, height: 'auto', fontWeight: 'bold', color: 'var(--accent-primary)' }}
+            >
+              <option value="today">Hoy</option>
+              <option value="week">Esta Semana</option>
+              <option value="month">Este Mes</option>
+              <option value="all">Todo el tiempo</option>
+            </select>
+          </div>
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
           
           {/* Top Global */}
