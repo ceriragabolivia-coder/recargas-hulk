@@ -22,7 +22,7 @@ export default function Configuracion() {
   // Estado para Mensajes Pop-up
   const [showMensajeForm, setShowMensajeForm] = useState(false)
   const [isEditingMensaje, setIsEditingMensaje] = useState(false)
-  const [currentMensaje, setCurrentMensaje] = useState({ titulo: '', contenido: '', activo: true, imagen_url: null, hora_inicio: '', hora_fin: '' })
+  const [currentMensaje, setCurrentMensaje] = useState({ titulo: '', contenido: '', activo: true, imagen_url: null, hora_inicio: '', hora_fin: '', link_url: '' })
 
   // Estado para Notificaciones Push
   const [formNoti, setFormNoti] = useState({ titulo: '', mensaje: '', imagen_url: null })
@@ -1206,7 +1206,7 @@ export default function Configuracion() {
                 <h2 className="card-title">Mensajes Emergentes (Pop-ups)</h2>
                 {!showMensajeForm && (
                   <button className="btn btn-primary btn-sm" onClick={() => {
-                    setCurrentMensaje({ titulo: '', contenido: '', activo: true, imagen_url: null })
+                    setCurrentMensaje({ titulo: '', contenido: '', activo: true, imagen_url: null, link_url: '' })
                     setIsEditingMensaje(false)
                     setShowMensajeForm(true)
                   }}>
@@ -1308,6 +1308,20 @@ export default function Configuracion() {
                           required
                           placeholder="Escribe el mensaje que verán los clientes..."
                         />
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">Link de Redirección (Opcional)</label>
+                        <input 
+                          type="text" 
+                          className="form-input" 
+                          value={currentMensaje.link_url || ''}
+                          onChange={(e) => setCurrentMensaje({...currentMensaje, link_url: e.target.value})}
+                          placeholder="Ej: https://..."
+                        />
+                        <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                          Si colocas un link, la imagen será clickeable y aparecerá un botón "Ir ahora".
+                        </p>
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

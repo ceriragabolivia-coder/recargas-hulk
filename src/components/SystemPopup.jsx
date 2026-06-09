@@ -89,7 +89,7 @@ export default function SystemPopup() {
     >
       <div 
         style={{
-          backgroundColor: 'var(--bg-card)', width: '95%', maxWidth: '500px',
+          backgroundColor: 'var(--bg-secondary, #111128)', color: 'var(--text-primary, #e8e8f0)', width: '95%', maxWidth: '500px',
           borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)',
           boxShadow: '0 25px 50px -12px rgba(0,0,0,0.7)',
           position: 'relative', overflowY: 'auto', maxHeight: '90vh',
@@ -114,13 +114,19 @@ export default function SystemPopup() {
         >✕</button>
 
         {activePopup.imagen_url && (
-          <div style={{ width: '100%', maxHeight: '250px', overflow: 'hidden' }}>
-            <img src={activePopup.imagen_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div style={{ width: '100%' }}>
+            {activePopup.link_url ? (
+              <a href={activePopup.link_url} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
+                <img src={activePopup.imagen_url} alt="" style={{ width: '100%', height: 'auto', display: 'block' }} />
+              </a>
+            ) : (
+              <img src={activePopup.imagen_url} alt="" style={{ width: '100%', height: 'auto', display: 'block' }} />
+            )}
           </div>
         )}
 
         <div style={{ padding: '32px', textAlign: 'center' }}>
-          <h2 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '16px' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#ffffff', marginBottom: '16px' }}>
             {activePopup.titulo}
           </h2>
           <div 
@@ -141,13 +147,26 @@ export default function SystemPopup() {
             </label>
           </div>
 
-          <button 
-            className="btn btn-primary" 
-            style={{ width: '100%', height: '48px', fontSize: '16px' }}
-            onClick={handleClosePopup}
-          >
-            Entendido
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {activePopup.link_url && (
+              <a 
+                href={activePopup.link_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="btn btn-primary"
+                style={{ width: '100%', height: '48px', fontSize: '16px', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                Ir ahora
+              </a>
+            )}
+            <button 
+              className={activePopup.link_url ? "btn btn-ghost" : "btn btn-primary"} 
+              style={{ width: '100%', height: '48px', fontSize: '16px' }}
+              onClick={handleClosePopup}
+            >
+              Entendido
+            </button>
+          </div>
         </div>
       </div>
     </div>
