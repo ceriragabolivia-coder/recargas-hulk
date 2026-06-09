@@ -66,6 +66,19 @@ export default function Checkout({ onFinish, embedded = false }) {
   const { perfil, user, isCliente, refreshPerfil } = useAuth()
   const { wallet } = useWallet()
   const { config } = useConfiguracion()
+
+  const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador';
+
+  const hasWalletUSD = useMemo(() => {
+    if (isAdmin) return true;
+    if (perfil?.rol === 'revendedor') return !(perfil.config_modulos || []).includes('disable_wallet_usd');
+    return (perfil?.config_modulos || []).includes('enable_wallet_usd');
+  }, [isAdmin, perfil]);
+
+  const hasWalletBs = useMemo(() => {
+    if (isAdmin) return true;
+    return !(perfil?.config_modulos || []).includes('disable_wallet_bs');
+  }, [isAdmin, perfil]);
   
   const [currentStep, setCurrentStep] = useState(1)
   const [selectedMetodoId, setSelectedMetodoId] = useState('')
@@ -883,13 +896,13 @@ export default function Checkout({ onFinish, embedded = false }) {
             {currentStep === 1 ? (
               <>
                 <div className="form-group mb-8" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {hasAnySaldo && !isGratis && !isCliente && (
+                  {hasAnySaldo && !isGratis && hasWalletUSD && (
                     <div onClick={handleToggleWalletPartial} className="checkout-toggle-card" style={{ border: `2px solid ${useWalletPartial ? 'var(--accent-success)' : 'var(--border-color)'}`, opacity: useWalletBs ? 0.5 : 1 }}>
                       <span>💵 Usar Saldo USD</span>
                       <small>Disp: {formatBs(Math.round(walletSaldo * (Number(config?.tasa_dolar) || 1)))}</small>
                     </div>
                   )}
-                  {hasAnySaldoBs && !isGratis && (
+                  {hasAnySaldoBs && !isGratis && hasWalletBs && (
                     <div onClick={handleToggleWalletBs} className="checkout-toggle-card" style={{ border: `2px solid ${useWalletBs ? '#a855f7' : 'var(--border-color)'}`, opacity: useWalletPartial ? 0.5 : 1 }}>
                       <span>🏦 Usar Saldo Bs</span>
                       <small>Disp: {formatBs(walletSaldoBs)}</small>

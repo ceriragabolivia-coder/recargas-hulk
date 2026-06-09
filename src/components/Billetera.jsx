@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useWallet, useAuth, useMetodosPago, useVentas } from '../hooks/useData'
 import { formatUSD, formatBs, getOptimizedImageUrl } from '../utils/helpers'
 import { supabase } from '../lib/supabase'
@@ -28,6 +28,17 @@ export default function Billetera({ onNavigate }) {
   const [pendingRecargas, setPendingRecargas] = useState([])
   const [approvedRecargas, setApprovedRecargas] = useState([])
   const [loadingAdmin, setLoadingAdmin] = useState(false)
+
+  const hasWalletUSD = useMemo(() => {
+    if (isAdmin) return true;
+    if (perfil?.rol === 'revendedor') return !(perfil.config_modulos || []).includes('disable_wallet_usd');
+    return (perfil?.config_modulos || []).includes('enable_wallet_usd');
+  }, [isAdmin, perfil]);
+
+  const hasWalletBs = useMemo(() => {
+    if (isAdmin) return true;
+    return !(perfil?.config_modulos || []).includes('disable_wallet_bs');
+  }, [isAdmin, perfil]);
 
   const fetchPendingRecargas = async () => {
     if (!isAdmin) return
@@ -116,9 +127,11 @@ export default function Billetera({ onNavigate }) {
   }, [isAdmin, perfil?.id])
 
   useEffect(() => {
-    if (isCliente) setMonedaRecarga('bs')
-    else setMonedaRecarga('usd')
-  }, [isCliente])
+    if (hasWalletBs && !hasWalletUSD) setMonedaRecarga('bs');
+    else if (!hasWalletBs && hasWalletUSD) setMonedaRecarga('usd');
+    else if (isCliente) setMonedaRecarga('bs');
+    else setMonedaRecarga('usd');
+  }, [isCliente, hasWalletBs, hasWalletUSD])
 
   const handleFileUpload = async (e) => {
     let file = e.target.files[0]
@@ -276,7 +289,7 @@ export default function Billetera({ onNavigate }) {
           {/* Tarjetas de Saldo Dual */}
           <div className="kpi-grid" style={{ marginBottom: '8px' }}>
             {/* Saldo USD */}
-            {!isCliente && (
+            {hasWalletUSD && (
               <div className="card kpi-card" style={{ 
                 background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(0, 210, 255, 0.05) 100%)',
                 textAlign: 'center', border: '1px solid var(--accent-primary)',
@@ -293,6 +306,7 @@ export default function Billetera({ onNavigate }) {
             )}
 
             {/* Saldo Bs */}
+            {hasWalletBs && (
             <div className="card kpi-card" style={{ 
               background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(139, 92, 246, 0.05) 100%)',
               textAlign: 'center', border: '1px solid rgba(139, 92, 246, 0.4)',
@@ -306,6 +320,7 @@ export default function Billetera({ onNavigate }) {
                 {formatBs(wallet?.saldo_bs || 0)}
               </div>
             </div>
+            )}
           </div>
 
           {/* Saldo de Ventas (Solo para Administradores) */}
@@ -579,7 +594,7 @@ export default function Billetera({ onNavigate }) {
               <div className="form-group">
                 <label className="form-label">Moneda de Recarga</label>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {!isCliente && (
+                  {hasWalletUSD && (
                     <button
                       type="button"
                       onClick={() => setMonedaRecarga('usd')}
@@ -594,6 +609,7 @@ export default function Billetera({ onNavigate }) {
                       💵 Dólares (USD)
                     </button>
                   )}
+                  {hasWalletBs && (
                   <button
                     type="button"
                     onClick={() => setMonedaRecarga('bs')}
@@ -607,6 +623,7 @@ export default function Billetera({ onNavigate }) {
                   >
                     🏦 Bolívares (Bs)
                   </button>
+                  )}
                 </div>
               </div>
 

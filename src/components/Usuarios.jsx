@@ -135,7 +135,7 @@ export default function Usuarios({ onNavigate }) {
           porcentaje_descuento: editingData.rol === 'revendedor' ? parseFloat(editingData.porcentaje_descuento || 0) : 0,
           estado: editingData.estado,
           motivo_estado: editingData.motivo_estado || null,
-          config_modulos: editingData.rol === 'negocio' ? editingData.config_modulos : []
+          config_modulos: editingData.config_modulos || []
         })
         if (errorProfile) throw errorProfile
       }
@@ -634,6 +634,48 @@ export default function Usuarios({ onNavigate }) {
                               >
                                 ⚙️ Configurar Módulos
                               </button>
+                            )}
+
+                            {['cliente', 'revendedor'].includes(editingData.rol) && (
+                              <div style={{ marginTop: '8px', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                                <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Billeteras Habilitadas</div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                                    <input 
+                                      type="checkbox"
+                                      checked={editingData.rol === 'cliente' 
+                                        ? (editingData.config_modulos || []).includes('enable_wallet_usd') 
+                                        : !(editingData.config_modulos || []).includes('disable_wallet_usd')
+                                      }
+                                      onChange={(e) => {
+                                        let mods = [...(editingData.config_modulos || [])];
+                                        if (editingData.rol === 'cliente') {
+                                          if (e.target.checked) { if(!mods.includes('enable_wallet_usd')) mods.push('enable_wallet_usd'); }
+                                          else { mods = mods.filter(m => m !== 'enable_wallet_usd'); }
+                                        } else {
+                                          if (!e.target.checked) { if(!mods.includes('disable_wallet_usd')) mods.push('disable_wallet_usd'); }
+                                          else { mods = mods.filter(m => m !== 'disable_wallet_usd'); }
+                                        }
+                                        setEditingData({...editingData, config_modulos: mods});
+                                      }}
+                                    />
+                                    <span>💵 Dólares (USD)</span>
+                                  </label>
+                                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                                    <input 
+                                      type="checkbox"
+                                      checked={!(editingData.config_modulos || []).includes('disable_wallet_bs')}
+                                      onChange={(e) => {
+                                        let mods = [...(editingData.config_modulos || [])];
+                                        if (!e.target.checked) { if(!mods.includes('disable_wallet_bs')) mods.push('disable_wallet_bs'); }
+                                        else { mods = mods.filter(m => m !== 'disable_wallet_bs'); }
+                                        setEditingData({...editingData, config_modulos: mods});
+                                      }}
+                                    />
+                                    <span>🏦 Bolívares (Bs)</span>
+                                  </label>
+                                </div>
+                              </div>
                             )}
 
                             {editingData.rol === 'revendedor' && (

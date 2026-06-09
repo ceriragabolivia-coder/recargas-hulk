@@ -24,6 +24,24 @@ export default function LandingWallet({ onClose }) {
   const [pendingRecargas, setPendingRecargas] = useState([])
   const [loadingAdmin, setLoadingAdmin] = useState(false)
 
+  const hasWalletUSD = useMemo(() => {
+    if (isAdmin) return true;
+    if (perfil?.rol === 'revendedor') return !(perfil.config_modulos || []).includes('disable_wallet_usd');
+    return (perfil?.config_modulos || []).includes('enable_wallet_usd');
+  }, [isAdmin, perfil]);
+
+  const hasWalletBs = useMemo(() => {
+    if (isAdmin) return true;
+    return !(perfil?.config_modulos || []).includes('disable_wallet_bs');
+  }, [isAdmin, perfil]);
+
+  useEffect(() => {
+    if (hasWalletBs && !hasWalletUSD) setMonedaRecarga('bs');
+    else if (!hasWalletBs && hasWalletUSD) setMonedaRecarga('usd');
+    else if (isCliente) setMonedaRecarga('bs');
+    else setMonedaRecarga('usd');
+  }, [isCliente, hasWalletBs, hasWalletUSD]);
+
   const fetchPendingRecargas = async () => {
     if (!isAdmin) return
     setLoadingAdmin(true)
@@ -209,18 +227,20 @@ export default function LandingWallet({ onClose }) {
         <div className="wallet-main-col">
           {/* Tarjetas de Saldo */}
           <div className="balance-cards">
-            {isAdmin && (
+            {hasWalletUSD && (
               <div className="balance-card usd">
                 <div className="balance-label">SALDO DÓLARES</div>
                 <div className="balance-value">{formatUSD(wallet?.saldo || 0)}</div>
                 <div className="balance-icon">💵</div>
               </div>
             )}
+            {hasWalletBs && (
             <div className="balance-card bs">
               <div className="balance-label">SALDO BOLÍVARES</div>
               <div className="balance-value">{formatBs(wallet?.saldo_bs || 0)}</div>
               <div className="balance-icon">🏦</div>
             </div>
+            )}
           </div>
 
           {/* Gestión Admin (Si aplica) */}
@@ -305,18 +325,20 @@ export default function LandingWallet({ onClose }) {
               <div className="form-group">
                 <label>Moneda</label>
                 <div className="currency-selector">
-                  {isAdmin && (
+                  {hasWalletUSD && (
                     <button 
                       type="button" 
                       className={monedaRecarga === 'usd' ? 'active' : ''} 
                       onClick={() => setMonedaRecarga('usd')}
                     >USD</button>
                   )}
+                  {hasWalletBs && (
                   <button 
                     type="button" 
                     className={monedaRecarga === 'bs' ? 'active' : ''} 
                     onClick={() => setMonedaRecarga('bs')}
                   >BS</button>
+                  )}
                 </div>
               </div>
 
