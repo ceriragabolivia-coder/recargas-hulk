@@ -14,6 +14,7 @@ export default function Estadisticas() {
     logins: [],
     pedidos: [],
     tracking: [],
+    tracking_timeline: [],
     totales: { usuarios: 0, pedidos: 0, hoy: 0 }
   });
 
@@ -54,11 +55,19 @@ export default function Estadisticas() {
         p_fecha_inicio: inicioDate
       });
 
+      // 4. Tracking Timeline
+      const { data: timelineData } = await supabase.rpc('get_tracking_timeline', {
+        p_fecha_inicio: inicioDate,
+        p_fecha_fin: finDate,
+        p_agrupacion: range.agrupacion
+      });
+
       setStats({
         registros: chartData?.registros || [],
         logins: chartData?.logins || [],
         pedidos: chartData?.pedidos || [],
         tracking: trackingData || [],
+        tracking_timeline: timelineData || [],
         totales: {
           usuarios: chartData?.total_usuarios || 0, // Ahora viene del RPC sincronizado
           pedidos: resOrders.count || 0,
@@ -189,6 +198,27 @@ export default function Estadisticas() {
                 <YAxis stroke="var(--text-muted)" fontSize={12} />
                 <Tooltip contentStyle={{ backgroundColor: 'rgba(15, 23, 22, 0.95)', border: '1px solid var(--border-color)', borderRadius: '12px' }} labelFormatter={formatFechaFull} />
                 <Area type="monotone" dataKey="cantidad" name="Registros" stroke="var(--accent-primary)" fill="url(#colorReg)" strokeWidth={3} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: '24px' }}>
+          <h3 style={{ color: 'white', marginBottom: '20px' }}>👁️ Visitas en el Tiempo</h3>
+          <div style={{ width: '100%', height: '300px' }}>
+            <ResponsiveContainer>
+              <AreaChart data={stats.tracking_timeline}>
+                <defs>
+                  <linearGradient id="colorVisitas" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="fecha" tickFormatter={formatFecha} stroke="var(--text-muted)" fontSize={12} />
+                <YAxis stroke="var(--text-muted)" fontSize={12} />
+                <Tooltip contentStyle={{ backgroundColor: 'rgba(15, 23, 22, 0.95)', border: '1px solid var(--border-color)', borderRadius: '12px' }} labelFormatter={formatFechaFull} />
+                <Area type="monotone" dataKey="visitas" name="Visitas" stroke="#ef4444" fill="url(#colorVisitas)" strokeWidth={3} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
