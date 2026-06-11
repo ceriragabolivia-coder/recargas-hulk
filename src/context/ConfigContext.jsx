@@ -70,33 +70,15 @@ export function ConfigProvider({ children }) {
     const safeValorTexto = isText ? String(valor) : null
 
     let error;
-    if (isNegocio) {
-      const { error: upsertError } = await supabase
-        .from('configuracion')
-        .upsert({ 
-          clave: clave, 
-          valor: safeValor, 
-          valor_texto: safeValorTexto, 
-          owner_id: user.id 
-        }, { onConflict: 'clave,owner_id' })
-      error = upsertError;
-    } else {
-      const { error: updateError, data } = await supabase
-        .from('configuracion')
-        .update({ valor: safeValor, valor_texto: safeValorTexto, updated_at: new Date().toISOString() })
-        .eq('clave', clave)
-        .is('owner_id', null)
-        .select()
+    
+    const { error: rpcError } = await supabase.rpc('update_config_rpc', {
+      p_clave: clave,
+      p_valor: safeValor,
+      p_valor_texto: safeValorTexto,
+      p_owner_id: isNegocio ? user.id : null
+    });
 
-      error = updateError;
-      
-      if (!error && (!data || data.length === 0)) {
-        const { error: insertError } = await supabase
-          .from('configuracion')
-          .insert({ clave: clave, valor: safeValor, valor_texto: safeValorTexto, owner_id: null })
-        error = insertError;
-      }
-    }
+    error = rpcError;
     
     if (error) {
       console.error("Error al actualizar configuración:", error)

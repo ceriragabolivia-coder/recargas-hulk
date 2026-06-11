@@ -13,6 +13,7 @@ import LandingPerfil from './LandingPerfil'
 import Ruleta from './Ruleta'
 import DOMPurify from 'dompurify'
 import TutorialVideoModal from './TutorialVideoModal'
+import FloatingBackground from './FloatingBackground'
 export default function Landing({ onNavigate }) {
   const navigate = useNavigate()
   const params = useParams()
@@ -690,6 +691,7 @@ export default function Landing({ onNavigate }) {
         backgroundRepeat: 'no-repeat'
       }}
     >
+      <FloatingBackground />
       {/* TOAST NOTIFICATION */}
       {activeToast && (
         <div 
