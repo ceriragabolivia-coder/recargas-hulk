@@ -1527,7 +1527,7 @@ tr:last-child td { border-bottom: none; }
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: -100;
+  z-index: 0;
   overflow: hidden;
   background: transparent;
   contain: strict; /* Optimización para que no afecte al layout principal */
@@ -2869,6 +2869,11 @@ tr:last-child td { border-bottom: none; }
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
+}
+
+.landing-main {
+  position: relative;
+  z-index: 1;
 }
 
 .landing-header {
