@@ -2863,6 +2863,8 @@ tr:last-child td { border-bottom: none; }
   font-family: 'Inter', sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
+  position: relative;
+  z-index: 0;
 }
 
 .landing-container {

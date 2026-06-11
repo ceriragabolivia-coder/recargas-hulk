@@ -620,7 +620,7 @@ export default function Checkout({ onFinish, embedded = false }) {
     if (embedded) return successInner;
 
     return (
-      <div style={{ minHeight: '100vh', position: 'relative', overflowX: 'hidden', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+      <div style={{ minHeight: '100vh', position: 'relative', zIndex: 0, overflowX: 'hidden', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
         <FloatingBackground />
         <header className="landing-header">
           <div className="landing-container flex items-center justify-between landing-header-inner">
@@ -647,7 +647,7 @@ export default function Checkout({ onFinish, embedded = false }) {
 
   return (
     <>
-      <div className={embedded ? 'checkout-embedded' : ''} style={{ minHeight: '100vh', position: 'relative', overflowX: 'hidden', background: embedded ? 'transparent' : 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+      <div className={embedded ? 'checkout-embedded' : ''} style={{ minHeight: '100vh', position: 'relative', zIndex: 0, overflowX: 'hidden', background: embedded ? 'transparent' : 'var(--bg-primary)', color: 'var(--text-primary)' }}>
         {!embedded && <FloatingBackground />}
         
         {/* HEADER — idéntico a Landing */}

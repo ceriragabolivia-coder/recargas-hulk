@@ -833,7 +833,6 @@ export default function App() {
           )
         ) : (
           <>
-            <FloatingBackground />
             <Layout currentPage={currentPage} onNavigate={handleNavigate} onOpenChat={() => navigate('/Soporte')} onlineUsers={onlineUsers}>
               <AppRoutes 
                 isAdmin={isAdmin} 
