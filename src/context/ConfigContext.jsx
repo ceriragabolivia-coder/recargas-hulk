@@ -69,16 +69,29 @@ export function ConfigProvider({ children }) {
     const safeValor = isText ? 0 : (Number(valor) || 0)
     const safeValorTexto = isText ? String(valor) : null
 
-    let error;
-    
-    const { error: rpcError } = await supabase.rpc('update_config_rpc', {
-      p_clave: clave,
-      p_valor: safeValor,
-      p_valor_texto: safeValorTexto,
-      p_owner_id: isNegocio ? user.id : null
-    });
+    const targetOwnerId = isNegocio ? user.id : null;
 
-    error = rpcError;
+    let error;
+    let query = supabase
+      .from('configuracion')
+      .update({ valor: safeValor, valor_texto: safeValorTexto, updated_at: new Date().toISOString() })
+      .eq('clave', clave);
+
+    if (targetOwnerId) {
+      query = query.eq('owner_id', targetOwnerId);
+    } else {
+      query = query.is('owner_id', null);
+    }
+
+    const { error: updateError, data } = await query.select();
+    error = updateError;
+
+    if (!error && (!data || data.length === 0)) {
+      const { error: insertError } = await supabase
+        .from('configuracion')
+        .insert({ clave: clave, valor: safeValor, valor_texto: safeValorTexto, owner_id: targetOwnerId });
+      error = insertError;
+    }
     
     if (error) {
       console.error("Error al actualizar configuración:", error)
