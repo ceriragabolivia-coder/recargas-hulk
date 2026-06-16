@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { key: 'usuarios', icon: '👥', label: 'Usuarios', path: '/Usuarios' },
   { key: 'revendedores', icon: '⭐', label: 'Revendedores', path: '/Revendedores' },
   { key: 'chats', icon: '💬', label: 'Sala de Chat', path: '/Soporte' },
+  { key: 'proveedor_tgv', icon: '📦', label: 'Proveedor API', path: '/Proveedor-TiendaGiftVen' },
   { key: 'config', icon: '⚙️', label: 'Configuración', path: '/Configuracion' },
   { key: 'reportes', icon: '📈', label: 'Reportes', path: '/Reportes' },
   { key: 'pagos_admins', icon: '💸', label: 'Pagos Admins', path: '/Pagos-Admins' },

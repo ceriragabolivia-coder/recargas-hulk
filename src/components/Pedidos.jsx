@@ -429,6 +429,58 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
       updateData.fecha_respuesta = null
     }
 
+    // 1.5 Enviar a TiendaGiftVen si aplica
+    if (nuevoEstado === 'completado' && config?.tiendagiftven_api_key) {
+      for (const item of (pedidoActual.pedido_items || [])) {
+        if (item.productos?.proveedor_api_id && !item.proveedor_pedido_id) {
+          try {
+            console.log(`🚀 Enviando a API TiendaGiftVen item ${item.id}...`)
+            const payload = {
+              producto_id: item.productos.proveedor_api_id,
+              merchant_ref: `CERIRAGA-ITEM-${item.id}`
+            };
+            
+            // Si es recarga directa, necesita id_juego y opcionalmente input2
+            if (item.player_id) {
+              payload.id_juego = item.player_id;
+              // Si tu sistema guarda el server/zone_id en algun lado, usualmente se pasa en zone_id, lo buscamos en el item
+              if (item.zone_id) payload.input2 = item.zone_id;
+            } else {
+              // Si no hay player_id, se asume Gift Card
+              payload.cantidad = item.cantidad || 1;
+            }
+
+            const res = await fetch('https://tiendagiftven.tech/api/v1/comprar', {
+              method: 'POST',
+              headers: { 
+                'X-API-Key': config.tiendagiftven_api_key,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            
+            if (data.ok) {
+              // Actualizar el estado del item en la base de datos
+              await supabase.from('pedido_items').update({
+                estado_proveedor: data.estado,
+                proveedor_pedido_id: data.pedido_id,
+                mensaje_proveedor: data.codigos ? data.codigos.join('\\n') : (data.mensaje || '')
+              }).eq('id', item.id);
+            } else {
+              console.error('Error API TiendaGiftVen:', data.error);
+              await supabase.from('pedido_items').update({
+                estado_proveedor: 'error',
+                mensaje_proveedor: data.error
+              }).eq('id', item.id);
+            }
+          } catch(e) {
+            console.error('Error invocando API TiendaGiftVen', e);
+          }
+        }
+      }
+    }
+
     // 2. Si el nuevo estado es COMPLETADO y no se ha registrado la venta aún, registrarla
     if (nuevoEstado === 'completado' && !pedidoActual.venta_registrada) {
       try {
@@ -2226,10 +2278,24 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                       <div>
                         <div className="product-item-title">{item.producto_nombre}</div>
                         {/* ESTADO LABEL CLIENTE/GENERAL */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
                           {item.estado === 'completado' && <span style={{ backgroundColor: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{fontSize: '14px'}}>✅</span> Recargado</span>}
                           {item.estado === 'fallido' && <span style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{fontSize: '14px'}}>❌</span> Error</span>}
+                          
+                          {/* ESTADO API TIENDAGIFTVEN */}
+                          {item.estado_proveedor && (
+                            <span style={{ backgroundColor: item.estado_proveedor === 'error' ? 'rgba(239, 68, 68, 0.1)' : item.estado_proveedor === 'completado' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(251, 191, 36, 0.1)', color: item.estado_proveedor === 'error' ? 'var(--accent-error)' : item.estado_proveedor === 'completado' ? '#22c55e' : '#fbbf24', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px', border: `1px solid ${item.estado_proveedor === 'error' ? 'rgba(239, 68, 68, 0.3)' : item.estado_proveedor === 'completado' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(251, 191, 36, 0.3)'}` }}>
+                              API: {item.estado_proveedor.toUpperCase()} {item.estado_proveedor === 'procesando' ? '⏳' : item.estado_proveedor === 'completado' ? '✅' : '❌'}
+                            </span>
+                          )}
                         </div>
+                        
+                        {item.mensaje_proveedor && item.estado_proveedor !== 'procesando' && (
+                          <div style={{ marginTop: '8px', fontSize: '11px', color: item.estado_proveedor === 'error' ? '#ef4444' : '#fff', backgroundColor: 'rgba(255,255,255,0.03)', padding: '6px 10px', borderRadius: '6px', whiteSpace: 'pre-line', borderLeft: `3px solid ${item.estado_proveedor === 'error' ? '#ef4444' : '#22c55e'}` }}>
+                            <strong>{item.estado_proveedor === 'error' ? 'Error API:' : 'Respuesta API (PINes):'}</strong><br/>
+                            {item.mensaje_proveedor}
+                          </div>
+                        )}
                       </div>
                     </div>
                     

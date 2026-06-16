@@ -35,6 +35,7 @@ const Estadisticas = lazy(() => import('./components/Estadisticas.jsx'))
 const GestionLanding = lazy(() => import('./components/GestionLanding'))
 const GestionPaginas = lazy(() => import('./components/GestionPaginas'))
 const PaginaEstatica = lazy(() => import('./components/PaginaEstatica'))
+const ProveedorCatalogo = lazy(() => import('./components/ProveedorCatalogo'))
 
 const Placeholder = ({ title }) => (
   <div className="page-content">
@@ -385,6 +386,7 @@ const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
         <Route path="/Estadisticas" element={isAdmin ? <Estadisticas /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Gestion-Landing" element={isAdmin ? <GestionLanding /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Gestion-Paginas" element={isAdmin ? <GestionPaginas /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Proveedor-TiendaGiftVen" element={isAdmin ? <ProveedorCatalogo /> : <Navigate to="/Lista-De-Precios" replace />} />
 
         {/* Redirección por defecto */}
         <Route path="/" element={<Navigate to={(isAdmin || isNegocio || isEmpleado) ? "/Dashboard" : "/"} replace />} />
