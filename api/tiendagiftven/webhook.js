@@ -34,6 +34,10 @@ export default async function handler(req, res) {
       proveedor_pedido_id: pedido_id
     };
 
+    if (estado === 'completado') {
+      updateData.estado = 'completado'; // Completa el item internamente en Ceriraga
+    }
+
     if (codigos && codigos.length > 0) {
       updateData.mensaje_proveedor = codigos.join('\n');
     } else if (mensaje) {

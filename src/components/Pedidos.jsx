@@ -29,6 +29,85 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
   const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
   
+  // Utilidad para refrescar un pedido en la UI localmente
+  const refreshPedidoData = async (pedidoId) => {
+    const { data: updData } = await supabase.from('pedidos').select('*, pedido_items(*, productos(*))').eq('id', pedidoId).single();
+    if (updData) {
+      setSelectedPedido(prev => {
+        if (prev?.id === pedidoId) {
+          return { ...updData, cliente: prev.cliente, atendido_por: prev.atendido_por };
+        }
+        return prev;
+      });
+      setPedidos(prev => prev.map(p => p.id === pedidoId ? { ...updData, cliente: p.cliente, atendido_por: p.atendido_por } : p));
+    }
+  };
+
+  const processTiendaGiftVenOrder = async (pedidoId) => {
+    if (!config?.tiendagiftven_api_key) return false;
+    let anySent = false;
+    
+    const { data: pedidoActual } = await supabase
+      .from('pedidos')
+      .select('*, pedido_items(*, productos(*))')
+      .eq('id', pedidoId)
+      .single();
+      
+    if (!pedidoActual || !pedidoActual.pedido_items) return false;
+
+    for (const item of pedidoActual.pedido_items) {
+      if (item.productos?.proveedor_api_id && !item.proveedor_pedido_id && !item.estado_proveedor) {
+        anySent = true;
+        try {
+          console.log(`🚀 Enviando a API TiendaGiftVen item ${item.id}...`)
+          const payload = {
+            producto_id: parseInt(item.productos.proveedor_api_id, 10),
+            merchant_ref: `CERIRAGA-ITEM-${item.id}`
+          };
+          
+          if (item.player_id) {
+            payload.id_juego = item.player_id;
+            if (item.zone_id) payload.input2 = item.zone_id;
+          } else {
+            payload.cantidad = item.cantidad || 1;
+          }
+
+          const res = await fetch('/api/tiendagiftven/proxy?endpoint=comprar', {
+            method: 'POST',
+            headers: { 
+              'X-API-Key': config.tiendagiftven_api_key,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          });
+          
+          if (!res.ok) {
+            const errData = await res.json().catch(()=>({}));
+            throw new Error(errData.error || 'Error HTTP ' + res.status);
+          }
+          const data = await res.json();
+          
+          if (data.ok) {
+            await supabase.from('pedido_items').update({
+              estado_proveedor: data.estado || 'procesando',
+              proveedor_pedido_id: data.pedido_id,
+              mensaje_proveedor: data.codigos ? data.codigos.join('\\n') : (data.mensaje || '')
+            }).eq('id', item.id);
+          } else {
+            throw new Error(data.error || 'Error respuesta proveedor');
+          }
+        } catch (e) {
+          console.error("❌ Error consumiendo API TiendaGiftVen:", e);
+          await supabase.from('pedido_items').update({
+            estado_proveedor: 'error',
+            mensaje_proveedor: e.message
+          }).eq('id', item.id);
+        }
+      }
+    }
+    return anySent;
+  };
+  
   const maskSensitive = (val, type = 'text') => {
     if (!isEmpleado) return val;
     if (!val) return '***';
@@ -422,64 +501,19 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
       updateData.atendido_por_id = user.id
     }
 
-    // Registrar fecha_respuesta cuando se cambia de pendiente a cualquier otro estado
     if (nuevoEstado !== 'pendiente') {
       updateData.fecha_respuesta = new Date().toISOString()
     } else {
       updateData.fecha_respuesta = null
     }
 
-    // 1.5 Enviar a TiendaGiftVen si aplica
-    if (nuevoEstado === 'completado' && config?.tiendagiftven_api_key) {
-      for (const item of (pedidoActual.pedido_items || [])) {
-        if (item.productos?.proveedor_api_id && !item.proveedor_pedido_id) {
-          try {
-            console.log(`🚀 Enviando a API TiendaGiftVen item ${item.id}...`)
-            const payload = {
-              producto_id: item.productos.proveedor_api_id,
-              merchant_ref: `CERIRAGA-ITEM-${item.id}`
-            };
-            
-            // Si es recarga directa, necesita id_juego y opcionalmente input2
-            if (item.player_id) {
-              payload.id_juego = item.player_id;
-              // Si tu sistema guarda el server/zone_id en algun lado, usualmente se pasa en zone_id, lo buscamos en el item
-              if (item.zone_id) payload.input2 = item.zone_id;
-            } else {
-              // Si no hay player_id, se asume Gift Card
-              payload.cantidad = item.cantidad || 1;
-            }
-
-            const res = await fetch('/api/tiendagiftven/proxy?endpoint=comprar', {
-              method: 'POST',
-              headers: { 
-                'X-API-Key': config.tiendagiftven_api_key,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(payload)
-            });
-            const data = await res.json();
-            
-            if (data.ok) {
-              // Actualizar el estado del item en la base de datos
-              await supabase.from('pedido_items').update({
-                estado_proveedor: data.estado,
-                proveedor_pedido_id: data.pedido_id,
-                mensaje_proveedor: data.codigos ? data.codigos.join('\\n') : (data.mensaje || '')
-              }).eq('id', item.id);
-            } else {
-              console.error('Error API TiendaGiftVen:', data.error);
-              await supabase.from('pedido_items').update({
-                estado_proveedor: 'error',
-                mensaje_proveedor: data.error
-              }).eq('id', item.id);
-            }
-          } catch(e) {
-            console.error('Error invocando API TiendaGiftVen', e);
-          }
-        }
-      }
+    // (Llamada a API TiendaGiftVen movida a función independiente processTiendaGiftVenOrder)
+    if (nuevoEstado === 'completado' || nuevoEstado === 'procesando') {
+      processTiendaGiftVenOrder(pedidoId).then(sent => {
+        if (sent) refreshPedidoData(pedidoId);
+      });
     }
+
 
     // 2. Si el nuevo estado es COMPLETADO y no se ha registrado la venta aún, registrarla
     if (nuevoEstado === 'completado' && !pedidoActual.venta_registrada) {
@@ -830,21 +864,18 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
         setPedidos(prev => prev.map(p => p.id === data.id ? pedFinal : p));
         playCashRegisterSound();
 
-        // Intentar autoprocesamiento en background si hay códigos
+        // Intentar autoprocesamiento en background si hay códigos (Baúl)
         processAutoDeliveryOrder(data.id).then(processed => {
           if (processed) {
             console.log('Pedido auto-procesado tras verificación manual');
-            // Fetch nuevamente para actualizar la UI (el estado cambió a completado en DB)
-            supabase.from('pedidos').select('*, pedido_items(*, productos(*))').eq('id', data.id).single()
-              .then(({data: updData}) => {
-                if(updData) {
-                  const finalPed = { ...updData, cliente: pedido.cliente, atendido_por: pedido.atendido_por };
-                  setSelectedPedido(prev => prev?.id === data.id ? finalPed : prev);
-                  setPedidos(prev => prev.map(p => p.id === data.id ? finalPed : p));
-                }
-              });
+            refreshPedidoData(data.id);
           }
         }).catch(console.error);
+
+        // Procesar TiendaGiftVen API
+        processTiendaGiftVenOrder(data.id).then(sent => {
+          if (sent) refreshPedidoData(data.id);
+        });
       }
     } else {
       // Si se rechaza el pago
