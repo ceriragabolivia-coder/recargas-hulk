@@ -66,9 +66,9 @@ export default function ProveedorCatalogo() {
   };
 
   useEffect(() => {
-    if (apiKey && config?.tiendagiftven_api_key) {
-      fetchSaldo();
-      fetchProductos();
+    if (config?.tiendagiftven_api_key) {
+      fetchSaldo(config.tiendagiftven_api_key);
+      fetchProductos(config.tiendagiftven_api_key);
     }
   }, [config?.tiendagiftven_api_key]);
 
