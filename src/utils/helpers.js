@@ -229,13 +229,7 @@ export function removeWhiteBackground(file, threshold = 240) {
  * @returns {string} URL optimizada o la URL original si no es de Supabase Storage
  */
 export function getOptimizedImageUrl(url, width = 300, quality = 80) {
-  if (!url || typeof url !== 'string') return url;
-  
-  if (url.includes('.supabase.co/storage/v1/object/public/')) {
-    let optimizedUrl = url.replace('/object/public/', '/render/image/public/');
-    const separator = optimizedUrl.includes('?') ? '&' : '?';
-    return `${optimizedUrl}${separator}width=${width}&quality=${quality}`;
-  }
-  
+  // Desactivado para evitar límites de cuota de transformaciones de Supabase Pro Plan.
+  // Las imágenes ya se comprimen localmente antes de subirlas gracias a compressImage().
   return url;
 }

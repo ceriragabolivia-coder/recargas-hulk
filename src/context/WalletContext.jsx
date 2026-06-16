@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
+import { useConfigContext } from './ConfigContext'
 
 const WalletContext = createContext()
 
 export function WalletProvider({ children }) {
   const { user, perfil } = useAuth()
+  const { config } = useConfigContext()
   const [wallet, setWallet] = useState(null)
   const [adminSalesBalance, setAdminSalesBalance] = useState({ saldo_usd: 0, saldo_bs: 0 })
   const [recargas, setRecargas] = useState([])
@@ -48,9 +50,17 @@ export function WalletProvider({ children }) {
   }
 
   async function solicitarRecarga(monto, metodoId, referencia, comprobanteUrl = null, moneda = 'usd') {
+    // Validación de seguridad para montos fijos en Bs
+    if (moneda === 'bs' && config?.montos_billetera_bs) {
+      const allowedAmounts = config.montos_billetera_bs.split(',').map(v => Number(v.trim())).filter(v => !isNaN(v) && v > 0)
+      if (allowedAmounts.length > 0 && !allowedAmounts.includes(Number(monto))) {
+        return { error: new Error('El monto ingresado no es válido. Seleccione uno de los montos permitidos.') }
+      }
+    }
+
     const { data, error } = await supabase.from('billetera_recargas').insert({
       auth_user_id: user.id,
-      monto,
+      monto: Number(monto),
       metodo_pago_id: metodoId,
       referencia_pago: referencia,
       comprobante_url: comprobanteUrl,

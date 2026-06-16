@@ -95,9 +95,11 @@ export function ConfigProvider({ children }) {
     
     if (error) {
       console.error("Error al actualizar configuración:", error)
+      return { error }
     } else {
       // Forzar actualización local inmediata si fue exitoso
       fetchConfig()
+      return { success: true }
     }
     
     return { error }

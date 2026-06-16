@@ -37,6 +37,7 @@ export default function Configuracion() {
   const logoFileInputRef = useRef(null)
 
   const [tiempoLimitePago, setTiempoLimitePago] = useState('15')
+  const [montosBilleteraBs, setMontosBilleteraBs] = useState('')
   
   // Estados para Banners dinámicos
   const [promoBannerTexto, setPromoBannerTexto] = useState('')
@@ -89,6 +90,7 @@ export default function Configuracion() {
       setCashbackPorcentaje(config.cashback_porcentaje || '0')
       setCashbackActivo(config.cashback_activo === 'true')
       setTiempoLimitePago(config.tiempo_limite_pago || '15')
+      setMontosBilleteraBs(config.montos_billetera_bs || '')
       
       // Banners
       setPromoBannerTexto(config.promo_banner_texto || '')
@@ -234,7 +236,8 @@ export default function Configuracion() {
       
       const newImages = [...bgFloatingImages, publicUrl]
       setBgFloatingImages(newImages)
-      await updateConfig('bg_floating_images', JSON.stringify(newImages), true)
+      const res = await updateConfig('bg_floating_images', JSON.stringify(newImages), true)
+      if (res && res.error) throw res.error
       setAlertModal({ type: 'success', message: 'Imagen añadida correctamente al efecto flotante' })
     } catch (err) {
       setAlertModal({ type: 'error', message: 'Error al subir la imagen: ' + err.message })
@@ -246,7 +249,8 @@ export default function Configuracion() {
   const handleRemoveFloatingImage = async (url) => {
     const newImages = bgFloatingImages.filter(img => img !== url)
     setBgFloatingImages(newImages)
-    await updateConfig('bg_floating_images', JSON.stringify(newImages), true)
+    const res = await updateConfig('bg_floating_images', JSON.stringify(newImages), true)
+    if (res && res.error) alert('Error: ' + res.error.message)
   }
 
   const handleSubmit = async (e) => {
@@ -545,37 +549,69 @@ export default function Configuracion() {
               </div>
 
               {!showForm && (
-                <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'rgba(0, 210, 255, 0.05)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
-                    <div style={{ flex: 1, minWidth: '300px' }}>
-                      <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '4px' }}>⏱️ Tiempo Límite para Pagos</h3>
-                      <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                        Minutos que tiene el cliente para realizar y reportar su pago antes de que el pedido sea eliminado automáticamente.
-                      </p>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div className="form-group" style={{ marginBottom: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <input 
-                            type="number" 
-                            className="form-input" 
-                            style={{ width: '80px', textAlign: 'center', fontWeight: 'bold' }}
-                            value={tiempoLimitePago}
-                            onChange={(e) => setTiempoLimitePago(e.target.value)}
-                            onBlur={(e) => updateConfig('tiempo_limite_pago', e.target.value)}
-                          />
-                          <span style={{ fontWeight: 600, fontSize: '13px' }}>minutos</span>
-                        </div>
+                <>
+                  <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'rgba(0, 210, 255, 0.05)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: '300px' }}>
+                        <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '4px' }}>⏱️ Tiempo Límite para Pagos</h3>
+                        <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                          Minutos que tiene el cliente para realizar y reportar su pago antes de que el pedido sea eliminado automáticamente.
+                        </p>
                       </div>
-                      <button 
-                        className="btn btn-primary btn-sm" 
-                        onClick={() => updateConfig('tiempo_limite_pago', tiempoLimitePago).then(() => setAlertModal({ type: 'success', message: 'Tiempo límite actualizado' }))}
-                      >
-                        Guardar
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <input 
+                              type="number" 
+                              className="form-input" 
+                              style={{ width: '80px', textAlign: 'center', fontWeight: 'bold' }}
+                              value={tiempoLimitePago}
+                              onChange={(e) => setTiempoLimitePago(e.target.value)}
+                              onBlur={(e) => updateConfig('tiempo_limite_pago', e.target.value)}
+                            />
+                            <span style={{ fontWeight: 600, fontSize: '13px' }}>minutos</span>
+                          </div>
+                        </div>
+                        <button 
+                          className="btn btn-primary btn-sm" 
+                          onClick={() => updateConfig('tiempo_limite_pago', tiempoLimitePago).then(() => setAlertModal({ type: 'success', message: 'Tiempo límite actualizado' }))}
+                        >
+                          Guardar
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                  
+                  <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'rgba(168, 85, 247, 0.05)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: '300px' }}>
+                        <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '4px' }}>💰 Montos Fijos Billetera (Bs)</h3>
+                        <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                          Opcional. Separa los montos por comas (Ej: 50, 100, 200). Si lo dejas vacío, los clientes podrán escribir cualquier monto.
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                          <input 
+                            type="text" 
+                            className="form-input" 
+                            style={{ width: '200px' }}
+                            placeholder="Ej: 50, 100, 200, 500"
+                            value={montosBilleteraBs}
+                            onChange={(e) => setMontosBilleteraBs(e.target.value)}
+                            onBlur={(e) => updateConfig('montos_billetera_bs', e.target.value, true)}
+                          />
+                        </div>
+                        <button 
+                          className="btn btn-primary btn-sm" 
+                          onClick={() => updateConfig('montos_billetera_bs', montosBilleteraBs, true).then(() => setAlertModal({ type: 'success', message: 'Montos fijos actualizados' }))}
+                        >
+                          Guardar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </>
               )}
 
               <div style={{ padding: '24px' }}>

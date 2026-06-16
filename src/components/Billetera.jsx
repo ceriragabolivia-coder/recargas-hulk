@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { useWallet, useAuth, useMetodosPago, useVentas } from '../hooks/useData'
+import { useWallet, useAuth, useMetodosPago, useVentas, useConfiguracion } from '../hooks/useData'
 import { formatUSD, formatBs, getOptimizedImageUrl } from '../utils/helpers'
 import { supabase } from '../lib/supabase'
 import AlertModal from './AlertModal'
@@ -9,8 +9,14 @@ export default function Billetera({ onNavigate }) {
   const { wallet, adminSalesBalance, recargas, transacciones, loading, solicitarRecarga, refetch } = useWallet()
   const { perfil, isCliente } = useAuth()
   const { metodos } = useMetodosPago()
+  const { config } = useConfiguracion()
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
   const { verificarYRegistrarReferencia } = useVentas()
+
+  const montosBsFijos = useMemo(() => {
+    if (!config?.montos_billetera_bs) return []
+    return config.montos_billetera_bs.split(',').map(v => v.trim()).filter(v => !isNaN(v) && v !== '')
+  }, [config?.montos_billetera_bs])
 
   const [monto, setMonto] = useState('')
   const [monedaRecarga, setMonedaRecarga] = useState('bs') // Cambiado a 'bs' por defecto
@@ -629,26 +635,60 @@ export default function Billetera({ onNavigate }) {
 
               <div className="form-group">
                 <label className="form-label">Monto a Recargar ({monedaRecarga === 'bs' ? 'Bs' : 'USD'})</label>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  min="1"
-                  className="form-input" 
-                  placeholder={monedaRecarga === 'bs' ? '0,00 Bs' : '$0.00'}
-                  value={monto}
-                  onChange={(e) => setMonto(e.target.value)}
-                  style={{ marginBottom: monedaRecarga === 'bs' && monto ? '8px' : '0' }}
-                  required
-                />
-                {monedaRecarga === 'bs' && monto && (
-                  <div className="fade-in" translate="no" style={{ 
-                    fontSize: '18px', fontWeight: 800, color: '#a855f7', 
-                    padding: '12px', backgroundColor: 'rgba(168, 85, 247, 0.1)', 
-                    borderRadius: '10px', border: '1px dashed rgba(168, 85, 247, 0.3)',
-                    textAlign: 'center'
-                  }}>
-                    💰 <span className="notranslate">{formatBs(monto)}</span>
-                  </div>
+                {monedaRecarga === 'bs' && montosBsFijos.length > 0 ? (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '10px' }}>
+                      {montosBsFijos.map((m, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setMonto(m)}
+                          className={`btn ${monto === m ? 'btn-primary' : 'btn-ghost'}`}
+                          style={{
+                            height: 'auto', padding: '12px 8px',
+                            border: monto === m ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                            backgroundColor: monto === m ? 'var(--accent-primary)' : 'var(--bg-panel)',
+                            color: monto === m ? '#fff' : 'var(--text-muted)',
+                            fontWeight: monto === m ? 'bold' : 'normal',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <span translate="no" className="notranslate">{formatBs(m)}</span>
+                        </button>
+                      ))}
+                    </div>
+                    {monto && (
+                      <div className="fade-in" style={{ marginTop: '12px', padding: '10px', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderLeft: '4px solid #fbbf24', borderRadius: '6px' }}>
+                        <p style={{ margin: 0, fontSize: '12.5px', color: '#fbbf24', lineHeight: 1.4 }}>
+                          ⚠️ <strong>Recuerda:</strong> Debes pagar exactamente el monto seleccionado para poder validar el pago.
+                        </p>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      min="1"
+                      className="form-input" 
+                      placeholder={monedaRecarga === 'bs' ? '0,00 Bs' : '$0.00'}
+                      value={monto}
+                      onChange={(e) => setMonto(e.target.value)}
+                      style={{ marginBottom: monedaRecarga === 'bs' && monto ? '8px' : '0' }}
+                      required
+                    />
+                    {monedaRecarga === 'bs' && monto && (
+                      <div className="fade-in" translate="no" style={{ 
+                        fontSize: '18px', fontWeight: 800, color: '#a855f7', 
+                        padding: '12px', backgroundColor: 'rgba(168, 85, 247, 0.1)', 
+                        borderRadius: '10px', border: '1px dashed rgba(168, 85, 247, 0.3)',
+                        textAlign: 'center'
+                      }}>
+                        💰 <span className="notranslate">{formatBs(monto)}</span>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
