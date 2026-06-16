@@ -450,7 +450,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
               payload.cantidad = item.cantidad || 1;
             }
 
-            const res = await fetch('https://tiendagiftven.tech/api/v1/comprar', {
+            const res = await fetch('/api/tiendagiftven/proxy?endpoint=comprar', {
               method: 'POST',
               headers: { 
                 'X-API-Key': config.tiendagiftven_api_key,

@@ -25,7 +25,7 @@ export default function ProveedorCatalogo() {
     if (!keyToUse) return;
     setLoadingSaldo(true);
     try {
-      const res = await fetch('https://tiendagiftven.tech/api/v1/saldo', {
+      const res = await fetch('/api/tiendagiftven/proxy?endpoint=saldo', {
         headers: { 'X-API-Key': keyToUse }
       });
       const data = await res.json();
@@ -49,7 +49,7 @@ export default function ProveedorCatalogo() {
     if (!keyToUse) return;
     setLoading(true);
     try {
-      const res = await fetch('https://tiendagiftven.tech/api/v1/productos', {
+      const res = await fetch('/api/tiendagiftven/proxy?endpoint=productos', {
         headers: { 'X-API-Key': keyToUse }
       });
       const data = await res.json();
@@ -80,7 +80,7 @@ export default function ProveedorCatalogo() {
     
     // Probar la API primero
     try {
-      const res = await fetch('https://tiendagiftven.tech/api/v1/saldo', {
+      const res = await fetch('/api/tiendagiftven/proxy?endpoint=saldo', {
         headers: { 'X-API-Key': apiKey }
       });
       const data = await res.json();
@@ -95,7 +95,7 @@ export default function ProveedorCatalogo() {
       // Intentar registrar el webhook automáticamente
       const webhookUrl = `${window.location.origin}/api/tiendagiftven/webhook`;
       try {
-        await fetch('https://tiendagiftven.tech/api/v1/webhook', {
+        await fetch('/api/tiendagiftven/proxy?endpoint=webhook', {
           method: 'POST',
           headers: { 
             'X-API-Key': apiKey,
