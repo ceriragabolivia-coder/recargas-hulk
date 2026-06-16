@@ -78,12 +78,6 @@ export default function Configuracion() {
   const [isEditingMotivo, setIsEditingMotivo] = useState(false)
   const [currentMotivo, setCurrentMotivo] = useState({ id: '', titulo: '', mensaje: '' })
 
-  // Estados para Integración de APIs
-  const [apiIntegrations, setApiIntegrations] = useState([])
-  const [showApiForm, setShowApiForm] = useState(false)
-  const [isEditingApi, setIsEditingApi] = useState(false)
-  const [currentApi, setCurrentApi] = useState({ id: '', nombre: '', url: '', token: '', activa: true })
-
   // Ref para evitar que las actualizaciones de Realtime sobrescriban lo que el admin está escribiendo
   const initialized = useRef(false)
 
@@ -150,13 +144,6 @@ export default function Configuracion() {
         }
       } catch (e) {
         setMotivosRechazo([]);
-      }
-
-      // APIs
-      try {
-        setApiIntegrations(JSON.parse(config.api_integrations || '[]'));
-      } catch (e) {
-        setApiIntegrations([]);
       }
 
       initialized.current = true
@@ -544,15 +531,6 @@ export default function Configuracion() {
               onClick={() => setActiveTab('mobile')}
             >
               📲 App Móvil
-            </button>
-          )}
-          {!isNegocio && (
-            <button 
-              className={`btn ${activeTab === 'apis' ? 'btn-primary' : 'btn-ghost'}`}
-              style={{ justifyContent: 'flex-start', textAlign: 'left' }}
-              onClick={() => setActiveTab('apis')}
-            >
-              🔌 APIs e Integraciones
             </button>
           )}
         </div>
@@ -2305,180 +2283,6 @@ export default function Configuracion() {
 
                 </div>
               </div>
-            </>
-          )}
-
-          {activeTab === 'apis' && !isNegocio && (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '15px' }}>
-                <div>
-                  <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 800 }}>🔌 Integración de APIs</h2>
-                  <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: '14px' }}>
-                    Configura las credenciales y endpoints para automatizar recargas y servicios.
-                  </p>
-                </div>
-                {!showApiForm && (
-                  <button 
-                    className="btn btn-primary" 
-                    onClick={() => {
-                      setCurrentApi({ id: Date.now().toString(), nombre: '', url: '', token: '', activa: true })
-                      setIsEditingApi(false)
-                      setShowApiForm(true)
-                    }}
-                  >
-                    + Nueva Integración
-                  </button>
-                )}
-              </div>
-
-              {showApiForm ? (
-                <div className="fade-in" style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-color)', marginBottom: '24px' }}>
-                  <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '20px' }}>
-                    {isEditingApi ? 'Editar Integración' : 'Nueva Integración'}
-                  </h3>
-                  
-                  <div className="form-group">
-                    <label>Nombre de la API (Ej: Binance, Proveedor Diamantes)</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      value={currentApi.nombre}
-                      onChange={e => setCurrentApi({...currentApi, nombre: e.target.value})}
-                      placeholder="Identificador del servicio"
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label>URL Endpoint (Opcional)</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      value={currentApi.url}
-                      onChange={e => setCurrentApi({...currentApi, url: e.target.value})}
-                      placeholder="https://api.ejemplo.com/v1"
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label>Token / API Key</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      value={currentApi.token}
-                      onChange={e => setCurrentApi({...currentApi, token: e.target.value})}
-                      placeholder="sk_live_XXXXXXXXXXXXXXXX"
-                    />
-                  </div>
-                  
-                  <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <label style={{ margin: 0 }}>Estado Activo</label>
-                    <div 
-                      className={`toggle-switch ${currentApi.activa ? 'active' : ''}`}
-                      onClick={() => setCurrentApi({...currentApi, activa: !currentApi.activa})}
-                    >
-                      <div className="toggle-slider"></div>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                    <button 
-                      className="btn btn-primary"
-                      onClick={async () => {
-                        if (!currentApi.nombre.trim()) {
-                          setAlertModal({ type: 'error', message: 'El nombre es obligatorio' })
-                          return
-                        }
-                        const updatedList = isEditingApi 
-                          ? apiIntegrations.map(a => a.id === currentApi.id ? currentApi : a)
-                          : [...apiIntegrations, { ...currentApi, id: Date.now().toString() }]
-                        
-                        setApiIntegrations(updatedList)
-                        await updateConfig('api_integrations', JSON.stringify(updatedList), true)
-                        setAlertModal({ type: 'success', message: 'Integración guardada' })
-                        setShowApiForm(false)
-                      }}
-                    >
-                      Guardar
-                    </button>
-                    <button 
-                      className="btn btn-ghost"
-                      onClick={() => setShowApiForm(false)}
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
-                  {apiIntegrations.length === 0 ? (
-                    <div style={{ gridColumn: '1 / -1', padding: '40px', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed var(--border-color)', color: 'var(--text-muted)' }}>
-                      <span style={{ fontSize: '32px', display: 'block', marginBottom: '10px' }}>🔌</span>
-                      No hay integraciones configuradas. Agrega tu primera API para comenzar a automatizar.
-                    </div>
-                  ) : (
-                    apiIntegrations.map(api => (
-                      <div key={api.id} style={{ 
-                        backgroundColor: 'var(--bg-panel)', 
-                        padding: '20px', 
-                        borderRadius: '16px', 
-                        border: '1px solid var(--border-color)',
-                        opacity: api.activa ? 1 : 0.6
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                          <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            {api.nombre}
-                            {!api.activa && <span style={{ fontSize: '10px', backgroundColor: 'var(--accent-error)', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>Inactiva</span>}
-                          </h4>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <button 
-                              className="btn btn-ghost btn-sm"
-                              style={{ padding: '6px', minWidth: 'auto', color: 'var(--accent-primary)' }}
-                              onClick={() => {
-                                setCurrentApi(api)
-                                setIsEditingApi(true)
-                                setShowApiForm(true)
-                              }}
-                              title="Editar"
-                            >
-                              ✏️
-                            </button>
-                            <button 
-                              className="btn btn-ghost btn-sm"
-                              style={{ padding: '6px', minWidth: 'auto', color: 'var(--accent-error)' }}
-                              onClick={() => {
-                                setAlertModal({
-                                  type: 'warning',
-                                  title: 'Eliminar Integración',
-                                  message: `¿Estás seguro de eliminar la API "${api.nombre}"?`,
-                                  onConfirm: async () => {
-                                    const updatedList = apiIntegrations.filter(a => a.id !== api.id)
-                                    setApiIntegrations(updatedList)
-                                    await updateConfig('api_integrations', JSON.stringify(updatedList), true)
-                                    setAlertModal(null)
-                                  }
-                                })
-                              }}
-                              title="Eliminar"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-                        </div>
-                        
-                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          <div><strong>URL:</strong> {api.url || <span style={{ opacity: 0.5 }}>No configurada</span>}</div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <strong>Token:</strong> 
-                            <span style={{ fontFamily: 'monospace', backgroundColor: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>
-                              {api.token ? `${api.token.substring(0, 4)}...${api.token.substring(api.token.length - 4)}` : <span style={{ opacity: 0.5 }}>No configurado</span>}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
             </>
           )}
         </div>
