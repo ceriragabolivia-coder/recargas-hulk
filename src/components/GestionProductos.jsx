@@ -1073,6 +1073,19 @@ export default function GestionProductos() {
             </select>
           </div>
 
+          <div className="form-group" style={{ marginBottom: '24px' }}>
+            <label className="form-label" style={{ color: '#fbbf24' }}>📦 ID Producto Proveedor (Opcional - TiendaGiftVen API)</label>
+            <input 
+              type="number" 
+              className="form-input" 
+              value={formData.proveedor_api_id || ''}
+              onChange={e => setFormData({ ...formData, proveedor_api_id: e.target.value })}
+              placeholder="Ej. 5"
+              style={{ borderColor: formData.proveedor_api_id ? '#fbbf24' : '' }}
+            />
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px' }}>Si colocas el ID que obtuviste del catálogo, el pedido se procesará automáticamente por la API al ser aprobado.</p>
+          </div>
+
           <div className="form-group" style={{ marginBottom: '24px', padding: '16px', backgroundColor: 'rgba(0, 210, 255, 0.05)', borderRadius: '12px', border: '1px solid rgba(0, 210, 255, 0.1)' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
               <input 
