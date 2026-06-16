@@ -353,7 +353,8 @@ export default function GestionProductos() {
         info_adicional_texto: formData.info_adicional_texto || null,
         info_adicional_imagen_url: finalInfoUrl,
         entrega_automatica: formData.entrega_automatica,
-        tipo_producto: formData.tipo_producto
+        tipo_producto: formData.tipo_producto,
+        proveedor_api_id: formData.proveedor_api_id ? parseInt(formData.proveedor_api_id, 10) : null
       }
 
       if (formData.id) {
