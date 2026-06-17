@@ -22,6 +22,8 @@ const NAV_ITEMS = [
   { key: 'config', icon: '⚙️', label: 'Configuración', path: '/Configuracion' },
   { key: 'reportes', icon: '📈', label: 'Reportes', path: '/Reportes' },
   { key: 'pagos_admins', icon: '💸', label: 'Pagos Admins', path: '/Pagos-Admins' },
+  { key: 'gestion_socios', icon: '🤝', label: 'Socios y Utilidades', path: '/Gestion-Socios' },
+  { key: 'mi_participacion', icon: '🤝', label: 'Mi Participación', path: '/Mi-Participacion' },
   { key: 'estadisticas', icon: '📈', label: 'Estadísticas Pro', path: '/Estadisticas' },
   { key: 'gestion_landing', icon: '🏠', label: 'Gestión Landing', path: '/Gestion-Landing' },
   { key: 'gestion_paginas', icon: '📄', label: 'Páginas del Footer', path: '/Gestion-Paginas' },
@@ -344,6 +346,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
   const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
   const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
+  const isSocio = perfil?.rol?.toLowerCase() === 'socio'
 
   const [counts, setCounts] = useState({
     pagos_pendientes: 0,
@@ -1039,7 +1042,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
               <div className="nav-section-label">Principal</div>
               {NAV_ITEMS.filter(i => ['dashboard', 'billetera', 'catalogo', 'ventas'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Gestión</div>
-              {NAV_ITEMS.filter(i => ['productos', 'pedidos', 'usuarios', 'revendedores', 'chats', 'proveedor_tgv', 'pagos_admins', 'config', 'gestion_landing', 'gestion_paginas'].includes(i.key)).map(renderNavItem)}
+              {NAV_ITEMS.filter(i => ['productos', 'pedidos', 'usuarios', 'revendedores', 'chats', 'proveedor_tgv', 'pagos_admins', 'gestion_socios', 'config', 'gestion_landing', 'gestion_paginas'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Análisis</div>
               {NAV_ITEMS.filter(i => ['reportes', 'estadisticas', 'gestion_ruleta'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Cuenta</div>
@@ -1058,6 +1061,11 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
               {NAV_ITEMS.filter(item => ['pedidos', 'usuarios', 'chats', 'catalogo'].includes(item.key)).map(renderNavItem)}
               <div className="nav-section-label">Cuenta</div>
               {NAV_ITEMS.filter(i => ['perfil'].includes(i.key)).map(renderNavItem)}
+            </>
+          ) : isSocio ? (
+            <>
+              <div className="nav-section-label">Mi Participación</div>
+              {NAV_ITEMS.filter(i => ['mi_participacion'].includes(i.key)).map(renderNavItem)}
             </>
           ) : (
             <>

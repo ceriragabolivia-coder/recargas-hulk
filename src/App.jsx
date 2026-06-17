@@ -36,6 +36,8 @@ const GestionLanding = lazy(() => import('./components/GestionLanding'))
 const GestionPaginas = lazy(() => import('./components/GestionPaginas'))
 const PaginaEstatica = lazy(() => import('./components/PaginaEstatica'))
 const ProveedorCatalogo = lazy(() => import('./components/ProveedorCatalogo'))
+const GestionSocios = lazy(() => import('./components/GestionSocios'))
+const MiParticipacion = lazy(() => import('./components/MiParticipacion'))
 
 const Placeholder = ({ title }) => (
   <div className="page-content">
@@ -337,6 +339,7 @@ const SuspendedView = ({ onLogout, onRefresh, type = 'suspendido', motivo }) => 
 const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
   const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
   const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
+  const isSocio = perfil?.rol?.toLowerCase() === 'socio'
   const fallback = (
     <div className="loading-screen">
       <div className="spinner"></div>
@@ -387,6 +390,10 @@ const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
         <Route path="/Gestion-Landing" element={isAdmin ? <GestionLanding /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Gestion-Paginas" element={isAdmin ? <GestionPaginas /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Proveedor-TiendaGiftVen" element={isAdmin ? <ProveedorCatalogo /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Gestion-Socios" element={isAdmin ? <GestionSocios /> : <Navigate to="/Lista-De-Precios" replace />} />
+
+        {/* Ruta del socio (solo lectura de su propia participación) */}
+        <Route path="/Mi-Participacion" element={isSocio ? <MiParticipacion /> : <Navigate to="/Lista-De-Precios" replace />} />
 
         {/* Redirección por defecto */}
         <Route path="/" element={<Navigate to={(isAdmin || isNegocio || isEmpleado) ? "/Dashboard" : "/"} replace />} />
@@ -410,6 +417,7 @@ export default function App() {
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
   const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
   const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
+  const isSocio = perfil?.rol?.toLowerCase() === 'socio'
 
   // Sincronizar isRegistering con la ruta para compatibilidad
   useEffect(() => {
@@ -722,6 +730,8 @@ export default function App() {
     if (perfil && !hasRedirectedRef.current && (location.pathname === '/login' || location.pathname === '/register')) {
       if (isAdmin || isNegocio || isEmpleado) {
         navigate('/Dashboard', { replace: true })
+      } else if (isSocio) {
+        navigate('/Mi-Participacion', { replace: true })
       } else {
         navigate('/', { replace: true })
       }
@@ -730,7 +740,7 @@ export default function App() {
       // Si inician sesión desde la Landing, se quedan en la Landing.
       hasRedirectedRef.current = true
     }
-  }, [perfil, location.pathname, isAdmin, isNegocio, navigate])
+  }, [perfil, location.pathname, isAdmin, isNegocio, isSocio, navigate])
 
   const [forceLoad, setForceLoad] = useState(false)
   useEffect(() => {

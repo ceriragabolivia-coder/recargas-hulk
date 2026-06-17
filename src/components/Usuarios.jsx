@@ -621,6 +621,7 @@ export default function Usuarios({ onNavigate }) {
                               <option value="negocio">🏢 Negocio (Punto de Venta)</option>
                               <option value="admin">👑 Administrador</option>
                               <option value="empleado">👷 Empleado / Trabajador</option>
+                              <option value="socio">🤝 Socio / Inversionista</option>
                             </select>
 
                             {editingData.rol === 'negocio' && (
@@ -704,19 +705,22 @@ export default function Usuarios({ onNavigate }) {
                               borderRadius: '20px', 
                               fontSize: '12px', 
                               fontWeight: 600,
-                              backgroundColor: cliente.rol === 'admin' ? 'rgba(156, 39, 176, 0.15)' : 
-                                               cliente.rol === 'revendedor' ? 'rgba(255, 152, 0, 0.15)' : 
+                              backgroundColor: cliente.rol === 'admin' ? 'rgba(156, 39, 176, 0.15)' :
+                                               cliente.rol === 'revendedor' ? 'rgba(255, 152, 0, 0.15)' :
                                                cliente.rol === 'empleado' ? 'rgba(233, 30, 99, 0.15)' :
-                                               cliente.rol === 'negocio' ? 'rgba(0, 210, 255, 0.15)' : 'rgba(52, 152, 219, 0.15)',
-                              color: cliente.rol === 'admin' ? '#ce93d8' : 
-                                     cliente.rol === 'revendedor' ? '#ffb74d' : 
+                                               cliente.rol === 'negocio' ? 'rgba(0, 210, 255, 0.15)' :
+                                               cliente.rol === 'socio' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(52, 152, 219, 0.15)',
+                              color: cliente.rol === 'admin' ? '#ce93d8' :
+                                     cliente.rol === 'revendedor' ? '#ffb74d' :
                                      cliente.rol === 'empleado' ? '#f48fb1' :
-                                     cliente.rol === 'negocio' ? 'var(--accent-primary)' : 'var(--accent-primary)'
+                                     cliente.rol === 'negocio' ? 'var(--accent-primary)' :
+                                     cliente.rol === 'socio' ? '#22c55e' : 'var(--accent-primary)'
                             }}>
-                              {cliente.rol === 'admin' ? '👑 Administrador' : 
-                               cliente.rol === 'revendedor' ? '⭐ Revendedor' : 
+                              {cliente.rol === 'admin' ? '👑 Administrador' :
+                               cliente.rol === 'revendedor' ? '⭐ Revendedor' :
                                cliente.rol === 'empleado' ? '👷 Empleado' :
-                               cliente.rol === 'negocio' ? '🏢 Negocio' : '👤 Cliente'}
+                               cliente.rol === 'negocio' ? '🏢 Negocio' :
+                               cliente.rol === 'socio' ? '🤝 Socio' : '👤 Cliente'}
                             </span>
                             
                             {cliente.rol === 'revendedor' && cliente.porcentaje_descuento > 0 && (
