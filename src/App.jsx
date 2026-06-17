@@ -420,6 +420,7 @@ export default function App() {
   const isNegocio = hasRole(perfil, 'negocio')
   const isEmpleado = hasRole(perfil, 'empleado', 'trabajador')
   const isSocio = hasRole(perfil, 'socio')
+  const isRevendedor = hasRole(perfil, 'revendedor')
 
   // Sincronizar isRegistering con la ruta para compatibilidad
   useEffect(() => {
@@ -778,10 +779,12 @@ export default function App() {
   ]
 
   // Definimos si estamos en una ruta que debe usar la interfaz de la Landing Page
-  const isLandingRoute = coreLandingRoutes.includes(currentPath) || 
+  const isLandingRoute = coreLandingRoutes.includes(currentPath) ||
                          currentPath.startsWith('/p/') ||
-                         ((!isAdmin && !isNegocio && !isEmpleado) && 
-                          ['/ruleta', '/mis-pedidos', '/billetera', '/mi-perfil'].includes(currentPath))
+                         ((!isAdmin && !isNegocio && !isEmpleado) &&
+                          ['/mis-pedidos', '/billetera', '/mi-perfil'].includes(currentPath)) ||
+                         ((!isAdmin && !isNegocio && !isEmpleado && !isRevendedor) &&
+                          currentPath === '/ruleta')
 
   const mainContent = () => {
     if (!user) {

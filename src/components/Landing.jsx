@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams, useLocation, useParams } from 'reac
 import PaginaEstatica from './PaginaEstatica'
 import { supabase } from '../lib/supabase'
 import { useConfiguracion, useAuth, useCart, useCuentasGuardadas, useMetodosPago, useWallet } from '../hooks/useData'
-import { formatUSD, formatBs, calcularPrecioVenta, playClientOrderSuccessSound, playClientWelcomeSound } from '../utils/helpers'
+import { formatUSD, formatBs, calcularPrecioVenta, playClientOrderSuccessSound, playClientWelcomeSound, hasRole } from '../utils/helpers'
 import LandingAuthModal from './LandingAuthModal'
 import Checkout from './Checkout'
 import Pedidos from './Pedidos'
@@ -25,7 +25,7 @@ export default function Landing({ onNavigate }) {
   const { wallet } = useWallet()
   const { cart, addToCart, clearCart } = useCart()
   const { metodos } = useMetodosPago()
-  const isRevendedor = user?.role === 'revendedor'
+  const isRevendedor = hasRole(perfil, 'revendedor')
   
   // Modal State
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
@@ -753,7 +753,9 @@ export default function Landing({ onNavigate }) {
             <nav className="landing-nav hidden-mobile">
               <a href="#" className="nav-link active" onClick={(e) => { e.preventDefault(); handleSelectJuego(null); }}>Home</a>
               {/* Servicios removido según solicitud del usuario */}
-              <a href="#" className={`nav-link ${showRuleta ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('/Ruleta'); }}>Ruleta</a>
+              {!isRevendedor && (
+                <a href="#" className={`nav-link ${showRuleta ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('/Ruleta'); }}>Ruleta</a>
+              )}
               <a href="#" className="nav-link">Ayuda</a>
             </nav>
           </div>
@@ -955,7 +957,9 @@ export default function Landing({ onNavigate }) {
                     <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Dashboard') }} style={{ color: 'var(--accent)', fontWeight: 'bold' }}>Panel de Control</a>
                   )}
                   <a href="#" className="visible-mobile" onClick={(e) => { e.preventDefault(); handleSelectJuego(null); setTimeout(() => { const element = document.getElementById('all-games'); if (element) element.scrollIntoView({ behavior: 'smooth' }); }, 100); }}>Servicios</a>
-                  <a href="#" className="visible-mobile" onClick={(e) => { e.preventDefault(); navigate('/Ruleta'); }}>Ruleta</a>
+                  {!isRevendedor && (
+                    <a href="#" className="visible-mobile" onClick={(e) => { e.preventDefault(); navigate('/Ruleta'); }}>Ruleta</a>
+                  )}
                   <a href="#" className="visible-mobile" onClick={(e) => { e.preventDefault(); }}>Ayuda</a>
                   <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Mi-Perfil'); }}>Mi Perfil</a>
                   <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Mis-Pedidos'); }}>Mis Pedidos</a>
@@ -1044,7 +1048,7 @@ export default function Landing({ onNavigate }) {
           <div className="fade-in" style={{ width: '100%', maxWidth: '1400px', margin: '0 auto', padding: '20px' }}>
              <Pedidos embedded={true} params={ordersParams} />
           </div>
-        ) : showRuleta ? (
+        ) : (showRuleta && !isRevendedor) ? (
           <div className="fade-in" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
              <Ruleta embedded={true} />
           </div>
