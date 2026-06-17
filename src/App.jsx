@@ -5,6 +5,7 @@ import Login from './components/Login'
 import Register from './components/Register'
 import { useAuth, useConfiguracion } from './hooks/useData'
 import { supabase } from './lib/supabase'
+import { hasRole } from './utils/helpers'
 
 // Componentes estáticos (carga inmediata)
 import SupportChat from './components/SupportChat'
@@ -337,9 +338,9 @@ const SuspendedView = ({ onLogout, onRefresh, type = 'suspendido', motivo }) => 
 
 // Componente de rutas separado para evitar re-montado al cambiar estado de App
 const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
-  const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
-  const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
-  const isSocio = perfil?.rol?.toLowerCase() === 'socio'
+  const isNegocio = hasRole(perfil, 'negocio')
+  const isEmpleado = hasRole(perfil, 'empleado', 'trabajador')
+  const isSocio = hasRole(perfil, 'socio')
   const fallback = (
     <div className="loading-screen">
       <div className="spinner"></div>
@@ -414,10 +415,10 @@ export default function App() {
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [individualTimeout, setIndividualTimeout] = useState(null)
   
-  const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
-  const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
-  const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
-  const isSocio = perfil?.rol?.toLowerCase() === 'socio'
+  const isAdmin = hasRole(perfil, 'admin', 'administrador')
+  const isNegocio = hasRole(perfil, 'negocio')
+  const isEmpleado = hasRole(perfil, 'empleado', 'trabajador')
+  const isSocio = hasRole(perfil, 'socio')
 
   // Sincronizar isRegistering con la ruta para compatibilidad
   useEffect(() => {

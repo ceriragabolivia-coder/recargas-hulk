@@ -6,7 +6,7 @@ import AlertModal from './AlertModal'
 import Pedidos from './Pedidos'
 
 export default function Usuarios({ onNavigate }) {
-  const { clientes, loading, updateProfileRoleAndDiscount, updateProfile, updateProfileStatus, ajustarSaldoWallet, ajustarSaldoWalletBs, resetUserPassword, deleteClienteDefinitivo, refetch } = useClientes()
+  const { clientes, loading, updateProfileRoleAndDiscount, updateRolesAdicionales, updateProfile, updateProfileStatus, ajustarSaldoWallet, ajustarSaldoWalletBs, resetUserPassword, deleteClienteDefinitivo, refetch } = useClientes()
   const { perfil } = useAuth()
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
   const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
@@ -72,6 +72,15 @@ export default function Usuarios({ onNavigate }) {
   const [configurandoUserTimeout, setConfigurandoUserTimeout] = useState(null)
   const [userTimeout, setUserTimeout] = useState('')
 
+  const ROLES_DISPONIBLES = [
+    { key: 'cliente', label: '👤 Cliente' },
+    { key: 'revendedor', label: '⭐ Revendedor' },
+    { key: 'negocio', label: '🏢 Negocio (Punto de Venta)' },
+    { key: 'admin', label: '👑 Administrador' },
+    { key: 'empleado', label: '👷 Empleado / Trabajador' },
+    { key: 'socio', label: '🤝 Socio / Inversionista' }
+  ]
+
   const MODULOS_DISPONIBLES = [
     { key: 'dashboard', label: '📊 Dashboard', desc: 'Vista general de estadísticas' },
     { key: 'ventas', label: '🛒 Registro de Ventas', desc: 'Punto de venta y caja' },
@@ -97,7 +106,8 @@ export default function Usuarios({ onNavigate }) {
       whatsapp: cliente.whatsapp || '',
       estado: cliente.estado || 'pendiente',
       motivo_estado: cliente.motivo_estado || '',
-      config_modulos: cliente.config_modulos || []
+      config_modulos: cliente.config_modulos || [],
+      roles_adicionales: cliente.roles_adicionales || []
     })
   }
 
@@ -138,6 +148,11 @@ export default function Usuarios({ onNavigate }) {
           config_modulos: editingData.config_modulos || []
         })
         if (errorProfile) throw errorProfile
+
+        if (isAdmin) {
+          const { error: errorRoles } = await updateRolesAdicionales(cliente.auth_user_id, editingData.roles_adicionales || [])
+          if (errorRoles) throw errorRoles
+        }
       }
 
       // Si cambia el whatsapp (afecta a 'clientes')
@@ -624,6 +639,30 @@ export default function Usuarios({ onNavigate }) {
                               <option value="socio">🤝 Socio / Inversionista</option>
                             </select>
 
+                            {isAdmin && (
+                              <div style={{ padding: '10px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                                <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Roles adicionales</div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                  {ROLES_DISPONIBLES.filter(r => r.key !== editingData.rol).map(r => (
+                                    <label key={r.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                                      <input
+                                        type="checkbox"
+                                        checked={(editingData.roles_adicionales || []).includes(r.key)}
+                                        onChange={(e) => {
+                                          const actuales = editingData.roles_adicionales || []
+                                          const nuevos = e.target.checked
+                                            ? [...actuales, r.key]
+                                            : actuales.filter(rol => rol !== r.key)
+                                          setEditingData({ ...editingData, roles_adicionales: nuevos })
+                                        }}
+                                      />
+                                      <span>{r.label}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
                             {editingData.rol === 'negocio' && (
                               <button 
                                 className="btn btn-sm"
@@ -722,7 +761,26 @@ export default function Usuarios({ onNavigate }) {
                                cliente.rol === 'negocio' ? '🏢 Negocio' :
                                cliente.rol === 'socio' ? '🤝 Socio' : '👤 Cliente'}
                             </span>
-                            
+
+                            {(cliente.roles_adicionales || []).map(rolAdicional => {
+                              const info = ROLES_DISPONIBLES.find(r => r.key === rolAdicional)
+                              return (
+                                <span key={rolAdicional} style={{
+                                  display: 'inline-block',
+                                  marginLeft: '4px',
+                                  padding: '4px 10px',
+                                  borderRadius: '20px',
+                                  fontSize: '11px',
+                                  fontWeight: 600,
+                                  backgroundColor: 'rgba(255,255,255,0.06)',
+                                  color: 'var(--text-muted)',
+                                  border: '1px solid var(--border-color)'
+                                }}>
+                                  {info?.label || rolAdicional}
+                                </span>
+                              )
+                            })}
+
                             {cliente.rol === 'revendedor' && cliente.porcentaje_descuento > 0 && (
                               <div style={{ marginTop: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
                                 <span style={{ color: 'var(--accent-success)', fontWeight: 600 }}>{cliente.porcentaje_descuento}%</span> descuento aplicado

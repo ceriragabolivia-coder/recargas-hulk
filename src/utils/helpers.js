@@ -1,3 +1,9 @@
+// Un usuario puede tener varios roles (rol principal + roles adicionales asignados por un admin)
+export function hasRole(perfil, ...roles) {
+  const rolesUsuario = perfil?.roles || [perfil?.rol?.toLowerCase()]
+  return roles.some(r => rolesUsuario.includes(r))
+}
+
 /**
  * Replica exacta de las fórmulas del Excel para calcular precios
  */

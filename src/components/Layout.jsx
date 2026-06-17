@@ -3,7 +3,7 @@ import { useAuth, useConfiguracion, useWallet, useNotificacionesPush, useCart } 
 import { playClientOrderSuccessSound } from '../utils/helpers'
 import { NavLink, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { formatUSD, formatBs, playOrderNotificationSound } from '../utils/helpers'
+import { formatUSD, formatBs, playOrderNotificationSound, hasRole } from '../utils/helpers'
 import FloatingBackground from './FloatingBackground'
 import DOMPurify from 'dompurify'
 import SupportChat from './SupportChat'
@@ -176,7 +176,7 @@ function NotificationBar({ counts, onNavigate, config, onlineUsers, isEmpleado }
 function WalletWidget({ onNavigate }) {
   const { wallet, adminSalesBalance, loading } = useWallet()
   const { perfil, isCliente } = useAuth()
-  const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
+  const isAdmin = hasRole(perfil, 'admin')
   return (
     <div 
       onClick={() => onNavigate('billetera')}
@@ -343,10 +343,10 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
     setSoundEnabled(newVal);
     localStorage.setItem('admin_sound_enabled', newVal.toString());
   }
-  const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
-  const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
-  const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
-  const isSocio = perfil?.rol?.toLowerCase() === 'socio'
+  const isAdmin = hasRole(perfil, 'admin', 'administrador')
+  const isNegocio = hasRole(perfil, 'negocio')
+  const isEmpleado = hasRole(perfil, 'empleado', 'trabajador')
+  const isSocio = hasRole(perfil, 'socio')
 
   const [counts, setCounts] = useState({
     pagos_pendientes: 0,
@@ -1048,7 +1048,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
               <div className="nav-section-label">Cuenta</div>
               {NAV_ITEMS.filter(i => ['perfil'].includes(i.key)).map(renderNavItem)}
             </>
-          ) : perfil?.rol === 'negocio' ? (
+          ) : isNegocio ? (
             <>
               <div className="nav-section-label">Panel de Negocio</div>
               {NAV_ITEMS.filter(item => (perfil.config_modulos || []).includes(item.key) || item.key === 'config').map(renderNavItem)}
@@ -1310,7 +1310,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
       )}
 
       {/* CHAT DE SOPORTE PARA CLIENTES (Fuera de la landing) */}
-      {perfil && perfil.rol !== 'admin' && (
+      {perfil && !isAdmin && (
         <SupportChat perfil={perfil} onNavigate={onNavigate} />
       )}
     </div>

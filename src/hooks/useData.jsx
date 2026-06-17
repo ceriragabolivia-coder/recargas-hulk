@@ -509,7 +509,7 @@ export function useClientes() {
 
   async function fetchClientes() {
     setLoading(true)
-    const [clientesRes, perfilesRes, billeterasRes] = await Promise.all([
+    const [clientesRes, perfilesRes, billeterasRes, rolesAdicionalesRes] = await Promise.all([
       supabase
         .from('clientes')
         .select('*')
@@ -519,13 +519,22 @@ export function useClientes() {
         .select('id, rol, estado, porcentaje_descuento, config_modulos, motivo_estado'),
       supabase
         .from('billeteras')
-        .select('auth_user_id, saldo, saldo_bs')
+        .select('auth_user_id, saldo, saldo_bs'),
+      supabase
+        .from('usuario_roles_adicionales')
+        .select('usuario_id, rol')
     ])
-    
+
     if (clientesRes.data) {
       const perfilesMap = new Map((perfilesRes.data || []).map(p => [p.id, p]))
       const billeterasMap = new Map((billeterasRes.data || []).map(b => [b.auth_user_id, { saldo: b.saldo, saldo_bs: b.saldo_bs }]))
-      
+      const rolesAdicionalesMap = new Map()
+      ;(rolesAdicionalesRes.data || []).forEach(r => {
+        const lista = rolesAdicionalesMap.get(r.usuario_id) || []
+        lista.push(r.rol)
+        rolesAdicionalesMap.set(r.usuario_id, lista)
+      })
+
       const formatted = clientesRes.data.map(c => {
         const p = perfilesMap.get(c.auth_user_id)
         return {
@@ -535,6 +544,7 @@ export function useClientes() {
           porcentaje_descuento: p?.porcentaje_descuento || 0,
           config_modulos: p?.config_modulos || [],
           motivo_estado: p?.motivo_estado || null,
+          roles_adicionales: rolesAdicionalesMap.get(c.auth_user_id) || [],
           billetera_saldo: billeterasMap.get(c.auth_user_id)?.saldo || 0,
           billetera_saldo_bs: billeterasMap.get(c.auth_user_id)?.saldo_bs || 0
         }
@@ -572,8 +582,23 @@ export function useClientes() {
     if (error) return { error }
     if (data && !data.success) return { error: new Error(data.message) }
 
-    setClientes(prev => prev.map(c => 
+    setClientes(prev => prev.map(c =>
       c.auth_user_id === authUserId ? { ...c, ...updates } : c
+    ))
+    return { error: null }
+  }
+
+  async function updateRolesAdicionales(authUserId, roles) {
+    const { data, error } = await supabase.rpc('admin_set_roles_adicionales', {
+      p_user_id: authUserId,
+      p_roles: roles || []
+    })
+
+    if (error) return { error }
+    if (data && !data.success) return { error: new Error(data.message) }
+
+    setClientes(prev => prev.map(c =>
+      c.auth_user_id === authUserId ? { ...c, roles_adicionales: roles || [] } : c
     ))
     return { error: null }
   }
@@ -671,6 +696,7 @@ export function useClientes() {
     updateProfile,
     updateProfileStatus,
     updateProfileRoleAndDiscount,
+    updateRolesAdicionales,
     ajustarSaldoWallet,
     ajustarSaldoWalletBs,
     resetUserPassword,

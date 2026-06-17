@@ -3,6 +3,11 @@ import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext()
 
+function buildRoles(rolPrincipal, rolesAdicionales) {
+  const extra = (rolesAdicionales || []).map(r => r.rol?.toLowerCase()).filter(Boolean)
+  return Array.from(new Set([rolPrincipal?.toLowerCase(), ...extra].filter(Boolean)))
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [perfil, setPerfil] = useState(null)
@@ -21,12 +26,13 @@ export function AuthProvider({ children }) {
     // 1. MODO VELOZ: Retorno rápido para evitar esperas en la UI
     // Si es SuperAdmin, retornamos admin instantáneo. Si no, esperamos un poco.
     if (isSuperAdmin) {
-      
+
       const fetchFullDetails = async () => {
-        const [resP, resC, resB] = await Promise.all([
+        const [resP, resC, resB, resRA] = await Promise.all([
           supabase.from('perfiles').select('*').eq('id', userId).maybeSingle(),
           supabase.from('clientes').select('*').eq('auth_user_id', userId).maybeSingle(),
-          supabase.from('billeteras').select('*').eq('auth_user_id', userId).maybeSingle()
+          supabase.from('billeteras').select('*').eq('auth_user_id', userId).maybeSingle(),
+          supabase.from('usuario_roles_adicionales').select('rol').eq('usuario_id', userId)
         ]);
 
         let perfilData = resP.data;
@@ -52,26 +58,31 @@ export function AuthProvider({ children }) {
           clienteData = nuevo;
         }
 
+        const rolPrincipal = perfilData?.rol || 'admin';
+        const roles = buildRoles(rolPrincipal, resRA.data);
+
         setPerfil(prev => ({
           ...prev,
           ...clienteData,
           ...perfilData,
           ...resB.data,
           cliente_uuid: clienteData?.id || prev?.cliente_uuid,
-          rol: perfilData?.rol || 'admin',
+          rol: rolPrincipal,
+          roles,
           is_vip: true
         }));
       };
 
       fetchFullDetails();
 
-      return { 
-        id: userId, 
-        rol: 'admin', 
-        estado: 'aprobado', 
+      return {
+        id: userId,
+        rol: 'admin',
+        roles: ['admin'],
+        estado: 'aprobado',
         nombres: 'Administrador',
         nickname: 'Admin',
-        is_vip: true 
+        is_vip: true
       }
     }
 
@@ -80,15 +91,17 @@ export function AuthProvider({ children }) {
       const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 3000))
       
       const fetchPromise = (async () => {
-        const [resP, resC, resB] = await Promise.all([
+        const [resP, resC, resB, resRA] = await Promise.all([
           supabase.from('perfiles').select('*').eq('id', userId).maybeSingle(),
           supabase.from('clientes').select('*').eq('auth_user_id', userId).maybeSingle(),
-          supabase.from('billeteras').select('*').eq('auth_user_id', userId).maybeSingle()
+          supabase.from('billeteras').select('*').eq('auth_user_id', userId).maybeSingle(),
+          supabase.from('usuario_roles_adicionales').select('rol').eq('usuario_id', userId)
         ])
-        
+
         let perfilData = resP.data
         let clienteData = resC.data
         const walletData = resB.data
+        const rolesAdicionales = resRA.data
         
         // Intercepción para Forzar Cierre de Sesión (__FORCE_LOGOUT__)
         if (perfilData?.motivo_estado && perfilData.motivo_estado.includes('__FORCE_LOGOUT__')) {
@@ -124,13 +137,16 @@ export function AuthProvider({ children }) {
           clienteData = nuevoCliente
         }
 
-        return { 
-          ...clienteData, 
-          ...perfilData, 
+        const rolPrincipal = (perfilData?.rol || clienteData?.rol || 'cliente').toLowerCase()
+
+        return {
+          ...clienteData,
+          ...perfilData,
           ...walletData,
-          id: userId, 
+          id: userId,
           cliente_uuid: clienteData?.id || null,
-          rol: (perfilData?.rol || clienteData?.rol || 'cliente').toLowerCase(),
+          rol: rolPrincipal,
+          roles: buildRoles(rolPrincipal, rolesAdicionales),
           estado: (perfilData?.estado || clienteData?.estado || 'pendiente').toLowerCase(),
           config_modulos: perfilData?.config_modulos || (perfilData?.rol === 'negocio' ? ['dashboard', 'productos', 'ventas', 'reportes'] : []),
           is_vip: false
@@ -139,7 +155,7 @@ export function AuthProvider({ children }) {
 
       return await Promise.race([fetchPromise, timeoutPromise])
     } catch (err) {
-      return { id: userId, rol: 'cliente', estado: 'cargando', is_fallback: true }
+      return { id: userId, rol: 'cliente', roles: ['cliente'], estado: 'cargando', is_fallback: true }
     }
   }
 
@@ -148,10 +164,19 @@ export function AuthProvider({ children }) {
 
     const setupRealtime = (userId) => {
       if (channel) supabase.removeChannel(channel)
+
+      const refreshRoles = async (rolPrincipal) => {
+        const { data: rolesAdicionales } = await supabase
+          .from('usuario_roles_adicionales')
+          .select('rol')
+          .eq('usuario_id', userId)
+        setPerfil(prev => ({ ...prev, roles: buildRoles(rolPrincipal ?? prev?.rol, rolesAdicionales) }))
+      }
+
       channel = supabase
         .channel(`auth_perfil_${userId}`)
-        .on('postgres_changes', { 
-          event: 'UPDATE', schema: 'public', table: 'perfiles', filter: `id=eq.${userId}` 
+        .on('postgres_changes', {
+          event: 'UPDATE', schema: 'public', table: 'perfiles', filter: `id=eq.${userId}`
         }, payload => {
            if (payload.new?.motivo_estado && payload.new.motivo_estado.includes('__FORCE_LOGOUT__')) {
                const newMotivo = payload.new.motivo_estado.replace('__FORCE_LOGOUT__', '').trim();
@@ -162,7 +187,13 @@ export function AuthProvider({ children }) {
                });
            } else {
                setPerfil(prev => ({ ...prev, ...payload.new }))
+               refreshRoles(payload.new?.rol)
            }
+        })
+        .on('postgres_changes', {
+          event: '*', schema: 'public', table: 'usuario_roles_adicionales', filter: `usuario_id=eq.${userId}`
+        }, () => {
+           refreshRoles()
         })
         .subscribe()
     }
@@ -236,9 +267,9 @@ export function AuthProvider({ children }) {
   }, [])
 
 
-  const isAdminOrRevendedor = useMemo(() => 
-    ['admin', 'revendedor'].includes(perfil?.rol?.toLowerCase()), 
-    [perfil?.rol]
+  const isAdminOrRevendedor = useMemo(() =>
+    (perfil?.roles || [perfil?.rol?.toLowerCase()]).some(r => ['admin', 'revendedor'].includes(r)),
+    [perfil?.rol, perfil?.roles]
   )
 
   const value = useMemo(() => ({
