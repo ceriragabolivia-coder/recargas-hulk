@@ -233,6 +233,41 @@ export default function GestionProductos() {
   const [iconPreview, setIconPreview] = useState(null)
   const [newInfoFile, setNewInfoFile] = useState(null)
   const [draggedIndex, setDraggedIndex] = useState(null)
+  const [sincronizandoCosto, setSincronizandoCosto] = useState(false)
+  const lastProveedorIdSincronizado = useRef(null)
+
+  // Trae el costo (precio) del producto en el catálogo del proveedor TiendaGiftVen
+  // y lo asigna automáticamente a costo_base, sobreescribiendo cualquier valor manual previo.
+  const sincronizarCostoProveedor = async (proveedorApiId) => {
+    const id = parseInt(proveedorApiId, 10)
+    if (!id || isNaN(id)) return
+    if (lastProveedorIdSincronizado.current === id) return
+    const apiKey = config?.tiendagiftven_api_key
+    if (!apiKey) return
+
+    setSincronizandoCosto(true)
+    try {
+      const res = await fetch('/api/tiendagiftven/proxy?endpoint=productos', {
+        headers: { 'X-API-Key': apiKey }
+      })
+      const data = await res.json()
+      if (data.ok) {
+        const prodProveedor = (data.productos || []).find(p => p.id === id)
+        if (prodProveedor) {
+          lastProveedorIdSincronizado.current = id
+          setFormData(prev => ({ ...prev, costo_base: parseFloat(prodProveedor.precio) }))
+        } else {
+          setAlertModal({ type: 'error', message: `No se encontró el producto con ID ${id} en el catálogo del proveedor.` })
+        }
+      } else {
+        setAlertModal({ type: 'error', message: data.error || 'Error consultando el catálogo del proveedor' })
+      }
+    } catch (err) {
+      console.error('Error sincronizando costo del proveedor:', err)
+    } finally {
+      setSincronizandoCosto(false)
+    }
+  }
 
   // Vista previa calculada
   const previewPrecio = () => {
@@ -254,6 +289,7 @@ export default function GestionProductos() {
 
   const handleOpenModal = () => {
     setFormData({ id: null, nombre: '', costo_base: '', margen_ganancia: '30', icono_url: null, descuento_revendedor: '', info_adicional_texto: '', info_adicional_imagen_url: null, entrega_automatica: false, tipo_producto: 'recarga', proveedor_api_id: '' })
+    lastProveedorIdSincronizado.current = null
     setNewIconFile(null)
     setIconPreview(null)
     setNewInfoFile(null)
@@ -275,6 +311,7 @@ export default function GestionProductos() {
       tipo_producto: prod.tipo_producto || 'recarga',
       proveedor_api_id: prod.proveedor_api_id || ''
     })
+    lastProveedorIdSincronizado.current = prod.proveedor_api_id || null
     setNewIconFile(null)
     setIconPreview(prod.icono_url)
     setNewInfoFile(null)
@@ -295,6 +332,7 @@ export default function GestionProductos() {
       tipo_producto: prod.tipo_producto || 'recarga',
       proveedor_api_id: prod.proveedor_api_id || ''
     })
+    lastProveedorIdSincronizado.current = null
     setNewIconFile(null)
     setIconPreview(prod.icono_url)
     setNewInfoFile(null)
@@ -1076,15 +1114,21 @@ export default function GestionProductos() {
 
           <div className="form-group" style={{ marginBottom: '24px' }}>
             <label className="form-label" style={{ color: '#fbbf24' }}>📦 ID Producto Proveedor (Opcional - TiendaGiftVen API)</label>
-            <input 
-              type="number" 
-              className="form-input" 
+            <input
+              type="number"
+              className="form-input"
               value={formData.proveedor_api_id || ''}
-              onChange={e => setFormData({ ...formData, proveedor_api_id: e.target.value })}
+              onChange={e => {
+                lastProveedorIdSincronizado.current = null
+                setFormData({ ...formData, proveedor_api_id: e.target.value })
+              }}
+              onBlur={e => sincronizarCostoProveedor(e.target.value)}
               placeholder="Ej. 5"
               style={{ borderColor: formData.proveedor_api_id ? '#fbbf24' : '' }}
             />
-            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px' }}>Si colocas el ID que obtuviste del catálogo, el pedido se procesará automáticamente por la API al ser aprobado.</p>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px' }}>
+              {sincronizandoCosto ? 'Consultando costo en el catálogo del proveedor...' : 'Si colocas el ID que obtuviste del catálogo, el pedido se procesará automáticamente por la API al ser aprobado y el "Costo tu proveedor" se actualizará automáticamente con el precio del proveedor.'}
+            </p>
           </div>
 
           <div className="form-group" style={{ marginBottom: '24px', padding: '16px', backgroundColor: 'rgba(0, 210, 255, 0.05)', borderRadius: '12px', border: '1px solid rgba(0, 210, 255, 0.1)' }}>
