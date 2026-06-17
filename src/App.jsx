@@ -341,6 +341,7 @@ const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
   const isNegocio = hasRole(perfil, 'negocio')
   const isEmpleado = hasRole(perfil, 'empleado', 'trabajador')
   const isSocio = hasRole(perfil, 'socio')
+  const isRevendedor = hasRole(perfil, 'revendedor')
   const fallback = (
     <div className="loading-screen">
       <div className="spinner"></div>
@@ -355,7 +356,7 @@ const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
         <Route path="/Lista-De-Precios" element={<Catalogo />} />
         <Route path="/Mi-Perfil" element={<Perfil />} />
         <Route path="/Billetera" element={<Billetera onNavigate={handleNavigate} />} />
-        <Route path="/Ruleta" element={<Ruleta />} />
+        <Route path="/Ruleta" element={!isRevendedor ? <Ruleta /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Checkout" element={<Checkout onFinish={() => window.history.back()} />} />
         <Route path="/Soporte" element={
           (isAdmin || isEmpleado) ? (

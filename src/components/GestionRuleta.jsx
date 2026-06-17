@@ -78,7 +78,7 @@ export default function GestionRuleta() {
       rol: perfilesMap[c.auth_user_id] || 'cliente'
     })).filter(u => {
       const r = (u.rol || '').toLowerCase()
-      return r === 'cliente' || r === 'revendedor'
+      return r === 'cliente'
     })
     setAllClients(formatted)
   }
