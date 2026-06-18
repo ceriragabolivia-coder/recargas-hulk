@@ -118,11 +118,25 @@ export function CartProvider({ children }) {
 
       const isAutomatic = (referencia && (referencia.includes('BILLETERA') || referencia.includes('PAGO_TOTAL')))
       
+      // DOBLE VERIFICACIÓN CONTRA DUPLICADOS (Blindaje extra cliente a nivel inserción)
+      if (referencia && !isAutomatic && referencia !== 'N/A') {
+        const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+        const { data: existingPedidos } = await supabase
+          .from('pedidos')
+          .select('id')
+          .eq('referencia_pago', referencia.trim())
+          .gte('created_at', fortyEightHoursAgo)
+          .limit(1);
+          
+        if (existingPedidos && existingPedidos.length > 0 && (!existingPedidoId || existingPedidos[0].id !== existingPedidoId)) {
+          return [{ id: 'pedido', error: `La referencia de pago ${referencia} ya ha sido registrada en otro pedido. No se pueden duplicar referencias.` }]
+        }
+      }
+
       const pedidoData = {
-        // En la tabla 'pedidos', el campo que referencia a auth.users se llama 'cliente_id'
         cliente_id: user.id, 
         metodo_pago_id: metodoPagoId || null,
-        referencia_pago: referencia || 'N/A',
+        referencia_pago: referencia ? referencia.trim() : 'N/A',
         total_usd: finalUSD,
         total_bs: finalBs,
         estado: 'pendiente',

@@ -543,11 +543,11 @@ export default function Checkout({ onFinish, embedded = false }) {
         audio.play().catch(e => console.error("No se pudo reproducir sonido de pedido creado", e));
       } catch (err) {}
       
-      if (Notification.permission === 'granted') {
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
         new Notification('¡Pedido Registrado!', {
           body: `Tu pedido ha sido creado exitosamente y está siendo verificado.`,
         });
-      } else if (Notification.permission !== 'denied') {
+      } else if (typeof Notification !== 'undefined' && Notification.permission !== 'denied') {
         Notification.requestPermission();
       }
 

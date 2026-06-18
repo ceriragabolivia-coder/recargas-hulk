@@ -58,6 +58,22 @@ export function WalletProvider({ children }) {
       }
     }
 
+    // DOBLE VERIFICACIÓN CONTRA DUPLICADOS (Blindaje extra cliente a nivel inserción)
+    if (referencia) {
+      const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+      const { data: existingRecargas } = await supabase
+        .from('billetera_recargas')
+        .select('id')
+        .eq('referencia_pago', referencia.trim())
+        .neq('estado', 'rechazado')
+        .gte('created_at', fortyEightHoursAgo)
+        .limit(1);
+        
+      if (existingRecargas && existingRecargas.length > 0) {
+        return { error: new Error(`La referencia de pago ${referencia} ya ha sido registrada.`) }
+      }
+    }
+
     const { data, error } = await supabase.from('billetera_recargas').insert({
       auth_user_id: user.id,
       monto: Number(monto),
