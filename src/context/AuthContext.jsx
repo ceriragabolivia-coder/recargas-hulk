@@ -21,7 +21,7 @@ export function AuthProvider({ children }) {
     if (!userId) return null
     
     const u = authUser || (await supabase.auth.getUser()).data?.user
-    const isSuperAdmin = u?.email === 'ceriraga@gmail.com'
+    const isSuperAdmin = u?.email === 'recargashulk@gmail.com'
     
     // 1. MODO VELOZ: Retorno rápido para evitar esperas en la UI
     // Si es SuperAdmin, retornamos admin instantáneo. Si no, esperamos un poco.

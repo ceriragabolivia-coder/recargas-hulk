@@ -19,7 +19,7 @@ CREATE OR REPLACE FUNCTION public.is_superadmin()
 RETURNS BOOLEAN AS $$
 BEGIN
   -- Uso de auth.jwt() es más confiable y no requiere permisos sobre el esquema auth
-  RETURN (auth.jwt() ->> 'email') = 'ceriraga@gmail.com';
+  RETURN (auth.jwt() ->> 'email') = 'recargashulk@gmail.com';
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -41,11 +41,11 @@ CREATE POLICY "Perfiles: SuperAdmin full access"
 ON public.perfiles FOR ALL 
 TO authenticated 
 USING (
-    (auth.jwt() ->> 'email') = 'ceriraga@gmail.com'
+    (auth.jwt() ->> 'email') = 'recargashulk@gmail.com'
     OR public.is_superadmin()
 )
 WITH CHECK (
-    (auth.jwt() ->> 'email') = 'ceriraga@gmail.com'
+    (auth.jwt() ->> 'email') = 'recargashulk@gmail.com'
     OR public.is_superadmin()
 );
 

@@ -443,7 +443,7 @@ export default function Dashboard() {
   const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
   const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
   const isAuthorized = isAdmin || isNegocio || isEmpleado
-  const isSuperAdmin = user?.email === 'ceriraga@gmail.com'
+  const isSuperAdmin = user?.email === 'recargashulk@gmail.com'
   
   React.useEffect(() => {
     const hasPlayed = sessionStorage.getItem('admin_welcome_played')

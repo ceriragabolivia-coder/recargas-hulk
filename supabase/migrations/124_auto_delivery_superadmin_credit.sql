@@ -1,5 +1,5 @@
 -- Migration: 124_auto_delivery_superadmin_credit.sql
--- Description: Asegurar que las ventas y el saldo operativo de las entregas automáticas se acrediten al SuperAdmin ceriraga@gmail.com
+-- Description: Asegurar que las ventas y el saldo operativo de las entregas automáticas se acrediten al SuperAdmin recargashulk@gmail.com
 
 -- 1. Actualizar registrar_venta_rpc para que el vendedor sea el superadmin si el producto es entrega automática
 CREATE OR REPLACE FUNCTION public.registrar_venta_rpc(
@@ -35,7 +35,7 @@ BEGIN
 
     -- Si es entrega automática, forzamos al SuperAdmin como vendedor
     IF v_producto.entrega_automatica THEN
-        SELECT id INTO v_superadmin_id FROM auth.users WHERE lower(email) = 'ceriraga@gmail.com' LIMIT 1;
+        SELECT id INTO v_superadmin_id FROM auth.users WHERE lower(email) = 'recargashulk@gmail.com' LIMIT 1;
         IF v_superadmin_id IS NOT NULL THEN
             p_vendedor_id := v_superadmin_id;
         END IF;
@@ -129,7 +129,7 @@ BEGIN
 
         IF v_has_auto THEN
             -- Obtener el ID del SuperAdmin
-            SELECT id INTO v_superadmin_id FROM auth.users WHERE lower(email) = 'ceriraga@gmail.com' LIMIT 1;
+            SELECT id INTO v_superadmin_id FROM auth.users WHERE lower(email) = 'recargashulk@gmail.com' LIMIT 1;
             
             -- Sobrescribir quién lo atendió
             IF v_superadmin_id IS NOT NULL THEN

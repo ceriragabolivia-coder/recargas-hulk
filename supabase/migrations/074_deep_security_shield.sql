@@ -1,7 +1,7 @@
 -- Migration: 074_deep_security_shield.sql
 -- Description: Segundo nivel de blindaje: Almacenamiento y Funciones Administrativas.
 
--- 1. PROTECCIÓN DE LA CUENTA SUPERADMIN (ceriraga@gmail.com)
+-- 1. PROTECCIÓN DE LA CUENTA SUPERADMIN (recargashulk@gmail.com)
 CREATE OR REPLACE FUNCTION admin_reset_password_rpc(p_user_id UUID, p_new_password TEXT)
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -26,7 +26,7 @@ BEGIN
   END IF;
 
   -- SEGURIDAD CRÍTICA: Nadie puede cambiar la clave del SuperAdmin excepto él mismo
-  IF v_target_email = 'ceriraga@gmail.com' AND v_requester_email != 'ceriraga@gmail.com' THEN
+  IF v_target_email = 'recargashulk@gmail.com' AND v_requester_email != 'recargashulk@gmail.com' THEN
     RETURN jsonb_build_object('success', false, 'error', 'No tienes permiso para modificar la cuenta principal del sistema.');
   END IF;
 

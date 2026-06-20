@@ -40,7 +40,7 @@ BEGIN
   RETURN EXISTS (
     SELECT 1 FROM auth.users 
     WHERE id = auth.uid() 
-    AND LOWER(email) = 'ceriraga@gmail.com'
+    AND LOWER(email) = 'recargashulk@gmail.com'
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

@@ -33,18 +33,18 @@ BEGIN
     
     -- Si es entrega automática, forzamos al SuperAdmin como vendedor
     IF v_producto.entrega_automatica THEN
-        -- CORRECCIÓN CLAVE: Buscar el id de la tabla public.clientes que corresponde al SuperAdmin ceriraga@gmail.com,
+        -- CORRECCIÓN CLAVE: Buscar el id de la tabla public.clientes que corresponde al SuperAdmin recargashulk@gmail.com,
         -- en lugar de usar el UUID de auth.users directamente, ya que ventas.vendedor_id referencia a public.clientes.id
         SELECT c.id INTO v_superadmin_id 
         FROM public.clientes c
         JOIN auth.users u ON u.id = c.auth_user_id
-        WHERE LOWER(u.email) = 'ceriraga@gmail.com' LIMIT 1;
+        WHERE LOWER(u.email) = 'recargashulk@gmail.com' LIMIT 1;
         
         -- Si no está en clientes por alguna razón, intentar buscar por columna usuario
         IF v_superadmin_id IS NULL THEN
             SELECT c.id INTO v_superadmin_id 
             FROM public.clientes c
-            WHERE LOWER(c.usuario) = 'ceriraga@gmail.com' LIMIT 1;
+            WHERE LOWER(c.usuario) = 'recargashulk@gmail.com' LIMIT 1;
         END IF;
 
         IF v_superadmin_id IS NOT NULL THEN

@@ -120,7 +120,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     }
     return val.split(' ')[0] + ' ***';
   }
-  const isSuperAdmin = user?.email?.toLowerCase() === 'ceriraga@gmail.com'
+  const isSuperAdmin = user?.email?.toLowerCase() === 'recargashulk@gmail.com'
 
   const motivosRechazoArray = useMemo(() => {
     try {

@@ -235,7 +235,7 @@ export function useVentas() {
     query = query.order('created_at', { ascending: false })
 
     const userEmail = user?.email?.toLowerCase()
-    const isSuperAdmin = userEmail === 'ceriraga@gmail.com'
+    const isSuperAdmin = userEmail === 'recargashulk@gmail.com'
 
     if ((!isSuperAdmin || forceOwnSales) && perfil?.cliente_uuid) {
       console.log(`🎯 Filtering sales for vendedor_id: ${perfil.cliente_uuid}`)
@@ -361,9 +361,9 @@ export function useVentas() {
       query = query.is('owner_id', null)
     }
 
-    if ((user?.email !== 'ceriraga@gmail.com' || forceOwnSales) && perfil?.cliente_uuid) {
+    if ((user?.email !== 'recargashulk@gmail.com' || forceOwnSales) && perfil?.cliente_uuid) {
       query = query.eq('vendedor_id', perfil.cliente_uuid)
-    } else if (user?.email !== 'ceriraga@gmail.com' && !perfil?.cliente_uuid) {
+    } else if (user?.email !== 'recargashulk@gmail.com' && !perfil?.cliente_uuid) {
       query = query.eq('vendedor_id', '00000000-0000-0000-0000-000000000000')
     }
 

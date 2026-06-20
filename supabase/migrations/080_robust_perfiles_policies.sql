@@ -25,16 +25,16 @@ ON public.perfiles FOR INSERT
 TO authenticated 
 WITH CHECK (auth.uid() = id);
 
--- 4. Política: SuperAdmin Bypass (ceriraga@gmail.com)
+-- 4. Política: SuperAdmin Bypass (recargashulk@gmail.com)
 -- Acceso total garantizado por email de auth.users, evitando dependencias circulares de la tabla perfiles
 CREATE POLICY "Perfiles: SuperAdmin bypass" 
 ON public.perfiles FOR ALL 
 TO authenticated 
 USING (
-    (SELECT LOWER(email) FROM auth.users WHERE id = auth.uid()) = 'ceriraga@gmail.com'
+    (SELECT LOWER(email) FROM auth.users WHERE id = auth.uid()) = 'recargashulk@gmail.com'
 )
 WITH CHECK (
-    (SELECT LOWER(email) FROM auth.users WHERE id = auth.uid()) = 'ceriraga@gmail.com'
+    (SELECT LOWER(email) FROM auth.users WHERE id = auth.uid()) = 'recargashulk@gmail.com'
 );
 
 -- 5. Políticas: Administradores generales (vía función is_admin)

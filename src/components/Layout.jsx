@@ -389,7 +389,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
       return
     }
 
-    const isSuperAdmin = user?.email?.toLowerCase() === 'ceriraga@gmail.com'
+    const isSuperAdmin = user?.email?.toLowerCase() === 'recargashulk@gmail.com'
     const ownerId = perfil?.owner_id || (isNegocio ? user?.id : null)
 
     try {

@@ -11,7 +11,7 @@ DROP POLICY IF EXISTS "Admins see only their own sales" ON public.ventas;
 CREATE OR REPLACE FUNCTION public.is_superadmin() 
 RETURNS BOOLEAN AS $$
 BEGIN
-  RETURN (SELECT LOWER(email) FROM auth.users WHERE id = auth.uid()) = 'ceriraga@gmail.com';
+  RETURN (SELECT LOWER(email) FROM auth.users WHERE id = auth.uid()) = 'recargashulk@gmail.com';
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

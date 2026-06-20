@@ -31,7 +31,7 @@ BEGIN
     
     -- Si es entrega automática, forzamos al SuperAdmin como vendedor
     IF v_producto.entrega_automatica THEN
-        SELECT id INTO v_superadmin_id FROM auth.users WHERE lower(email) = 'ceriraga@gmail.com' LIMIT 1;
+        SELECT id INTO v_superadmin_id FROM auth.users WHERE lower(email) = 'recargashulk@gmail.com' LIMIT 1;
         IF v_superadmin_id IS NOT NULL THEN
             p_vendedor_id := v_superadmin_id;
         END IF;

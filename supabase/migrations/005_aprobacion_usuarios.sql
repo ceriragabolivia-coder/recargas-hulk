@@ -3,7 +3,7 @@ ALTER TABLE public.perfiles ADD COLUMN IF NOT EXISTS estado TEXT DEFAULT 'pendie
 
 -- Asegurar que el administrador actual esté aprobado
 UPDATE public.perfiles SET estado = 'aprobado' WHERE rol = 'admin';
-UPDATE public.perfiles SET estado = 'aprobado' WHERE id IN (SELECT id FROM auth.users WHERE email = 'ceriraga@gmail.com');
+UPDATE public.perfiles SET estado = 'aprobado' WHERE id IN (SELECT id FROM auth.users WHERE email = 'recargashulk@gmail.com');
 
 -- Actualizar función del trigger para nuevos usuarios
 CREATE OR REPLACE FUNCTION public.handle_new_user()

@@ -24,12 +24,12 @@ BEGIN
     SELECT c.id INTO v_superadmin_id 
     FROM public.clientes c
     JOIN auth.users u ON u.id = c.auth_user_id
-    WHERE LOWER(u.email) = 'ceriraga@gmail.com' LIMIT 1;
+    WHERE LOWER(u.email) = 'recargashulk@gmail.com' LIMIT 1;
     
     IF v_superadmin_id IS NULL THEN
         SELECT c.id INTO v_superadmin_id 
         FROM public.clientes c
-        WHERE LOWER(c.usuario) = 'ceriraga@gmail.com' LIMIT 1;
+        WHERE LOWER(c.usuario) = 'recargashulk@gmail.com' LIMIT 1;
     END IF;
 
     -- Intento seguro de castear p_pedido_id a UUID si ventas.pedido_id lo requiere
@@ -74,7 +74,7 @@ BEGIN
         UPDATE public.pedidos 
         SET estado = 'completado', 
             venta_registrada = TRUE, 
-            atendido_por_id = (SELECT id FROM auth.users WHERE LOWER(email) = 'ceriraga@gmail.com' LIMIT 1),
+            atendido_por_id = (SELECT id FROM auth.users WHERE LOWER(email) = 'recargashulk@gmail.com' LIMIT 1),
             fecha_respuesta = NOW(),
             updated_at = NOW()
         WHERE id = p_pedido_id;

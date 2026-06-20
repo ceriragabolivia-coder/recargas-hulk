@@ -1,5 +1,5 @@
 -- Migration: 058_super_admin_sales_visibility.sql
--- Description: Allow super admin (ceriraga@gmail.com) to see all sales records
+-- Description: Allow super admin (recargashulk@gmail.com) to see all sales records
 
 DROP POLICY IF EXISTS "Admins see only their own sales" ON public.ventas;
 CREATE POLICY "Admins see only their own sales" ON public.ventas
@@ -11,7 +11,7 @@ CREATE POLICY "Admins see only their own sales" ON public.ventas
             AND (
                 c.id = vendedor_id 
                 OR vendedor_id IS NULL 
-                OR (auth.jwt() ->> 'email') = 'ceriraga@gmail.com'
+                OR (auth.jwt() ->> 'email') = 'recargashulk@gmail.com'
             )
         )
     );
