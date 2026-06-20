@@ -243,14 +243,28 @@ export default function GestionProductos() {
     if (!id || isNaN(id)) return
     if (lastProveedorIdSincronizado.current === id) return
     const apiKey = config?.tiendagiftven_api_key
-    if (!apiKey) return
+    if (!apiKey || apiKey === '0') {
+      setAlertModal({ 
+        type: 'error', 
+        message: 'No se puede sincronizar el costo porque no has configurado la API Key de TiendaGiftVen. Ve al panel de "Proveedor API" para configurarla.' 
+      })
+      return
+    }
 
     setSincronizandoCosto(true)
     try {
       const res = await fetch('/api/tiendagiftven/proxy?endpoint=productos', {
         headers: { 'X-API-Key': apiKey }
       })
-      const data = await res.json()
+      
+      const text = await res.text()
+      let data
+      try {
+        data = JSON.parse(text)
+      } catch (parseErr) {
+        throw new Error('La respuesta del servidor no es un JSON válido. Revisa la consola o la configuración del servidor.')
+      }
+
       if (data.ok) {
         const prodProveedor = (data.productos || []).find(p => p.id === id)
         if (prodProveedor) {
@@ -264,6 +278,10 @@ export default function GestionProductos() {
       }
     } catch (err) {
       console.error('Error sincronizando costo del proveedor:', err)
+      setAlertModal({ 
+        type: 'error', 
+        message: `Error al sincronizar costo: ${err.message}` 
+      })
     } finally {
       setSincronizandoCosto(false)
     }
