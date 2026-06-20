@@ -62,7 +62,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
           console.log(`🚀 Enviando a API TiendaGiftVen item ${item.id}...`)
           const payload = {
             producto_id: parseInt(item.productos.proveedor_api_id, 10),
-            merchant_ref: `CERIRAGA-ITEM-${item.id}`
+            merchant_ref: `HULK-ITEM-${item.id}`
           };
           
           if (item.player_id) {

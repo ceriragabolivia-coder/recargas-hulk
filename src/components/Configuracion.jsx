@@ -85,8 +85,8 @@ export default function Configuracion() {
   React.useEffect(() => {
     // Solo inicializar si no se ha hecho ya y si config tiene datos reales (no {})
     if (!configLoading && config && Object.keys(config).length > 0 && !initialized.current) {
-      setSidebarTitle(config.sidebar_title || 'Ceriraga')
-      setSidebarSubtitle(config.sidebar_subtitle || 'Centro de Recargas')
+      setSidebarTitle(config.sidebar_title || 'Hulk')
+      setSidebarSubtitle(config.sidebar_subtitle || 'Rápidos y Seguros')
       setCashbackPorcentaje(config.cashback_porcentaje || '0')
       setCashbackActivo(config.cashback_activo === 'true')
       setTiempoLimitePago(config.tiempo_limite_pago || '15')
@@ -930,7 +930,7 @@ export default function Configuracion() {
                             className="form-input" 
                             value={sidebarTitle} 
                             onChange={e => setSidebarTitle(e.target.value)} 
-                            placeholder="Ej: Ceriraga" 
+                            placeholder="Ej: Hulk" 
                           />
                         </div>
                         <div className="form-group">
@@ -940,7 +940,7 @@ export default function Configuracion() {
                             className="form-input" 
                             value={sidebarSubtitle} 
                             onChange={e => setSidebarSubtitle(e.target.value)} 
-                            placeholder="Ej: Centro de Recargas" 
+                            placeholder="Ej: Rápidos y Seguros" 
                           />
                         </div>
                         <button className="btn btn-primary btn-sm" onClick={handleSaveSidebarText}>
@@ -2080,7 +2080,7 @@ export default function Configuracion() {
                             
                             setUploadingImage(true)
                             try {
-                              const fileName = `apps/ceriraga-v${Date.now()}.apk`
+                              const fileName = `apps/hulk-v${Date.now()}.apk`
                               const { error: uploadError } = await supabase.storage
                                 .from('logos')
                                 .upload(fileName, await compressImage(file), { cacheControl: '31536000', upsert: true })

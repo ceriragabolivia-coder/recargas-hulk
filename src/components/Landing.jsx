@@ -747,7 +747,7 @@ export default function Landing({ onNavigate }) {
               ) : (
                 <div className="landing-logo-icon">⚡</div>
               )}
-              <span className="landing-logo-text">{config?.landing_titulo || 'Ceriraga'}</span>
+              <span className="landing-logo-text">{config?.landing_titulo || 'Recargas Hulk'}</span>
             </div>
             
             <nav className="landing-nav hidden-mobile">
@@ -1776,7 +1776,7 @@ export default function Landing({ onNavigate }) {
                 ) : (
                   <div className="landing-logo-icon">⚡</div>
                 )}
-                <span className="landing-logo-text">{config?.landing_titulo || 'Ceriraga'}</span>
+                <span className="landing-logo-text">{config?.landing_titulo || 'Recargas Hulk'}</span>
               </div>
               <p style={{ fontSize: '13px', lineHeight: '1.7', color: '#8a9bb5', maxWidth: '240px', margin: '0 0 20px 0' }}>
                 {config?.footer_descripcion || 'Recargas, gift cards y servicios digitales al instante.'}
@@ -1895,7 +1895,7 @@ export default function Landing({ onNavigate }) {
         {/* Bottom bar */}
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '20px', textAlign: 'center' }}>
           <p style={{ fontSize: '12px', color: '#5a6a7e', margin: 0 }}>
-            © {new Date().getFullYear()} {config?.landing_titulo || 'Ceriraga'}. Todos los derechos reservados.
+            © {new Date().getFullYear()} {config?.landing_titulo || 'Recargas Hulk'}. Todos los derechos reservados.
             {paginasFooter.filter(p => p.categoria === 'Empresa').map(p => (
               <span key={p.id}>
                 {' · '}

@@ -932,7 +932,7 @@ export default function Catalogo() {
               const hasGiftCards = selectedJuego.productos.some(p => p.tipo_producto === 'gift_card')
               const showTabs = hasRecargas && hasGiftCards
               
-              // DEBUG INFO FOR CERIRAGA
+              // DEBUG INFO FOR HULK
               const debugStr = `Total: ${selectedJuego.productos.length} | Recargas: ${hasRecargas} | GiftCards: ${hasGiftCards} | showTabs: ${showTabs}`
               
               const filteredProducts = showTabs 

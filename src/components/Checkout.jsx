@@ -631,7 +631,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                 ) : (
                   <div className="landing-logo-icon">⚡</div>
                 )}
-                <span className="landing-logo-text">{config?.landing_titulo || 'Ceriraga'}</span>
+                <span className="landing-logo-text">{config?.landing_titulo || 'Recargas Hulk'}</span>
               </div>
             </div>
           </div>
@@ -660,7 +660,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                 ) : (
                   <div className="landing-logo-icon">⚡</div>
                 )}
-                <span className="landing-logo-text">{config?.landing_titulo || 'Ceriraga'}</span>
+                <span className="landing-logo-text">{config?.landing_titulo || 'Recargas Hulk'}</span>
               </div>
               <nav className="landing-nav hidden-mobile" style={{ marginLeft: '24px' }}>
                 <a href="#" className="nav-link" onClick={(e) => { e.preventDefault(); onFinish(); }}>Home</a>

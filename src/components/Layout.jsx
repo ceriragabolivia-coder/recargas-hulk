@@ -1033,7 +1033,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
             <div className="sidebar-logo">⚡</div>
           )}
           <div>
-            <div className="sidebar-title" style={{ fontSize: '18px', fontWeight: 'bold' }}>{config?.sidebar_title || 'Ceriraga'}</div>
+            <div className="sidebar-title" style={{ fontSize: '18px', fontWeight: 'bold' }}>{config?.sidebar_title || 'Hulk'}</div>
             <div className="sidebar-subtitle">{config?.sidebar_subtitle || 'Centro de Recargas'}</div>
           </div>
         </div>
@@ -1085,7 +1085,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
           <div style={{ padding: '0 12px 12px' }}>
              <a 
                href={config.apk_url} 
-               download="Ceriraga.apk"
+               download="Hulk.apk"
                className="nav-item nav-item-promo"
                style={{ 
                  textDecoration: 'none', 

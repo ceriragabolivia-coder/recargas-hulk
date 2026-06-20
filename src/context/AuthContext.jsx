@@ -50,7 +50,7 @@ export function AuthProvider({ children }) {
           const { data: nuevo } = await supabase.from('clientes').insert({
             auth_user_id: userId,
             nombres: u.user_metadata?.nombres || 'Administrador',
-            apellidos: u.user_metadata?.apellidos || 'Ceriraga',
+            apellidos: u.user_metadata?.apellidos || 'Hulk',
             usuario: u.email,
             nickname: 'Admin',
             estado: 'aprobado'

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '../hooks/useData'
+import { useAuth, useConfiguracion } from '../hooks/useData'
 
 export default function Login({ onGoToRegister }) {
   const { login, loading: authLoading } = useAuth()
+  const { config } = useConfiguracion()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
@@ -37,7 +38,7 @@ export default function Login({ onGoToRegister }) {
       <div className="login-card" style={{ maxWidth: '400px' }}>
         <div className="login-header">
           <div className="login-logo">{isSubmitLoading ? '⌛' : '⚡'}</div>
-          <h1 className="login-title">Ceriraga</h1>
+          <h1 className="login-title">{config?.landing_titulo || 'Recargas Hulk'}</h1>
           <p className="login-subtitle">
             {isSubmitLoading ? 'Verificando cuenta, por favor espera...' : 'Sistema de Gestión de Recargas'}
           </p>

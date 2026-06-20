@@ -326,7 +326,7 @@ export default function GestionLanding() {
               className="form-input"
               value={form.landing_titulo}
               onChange={(e) => setForm({...form, landing_titulo: e.target.value})}
-              placeholder="Ej: Ceriraga Recargas"
+              placeholder="Ej: Recargas Hulk"
             />
           </div>
 
