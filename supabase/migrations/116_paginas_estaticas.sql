@@ -1,7 +1,7 @@
 -- 116_paginas_estaticas.sql
 -- Crear tabla para páginas estáticas (CMS) del footer
 CREATE TABLE IF NOT EXISTS paginas_estaticas (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     slug TEXT UNIQUE NOT NULL,
     titulo TEXT NOT NULL,
     contenido TEXT, -- Contenido HTML o texto enriquecido

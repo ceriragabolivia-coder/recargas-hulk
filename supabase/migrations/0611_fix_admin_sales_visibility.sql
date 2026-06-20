@@ -3,25 +3,6 @@
 
 DROP POLICY IF EXISTS "Admins see only their own sales" ON public.ventas;
 
-CREATE POLICY "Admins see sales" ON public.ventas
-    FOR ALL USING (
-        EXISTS (
-            SELECT 1 FROM public.perfiles p
-            WHERE p.id = auth.uid() AND (
-                -- SuperAdmin can see everything
-                p.email = 'ceriraga@gmail.com' 
-                OR 
-                -- Other admins see their own or orphan sales
-                (p.rol = 'admin' AND (
-                    EXISTS (
-                        SELECT 1 FROM public.clientes c 
-                        WHERE c.auth_user_id = p.id AND c.id = vendedor_id
-                    )
-                    OR vendedor_id IS NULL
-                ))
-            )
-        )
-    );
 
 -- Nota: Si auth.email() no está disponible en RLS directamente sin join con auth.users, 
 -- usamos el nickname como respaldo o simplemente permitimos a todos los 'admin' ver nulos.

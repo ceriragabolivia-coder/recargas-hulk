@@ -60,7 +60,7 @@ ALTER TABLE public.ventas ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Ventas: acceso restringido" ON public.ventas
     FOR ALL USING (
         public.is_admin() -- Admin ve todo (superadmin controlado en lógica interna si es necesario)
-        OR (rol = 'negocio' AND owner_id = auth.uid()) -- Dueño del negocio ve lo suyo
+        OR ((SELECT rol FROM public.perfiles WHERE id = auth.uid()) = 'negocio' AND owner_id = auth.uid()) -- Dueño del negocio ve lo suyo
         OR (cliente_id = auth.uid()) -- El cliente ve su propia compra (pero sin ver campos sensibles?)
     );
 

@@ -17,8 +17,9 @@ BEGIN
     -- Verificamos si el remitente es un administrador
     -- (Buscamos su rol en la tabla perfiles)
     IF EXISTS (
-        SELECT 1 FROM public.perfiles 
-        WHERE id = NEW.remitente_id AND rol = 'admin'
+        SELECT 1 FROM public.clientes c
+        JOIN public.perfiles p ON c.auth_user_id = p.id
+        WHERE c.id = NEW.remitente_id AND p.rol = 'admin'
     ) AND v_cliente_auth_id IS NOT NULL THEN
         
         -- A. Insertar notificación para el usuario

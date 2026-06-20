@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS public.ruleta_descuentos_pendientes (
   porcentaje numeric NOT NULL,
   nombre text NOT NULL,
   usado boolean DEFAULT false,
-  pedido_id uuid REFERENCES public.pedidos(id),
+  pedido_id INT REFERENCES public.pedidos(id),
   created_at timestamptz DEFAULT now()
 );
 

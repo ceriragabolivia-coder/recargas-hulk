@@ -2,9 +2,17 @@
 -- Description: Fixes the order completion block by ensuring tasa_dolar exists and the RPC is robust.
 
 -- 1. Asegurar que tasa_dolar exista en la configuración para evitar fallos en cálculos
-INSERT INTO public.configuracion (clave, valor, descripcion)
-VALUES ('tasa_dolar', 650, 'Tasa de cambio principal (Dólar)')
-ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor WHERE public.configuracion.valor IS NULL OR public.configuracion.valor = 0;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM public.configuracion WHERE clave = 'tasa_dolar') THEN
+        INSERT INTO public.configuracion (clave, valor, descripcion)
+        VALUES ('tasa_dolar', 650, 'Tasa de cambio principal (Dólar)');
+    ELSE
+        UPDATE public.configuracion 
+        SET valor = 650 
+        WHERE clave = 'tasa_dolar' AND (valor IS NULL OR valor = 0);
+    END IF;
+END $$;
 
 -- 2. Hacer que la función registrar_venta_rpc sea más robusta ante valores nulos
 CREATE OR REPLACE FUNCTION public.registrar_venta_rpc(

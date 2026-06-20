@@ -24,7 +24,7 @@ CREATE POLICY "Admins pueden ver todos los saldos" ON public.admin_saldos
 CREATE TABLE IF NOT EXISTS public.admin_saldos_historial (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     admin_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    pedido_id UUID REFERENCES public.pedidos(id) ON DELETE SET NULL,
+    pedido_id INT REFERENCES public.pedidos(id) ON DELETE SET NULL,
     tipo_movimiento VARCHAR(50) NOT NULL CHECK (tipo_movimiento IN ('credito_venta', 'reverso_venta', 'liquidacion')),
     moneda VARCHAR(10) NOT NULL CHECK (moneda IN ('usd', 'bs')),
     monto NUMERIC(15, 2) NOT NULL,

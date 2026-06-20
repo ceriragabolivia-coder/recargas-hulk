@@ -48,27 +48,33 @@ ALTER TABLE public.ruleta_giros ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ruleta_giros_disponibles ENABLE ROW LEVEL SECURITY;
 
 -- Premios: todos los autenticados pueden leer los activos
-CREATE POLICY IF NOT EXISTS "premios_select_activos" ON public.ruleta_premios
+DROP POLICY IF EXISTS "premios_select_activos" ON public.ruleta_premios;
+CREATE POLICY "premios_select_activos" ON public.ruleta_premios
   FOR SELECT USING (activo = true);
 
 -- Premios: solo admins pueden modificar
-CREATE POLICY IF NOT EXISTS "premios_admin_all" ON public.ruleta_premios
+DROP POLICY IF EXISTS "premios_admin_all" ON public.ruleta_premios;
+CREATE POLICY "premios_admin_all" ON public.ruleta_premios
   FOR ALL USING (EXISTS (SELECT 1 FROM public.perfiles WHERE id = auth.uid() AND rol = 'admin'));
 
 -- Giros historial: usuario ve los suyos
-CREATE POLICY IF NOT EXISTS "giros_select_own" ON public.ruleta_giros
+DROP POLICY IF EXISTS "giros_select_own" ON public.ruleta_giros;
+CREATE POLICY "giros_select_own" ON public.ruleta_giros
   FOR SELECT USING (cliente_id = auth.uid());
 
 -- Giros historial: admin ve todos
-CREATE POLICY IF NOT EXISTS "giros_select_admin" ON public.ruleta_giros
+DROP POLICY IF EXISTS "giros_select_admin" ON public.ruleta_giros;
+CREATE POLICY "giros_select_admin" ON public.ruleta_giros
   FOR SELECT USING (EXISTS (SELECT 1 FROM public.perfiles WHERE id = auth.uid() AND rol = 'admin'));
 
 -- Giros disponibles: usuario ve los suyos
-CREATE POLICY IF NOT EXISTS "giros_disp_select_own" ON public.ruleta_giros_disponibles
+DROP POLICY IF EXISTS "giros_disp_select_own" ON public.ruleta_giros_disponibles;
+CREATE POLICY "giros_disp_select_own" ON public.ruleta_giros_disponibles
   FOR SELECT USING (cliente_id = auth.uid());
 
 -- Giros disponibles: admin ve y modifica todos
-CREATE POLICY IF NOT EXISTS "giros_disp_admin_all" ON public.ruleta_giros_disponibles
+DROP POLICY IF EXISTS "giros_disp_admin_all" ON public.ruleta_giros_disponibles;
+CREATE POLICY "giros_disp_admin_all" ON public.ruleta_giros_disponibles
   FOR ALL USING (EXISTS (SELECT 1 FROM public.perfiles WHERE id = auth.uid() AND rol = 'admin'));
 
 -- ============================================================
@@ -148,12 +154,12 @@ BEGIN
 
   -- Acreditar saldo si aplica
   IF v_premio.tipo = 'saldo_usd' AND v_premio.valor > 0 THEN
-    UPDATE public.billetera
-    SET saldo = saldo + v_premio.valor WHERE cliente_id = p_cliente_id;
+    UPDATE public.billeteras
+    SET saldo = saldo + v_premio.valor WHERE auth_user_id = p_cliente_id;
     UPDATE public.ruleta_giros SET acreditado = true WHERE id = v_giro_id;
   ELSIF v_premio.tipo = 'saldo_bs' AND v_premio.valor > 0 THEN
-    UPDATE public.billetera
-    SET saldo_bs = saldo_bs + v_premio.valor WHERE cliente_id = p_cliente_id;
+    UPDATE public.billeteras
+    SET saldo_bs = saldo_bs + v_premio.valor WHERE auth_user_id = p_cliente_id;
     UPDATE public.ruleta_giros SET acreditado = true WHERE id = v_giro_id;
   END IF;
 

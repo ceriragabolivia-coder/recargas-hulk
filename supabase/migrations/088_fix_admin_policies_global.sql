@@ -37,7 +37,7 @@ CREATE POLICY "pedidos_admin_all" ON public.pedidos
     FOR ALL TO authenticated USING (public.is_admin() OR public.is_superadmin());
 
 CREATE POLICY "pedidos_user_select" ON public.pedidos
-    FOR SELECT TO authenticated USING (cliente_id = auth.uid() OR owner_id = auth.uid());
+    FOR SELECT TO authenticated USING (cliente_id = auth.uid());
 
 -- 4. CLIENTES
 DROP POLICY IF EXISTS "Permitir lectura a autenticados" ON public.clientes;

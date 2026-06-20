@@ -11,13 +11,15 @@ CREATE TABLE IF NOT EXISTS public.metodos_pago (
 ALTER TABLE public.metodos_pago ENABLE ROW LEVEL SECURITY;
 
 -- Políticas: Todos pueden ver métodos activos, solo admin puede editar
+DROP POLICY IF EXISTS "Métodos de pago visibles para todos" ON public.metodos_pago;
 CREATE POLICY "Métodos de pago visibles para todos" ON public.metodos_pago
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Admin gestiona métodos de pago" ON public.metodos_pago;
 CREATE POLICY "Admin gestiona métodos de pago" ON public.metodos_pago
     FOR ALL USING (
         EXISTS (
-            SELECT 1 FROM usuarios
-            WHERE auth_user_id = auth.uid() AND rol = 'admin'
+            SELECT 1 FROM perfiles
+            WHERE id = auth.uid() AND rol = 'admin'
         )
     );

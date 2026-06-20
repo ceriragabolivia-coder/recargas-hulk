@@ -54,6 +54,7 @@ ALTER TABLE pedidos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pedido_items ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "auth_all" ON pedidos FOR ALL TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "auth_all" ON pedido_items;
 CREATE POLICY "auth_all" ON pedido_items FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- Recargar caché

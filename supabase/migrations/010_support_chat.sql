@@ -1,6 +1,6 @@
 -- 1. Crear tabla para los mensajes de soporte
 CREATE TABLE IF NOT EXISTS soporte_mensajes (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   cliente_id UUID REFERENCES clientes(id) ON DELETE CASCADE, -- ID del perfil del cliente (sala de chat)
   remitente_id UUID REFERENCES clientes(id) ON DELETE CASCADE, -- Perfil de quien envía (puede ser admin o el mismo cliente)
   mensaje TEXT NOT NULL,
@@ -18,8 +18,8 @@ CREATE POLICY "Admins pueden ver todos los chats" ON soporte_mensajes
   FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM clientes c 
-      WHERE c.auth_id = auth.uid() AND c.rol = 'admin'
+      SELECT 1 FROM perfiles p 
+      WHERE p.id = auth.uid() AND p.rol = 'admin'
     )
   );
 
@@ -29,7 +29,7 @@ CREATE POLICY "Clientes pueden ver su propio chat" ON soporte_mensajes
   USING (
     EXISTS (
       SELECT 1 FROM clientes c 
-      WHERE c.auth_id = auth.uid() AND c.id = soporte_mensajes.cliente_id
+      WHERE c.auth_user_id = auth.uid() AND c.id = soporte_mensajes.cliente_id
     )
   );
 
@@ -38,8 +38,8 @@ CREATE POLICY "Admins pueden enviar mensajes" ON soporte_mensajes
   FOR INSERT
   WITH CHECK (
     EXISTS (
-      SELECT 1 FROM clientes c 
-      WHERE c.auth_id = auth.uid() AND c.rol = 'admin'
+      SELECT 1 FROM perfiles p 
+      WHERE p.id = auth.uid() AND p.rol = 'admin'
     )
   );
 
@@ -49,7 +49,7 @@ CREATE POLICY "Clientes pueden enviar a su propio chat" ON soporte_mensajes
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM clientes c 
-      WHERE c.auth_id = auth.uid() AND c.id = soporte_mensajes.cliente_id
+      WHERE c.auth_user_id = auth.uid() AND c.id = soporte_mensajes.cliente_id
     )
   );
 
@@ -58,8 +58,8 @@ CREATE POLICY "Admins pueden actualizar mensajes" ON soporte_mensajes
   FOR UPDATE
   USING (
     EXISTS (
-      SELECT 1 FROM clientes c 
-      WHERE c.auth_id = auth.uid() AND c.rol = 'admin'
+      SELECT 1 FROM perfiles p 
+      WHERE p.id = auth.uid() AND p.rol = 'admin'
     )
   );
 
@@ -69,7 +69,7 @@ CREATE POLICY "Clientes pueden actualizar sus mensajes" ON soporte_mensajes
   USING (
     EXISTS (
       SELECT 1 FROM clientes c 
-      WHERE c.auth_id = auth.uid() AND c.id = soporte_mensajes.cliente_id
+      WHERE c.auth_user_id = auth.uid() AND c.id = soporte_mensajes.cliente_id
     )
   );
 

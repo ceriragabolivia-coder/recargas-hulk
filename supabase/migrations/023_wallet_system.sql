@@ -45,9 +45,11 @@ ALTER TABLE public.billetera_recargas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.billetera_transacciones ENABLE ROW LEVEL SECURITY;
 
 -- Policies for billeteras
+DROP POLICY IF EXISTS "Users can view their own wallet" ON public.billeteras;
 CREATE POLICY "Users can view their own wallet" ON public.billeteras
     FOR SELECT USING (auth.uid() = auth_user_id);
 
+DROP POLICY IF EXISTS "Admins can view all wallets" ON public.billeteras;
 CREATE POLICY "Admins can view all wallets" ON public.billeteras
     FOR ALL USING (
         EXISTS (
@@ -57,9 +59,11 @@ CREATE POLICY "Admins can view all wallets" ON public.billeteras
     );
 
 -- Policies for billetera_recargas
+DROP POLICY IF EXISTS "Users can view and create their own recharges" ON public.billetera_recargas;
 CREATE POLICY "Users can view and create their own recharges" ON public.billetera_recargas
     FOR ALL USING (auth.uid() = auth_user_id);
 
+DROP POLICY IF EXISTS "Admins can view and manage all recharges" ON public.billetera_recargas;
 CREATE POLICY "Admins can view and manage all recharges" ON public.billetera_recargas
     FOR ALL USING (
         EXISTS (
@@ -69,9 +73,11 @@ CREATE POLICY "Admins can view and manage all recharges" ON public.billetera_rec
     );
 
 -- Policies for billetera_transacciones
+DROP POLICY IF EXISTS "Users can view their own transactions" ON public.billetera_transacciones;
 CREATE POLICY "Users can view their own transactions" ON public.billetera_transacciones
     FOR SELECT USING (auth.uid() = auth_user_id);
 
+DROP POLICY IF EXISTS "Admins can view all transactions" ON public.billetera_transacciones;
 CREATE POLICY "Admins can view all transactions" ON public.billetera_transacciones
     FOR SELECT USING (
         EXISTS (
@@ -158,5 +164,16 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Enable Realtime for balance updates
-ALTER PUBLICATION supabase_realtime ADD TABLE public.billeteras;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.billetera_recargas;
+DO $$
+BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.billeteras;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.billetera_recargas;
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
