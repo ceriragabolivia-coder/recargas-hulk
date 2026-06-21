@@ -1653,7 +1653,7 @@ export default function Landing({ onNavigate }) {
                 <div className="games-grid">
                   {loading ? (
                     Array(8).fill(0).map((_, i) => (
-                      <div key={i} className="game-card-skeleton" style={{ height: '220px', backgroundColor: 'var(--bg-hover)', borderRadius: '16px', opacity: 0.5, animation: 'pulse 1.5s infinite' }}></div>
+                      <div key={i} className="game-card-skeleton" style={{ height: '220px', backgroundColor: 'var(--bg-hover)', borderRadius: '12px', opacity: 0.5, animation: 'pulse 1.5s infinite' }}></div>
                     ))
                   ) : bestsellers.length > 0 ? (
                     bestsellers.map(juego => (
@@ -1717,17 +1717,16 @@ export default function Landing({ onNavigate }) {
                   {loading && juegos.length === 0 ? (
                     Array(12).fill(0).map((_, i) => (
                       <div key={i} className="game-card-skeleton" style={{ 
-                        height: '240px', 
+                        height: '220px', 
                         backgroundColor: 'rgba(255,255,255,0.05)', 
-                        borderRadius: '16px', 
+                        borderRadius: '12px', 
                         overflow: 'hidden',
                         position: 'relative',
                         border: '1px solid rgba(255,255,255,0.05)'
                       }}>
                         <div style={{ height: '75%', background: 'rgba(255,255,255,0.03)', animation: 'pulse 1.5s infinite' }}></div>
-                        <div style={{ padding: '15px' }}>
-                          <div style={{ height: '12px', width: '70%', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', marginBottom: '8px', animation: 'pulse 1.5s infinite' }}></div>
-                          <div style={{ height: '10px', width: '40%', background: 'rgba(255,255,255,0.03)', borderRadius: '4px', animation: 'pulse 1.5s infinite' }}></div>
+                        <div style={{ padding: '10px 15px', background: '#000000', height: '25%' }}>
+                          <div style={{ height: '12px', width: '80%', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', margin: '4px auto 0', animation: 'pulse 1.5s infinite' }}></div>
                         </div>
                       </div>
                     ))
@@ -2206,11 +2205,6 @@ export default function Landing({ onNavigate }) {
 }
 
 function GameCard({ juego, onSelect }) {
-  const sold = useMemo(() => {
-    const seed = (juego.id || 0).toString().split('').reduce((a, b) => a + b.charCodeAt(0), 0)
-    return (10 + (seed % 190)).toFixed(1) + 'K'
-  }, [juego.id])
-
   return (
     <div className="game-card" onClick={onSelect}>
       {juego.etiqueta_descuento && <div className="badge-discount">{juego.etiqueta_descuento}</div>}
@@ -2225,11 +2219,6 @@ function GameCard({ juego, onSelect }) {
       </div>
       <div className="game-info">
         <div className="game-name">{juego.nombre}</div>
-        <div className="game-meta hidden-mobile">
-          <span className="rating">⭐ 5.0</span>
-          <span>•</span>
-          <span>{sold} Sold</span>
-        </div>
       </div>
     </div>
   )
