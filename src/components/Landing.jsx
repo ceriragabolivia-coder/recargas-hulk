@@ -1192,6 +1192,7 @@ export default function Landing({ onNavigate }) {
               {/* SECCIÓN CABECERA ESTILO ASSAXSTORE */}
               <div className="detail-header-area">
                 <div className="assax-header-card">
+                  {/* FILA SUPERIOR: Imagen + Info del juego + Wizard de pasos en la misma línea */}
                   <div className="assax-header-left">
                     <img 
                       src={selectedJuego.icono_url ? (selectedJuego.icono_url.includes('?') ? `${selectedJuego.icono_url}&v=3` : `${selectedJuego.icono_url}?v=3`) : 'https://via.placeholder.com/120'} 
@@ -1199,37 +1200,55 @@ export default function Landing({ onNavigate }) {
                       className="assax-header-icon" 
                     />
                     <div className="assax-header-info">
-                      <h1 className="assax-game-title">{selectedJuego.nombre}</h1>
+                      {/* Fila superior: Título + Wizard de pasos en la misma línea */}
+                      <div className="assax-title-steps-row">
+                        <h1 className="assax-game-title">{selectedJuego.nombre}</h1>
+                        {/* INDICADOR DE PASOS (WIZARD) - Ahora inline con el título */}
+                        <div className="detail-steps-path hidden-mobile">
+                          <span className={`step-item ${detailStep === 'paquete' ? 'active' : ''}`} onClick={() => setDetailStep('paquete')}>
+                            <span className="step-num">1</span> PAQUETE
+                          </span>
+                          <span className="step-arrow">&gt;</span>
+                          <span className={`step-item ${detailStep === 'identidad' ? 'active' : ''}`} onClick={() => { if (pendingItem) setDetailStep('identidad'); }}>
+                            <span className="step-num">2</span> IDENTIDAD
+                          </span>
+                          <span className="step-arrow">&gt;</span>
+                          <span className="step-item">
+                            <span className="step-num">3</span> PAGO
+                          </span>
+                        </div>
+                      </div>
+                      {/* Badges editables desde el panel admin */}
                       <div className="assax-header-badges">
-                        <span className="assax-badge">
-                          🌐 {selectedJuego.categoria || 'Global'}
-                        </span>
-                        <span className="assax-badge">
-                          ⚡ Entrega instantánea
-                        </span>
-                        <span className="assax-badge">
-                          🛡️ Pago seguro
-                        </span>
+                        {selectedJuego.caracteristicas_region && (
+                          <span className="assax-badge">
+                            🌐 {selectedJuego.caracteristicas_region}
+                          </span>
+                        )}
+                        {selectedJuego.caracteristicas_entrega && (
+                          <span className="assax-badge">
+                            ⚡ {selectedJuego.caracteristicas_entrega}
+                          </span>
+                        )}
+                        {selectedJuego.caracteristicas_tipo && (
+                          <span className="assax-badge">
+                            🛡️ {selectedJuego.caracteristicas_tipo}
+                          </span>
+                        )}
+                        {/* Fallbacks si no hay campos configurados */}
+                        {!selectedJuego.caracteristicas_region && !selectedJuego.caracteristicas_entrega && !selectedJuego.caracteristicas_tipo && (
+                          <>
+                            <span className="assax-badge">🌐 {selectedJuego.categoria || 'Global'}</span>
+                            <span className="assax-badge">⚡ Entrega instantánea</span>
+                            <span className="assax-badge">🛡️ Pago seguro</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
-
-                  {/* INDICADOR DE PASOS (WIZARD) */}
-                  <div className="detail-steps-path hidden-mobile">
-                    <span className={`step-item ${detailStep === 'paquete' ? 'active' : ''}`} onClick={() => setDetailStep('paquete')}>
-                      <span className="step-num">1</span> PAQUETE
-                    </span>
-                    <span className="step-arrow">&gt;</span>
-                    <span className={`step-item ${detailStep === 'identidad' ? 'active' : ''}`} onClick={() => { if (pendingItem) setDetailStep('identidad'); }}>
-                      <span className="step-num">2</span> IDENTIDAD
-                    </span>
-                    <span className="step-arrow">&gt;</span>
-                    <span className="step-item">
-                      <span className="step-num">3</span> PAGO
-                    </span>
-                  </div>
                 </div>
               </div>
+
 
               {/* COLUMNA IZQUIERDA: SELECCIÓN DE PRODUCTOS O INGRESO DE DATOS */}
               <div className="detail-content-area">

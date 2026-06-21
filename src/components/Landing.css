@@ -1768,52 +1768,68 @@
 /* Cabecera Estilo AssaxStore */
 .assax-header-card {
   background: var(--bg-panel);
-  padding: 24px;
-  border-radius: 20px;
+  padding: 16px 20px;
+  border-radius: 16px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
   border: 1px solid var(--border);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .assax-header-left {
   display: flex;
-  gap: 20px;
+  gap: 16px;
   align-items: center;
+  width: 100%;
 }
 
 .assax-header-icon {
-  width: 110px;
-  height: 110px;
+  width: 80px;
+  height: 80px;
   object-fit: cover;
-  border-radius: 16px;
+  border-radius: 12px;
   border: 2px solid var(--border);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
 }
 
 .assax-header-info {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Fila que contiene el título + wizard de pasos en la misma línea */
+.assax-title-steps-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .assax-game-title {
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 900;
   text-transform: uppercase;
   font-style: italic;
   letter-spacing: 1px;
   color: var(--text-primary);
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .assax-header-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
+
 
 .assax-badge {
   display: inline-flex;
@@ -2354,23 +2370,28 @@
 /* Responsividad para móviles */
 @media (max-width: 768px) {
   .assax-header-card {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 16px;
+    padding: 12px;
   }
   
   .assax-header-left {
     width: 100%;
+    gap: 12px;
   }
 
   .assax-header-icon {
-    width: 80px;
-    height: 80px;
+    width: 64px;
+    height: 64px;
+  }
+
+  .assax-title-steps-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 
   .assax-game-title {
-    font-size: 20px;
+    font-size: 18px;
+    white-space: normal;
   }
 
   .assax-products-grid {
