@@ -779,11 +779,13 @@ export default function Landing({ onNavigate }) {
               {config?.landing_logo ? (
                 <img src={config.landing_logo} alt="Logo" className="landing-logo-img" />
               ) : (
-                <div className="landing-logo-icon">⚡</div>
+                <>
+                  <div className="landing-logo-icon">⚡</div>
+                  <span className="landing-logo-text">{config?.landing_titulo || 'Recargas Hulk'}</span>
+                </>
               )}
-              <span className="landing-logo-text">{config?.landing_titulo || 'Recargas Hulk'}</span>
             </div>
-            
+
             {/* PASTILLA DE NAVEGACIÓN UNIFICADA (Estilo AssaxStore) */}
             <div className="landing-nav-pill hidden-mobile">
               <div className="nav-pill-links">
@@ -2084,11 +2086,13 @@ export default function Landing({ onNavigate }) {
             <div className="footer-col-brand">
               <div className="landing-logo-container" onClick={() => handleSelectJuego(null)} style={{ marginBottom: '16px' }}>
                 {config?.landing_logo ? (
-                  <img src={config.landing_logo} alt="Logo" style={{ width: '44px', height: '44px', borderRadius: '12px', objectFit: 'contain' }} />
+                  <img src={config.landing_logo} alt="Logo" style={{ height: '44px', width: 'auto', maxWidth: '220px', objectFit: 'contain' }} />
                 ) : (
-                  <div className="landing-logo-icon">⚡</div>
+                  <>
+                    <div className="landing-logo-icon">⚡</div>
+                    <span className="landing-logo-text">{config?.landing_titulo || 'Recargas Hulk'}</span>
+                  </>
                 )}
-                <span className="landing-logo-text">{config?.landing_titulo || 'Recargas Hulk'}</span>
               </div>
             </div>
 
