@@ -66,15 +66,20 @@ export function ConfigProvider({ children }) {
     if (!user) return { error: new Error('No user logged in') }
 
     const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
-    const safeValor = isText ? 0 : (Number(valor) || 0)
-    const safeValorTexto = isText ? String(valor) : null
-
     const targetOwnerId = isNegocio ? user.id : null;
+
+    const updatePayload = { updated_at: new Date().toISOString() };
+    if (isText) {
+      updatePayload.valor_texto = String(valor);
+    } else {
+      updatePayload.valor = Number(valor) || 0;
+      updatePayload.valor_texto = null;
+    }
 
     let error;
     let query = supabase
       .from('configuracion')
-      .update({ valor: safeValor, valor_texto: safeValorTexto, updated_at: new Date().toISOString() })
+      .update(updatePayload)
       .eq('clave', clave);
 
     if (targetOwnerId) {
@@ -87,9 +92,18 @@ export function ConfigProvider({ children }) {
     error = updateError;
 
     if (!error && (!data || data.length === 0)) {
+      const insertPayload = { clave: clave, owner_id: targetOwnerId };
+      if (isText) {
+        insertPayload.valor_texto = String(valor);
+        insertPayload.valor = 0;
+      } else {
+        insertPayload.valor = Number(valor) || 0;
+        insertPayload.valor_texto = null;
+      }
+
       const { error: insertError } = await supabase
         .from('configuracion')
-        .insert({ clave: clave, valor: safeValor, valor_texto: safeValorTexto, owner_id: targetOwnerId });
+        .insert(insertPayload);
       error = insertError;
     }
     
@@ -101,8 +115,6 @@ export function ConfigProvider({ children }) {
       fetchConfig()
       return { success: true }
     }
-    
-    return { error }
   }
 
   useEffect(() => {
