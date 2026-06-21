@@ -956,26 +956,7 @@ export default function Landing({ onNavigate }) {
               </div>
             )}
 
-            {/* CARRITO */}
-            {user && (
-              <div 
-                className="btn-header-circle hidden-mobile"
-                onClick={() => {
-                  setShowCheckout(true);
-                  setShowRuleta(false);
-                  setSelectedJuego(null);
-                  window.scrollTo(0, 0);
-                }}
-                title="Ver Carrito"
-              >
-                <span style={{ fontSize: '20px' }}>🛒</span>
-                {cart.length > 0 && (
-                  <div className="badge">
-                    {cart.length}
-                  </div>
-                )}
-              </div>
-            )}
+
 
             {/* CAMPANA DE NOTIFICACIONES */}
             {user && (
@@ -1041,15 +1022,7 @@ export default function Landing({ onNavigate }) {
                     <div style={{ fontWeight: '600', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>{user.email}</div>
                   </div>
                   
-                  <a href="#" className="visible-mobile" onClick={(e) => { 
-                    e.preventDefault(); 
-                    setShowCheckout(true);
-                    setShowRuleta(false);
-                    setSelectedJuego(null);
-                    window.scrollTo(0, 0); 
-                  }}>
-                    🛒 Carrito {cart.length > 0 && <span style={{ background: '#ef4444', color: 'white', borderRadius: '10px', padding: '2px 6px', fontSize: '10px', marginLeft: '4px' }}>{cart.length}</span>}
-                  </a>
+
                   <a href="#" className="visible-mobile" onClick={(e) => { 
                     e.preventDefault(); 
                     setShowNotiDropdown(!showNotiDropdown);
@@ -1399,20 +1372,7 @@ export default function Landing({ onNavigate }) {
                     </h3>
 
                     <div className="card-recharge-info" style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', padding: '24px', borderRadius: '16px' }}>
-                      <div className="buy-mode-toggle" style={{ marginBottom: '20px' }}>
-                        <button 
-                          onClick={() => setBuyMode('single')}
-                          className={buyMode === 'single' ? 'active' : ''}
-                        >
-                          🛍️ Comprar uno
-                        </button>
-                        <button 
-                          onClick={() => setBuyMode('multiple')}
-                          className={buyMode === 'multiple' ? 'active' : ''}
-                        >
-                          🛒 Comprar varios
-                        </button>
-                      </div>
+
 
                       {effectiveMetodoRecarga === 'sin_datos' ? (
                         <div style={{ textAlign: 'center', padding: '20px 0' }}>
@@ -1680,51 +1640,6 @@ export default function Landing({ onNavigate }) {
                       </button>
 
                       <div style={{ display: 'flex', gap: '12px' }}>
-                        {buyMode === 'multiple' && (
-                          <button 
-                            className="btn-assax-next"
-                            style={{ background: 'var(--bg-hover)', border: '1px solid var(--accent)', color: 'var(--accent)' }}
-                            onClick={() => {
-                              const prodEffectiveMetodo = (pendingItem.p.tipo_producto === 'gift_card') ? 'entrega_codigo' : effectiveMetodoRecarga;
-
-                              if (prodEffectiveMetodo === 'solo_correo') {
-                                if (!localRechargeData.account_email.trim()) { alert('Por favor introduce el correo.'); return; }
-                              } else if (prodEffectiveMetodo === 'cuenta_completa') {
-                                if (!localRechargeData.account_email.trim() || !localRechargeData.account_password.trim()) { alert('Por favor introduce el correo y clave.'); return; }
-                              } else if (prodEffectiveMetodo === 'usuario_clave') {
-                                if (!localRechargeData.account_user?.trim() || !localRechargeData.account_password.trim()) { alert('Por favor introduce el usuario y clave.'); return; }
-                              } else if (prodEffectiveMetodo === 'sin_datos' || prodEffectiveMetodo === 'entrega_codigo') {
-                                // OK
-                              } else {
-                                if (!localRechargeData.player_id.trim()) { alert('Por favor introduce el ID.'); return; }
-                                const isVerificationActive = selectedJuego.verificacion_api_activa || 
-                                    (selectedJuego.verificacion_api_activa === undefined && (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('bloodstrike')));
-
-                                if (isVerificationActive) {
-                                  if (!verificacionResultado?.success || verificacionResultado.verified_id !== localRechargeData.player_id) {
-                                    alert('Debes verificar el nombre del jugador antes de comprar.');
-                                    return;
-                                  }
-                                }
-                              }
-
-                              for (let i = 0; i < quantity; i++) {
-                                addToCart(pendingItem.p, selectedJuego, pendingItem.finalPrice, {
-                                  ...localRechargeData,
-                                  nickname: (verificacionResultado?.success && verificacionResultado.verified_id === localRechargeData.player_id) 
-                                            ? verificacionResultado.nickname : null
-                                });
-                              }
-                              setAddedItem(pendingItem.p.id)
-                              setTimeout(() => setAddedItem(null), 1200)
-                              setPendingItem(null)
-                              setDetailStep('paquete')
-                              resetRechargeForm()
-                            }}
-                          >
-                            🛒 AÑADIR AL CARRITO
-                          </button>
-                        )}
                         <button 
                           className="btn-assax-next"
                           onClick={async () => {
@@ -1752,13 +1667,11 @@ export default function Landing({ onNavigate }) {
                             }
 
                             clearCart()
-                            for (let i = 0; i < quantity; i++) {
-                              addToCart(pendingItem.p, selectedJuego, pendingItem.finalPrice, {
-                                ...localRechargeData,
-                                nickname: (verificacionResultado?.success && verificacionResultado.verified_id === localRechargeData.player_id) 
-                                          ? verificacionResultado.nickname : null
-                              })
-                            }
+                            addToCart(pendingItem.p, selectedJuego, pendingItem.finalPrice, {
+                              ...localRechargeData,
+                              nickname: (verificacionResultado?.success && verificacionResultado.verified_id === localRechargeData.player_id) 
+                                        ? verificacionResultado.nickname : null
+                            })
                             if (shouldSaveData && localRechargeData.cuentaOpcion !== 'nueva') {
                               await guardarCuenta({
                                 tipo_dato: selectedJuego.metodo_recarga || 'id',
@@ -1832,45 +1745,20 @@ export default function Landing({ onNavigate }) {
 
                     <div className="summary-divider"></div>
 
-                    {/* Combos quantity selector */}
-                    <div className="assax-summary-combos">
-                      <div className="combos-label-row">
-                        <span className="combos-title">COMBOS</span>
-                        <span className="combos-badge">X{quantity}</span>
-                      </div>
-                      <div className="assax-counter">
-                        <button 
-                          type="button" 
-                          onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                          disabled={!pendingItem}
-                        >
-                          -
-                        </button>
-                        <span>{quantity}</span>
-                        <button 
-                          type="button" 
-                          onClick={() => setQuantity(q => q + 1)}
-                          disabled={!pendingItem}
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
 
-                    <div className="summary-divider"></div>
 
                     {/* Subtotal */}
                     <div className="assax-summary-row">
                       <span>SUBTOTAL</span>
                       <span className="summary-val">
                         {pendingItem ? (
-                          formatBsAssax(pendingItem.finalPrice.venta_bs * quantity)
+                          formatBsAssax(pendingItem.finalPrice.venta_bs)
                         ) : (
                           'Bs. 0,00'
                         )}
                         {pendingItem && selectedJuego.mostrar_precio_dual && (
                           <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', textAlign: 'right', marginTop: '2px' }}>
-                            {formatUSD(pendingItem.finalPrice.venta_usd * quantity)}
+                            {formatUSD(pendingItem.finalPrice.venta_usd)}
                           </span>
                         )}
                       </span>
@@ -1882,13 +1770,13 @@ export default function Landing({ onNavigate }) {
                       <div className="total-price-box">
                         <span className="total-price-val">
                           {pendingItem ? (
-                            formatBsAssax(pendingItem.finalPrice.venta_bs * quantity)
+                            formatBsAssax(pendingItem.finalPrice.venta_bs)
                           ) : (
                             'Bs. 0,00'
                           )}
                           {pendingItem && selectedJuego.mostrar_precio_dual && (
                             <span style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', textAlign: 'right', marginTop: '2px', fontWeight: 500 }}>
-                              {formatUSD(pendingItem.finalPrice.venta_usd * quantity)}
+                              {formatUSD(pendingItem.finalPrice.venta_usd)}
                             </span>
                           )}
                         </span>
@@ -2261,46 +2149,23 @@ export default function Landing({ onNavigate }) {
               <div className="sticky-product-info">
                 <div className="sticky-product-title">{pendingItem.p.nombre}</div>
                 <div className="sticky-product-price">
-                  {formatBs(pendingItem.finalPrice.venta_bs * quantity)}
+                  {formatBs(pendingItem.finalPrice.venta_bs)}
                   {selectedJuego.mostrar_precio_dual && (
-                    <span className="sticky-price-usd"> ({formatUSD(pendingItem.finalPrice.venta_usd * quantity)})</span>
+                    <span className="sticky-price-usd"> ({formatUSD(pendingItem.finalPrice.venta_usd)})</span>
                   )}
                 </div>
               </div>
             </div>
 
             <div className="sticky-actions-container">
-              <div className="sticky-quantity-selector">
-                <button type="button" onClick={() => setQuantity(q => Math.max(1, q - 1))}>-</button>
-                <span>{quantity}</span>
-                <button type="button" onClick={() => setQuantity(q => q + 1)}>+</button>
-              </div>
-              
               <div className="sticky-button-group">
-                <button 
-                  type="button"
-                  className="btn-sticky-cart"
-                  onClick={() => {
-                    for (let i = 0; i < quantity; i++) {
-                      addToCart(pendingItem.p, selectedJuego, pendingItem.finalPrice, pendingItem.localRechargeData)
-                    }
-                    setAddedItem(pendingItem.p.id)
-                    setTimeout(() => setAddedItem(null), 1200)
-                    setPendingItem(null)
-                    resetRechargeForm()
-                  }}
-                >
-                  🛒 Añadir
-                </button>
                 <button 
                   type="button"
                   className="btn-sticky-buy"
                   onClick={async () => {
                     clearCart()
-                    for (let i = 0; i < quantity; i++) {
-                      addToCart(pendingItem.p, selectedJuego, pendingItem.finalPrice, pendingItem.localRechargeData)
-                    }
-                    if (shouldSaveData && pendingItem.localRechargeData.cuentaOpcion !== 'nueva') {
+                    addToCart(pendingItem.p, selectedJuego, pendingItem.finalPrice, pendingItem.localRechargeData)
+                    if (shouldSaveData && pendingItem.localRechargeData?.cuentaOpcion !== 'nueva') {
                       await guardarCuenta({
                         tipo_dato: selectedJuego.metodo_recarga || 'id',
                         player_id: pendingItem.localRechargeData.player_id,
@@ -2323,19 +2188,6 @@ export default function Landing({ onNavigate }) {
               </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {addedItem && (
-        <div style={{
-          position: 'fixed', bottom: '30px', left: '50%', transform: 'translateX(-50%)',
-          backgroundColor: '#00c853', color: '#fff', padding: '12px 24px',
-          borderRadius: '30px', fontWeight: 'bold', fontSize: '14px',
-          boxShadow: '0 10px 30px rgba(0,200,83,0.4)', zIndex: 10001,
-          animation: 'slideUpFade 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          display: 'flex', alignItems: 'center', gap: '8px'
-        }}>
-          <span style={{ fontSize: '18px' }}>✨</span> Paquete añadido al carrito
         </div>
       )}
 
