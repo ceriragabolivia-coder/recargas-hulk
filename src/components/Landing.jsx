@@ -626,7 +626,7 @@ export default function Landing({ onNavigate }) {
   }, [juegos, activeCategory, search])
 
   const bestsellers = useMemo(() => {
-    if (config?.landing_featured_games) {
+    if (config?.landing_featured_games && config.landing_featured_games !== '0' && config.landing_featured_games.trim() !== '') {
       const ids = config.landing_featured_games.split(',').map(id => id.trim())
       return juegos.filter(j => ids.includes(String(j.id)))
     }
