@@ -628,7 +628,8 @@ export default function Landing({ onNavigate }) {
   const bestsellers = useMemo(() => {
     if (config?.landing_featured_games && config.landing_featured_games !== '0' && config.landing_featured_games.trim() !== '') {
       const ids = config.landing_featured_games.split(',').map(id => id.trim())
-      return juegos.filter(j => ids.includes(String(j.id)))
+      const filtered = juegos.filter(j => ids.includes(String(j.id)))
+      if (filtered.length > 0) return filtered
     }
     return juegos // Mostrar todos los juegos en lugar de limitar a 20
   }, [juegos, config])
