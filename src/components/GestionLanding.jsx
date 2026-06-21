@@ -14,6 +14,9 @@ export default function GestionLanding() {
   const [activeTab, setActiveTab] = useState('general')
 
   const [bannersList, setBannersList] = useState([])
+  const [benefitsList, setBenefitsList] = useState([])
+  const [reviewsList, setReviewsList] = useState([])
+  const [faqList, setFaqList] = useState([])
 
   const [form, setForm] = useState({
     landing_titulo: config?.landing_titulo || '',
@@ -25,7 +28,21 @@ export default function GestionLanding() {
     landing_auth_icon: config?.landing_auth_icon || '⚡',
     landing_auth_logo_size: config?.landing_auth_logo_size || '100px',
     landing_auth_title_size: config?.landing_auth_title_size || '24px',
-    landing_auth_text_size: config?.landing_auth_text_size || '14px'
+    landing_auth_text_size: config?.landing_auth_text_size || '14px',
+    // Colores de diseño
+    landing_bg_color: config?.landing_bg_color || '#0f0f10',
+    landing_card_bg: config?.landing_card_bg || '#1a1d21',
+    landing_border_color: config?.landing_border_color || '#27272a',
+    landing_accent_color: config?.landing_accent_color || '#a3e635',
+    landing_text_main: config?.landing_text_main || '#ffffff',
+    landing_text_muted: config?.landing_text_muted || '#a1a1aa',
+    // Visibilidad de secciones
+    landing_show_hero: config?.landing_show_hero !== '0',
+    landing_show_bestsellers: config?.landing_show_bestsellers !== '0',
+    landing_show_sliders: config?.landing_show_sliders !== '0',
+    landing_show_benefits: config?.landing_show_benefits !== '0',
+    landing_show_reviews: config?.landing_show_reviews !== '0',
+    landing_show_faq: config?.landing_show_faq !== '0'
   })
 
   // Sincronizar cuando cargue la config real
@@ -42,7 +59,21 @@ export default function GestionLanding() {
         landing_auth_icon: config.landing_auth_icon || '⚡',
         landing_auth_logo_size: config.landing_auth_logo_size || '100px',
         landing_auth_title_size: config.landing_auth_title_size || '24px',
-        landing_auth_text_size: config.landing_auth_text_size || '14px'
+        landing_auth_text_size: config.landing_auth_text_size || '14px',
+        // Colores de diseño
+        landing_bg_color: config.landing_bg_color || '#0f0f10',
+        landing_card_bg: config.landing_card_bg || '#1a1d21',
+        landing_border_color: config.landing_border_color || '#27272a',
+        landing_accent_color: config.landing_accent_color || '#a3e635',
+        landing_text_main: config.landing_text_main || '#ffffff',
+        landing_text_muted: config.landing_text_muted || '#a1a1aa',
+        // Visibilidad de secciones
+        landing_show_hero: config.landing_show_hero !== '0',
+        landing_show_bestsellers: config.landing_show_bestsellers !== '0',
+        landing_show_sliders: config.landing_show_sliders !== '0',
+        landing_show_benefits: config.landing_show_benefits !== '0',
+        landing_show_reviews: config.landing_show_reviews !== '0',
+        landing_show_faq: config.landing_show_faq !== '0'
       })
       if (config.landing_banners_json) {
         try {
@@ -63,6 +94,52 @@ export default function GestionLanding() {
             id: 3, image: config.landing_banner_3 || '', title: config.landing_banner_3_title || '', text: config.landing_banner_3_text || '', btnText: config.landing_banner_3_btn_text || '', url: config.landing_banner_3_url || '', interval: config.landing_banner_3_interval || '5'
           }
         ].filter(b => b.image || b.title))
+      }
+
+      // Cargar lista de beneficios
+      if (config.landing_benefits_json) {
+        try {
+          setBenefitsList(JSON.parse(config.landing_benefits_json));
+        } catch (e) {
+          console.error("Error parsing landing_benefits_json", e);
+        }
+      } else {
+        setBenefitsList([
+          {id: 1, icon: "⚡", title: "Entrega en 1-5 Minutos", desc: "La mayoría de las recargas se procesan de manera automatizada y se entregan al instante."},
+          {id: 2, icon: "🛡️", title: "Verificación Segura", desc: "Validamos el ID del jugador antes de que completes el pago para evitar errores."},
+          {id: 3, icon: "💳", title: "Múltiples Métodos de Pago", desc: "Aceptamos Pago Móvil, Binance Pay, Zelle y transferencias en Bolívares."},
+          {id: 4, icon: "🤖", title: "Servicio 24/7", desc: "Nuestra plataforma está disponible las 24 horas del día, los 7 días de la semana."}
+        ])
+      }
+
+      // Cargar opiniones/testimonios
+      if (config.landing_reviews_json) {
+        try {
+          setReviewsList(JSON.parse(config.landing_reviews_json));
+        } catch (e) {
+          console.error("Error parsing landing_reviews_json", e);
+        }
+      } else {
+        setReviewsList([
+          {id: 1, name: "Carlos M.", rating: 5, comment: "Excelente servicio, la recarga de Free Fire llegó en menos de 2 minutos. Muy recomendado!"},
+          {id: 2, name: "Andrea G.", rating: 5, comment: "La verificación del ID evita errores. Es la mejor página de recargas en Venezuela."},
+          {id: 3, name: "Luis P.", rating: 5, comment: "Rápido y seguro. Pagué con Pago Móvil y fue instantáneo."}
+        ])
+      }
+
+      // Cargar preguntas frecuentes
+      if (config.landing_faq_json) {
+        try {
+          setFaqList(JSON.parse(config.landing_faq_json));
+        } catch (e) {
+          console.error("Error parsing landing_faq_json", e);
+        }
+      } else {
+        setFaqList([
+          {id: 1, question: "¿Cuánto tiempo tarda en llegar mi recarga?", answer: "La mayoría de las recargas se procesan de manera automática y se entregan en un lapso de 1 a 5 minutos."},
+          {id: 2, question: "¿Qué métodos de pago aceptan?", answer: "Aceptamos Pago Móvil, Binance Pay, Zelle y transferencias en Bolívares."},
+          {id: 3, question: "¿Qué pasa si introduzco un ID de jugador incorrecto?", answer: "Gracias a nuestro sistema de verificación de ID, validamos el nombre del jugador antes de que completes el pago, evitando que pierdas tu dinero."}
+        ])
       }
     }
   }, [config])
@@ -240,7 +317,25 @@ export default function GestionLanding() {
         updateConfig('landing_auth_icon', form.landing_auth_icon, true),
         updateConfig('landing_auth_logo_size', form.landing_auth_logo_size, true),
         updateConfig('landing_auth_title_size', form.landing_auth_title_size, true),
-        updateConfig('landing_auth_text_size', form.landing_auth_text_size, true)
+        updateConfig('landing_auth_text_size', form.landing_auth_text_size, true),
+        // Colores de diseño
+        updateConfig('landing_bg_color', form.landing_bg_color || '#0f0f10', true),
+        updateConfig('landing_card_bg', form.landing_card_bg || '#1a1d21', true),
+        updateConfig('landing_border_color', form.landing_border_color || '#27272a', true),
+        updateConfig('landing_accent_color', form.landing_accent_color || '#a3e635', true),
+        updateConfig('landing_text_main', form.landing_text_main || '#ffffff', true),
+        updateConfig('landing_text_muted', form.landing_text_muted || '#a1a1aa', true),
+        // Visibilidad de secciones
+        updateConfig('landing_show_hero', form.landing_show_hero ? '1' : '0', true),
+        updateConfig('landing_show_bestsellers', form.landing_show_bestsellers ? '1' : '0', true),
+        updateConfig('landing_show_sliders', form.landing_show_sliders ? '1' : '0', true),
+        updateConfig('landing_show_benefits', form.landing_show_benefits ? '1' : '0', true),
+        updateConfig('landing_show_reviews', form.landing_show_reviews ? '1' : '0', true),
+        updateConfig('landing_show_faq', form.landing_show_faq ? '1' : '0', true),
+        // Listas JSON
+        updateConfig('landing_benefits_json', JSON.stringify(benefitsList), true),
+        updateConfig('landing_reviews_json', JSON.stringify(reviewsList), true),
+        updateConfig('landing_faq_json', JSON.stringify(faqList), true)
       ])
 
       const errorResult = results.find(r => r && r.error)
@@ -293,9 +388,13 @@ export default function GestionLanding() {
 
       <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', borderBottom: '1px solid var(--border)', paddingBottom: '16px', overflowX: 'auto', whiteSpace: 'nowrap' }}>
         <button type="button" className={`btn ${activeTab === 'general' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('general')}>General</button>
+        <button type="button" className={`btn ${activeTab === 'diseno' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('diseno')}>Diseño y Colores</button>
         <button type="button" className={`btn ${activeTab === 'banners' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('banners')}>Banners Promocionales</button>
         <button type="button" className={`btn ${activeTab === 'auth' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('auth')}>Acceso y Login</button>
         <button type="button" className={`btn ${activeTab === 'catalogo' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('catalogo')}>Catálogo y Descuentos</button>
+        <button type="button" className={`btn ${activeTab === 'beneficios' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('beneficios')}>Beneficios</button>
+        <button type="button" className={`btn ${activeTab === 'resenas' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('resenas')}>Opiniones</button>
+        <button type="button" className={`btn ${activeTab === 'faqs' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('faqs')}>Preguntas Frecuentes</button>
       </div>
 
       {activeTab !== 'catalogo' && (
@@ -557,6 +656,378 @@ export default function GestionLanding() {
             </div>
           </div>
           </>
+          )}
+
+          {activeTab === 'diseno' && (
+            <>
+              <div className="form-group full-width" style={{ marginTop: '0px' }}>
+                <h3 style={{ marginBottom: '16px' }}>Paleta de Colores de la Landing Page</h3>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Color de Fondo de Página</label>
+                    <div className="flex gap-8" style={{ alignItems: 'center' }}>
+                      <input 
+                        type="color" 
+                        value={form.landing_bg_color} 
+                        onChange={(e) => setForm({...form, landing_bg_color: e.target.value})} 
+                        style={{ width: '50px', height: '40px', padding: 0, border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                      />
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        value={form.landing_bg_color} 
+                        onChange={(e) => setForm({...form, landing_bg_color: e.target.value})} 
+                        style={{ flex: 1 }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Color de Fondo de Tarjetas</label>
+                    <div className="flex gap-8" style={{ alignItems: 'center' }}>
+                      <input 
+                        type="color" 
+                        value={form.landing_card_bg} 
+                        onChange={(e) => setForm({...form, landing_card_bg: e.target.value})} 
+                        style={{ width: '50px', height: '40px', padding: 0, border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                      />
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        value={form.landing_card_bg} 
+                        onChange={(e) => setForm({...form, landing_card_bg: e.target.value})} 
+                        style={{ flex: 1 }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Color de Bordes y Líneas</label>
+                    <div className="flex gap-8" style={{ alignItems: 'center' }}>
+                      <input 
+                        type="color" 
+                        value={form.landing_border_color} 
+                        onChange={(e) => setForm({...form, landing_border_color: e.target.value})} 
+                        style={{ width: '50px', height: '40px', padding: 0, border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                      />
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        value={form.landing_border_color} 
+                        onChange={(e) => setForm({...form, landing_border_color: e.target.value})} 
+                        style={{ flex: 1 }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Color de Acento (Neon / Destacados)</label>
+                    <div className="flex gap-8" style={{ alignItems: 'center' }}>
+                      <input 
+                        type="color" 
+                        value={form.landing_accent_color} 
+                        onChange={(e) => setForm({...form, landing_accent_color: e.target.value})} 
+                        style={{ width: '50px', height: '40px', padding: 0, border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                      />
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        value={form.landing_accent_color} 
+                        onChange={(e) => setForm({...form, landing_accent_color: e.target.value})} 
+                        style={{ flex: 1 }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Color del Texto Principal</label>
+                    <div className="flex gap-8" style={{ alignItems: 'center' }}>
+                      <input 
+                        type="color" 
+                        value={form.landing_text_main} 
+                        onChange={(e) => setForm({...form, landing_text_main: e.target.value})} 
+                        style={{ width: '50px', height: '40px', padding: 0, border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                      />
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        value={form.landing_text_main} 
+                        onChange={(e) => setForm({...form, landing_text_main: e.target.value})} 
+                        style={{ flex: 1 }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Color del Texto Secundario (Muted)</label>
+                    <div className="flex gap-8" style={{ alignItems: 'center' }}>
+                      <input 
+                        type="color" 
+                        value={form.landing_text_muted} 
+                        onChange={(e) => setForm({...form, landing_text_muted: e.target.value})} 
+                        style={{ width: '50px', height: '40px', padding: 0, border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                      />
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        value={form.landing_text_muted} 
+                        onChange={(e) => setForm({...form, landing_text_muted: e.target.value})} 
+                        style={{ flex: 1 }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '16px' }}>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setForm({
+                        ...form,
+                        landing_bg_color: '#0f0f10',
+                        landing_card_bg: '#1a1d21',
+                        landing_border_color: '#27272a',
+                        landing_accent_color: '#a3e635',
+                        landing_text_main: '#ffffff',
+                        landing_text_muted: '#a1a1aa'
+                      })
+                    }}
+                  >
+                    🔄 Restaurar Colores Conecta2VE
+                  </button>
+                </div>
+
+                <h3 style={{ marginTop: '30px', marginBottom: '16px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>Visibilidad de Secciones</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={form.landing_show_hero} 
+                      onChange={(e) => setForm({...form, landing_show_hero: e.target.checked})}
+                      style={{ width: '18px', height: '18px' }}
+                    />
+                    <span>Mostrar Héroe (Carrusel de Banners Principal)</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={form.landing_show_bestsellers} 
+                      onChange={(e) => setForm({...form, landing_show_bestsellers: e.target.checked})}
+                      style={{ width: '18px', height: '18px' }}
+                    />
+                    <span>Mostrar Destacados / Bestsellers ("Recarga Aquí")</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={form.landing_show_sliders} 
+                      onChange={(e) => setForm({...form, landing_show_sliders: e.target.checked})}
+                      style={{ width: '18px', height: '18px' }}
+                    />
+                    <span>Mostrar Catálogo en Sliders Horizontales por Categoría</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={form.landing_show_benefits} 
+                      onChange={(e) => setForm({...form, landing_show_benefits: e.target.checked})}
+                      style={{ width: '18px', height: '18px' }}
+                    />
+                    <span>Mostrar Sección de Beneficios ("¿Por qué elegirnos?")</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={form.landing_show_reviews} 
+                      onChange={(e) => setForm({...form, landing_show_reviews: e.target.checked})}
+                      style={{ width: '18px', height: '18px' }}
+                    />
+                    <span>Mostrar Opiniones de Clientes (Testimonios)</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={form.landing_show_faq} 
+                      onChange={(e) => setForm({...form, landing_show_faq: e.target.checked})}
+                      style={{ width: '18px', height: '18px' }}
+                    />
+                    <span>Mostrar Preguntas Frecuentes (FAQs Accordion)</span>
+                  </label>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'beneficios' && (
+            <div className="form-group full-width" style={{ marginTop: '0px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ margin: 0 }}>Beneficios de la Plataforma</h3>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setBenefitsList([...benefitsList, { id: Date.now(), icon: "💡", title: "Nuevo Beneficio", desc: "Descripción del beneficio" }])}
+                >
+                  ➕ Añadir Beneficio
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {benefitsList.map((b, index) => (
+                  <div key={b.id || index} style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      <div style={{ width: '60px' }}>
+                        <label className="form-label" style={{ fontSize: '11px' }}>Icono</label>
+                        <input 
+                          type="text" 
+                          className="form-input" 
+                          value={b.icon || ''} 
+                          onChange={(e) => setBenefitsList(benefitsList.map(item => item.id === b.id ? { ...item, icon: e.target.value } : item))} 
+                          style={{ textAlign: 'center' }}
+                        />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label className="form-label" style={{ fontSize: '11px' }}>Título</label>
+                        <input 
+                          type="text" 
+                          className="form-input" 
+                          value={b.title || ''} 
+                          onChange={(e) => setBenefitsList(benefitsList.map(item => item.id === b.id ? { ...item, title: e.target.value } : item))}
+                        />
+                      </div>
+                      <button 
+                        type="button" 
+                        className="btn" 
+                        style={{ alignSelf: 'flex-end', background: 'rgba(255, 77, 79, 0.1)', color: '#ff4d4f', padding: '8px 12px', border: 'none', borderRadius: '6px', height: '40px' }}
+                        onClick={() => setBenefitsList(benefitsList.filter(item => item.id !== b.id))}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                    <div>
+                      <label className="form-label" style={{ fontSize: '11px' }}>Descripción</label>
+                      <textarea 
+                        className="form-input" 
+                        rows={2} 
+                        value={b.desc || ''} 
+                        onChange={(e) => setBenefitsList(benefitsList.map(item => item.id === b.id ? { ...item, desc: e.target.value } : item))}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'resenas' && (
+            <div className="form-group full-width" style={{ marginTop: '0px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ margin: 0 }}>Opiniones de Clientes</h3>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setReviewsList([...reviewsList, { id: Date.now(), name: "Nombre Cliente", rating: 5, comment: "Excelente servicio!" }])}
+                >
+                  ➕ Añadir Opinión
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {reviewsList.map((r, index) => (
+                  <div key={r.id || index} style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      <div style={{ flex: 2 }}>
+                        <label className="form-label" style={{ fontSize: '11px' }}>Nombre</label>
+                        <input 
+                          type="text" 
+                          className="form-input" 
+                          value={r.name || ''} 
+                          onChange={(e) => setReviewsList(reviewsList.map(item => item.id === r.id ? { ...item, name: e.target.value } : item))} 
+                        />
+                      </div>
+                      <div style={{ width: '150px' }}>
+                        <label className="form-label" style={{ fontSize: '11px' }}>Estrellas (1-5)</label>
+                        <select 
+                          className="form-input" 
+                          value={r.rating || 5} 
+                          onChange={(e) => setReviewsList(reviewsList.map(item => item.id === r.id ? { ...item, rating: parseInt(e.target.value, 10) } : item))}
+                        >
+                          <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                          <option value="4">⭐⭐⭐⭐ (4)</option>
+                          <option value="3">⭐⭐⭐ (3)</option>
+                          <option value="2">⭐⭐ (2)</option>
+                          <option value="1">⭐ (1)</option>
+                        </select>
+                      </div>
+                      <button 
+                        type="button" 
+                        className="btn" 
+                        style={{ alignSelf: 'flex-end', background: 'rgba(255, 77, 79, 0.1)', color: '#ff4d4f', padding: '8px 12px', border: 'none', borderRadius: '6px', height: '40px' }}
+                        onClick={() => setReviewsList(reviewsList.filter(item => item.id !== r.id))}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                    <div>
+                      <label className="form-label" style={{ fontSize: '11px' }}>Comentario</label>
+                      <textarea 
+                        className="form-input" 
+                        rows={2} 
+                        value={r.comment || ''} 
+                        onChange={(e) => setReviewsList(reviewsList.map(item => item.id === r.id ? { ...item, comment: e.target.value } : item))}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'faqs' && (
+            <div className="form-group full-width" style={{ marginTop: '0px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ margin: 0 }}>Preguntas Frecuentes (FAQs)</h3>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setFaqList([...faqList, { id: Date.now(), question: "¿Nueva Pregunta?", answer: "Respuesta a la pregunta" }])}
+                >
+                  ➕ Añadir Pregunta
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {faqList.map((faq, index) => (
+                  <div key={faq.id || index} style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      <div style={{ flex: 1 }}>
+                        <label className="form-label" style={{ fontSize: '11px' }}>Pregunta</label>
+                        <input 
+                          type="text" 
+                          className="form-input" 
+                          value={faq.question || ''} 
+                          onChange={(e) => setFaqList(faqList.map(item => item.id === faq.id ? { ...item, question: e.target.value } : item))} 
+                        />
+                      </div>
+                      <button 
+                        type="button" 
+                        className="btn" 
+                        style={{ alignSelf: 'flex-end', background: 'rgba(255, 77, 79, 0.1)', color: '#ff4d4f', padding: '8px 12px', border: 'none', borderRadius: '6px', height: '40px' }}
+                        onClick={() => setFaqList(faqList.filter(item => item.id !== faq.id))}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                    <div>
+                      <label className="form-label" style={{ fontSize: '11px' }}>Respuesta</label>
+                      <textarea 
+                        className="form-input" 
+                        rows={3} 
+                        value={faq.answer || ''} 
+                        onChange={(e) => setFaqList(faqList.map(item => item.id === faq.id ? { ...item, answer: e.target.value } : item))}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
 
           <div className="flex justify-end full-width" style={{ marginTop: '20px' }}>
