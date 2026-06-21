@@ -768,59 +768,150 @@ export default function Landing({ onNavigate }) {
               <span className="landing-logo-text">{config?.landing_titulo || 'Recargas Hulk'}</span>
             </div>
             
-            <nav className="landing-nav hidden-mobile">
-              <a href="#" className="nav-link active" onClick={(e) => { e.preventDefault(); handleSelectJuego(null); }}>Home</a>
-              {!isRevendedor && (
-                <a href="#" className={`nav-link ${showRuleta ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('/Ruleta'); }}>Ruleta</a>
-              )}
-              <a href="#" className="nav-link">Ayuda</a>
-            </nav>
+            {/* PASTILLA DE NAVEGACIÓN UNIFICADA (Estilo AssaxStore) */}
+            <div className="landing-nav-pill hidden-mobile">
+              <div className="nav-pill-links">
+                <a 
+                  href="#" 
+                  className={`nav-pill-link ${(!showRuleta && !selectedJuego && !showCheckout && !showOrders && !showWallet && !showProfile) ? 'active' : ''}`}
+                  onClick={(e) => { 
+                    e.preventDefault(); 
+                    handleSelectJuego(null); 
+                    setShowCheckout(false); 
+                    setShowOrders(false); 
+                    setShowRuleta(false); 
+                    setShowWallet(false); 
+                    setShowProfile(false); 
+                    window.scrollTo({ top: 0, behavior: 'smooth' }); 
+                  }}
+                >
+                  Inicio
+                </a>
+                <a 
+                  href="#" 
+                  className={`nav-pill-link ${(!showRuleta && selectedJuego && !showCheckout && !showOrders && !showWallet && !showProfile) ? 'active' : ''}`}
+                  onClick={(e) => { 
+                    e.preventDefault(); 
+                    handleSelectJuego(null); 
+                    setShowCheckout(false); 
+                    setShowOrders(false); 
+                    setShowRuleta(false); 
+                    setShowWallet(false); 
+                    setShowProfile(false); 
+                    setTimeout(() => {
+                      const el = document.getElementById('all-games');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  }}
+                >
+                  Catálogo
+                </a>
+                {!isRevendedor && (
+                  <a 
+                    href="#" 
+                    className={`nav-pill-link ${showRuleta ? 'active' : ''}`}
+                    onClick={(e) => { 
+                      e.preventDefault(); 
+                      navigate('/Ruleta'); 
+                      setShowRuleta(true); 
+                      setShowCheckout(false); 
+                      setShowOrders(false); 
+                      setShowWallet(false); 
+                      setShowProfile(false); 
+                      setSelectedJuego(null);
+                    }}
+                  >
+                    Ruleta
+                  </a>
+                )}
+                <a 
+                  href="#" 
+                  className="nav-pill-link"
+                  onClick={(e) => { 
+                    e.preventDefault(); 
+                    handleSelectJuego(null); 
+                    setShowCheckout(false); 
+                    setShowOrders(false); 
+                    setShowRuleta(false); 
+                    setShowWallet(false); 
+                    setShowProfile(false); 
+                    setTimeout(() => {
+                      const el = document.getElementById('reviews-section');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  }}
+                >
+                  Reseñas
+                </a>
+                <a 
+                  href="#" 
+                  className="nav-pill-link"
+                  onClick={(e) => { 
+                    e.preventDefault(); 
+                    handleSelectJuego(null); 
+                    setShowCheckout(false); 
+                    setShowOrders(false); 
+                    setShowRuleta(false); 
+                    setShowWallet(false); 
+                    setShowProfile(false); 
+                    setTimeout(() => {
+                      const el = document.getElementById('faq-section');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  }}
+                >
+                  Soporte
+                </a>
+              </div>
+              
+              <div className="nav-pill-divider"></div>
+              
+              <div className="nav-pill-search">
+                <span className="search-icon">🔍</span>
+                <input 
+                  type="text" 
+                  placeholder="Buscar..." 
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onBlur={() => setTimeout(() => setSearch(''), 200)}
+                />
+                
+                {search.trim().length > 0 && (
+                  <div className="search-results-dropdown">
+                    {juegos
+                      .filter(j => j.nombre.toLowerCase().includes(search.toLowerCase()))
+                      .slice(0, 8)
+                      .map(juego => (
+                        <div 
+                          key={juego.id} 
+                          className="search-result-item"
+                          onClick={() => {
+                            handleSelectJuego(juego);
+                            setSearch('');
+                          }}
+                        >
+                          <img src={juego.icono_url ? (juego.icono_url.includes('?') ? `${juego.icono_url}&v=3` : `${juego.icono_url}?v=3`) : 'https://via.placeholder.com/40'} alt={juego.nombre} />
+                          <div className="result-info">
+                            <div className="result-name">{juego.nombre}</div>
+                            <div className="result-cat">{juego.categoria}</div>
+                          </div>
+                        </div>
+                      ))
+                    }
+                    {juegos.filter(j => j.nombre.toLowerCase().includes(search.toLowerCase())).length === 0 && (
+                      <div className="search-no-results">No se encontraron resultados</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center landing-header-right">
-            <div className="landing-search hidden-mobile" style={{ position: 'relative' }}>
-              <input 
-                type="text" 
-                placeholder="Buscar juegos o servicios..." 
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onBlur={() => setTimeout(() => setSearch(''), 200)}
-              />
-              <span className="search-icon">🔍</span>
-              
-              {search.trim().length > 0 && (
-                <div className="search-results-dropdown">
-                  {juegos
-                    .filter(j => j.nombre.toLowerCase().includes(search.toLowerCase()))
-                    .slice(0, 8)
-                    .map(juego => (
-                      <div 
-                        key={juego.id} 
-                        className="search-result-item"
-                        onClick={() => {
-                          handleSelectJuego(juego);
-                          setSearch('');
-                        }}
-                      >
-                        <img src={juego.icono_url ? (juego.icono_url.includes('?') ? `${juego.icono_url}&v=3` : `${juego.icono_url}?v=3`) : 'https://via.placeholder.com/40'} alt={juego.nombre} />
-                        <div className="result-info">
-                          <div className="result-name">{juego.nombre}</div>
-                          <div className="result-cat">{juego.categoria}</div>
-                        </div>
-                      </div>
-                    ))
-                  }
-                  {juegos.filter(j => j.nombre.toLowerCase().includes(search.toLowerCase())).length === 0 && (
-                    <div className="search-no-results">No se encontraron resultados</div>
-                  )}
-                </div>
-              )}
-            </div>
-            
             {/* BILLETERA */}
             {user && (
               <div
-                className="header-wallet"
+                className="btn-header-wallet"
                 onClick={() => {
                   setShowWallet(true);
                   setShowCheckout(false);
@@ -828,31 +919,20 @@ export default function Landing({ onNavigate }) {
                   setSelectedJuego(null);
                   window.scrollTo(0, 0);
                 }}
-                style={{ 
-                  cursor: 'pointer', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '6px', 
-                  background: 'rgba(255,255,255,0.1)', 
-                  padding: '6px 12px', 
-                  borderRadius: '20px',
-                  marginRight: '8px',
-                  flexShrink: 0
-                }}
                 title="Billetera"
               >
                 {hasWalletUSD && (
                   <>
-                    <span style={{ fontSize: '18px' }}>💵</span>
-                    <span style={{ fontWeight: 'bold', fontSize: '14px', color: 'var(--accent-success)', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '16px' }}>💵</span>
+                    <span style={{ color: 'var(--accent-success)', whiteSpace: 'nowrap' }}>
                       {formatUSD(wallet?.saldo || 0)}
                     </span>
                   </>
                 )}
                 {!hasWalletUSD && hasWalletBs && (
                   <>
-                    <span style={{ fontSize: '18px' }}>🏦</span>
-                    <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#a855f7', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '16px' }}>🏦</span>
+                    <span style={{ color: '#a855f7', whiteSpace: 'nowrap' }}>
                       {formatBs(wallet?.saldo_bs || 0)}
                     </span>
                   </>
@@ -863,8 +943,7 @@ export default function Landing({ onNavigate }) {
             {/* CARRITO */}
             {user && (
               <div 
-                className="hidden-mobile"
-                style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center', marginRight: '8px' }} 
+                className="btn-header-circle hidden-mobile"
                 onClick={() => {
                   setShowCheckout(true);
                   setShowRuleta(false);
@@ -873,9 +952,9 @@ export default function Landing({ onNavigate }) {
                 }}
                 title="Ver Carrito"
               >
-                <span style={{ fontSize: '24px' }}>🛒</span>
+                <span style={{ fontSize: '20px' }}>🛒</span>
                 {cart.length > 0 && (
-                  <div style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#ef4444', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
+                  <div className="badge">
                     {cart.length}
                   </div>
                 )}
@@ -884,21 +963,20 @@ export default function Landing({ onNavigate }) {
 
             {/* CAMPANA DE NOTIFICACIONES */}
             {user && (
-              <div className="nav-dropdown hidden-mobile" style={{ position: 'relative', marginRight: '8px' }}>
+              <div className="nav-dropdown hidden-mobile" style={{ position: 'relative' }}>
                 <div 
-                  className="noti-bell-container" 
+                  className="btn-header-circle noti-bell-container" 
                   onClick={() => setShowNotiDropdown(!showNotiDropdown)}
-                  style={{ position: 'relative', cursor: 'pointer', fontSize: '22px', padding: '5px' }}
                 >
-                  🔔
+                  <span style={{ fontSize: '18px' }}>🔔</span>
                   {unreadCount > 0 && (
-                    <div style={{ position: 'absolute', top: '0', right: '0', background: '#ef4444', color: 'white', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold', border: '2px solid var(--bg-card)' }}>
+                    <div className="badge" style={{ top: '-4px', right: '-4px' }}>
                       {unreadCount}
                     </div>
                   )}
                 </div>
                 <div className={`dropdown-content ${showNotiDropdown ? 'show' : ''}`} style={{ right: 0, left: 'auto', width: '300px', maxHeight: '400px', overflowY: 'auto' }}>
-                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifycontent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontWeight: '700', fontSize: '14px' }}>Notificaciones</span>
                     {unreadCount > 0 && (
                       <button onClick={markAllAsRead} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}>Marcar todas como leídas</button>
@@ -935,22 +1013,16 @@ export default function Landing({ onNavigate }) {
               </div>
             )}
 
+            {/* BOTÓN PRIMARIO NEÓN (INGRESAR / MI CUENTA) */}
             {user ? (
               <div className="nav-dropdown">
-                <div className="flex items-center" style={{ gap: '8px', cursor: 'pointer' }}>
-                  <div className="user-avatar-small" style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {perfil?.avatar_url ? (
-                      <img src={perfil.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      user.email?.charAt(0).toUpperCase()
-                    )}
-                  </div>
-                  <span className="hidden-mobile" style={{ fontWeight: '600' }}>Mi Cuenta ▾</span>
-                </div>
+                <button className="btn-assax-primary">
+                  <span>👤 MI CUENTA</span>
+                </button>
                 <div className="dropdown-content" style={{ right: 0, left: 'auto' }}>
                   <div style={{ padding: '10px 20px', borderBottom: '1px solid var(--border)', marginBottom: '4px' }}>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Conectado como</div>
-                    <div style={{ fontWeight: '600', fontSize: '14px' }}>{user.email}</div>
+                    <div style={{ fontWeight: '600', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>{user.email}</div>
                   </div>
                   
                   <a href="#" className="visible-mobile" onClick={(e) => { 
@@ -985,8 +1057,9 @@ export default function Landing({ onNavigate }) {
               </div>
             ) : (
               <div className="flex items-center" style={{ gap: '10px' }}>
-                <button className="btn-landing-secondary hidden-mobile" onClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}>Entrar</button>
-                <button className="btn-landing-primary hidden-mobile" onClick={() => { setAuthModalView('register'); setIsAuthModalOpen(true); }}>Registrarse</button>
+                <button className="btn-assax-primary hidden-mobile" onClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}>
+                  <span>⚡ INGRESAR</span>
+                </button>
                 <div className="nav-dropdown visible-mobile">
                   <button className="btn-mobile-auth-icon" title="Menú">
                     👤
@@ -1778,7 +1851,7 @@ export default function Landing({ onNavigate }) {
 
             {/* SECCIÓN DE RESEÑAS / TESTIMONIOS */}
             {!slug && !selectedJuego && !showCheckout && !showOrders && !showRuleta && !showWallet && !showProfile && config?.landing_show_reviews !== '0' && (
-              <section className="landing-section landing-container" style={{ marginTop: '50px' }}>
+              <section id="reviews-section" className="landing-section landing-container" style={{ marginTop: '50px' }}>
                 <div className="section-header" style={{ justifyContent: 'center', textAlign: 'center', flexDirection: 'column', borderLeft: 'none', paddingLeft: 0, marginBottom: '24px' }}>
                   <h3 style={{ fontSize: '24px', fontWeight: 800 }}>Lo que dicen nuestros clientes</h3>
                   <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '4px' }}>Opiniones 100% reales y verificadas</p>
@@ -1812,7 +1885,7 @@ export default function Landing({ onNavigate }) {
 
             {/* SECCIÓN DE PREGUNTAS FRECUENTES (FAQs) */}
             {!slug && !selectedJuego && !showCheckout && !showOrders && !showRuleta && !showWallet && !showProfile && config?.landing_show_faq !== '0' && (
-              <section className="landing-section landing-container" style={{ marginTop: '50px', marginBottom: '40px' }}>
+              <section id="faq-section" className="landing-section landing-container" style={{ marginTop: '50px', marginBottom: '40px' }}>
                 <div className="section-header" style={{ justifyContent: 'center', textAlign: 'center', flexDirection: 'column', borderLeft: 'none', paddingLeft: 0, marginBottom: '24px' }}>
                   <h3 style={{ fontSize: '24px', fontWeight: 800 }}>Preguntas Frecuentes</h3>
                   <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '4px' }}>Resuelve tus dudas al instante</p>

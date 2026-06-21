@@ -1512,3 +1512,251 @@
     font-size: 12px;
   }
 }
+
+/* ==========================================================================
+   ASSAXSTORE HEADER STYLING
+   ========================================================================== */
+
+/* Pastilla de navegación unificada en el centro */
+.landing-nav-pill {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  padding: 4px 6px;
+  gap: 8px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.landing-nav-pill:focus-within {
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.3);
+}
+
+.nav-pill-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.nav-pill-link {
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-pill-link:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.nav-pill-link.active {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Indicador de pestaña activa */
+.nav-pill-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 3px;
+  background: var(--accent); /* Color neón */
+  border-radius: 2px;
+  box-shadow: 0 0 8px var(--accent);
+}
+
+/* Divisor vertical */
+.nav-pill-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  align-self: center;
+}
+
+/* Buscador integrado */
+.nav-pill-search {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 180px;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding-right: 6px;
+}
+
+.nav-pill-search:focus-within {
+  width: 240px;
+}
+
+.nav-pill-search input {
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  font-size: 13px;
+  padding: 8px 8px 8px 32px;
+  outline: none;
+  width: 100%;
+}
+
+.nav-pill-search input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+.nav-pill-search .search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+/* Dropdown de resultados de búsqueda para el buscador integrado */
+.nav-pill-search .search-results-dropdown {
+  position: absolute;
+  top: calc(100% + 15px);
+  right: 0;
+  width: 320px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+}
+
+/* Ajustes a la parte derecha del header */
+.btn-header-wallet {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.btn-header-wallet:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn-header-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  color: var(--text-main);
+  flex-shrink: 0;
+}
+
+.btn-header-circle:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn-header-circle .badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+/* Botón primario neón estilo AssaxStore */
+.btn-assax-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent); /* Verde/cyan neón */
+  color: #000000;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 9999px;
+  font-weight: 800;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(163, 230, 53, 0.2); /* Sombra difuminada */
+  flex-shrink: 0;
+}
+
+.btn-assax-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px var(--accent-light), 0 0 10px var(--accent);
+  filter: brightness(1.05);
+}
+
+.btn-assax-primary:active {
+  transform: translateY(0);
+}
+
+/* Asegurar que el avatar del botón esté alineado si se reusa */
+.btn-assax-primary span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Corregir margen de la campana y notificaciones */
+.landing-header-right {
+  gap: 12px !important;
+}
+
+/* Ajustes de responsividad */
+@media (max-width: 1024px) {
+  .nav-pill-search {
+    width: 140px;
+  }
+  .nav-pill-search:focus-within {
+    width: 180px;
+  }
+}
