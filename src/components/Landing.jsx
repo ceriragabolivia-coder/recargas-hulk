@@ -113,6 +113,21 @@ export default function Landing({ onNavigate }) {
   
   // Modo Nocturno
   const [darkMode, setDarkMode] = useState(true)
+  const [detailStep, setDetailStep] = useState('paquete')
+  
+  const formatBsAssax = (value) => {
+    const num = Math.round(Number(value || 0)).toString();
+    let result = "";
+    for (let i = 0; i < num.length; i++) {
+      const posFromEnd = num.length - i;
+      result += num[i];
+      if (posFromEnd > 1 && (posFromEnd - 1) % 3 === 0) {
+        result += ".";
+      }
+    }
+    return `Bs. ${result},00`;
+  };
+
   const [infoProductModal, setInfoProductModal] = useState(null)
   const [expandedImage, setExpandedImage] = useState(null)
   const [quantity, setQuantity] = useState(1)
@@ -584,6 +599,7 @@ export default function Landing({ onNavigate }) {
   }, [searchParams.get('juego'), selectedJuego?.id, showCheckout, showOrders, showRuleta, showWallet, showProfile]);
 
   const handleSelectJuego = (juego) => {
+    setDetailStep('paquete')
     setActiveProductType('recarga')
     setShowCheckout(false)
     setShowOrders(false)
@@ -1173,40 +1189,198 @@ export default function Landing({ onNavigate }) {
             </div>
 
             <div className="detail-layout">
-              {/* SECCIÓN CABECERA */}
+              {/* SECCIÓN CABECERA ESTILO ASSAXSTORE */}
               <div className="detail-header-area">
-                <div className={`detail-header-card ${selectedJuego.banner_url ? 'has-banner' : ''}`}>
-                  {selectedJuego.banner_url ? (
-                    <div className="detail-game-banner">
-                      <img 
-                        src={selectedJuego.banner_url} 
-                        alt={selectedJuego.nombre} 
-                        fetchpriority="high"
-                        loading="eager"
-                      />
+                <div className="assax-header-card">
+                  <div className="assax-header-left">
+                    <img 
+                      src={selectedJuego.icono_url ? (selectedJuego.icono_url.includes('?') ? `${selectedJuego.icono_url}&v=3` : `${selectedJuego.icono_url}?v=3`) : 'https://via.placeholder.com/120'} 
+                      alt={selectedJuego.nombre} 
+                      className="assax-header-icon" 
+                    />
+                    <div className="assax-header-info">
+                      <h1 className="assax-game-title">{selectedJuego.nombre}</h1>
+                      <div className="assax-header-badges">
+                        <span className="assax-badge">
+                          🌐 {selectedJuego.categoria || 'Global'}
+                        </span>
+                        <span className="assax-badge">
+                          ⚡ Entrega instantánea
+                        </span>
+                        <span className="assax-badge">
+                          🛡️ Pago seguro
+                        </span>
+                      </div>
                     </div>
-                  ) : (
-                    <img src={selectedJuego.icono_url ? (selectedJuego.icono_url.includes('?') ? `${selectedJuego.icono_url}&v=3` : `${selectedJuego.icono_url}?v=3`) : ''} alt="" className="detail-header-icon" />
-                  )}
-                  <div className="detail-header-info">
-                    <h1>{selectedJuego.nombre}</h1>
-                    <div className="detail-stats">
-                      <span className="rating">⭐ 5.0 (200+ Reviews)</span>
-                      <span className="sold">🔥 200K+ Sold</span>
-                      <span className="badge-secure">✅ Secure</span>
-                    </div>
+                  </div>
+
+                  {/* INDICADOR DE PASOS (WIZARD) */}
+                  <div className="detail-steps-path hidden-mobile">
+                    <span className={`step-item ${detailStep === 'paquete' ? 'active' : ''}`} onClick={() => setDetailStep('paquete')}>
+                      <span className="step-num">1</span> PAQUETE
+                    </span>
+                    <span className="step-arrow">&gt;</span>
+                    <span className={`step-item ${detailStep === 'identidad' ? 'active' : ''}`} onClick={() => { if (pendingItem) setDetailStep('identidad'); }}>
+                      <span className="step-num">2</span> IDENTIDAD
+                    </span>
+                    <span className="step-arrow">&gt;</span>
+                    <span className="step-item">
+                      <span className="step-num">3</span> PAGO
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* SIDEBAR DE COMPRA */}
-              <aside className="detail-sidebar-area">
-                <div className="purchase-card">
-                  {user ? (
-                    <>
-                      <h3>Datos de Recarga</h3>
-                      
-                      <div className="buy-mode-toggle">
+              {/* COLUMNA IZQUIERDA: SELECCIÓN DE PRODUCTOS O INGRESO DE DATOS */}
+              <div className="detail-content-area">
+                {detailStep === 'paquete' ? (
+                  /* PASO 1: SELECCIONAR PAQUETE */
+                  <div className="price-list-section">
+                    <h3 className="assax-section-title">
+                      ❶ SELECCIONA TU <span className="highlight-green">PAQUETE</span>
+                    </h3>
+
+                    {loadingProductos ? (
+                      <div className="spinner"></div>
+                    ) : (
+                      <>
+                        {/* Selector de sub-categorías (Tabs) */}
+                        {showTabs && (
+                          <div className="assax-tab-toggles" style={{ display: 'flex', gap: '8px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '4px' }}>
+                            {hasRecargas && (
+                              <button 
+                                onClick={() => setActiveProductType('recarga')}
+                                className={`assax-tab-btn ${currentViewType === 'recarga' ? 'active' : ''}`}
+                              >
+                                {selectedJuego?.metodo_recarga === 'cuenta_completa' || selectedJuego?.metodo_recarga === 'usuario_clave' ? 'Recarga Interna' : selectedJuego?.metodo_recarga === 'solo_usuario' ? 'Recarga por Usuario' : selectedJuego?.metodo_recarga === 'solo_correo' ? 'Recarga por Correo' : 'DIAMANTES'}
+                              </button>
+                            )}
+                            {hasPaquetes && (
+                              <button 
+                                onClick={() => setActiveProductType('paquete')}
+                                className={`assax-tab-btn ${currentViewType === 'paquete' ? 'active' : ''}`}
+                              >
+                                PAQUETES
+                              </button>
+                            )}
+                            {hasGiftCards && (
+                              <button 
+                                onClick={() => setActiveProductType('gift_card')}
+                                className={`assax-tab-btn ${currentViewType === 'gift_card' ? 'active' : ''}`}
+                              >
+                                GIFT CARDS
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="assax-products-grid">
+                          {(() => {
+                            const filteredProducts = productosJuego.filter(p => {
+                              if (currentViewType === 'gift_card') return p.tipo_producto === 'gift_card';
+                              if (currentViewType === 'paquete') return p.tipo_producto === 'paquete';
+                              return p.tipo_producto === 'recarga' || !p.tipo_producto;
+                            });
+
+                            return filteredProducts.map(prod => {
+                              const pricing = calcularPrecioVenta(prod, selectedJuego, config, perfil)
+                              const isSelected = pendingItem?.p?.id === prod.id;
+                              return (
+                                <div 
+                                  key={prod.id} 
+                                  className={`assax-product-card ${isSelected ? 'selected' : ''}`}
+                                  onClick={() => {
+                                    if (!user) {
+                                      setAuthModalView('login');
+                                      setIsAuthModalOpen(true);
+                                      return;
+                                    }
+                                    
+                                    const finalPrice = calcularPrecioVenta(prod, selectedJuego, config, perfil)
+                                    setPendingItem({ 
+                                      p: prod, 
+                                      selectedJuego, 
+                                      finalPrice, 
+                                      localRechargeData: {
+                                        ...localRechargeData,
+                                        nickname: (verificacionResultado?.success && verificacionResultado.verified_id === localRechargeData.player_id) 
+                                                  ? verificacionResultado.nickname : null
+                                      } 
+                                    })
+                                  }}
+                                >
+                                  {/* Icon container */}
+                                  <div className="assax-product-icon-box">
+                                    {prod.icono_url ? (
+                                      <img src={prod.icono_url.includes('?') ? `${prod.icono_url}&v=3` : `${prod.icono_url}?v=3`} alt="" />
+                                    ) : (
+                                      <span>💎</span>
+                                    )}
+                                  </div>
+
+                                  <div className="assax-product-info">
+                                    <div className="product-name">{prod.nombre}</div>
+                                    {(prod.info_adicional_texto || prod.info_adicional_imagen_url) && (
+                                      <div 
+                                        onClick={(e) => { e.stopPropagation(); setInfoProductModal(prod); }} 
+                                        className="product-info-trigger"
+                                        title="Información importante"
+                                      >
+                                        i
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <div className="assax-product-price-box">
+                                    <div className="assax-product-price">
+                                      {formatBsAssax(pricing.venta_bs)}
+                                    </div>
+                                    {selectedJuego.mostrar_precio_dual && (
+                                      <div className="price-secondary-usd">
+                                        ({formatUSD(pricing.venta_usd)})
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* CASHBACK BADGE */}
+                                  {(config?.cashback_activo === 'true' || config?.cashback_activo === '1') && (
+                                    <div className="product-cashback-badge">
+                                      ⚡ +{config?.cashback_porcentaje || '0'}%
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            });
+                          })()}
+                        </div>
+
+                        {/* Botón Siguiente para ir a Identidad */}
+                        <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'flex-end' }}>
+                          <button 
+                            className="btn-assax-next"
+                            disabled={!pendingItem}
+                            onClick={() => {
+                              if (pendingItem) {
+                                setDetailStep('identidad');
+                                window.scrollTo(0, 0);
+                              }
+                            }}
+                          >
+                            SIGUIENTE &gt;
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  /* PASO 2: INGRESAR DATOS DE RECARGA (IDENTIDAD) */
+                  <div className="price-list-section">
+                    <h3 className="assax-section-title">
+                      ❷ DATOS DE <span className="highlight-green">RECARGA</span>
+                    </h3>
+
+                    <div className="card-recharge-info" style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', padding: '24px', borderRadius: '16px' }}>
+                      <div className="buy-mode-toggle" style={{ marginBottom: '20px' }}>
                         <button 
                           onClick={() => setBuyMode('single')}
                           className={buyMode === 'single' ? 'active' : ''}
@@ -1221,272 +1395,506 @@ export default function Landing({ onNavigate }) {
                         </button>
                       </div>
 
-                      {/* FORMULARIO DE DATOS */}
-                      <div className="card-recharge-info">
-                        {effectiveMetodoRecarga === 'sin_datos' ? (
-                          <div style={{ textAlign: 'center' }}>
-                            <p style={{ fontSize: '14px', color: 'var(--text)', fontWeight: 600, margin: 0 }}>⚡ Entrega inmediata</p>
-                            <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>No necesitas ingresar ningún dato.</p>
-                          </div>
-                        ) : effectiveMetodoRecarga === 'entrega_codigo' ? (
-                          <div style={{ textAlign: 'center' }}>
-                            <p style={{ fontSize: '14px', color: 'var(--text)', fontWeight: 600, margin: 0 }}>🎁 Entrega de Código</p>
-                            <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>Recibirás un código de Gift Card tras la compra.</p>
-                          </div>
-                        ) : effectiveMetodoRecarga === 'solo_correo' ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                <label className="form-label" style={{ fontSize: '12px', margin: 0 }}>📧 Correo Electrónico</label>
-                                {selectedJuego?.guia_id_url && (
-                                  <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent)', color:'#000', width:'16px', height:'16px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:'bold' }} title="Ver guía">?</div>
-                                )}
-                              </div>
-                              <input 
-                                type="email" 
-                                className="form-input" 
-                                placeholder="ejemplo@correo.com"
-                                value={localRechargeData.account_email}
-                                onChange={e => setLocalRechargeData({...localRechargeData, account_email: e.target.value})}
-                              />
+                      {effectiveMetodoRecarga === 'sin_datos' ? (
+                        <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                          <p style={{ fontSize: '16px', color: 'var(--text-main)', fontWeight: 800, margin: 0 }}>⚡ Entrega inmediata</p>
+                          <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '6px 0 0 0' }}>No necesitas ingresar ningún dato.</p>
+                        </div>
+                      ) : effectiveMetodoRecarga === 'entrega_codigo' ? (
+                        <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                          <p style={{ fontSize: '16px', color: 'var(--text-main)', fontWeight: 800, margin: 0 }}>🎁 Entrega de Código</p>
+                          <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '6px 0 0 0' }}>Recibirás un código de Gift Card tras la compra.</p>
+                        </div>
+                      ) : effectiveMetodoRecarga === 'solo_correo' ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                              <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>📧 Correo Electrónico</label>
+                              {selectedJuego?.guia_id_url && (
+                                <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent)', color:'#000', width:'18px', height:'18px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:'bold' }} title="Ver guía">?</div>
+                              )}
                             </div>
-                          </div>
-                        ) : effectiveMetodoRecarga === 'solo_usuario' ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                <label className="form-label" style={{ fontSize: '12px', margin: 0 }}>👤 Usuario (@)</label>
-                                {selectedJuego?.guia_id_url && (
-                                  <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent)', color:'#000', width:'16px', height:'16px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:'bold' }} title="Ver guía">?</div>
-                                )}
-                              </div>
-                              <input 
-                                type="text" 
-                                className="form-input" 
-                                placeholder="@Usuario"
-                                value={localRechargeData.account_user || ''}
-                                onChange={e => setLocalRechargeData({...localRechargeData, account_user: e.target.value})}
-                              />
-                            </div>
-                          </div>
-                        ) : effectiveMetodoRecarga === 'cuenta_completa' ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                <label className="form-label" style={{ fontSize: '12px', margin: 0 }}>📧 Correo</label>
-                                {selectedJuego?.guia_id_url && (
-                                  <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent)', color:'#000', width:'16px', height:'16px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:'bold' }} title="Ver guía">?</div>
-                                )}
-                              </div>
-                              <input 
-                                type="email" 
-                                className="form-input" 
-                                placeholder="ejemplo@correo.com"
-                                value={localRechargeData.account_email}
-                                onChange={e => setLocalRechargeData({...localRechargeData, account_email: e.target.value})}
-                              />
-                            </div>
-                            <div>
-                              <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>🔑 Contraseña</label>
-                              <input 
-                                type="password" 
-                                className="form-input" 
-                                placeholder="********"
-                                value={localRechargeData.account_password}
-                                onChange={e => setLocalRechargeData({...localRechargeData, account_password: e.target.value})}
-                              />
-                            </div>
-                          </div>
-                        ) : effectiveMetodoRecarga === 'usuario_clave' ? (
-                          <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                            <div style={{ flex: '1 1 200px' }}>
-                              <label className="form-label" style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                👤 Nombre de usuario
-                                {selectedJuego.guia_id_url && (
-                                  <span 
-                                    onClick={() => setShowGuideModal(true)}
-                                    style={{ 
-                                      cursor: 'pointer', backgroundColor: 'var(--accent)', color: '#000', 
-                                      width: '18px', height: '18px', borderRadius: '50%', display: 'flex', 
-                                      alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold' 
-                                    }}
-                                    title="Ver dónde obtener esta información"
-                                  >?</span>
-                                )}
-                              </label>
-                              <input 
-                                type="text" 
-                                className="form-input" 
-                                placeholder="Tu nombre de usuario en el juego"
-                                value={localRechargeData.account_user || ''}
-                                onChange={e => setLocalRechargeData({...localRechargeData, account_user: e.target.value})}
-                                style={{ backgroundColor: 'var(--bg-card)', padding: '16px', fontSize: '15px' }}
-                              />
-                            </div>
-                            <div style={{ flex: '1 1 200px' }}>
-                              <label className="form-label" style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px' }}>
-                                🔑 Contraseña
-                              </label>
-                              <input 
-                                type="password" 
-                                className="form-input" 
-                                placeholder="********"
-                                value={localRechargeData.account_password}
-                                onChange={e => setLocalRechargeData({...localRechargeData, account_password: e.target.value})}
-                                style={{ backgroundColor: 'var(--bg-card)', padding: '16px', fontSize: '15px' }}
-                              />
-                            </div>
-                          </div>
-                        ) : effectiveMetodoRecarga === 'opcional_cuenta' ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                               <button 
-                                  onClick={() => setLocalRechargeData({...localRechargeData, cuentaOpcion: 'propia'})}
-                                  style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid ' + (localRechargeData.cuentaOpcion === 'propia' ? 'var(--accent)' : 'var(--border)'), backgroundColor: localRechargeData.cuentaOpcion === 'propia' ? 'var(--accent-light)' : 'var(--bg-card)', color: localRechargeData.cuentaOpcion === 'propia' ? 'var(--accent)' : 'var(--text-muted)', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
-                               >🏠 Activar en mi propia cuenta</button>
-                               <button 
-                                  onClick={() => setLocalRechargeData({...localRechargeData, cuentaOpcion: 'nueva'})}
-                                  style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid ' + (localRechargeData.cuentaOpcion === 'nueva' ? 'var(--accent)' : 'var(--border)'), backgroundColor: localRechargeData.cuentaOpcion === 'nueva' ? 'var(--accent-light)' : 'var(--bg-card)', color: localRechargeData.cuentaOpcion === 'nueva' ? 'var(--accent)' : 'var(--text-muted)', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
-                               >✨ Quiero una cuenta nueva</button>
-                            </div>
-                            {localRechargeData.cuentaOpcion === 'propia' ? (
-                              <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap', animation: 'fadeIn 0.3s' }}>
-                                   <div style={{ flex: '1 1 200px' }}>
-                                     <label className="form-label" style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px' }}>📧 Correo de la cuenta</label>
-                                     <input type="email" className="form-input" placeholder="ejemplo@correo.com" value={localRechargeData.account_email} onChange={e => setLocalRechargeData({...localRechargeData, account_email: e.target.value})} style={{ backgroundColor: 'var(--bg-card)', padding: '16px', fontSize: '15px' }} />
-                                   </div>
-                                   <div style={{ flex: '1 1 200px' }}>
-                                     <label className="form-label" style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px' }}>🔑 Clave de acceso</label>
-                                     <input type="password" className="form-input" placeholder="********" value={localRechargeData.account_password} onChange={e => setLocalRechargeData({...localRechargeData, account_password: e.target.value})} style={{ backgroundColor: 'var(--bg-card)', padding: '16px', fontSize: '15px' }} />
-                                   </div>
-                              </div>
-                            ) : (
-                              <div style={{ padding: '16px', backgroundColor: 'var(--accent-light)', borderRadius: '12px', border: '1px dashed var(--accent)', textAlign: 'center', animation: 'fadeIn 0.3s' }}>
-                                 <div style={{ fontSize: '24px', marginBottom: '8px' }}>📺</div>
-                                 <p style={{ color: 'var(--accent)', fontWeight: 'bold', margin: '0 0 4px 0', fontSize: '16px' }}>Nosotros te proveeremos una cuenta</p>
-                                 <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0, lineHeight: 1.4 }}>No necesitas ingresar ningún dato. Una vez procesado el pedido, te enviaremos el correo y la contraseña de tu nueva cuenta con el servicio activado.</p>
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>🆔 ID del Jugador</label>
-                                {selectedJuego?.guia_id_url && (
-                                  <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent)', color:'#000', width:'18px', height:'18px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:'bold' }} title="Ver guía">?</div>
-                                )}
-                              </div>
-                              <input 
-                                type="text" 
-                                className="form-input" 
-                                placeholder="Introduce el ID"
-                                value={localRechargeData.player_id}
-                                onChange={e => {
-                                  const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 30);
-                                  setLocalRechargeData({...localRechargeData, player_id: val});
-                                  if (verificacionResultado) setVerificacionResultado(null);
-                                }}
-                                style={{ fontSize: '16px', fontWeight: 'bold', letterSpacing: '1px' }}
-                              />
-                            </div>
-                            
-                            {effectiveMetodoRecarga === 'id_zone' && (
-                              <div>
-                                <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>🆔 Zone ID</label>
-                                <input 
-                                  type="text" 
-                                  className="form-input" 
-                                  placeholder="Zone ID"
-                                  maxLength={4}
-                                  value={localRechargeData.zone_id}
-                                  onChange={e => {
-                                    const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
-                                    setLocalRechargeData({...localRechargeData, zone_id: val});
-                                  }}
-                                  style={{ fontSize: '16px', fontWeight: 'bold', letterSpacing: '1px' }}
-                                />
-                              </div>
-                            )}
-
-                            {(selectedJuego.verificacion_api_activa || (selectedJuego.verificacion_api_activa === undefined && (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('bloodstrike')))) && (
-                              <div>
-                                <button 
-                                  className="btn-verify-prominent"
-                                  onClick={handleVerificarJugador}
-                                  disabled={isVerificando}
-                                  style={{ 
-                                    width: '100%', 
-                                    fontSize: '14px', 
-                                    padding: '12px',
-                                    marginTop: '8px'
-                                  }}
-                                >
-                                  {isVerificando ? 'Verificando...' : '🔍 Verificar Jugador'}
-                                </button>
-
-                                {verificacionResultado && (
-                                  <div style={{ 
-                                    marginTop: '10px', padding: '10px', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold',
-                                    backgroundColor: verificacionResultado.success ? 'rgba(0, 200, 83, 0.1)' : 'rgba(255, 82, 82, 0.1)',
-                                    color: verificacionResultado.success ? '#00c853' : '#ff5252',
-                                    border: `1px solid ${verificacionResultado.success ? '#00c853' : '#ff5252'}`
-                                  }}>
-                                    {verificacionResultado.success ? `✅ ${verificacionResultado.nickname}` : `❌ ${verificacionResultado.mensaje}`}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        
-                        {/* Cuentas Guardadas */}
-                        {cuentas.length > 0 && (
-                          <div style={{ marginTop: '10px', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
-                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Cuentas Guardadas</div>
-                            <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
-                              {cuentas.map(c => (
-                                <div 
-                                  key={c.id} onClick={() => handleSelectCuenta(c)}
-                                  style={{ padding: '6px 10px', backgroundColor: 'var(--bg-card)', borderRadius: '6px', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}
-                                >
-                                  <span>{c.player_id || c.email || c.username || 'Cuenta'}</span>
-                                  <span onClick={(e) => { e.stopPropagation(); if(window.confirm('¿Eliminar?')) eliminarCuenta(c.id); }} style={{ color: '#ff5252', padding: '0 4px' }}>✕</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {!(effectiveMetodoRecarga === 'sin_datos' || effectiveMetodoRecarga === 'entrega_codigo') && (
-                          <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <input 
-                              type="checkbox" 
-                              id="save-data-checkbox-landing"
-                              checked={shouldSaveData}
-                              onChange={(e) => setShouldSaveData(e.target.checked)}
+                              type="email" 
+                              className="form-input" 
+                              placeholder="ejemplo@correo.com"
+                              value={localRechargeData.account_email}
+                              onChange={e => setLocalRechargeData({...localRechargeData, account_email: e.target.value})}
+                              style={{ backgroundColor: 'var(--bg-card)', padding: '14px', fontSize: '15px' }}
                             />
-                            <label htmlFor="save-data-checkbox-landing" style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Guardar datos</label>
                           </div>
+                        </div>
+                      ) : effectiveMetodoRecarga === 'solo_usuario' ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                              <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>👤 Usuario (@)</label>
+                              {selectedJuego?.guia_id_url && (
+                                <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent)', color:'#000', width:'18px', height:'18px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:'bold' }} title="Ver guía">?</div>
+                              )}
+                            </div>
+                            <input 
+                              type="text" 
+                              className="form-input" 
+                              placeholder="@Usuario"
+                              value={localRechargeData.account_user || ''}
+                              onChange={e => setLocalRechargeData({...localRechargeData, account_user: e.target.value})}
+                              style={{ backgroundColor: 'var(--bg-card)', padding: '14px', fontSize: '15px' }}
+                            />
+                          </div>
+                        </div>
+                      ) : effectiveMetodoRecarga === 'cuenta_completa' ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                              <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>📧 Correo</label>
+                              {selectedJuego?.guia_id_url && (
+                                <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent)', color:'#000', width:'18px', height:'18px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:'bold' }} title="Ver guía">?</div>
+                              )}
+                            </div>
+                            <input 
+                              type="email" 
+                              className="form-input" 
+                              placeholder="ejemplo@correo.com"
+                              value={localRechargeData.account_email}
+                              onChange={e => setLocalRechargeData({...localRechargeData, account_email: e.target.value})}
+                              style={{ backgroundColor: 'var(--bg-card)', padding: '14px', fontSize: '15px' }}
+                            />
+                          </div>
+                          <div>
+                            <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>🔑 Contraseña</label>
+                            <input 
+                              type="password" 
+                              className="form-input" 
+                              placeholder="********"
+                              value={localRechargeData.account_password}
+                              onChange={e => setLocalRechargeData({...localRechargeData, account_password: e.target.value})}
+                              style={{ backgroundColor: 'var(--bg-card)', padding: '14px', fontSize: '15px' }}
+                            />
+                          </div>
+                        </div>
+                      ) : effectiveMetodoRecarga === 'usuario_clave' ? (
+                        <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                          <div style={{ flex: '1 1 200px' }}>
+                            <label className="form-label" style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              👤 Nombre de usuario
+                              {selectedJuego.guia_id_url && (
+                                <span 
+                                  onClick={() => setShowGuideModal(true)}
+                                  style={{ 
+                                    cursor: 'pointer', backgroundColor: 'var(--accent)', color: '#000', 
+                                    width: '18px', height: '18px', borderRadius: '50%', display: 'flex', 
+                                    alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold' 
+                                  }}
+                                  title="Ver dónde obtener esta información"
+                                >?</span>
+                              )}
+                            </label>
+                            <input 
+                              type="text" 
+                              className="form-input" 
+                              placeholder="Tu nombre de usuario en el juego"
+                              value={localRechargeData.account_user || ''}
+                              onChange={e => setLocalRechargeData({...localRechargeData, account_user: e.target.value})}
+                              style={{ backgroundColor: 'var(--bg-card)', padding: '16px', fontSize: '15px' }}
+                            />
+                          </div>
+                          <div style={{ flex: '1 1 200px' }}>
+                            <label className="form-label" style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px' }}>
+                              🔑 Contraseña
+                            </label>
+                            <input 
+                              type="password" 
+                              className="form-input" 
+                              placeholder="********"
+                              value={localRechargeData.account_password}
+                              onChange={e => setLocalRechargeData({...localRechargeData, account_password: e.target.value})}
+                              style={{ backgroundColor: 'var(--bg-card)', padding: '16px', fontSize: '15px' }}
+                            />
+                          </div>
+                        </div>
+                      ) : effectiveMetodoRecarga === 'opcional_cuenta' ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                             <button 
+                                onClick={() => setLocalRechargeData({...localRechargeData, cuentaOpcion: 'propia'})}
+                                style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid ' + (localRechargeData.cuentaOpcion === 'propia' ? 'var(--accent)' : 'var(--border)'), backgroundColor: localRechargeData.cuentaOpcion === 'propia' ? 'var(--accent-light)' : 'var(--bg-card)', color: localRechargeData.cuentaOpcion === 'propia' ? 'var(--accent)' : 'var(--text-muted)', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
+                             >🏠 Activar en mi propia cuenta</button>
+                             <button 
+                                onClick={() => setLocalRechargeData({...localRechargeData, cuentaOpcion: 'nueva'})}
+                                style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid ' + (localRechargeData.cuentaOpcion === 'nueva' ? 'var(--accent)' : 'var(--border)'), backgroundColor: localRechargeData.cuentaOpcion === 'nueva' ? 'var(--accent-light)' : 'var(--bg-card)', color: localRechargeData.cuentaOpcion === 'nueva' ? 'var(--accent)' : 'var(--text-muted)', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
+                             >✨ Quiero una cuenta nueva</button>
+                          </div>
+                          {localRechargeData.cuentaOpcion === 'propia' ? (
+                            <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap', animation: 'fadeIn 0.3s' }}>
+                                 <div style={{ flex: '1 1 200px' }}>
+                                   <label className="form-label" style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px' }}>📧 Correo de la cuenta</label>
+                                   <input type="email" className="form-input" placeholder="ejemplo@correo.com" value={localRechargeData.account_email} onChange={e => setLocalRechargeData({...localRechargeData, account_email: e.target.value})} style={{ backgroundColor: 'var(--bg-card)', padding: '16px', fontSize: '15px' }} />
+                                 </div>
+                                 <div style={{ flex: '1 1 200px' }}>
+                                   <label className="form-label" style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px' }}>🔑 Clave de acceso</label>
+                                   <input type="password" className="form-input" placeholder="********" value={localRechargeData.account_password} onChange={e => setLocalRechargeData({...localRechargeData, account_password: e.target.value})} style={{ backgroundColor: 'var(--bg-card)', padding: '16px', fontSize: '15px' }} />
+                                 </div>
+                            </div>
+                          ) : (
+                            <div style={{ padding: '16px', backgroundColor: 'var(--accent-light)', borderRadius: '12px', border: '1px dashed var(--accent)', textAlign: 'center', animation: 'fadeIn 0.3s' }}>
+                               <div style={{ fontSize: '24px', marginBottom: '8px' }}>📺</div>
+                               <p style={{ color: 'var(--accent)', fontWeight: 'bold', margin: '0 0 4px 0', fontSize: '16px' }}>Nosotros te proveeremos una cuenta</p>
+                               <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0, lineHeight: 1.4 }}>No necesitas ingresar ningún dato. Una vez procesado el pedido, te enviaremos el correo y la contraseña de tu nueva cuenta con el servicio activado.</p>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                              <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>🆔 ID del Jugador</label>
+                              {selectedJuego?.guia_id_url && (
+                                <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent)', color:'#000', width:'18px', height:'18px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:'bold' }} title="Ver guía">?</div>
+                              )}
+                            </div>
+                            <input 
+                              type="text" 
+                              className="form-input" 
+                              placeholder="Introduce el ID"
+                              value={localRechargeData.player_id}
+                              onChange={e => {
+                                const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 30);
+                                setLocalRechargeData({...localRechargeData, player_id: val});
+                                if (verificacionResultado) setVerificacionResultado(null);
+                              }}
+                              style={{ fontSize: '16px', fontWeight: 'bold', letterSpacing: '1px', backgroundColor: 'var(--bg-card)', padding: '14px' }}
+                            />
+                          </div>
+                          
+                          {effectiveMetodoRecarga === 'id_zone' && (
+                            <div>
+                              <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>🆔 Zone ID</label>
+                              <input 
+                                type="text" 
+                                className="form-input" 
+                                placeholder="Zone ID"
+                                maxLength={4}
+                                value={localRechargeData.zone_id}
+                                onChange={e => {
+                                  const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
+                                  setLocalRechargeData({...localRechargeData, zone_id: val});
+                                }}
+                                style={{ fontSize: '16px', fontWeight: 'bold', letterSpacing: '1px', backgroundColor: 'var(--bg-card)', padding: '14px' }}
+                              />
+                            </div>
+                          )}
+
+                          {(selectedJuego.verificacion_api_activa || (selectedJuego.verificacion_api_activa === undefined && (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('bloodstrike')))) && (
+                            <div>
+                              <button 
+                                className="btn-verify-prominent"
+                                onClick={handleVerificarJugador}
+                                disabled={isVerificando}
+                                style={{ 
+                                  width: '100%', 
+                                  fontSize: '14px', 
+                                  padding: '14px',
+                                  marginTop: '8px'
+                                }}
+                              >
+                                {isVerificando ? 'Verificando...' : '🔍 Verificar Jugador'}
+                              </button>
+
+                              {verificacionResultado && (
+                                <div style={{ 
+                                  marginTop: '10px', padding: '10px', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold',
+                                  backgroundColor: verificacionResultado.success ? 'rgba(0, 200, 83, 0.1)' : 'rgba(255, 82, 82, 0.1)',
+                                  color: verificacionResultado.success ? '#00c853' : '#ff5252',
+                                  border: `1px solid ${verificacionResultado.success ? '#00c853' : '#ff5252'}`
+                                }}>
+                                  {verificacionResultado.success ? `✅ ${verificacionResultado.nickname}` : `❌ ${verificacionResultado.mensaje}`}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Cuentas Guardadas */}
+                      {cuentas.length > 0 && (
+                        <div style={{ marginTop: '15px', borderTop: '1px solid var(--border)', paddingTop: '15px' }}>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Cuentas Guardadas</div>
+                          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+                            {cuentas.map(c => (
+                              <div 
+                                key={c.id} onClick={() => handleSelectCuenta(c)}
+                                style={{ padding: '6px 10px', backgroundColor: 'var(--bg-card)', borderRadius: '6px', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '12px', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}
+                              >
+                                <span>{c.player_id || c.email || c.username || 'Cuenta'}</span>
+                                <span onClick={(e) => { e.stopPropagation(); if(window.confirm('¿Eliminar?')) eliminarCuenta(c.id); }} style={{ color: '#ff5252', padding: '0 4px' }}>✕</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {!(effectiveMetodoRecarga === 'sin_datos' || effectiveMetodoRecarga === 'entrega_codigo') && (
+                        <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <input 
+                            type="checkbox" 
+                            id="save-data-checkbox-landing"
+                            checked={shouldSaveData}
+                            onChange={(e) => setShouldSaveData(e.target.checked)}
+                          />
+                          <label htmlFor="save-data-checkbox-landing" style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Guardar datos</label>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Botones de acción del Paso 2 */}
+                    <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+                      <button 
+                        className="btn-assax-next"
+                        style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-main)', border: '1px solid var(--border)' }}
+                        onClick={() => {
+                          setDetailStep('paquete');
+                          window.scrollTo(0, 0);
+                        }}
+                      >
+                        &lt; ATRÁS
+                      </button>
+
+                      <div style={{ display: 'flex', gap: '12px' }}>
+                        {buyMode === 'multiple' && (
+                          <button 
+                            className="btn-assax-next"
+                            style={{ background: 'var(--bg-hover)', border: '1px solid var(--accent)', color: 'var(--accent)' }}
+                            onClick={() => {
+                              const prodEffectiveMetodo = (pendingItem.p.tipo_producto === 'gift_card') ? 'entrega_codigo' : effectiveMetodoRecarga;
+
+                              if (prodEffectiveMetodo === 'solo_correo') {
+                                if (!localRechargeData.account_email.trim()) { alert('Por favor introduce el correo.'); return; }
+                              } else if (prodEffectiveMetodo === 'cuenta_completa') {
+                                if (!localRechargeData.account_email.trim() || !localRechargeData.account_password.trim()) { alert('Por favor introduce el correo y clave.'); return; }
+                              } else if (prodEffectiveMetodo === 'usuario_clave') {
+                                if (!localRechargeData.account_user?.trim() || !localRechargeData.account_password.trim()) { alert('Por favor introduce el usuario y clave.'); return; }
+                              } else if (prodEffectiveMetodo === 'sin_datos' || prodEffectiveMetodo === 'entrega_codigo') {
+                                // OK
+                              } else {
+                                if (!localRechargeData.player_id.trim()) { alert('Por favor introduce el ID.'); return; }
+                                const isVerificationActive = selectedJuego.verificacion_api_activa || 
+                                    (selectedJuego.verificacion_api_activa === undefined && (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('bloodstrike')));
+
+                                if (isVerificationActive) {
+                                  if (!verificacionResultado?.success || verificacionResultado.verified_id !== localRechargeData.player_id) {
+                                    alert('Debes verificar el nombre del jugador antes de comprar.');
+                                    return;
+                                  }
+                                }
+                              }
+
+                              for (let i = 0; i < quantity; i++) {
+                                addToCart(pendingItem.p, selectedJuego, pendingItem.finalPrice, {
+                                  ...localRechargeData,
+                                  nickname: (verificacionResultado?.success && verificacionResultado.verified_id === localRechargeData.player_id) 
+                                            ? verificacionResultado.nickname : null
+                                });
+                              }
+                              setAddedItem(pendingItem.p.id)
+                              setTimeout(() => setAddedItem(null), 1200)
+                              setPendingItem(null)
+                              setDetailStep('paquete')
+                              resetRechargeForm()
+                            }}
+                          >
+                            🛒 AÑADIR AL CARRITO
+                          </button>
+                        )}
+                        <button 
+                          className="btn-assax-next"
+                          onClick={async () => {
+                            const prodEffectiveMetodo = (pendingItem.p.tipo_producto === 'gift_card') ? 'entrega_codigo' : effectiveMetodoRecarga;
+
+                            if (prodEffectiveMetodo === 'solo_correo') {
+                              if (!localRechargeData.account_email.trim()) { alert('Por favor introduce el correo.'); return; }
+                            } else if (prodEffectiveMetodo === 'cuenta_completa') {
+                              if (!localRechargeData.account_email.trim() || !localRechargeData.account_password.trim()) { alert('Por favor introduce el correo y clave.'); return; }
+                            } else if (prodEffectiveMetodo === 'usuario_clave') {
+                              if (!localRechargeData.account_user?.trim() || !localRechargeData.account_password.trim()) { alert('Por favor introduce el usuario y clave.'); return; }
+                            } else if (prodEffectiveMetodo === 'sin_datos' || prodEffectiveMetodo === 'entrega_codigo') {
+                              // OK
+                            } else {
+                              if (!localRechargeData.player_id.trim()) { alert('Por favor introduce el ID.'); return; }
+                              const isVerificationActive = selectedJuego.verificacion_api_activa || 
+                                  (selectedJuego.verificacion_api_activa === undefined && (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('bloodstrike')));
+
+                              if (isVerificationActive) {
+                                if (!verificacionResultado?.success || verificacionResultado.verified_id !== localRechargeData.player_id) {
+                                  alert('Debes verificar el nombre del jugador antes de comprar.');
+                                  return;
+                                }
+                              }
+                            }
+
+                            clearCart()
+                            for (let i = 0; i < quantity; i++) {
+                              addToCart(pendingItem.p, selectedJuego, pendingItem.finalPrice, {
+                                ...localRechargeData,
+                                nickname: (verificacionResultado?.success && verificacionResultado.verified_id === localRechargeData.player_id) 
+                                          ? verificacionResultado.nickname : null
+                              })
+                            }
+                            if (shouldSaveData && localRechargeData.cuentaOpcion !== 'nueva') {
+                              await guardarCuenta({
+                                tipo_dato: selectedJuego.metodo_recarga || 'id',
+                                player_id: localRechargeData.player_id,
+                                zone_id: localRechargeData.zone_id,
+                                email: localRechargeData.account_email,
+                                password: localRechargeData.account_password,
+                                username: localRechargeData.account_user,
+                                nombre_perfil: localRechargeData.player_id || localRechargeData.account_email || localRechargeData.account_user || 'Cuenta'
+                              })
+                            }
+                            setPendingItem(null)
+                            resetRechargeForm()
+                            setShowCheckout(true)
+                            window.scrollTo(0, 0)
+                          }}
+                        >
+                          🚀 COMPRAR AHORA
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Información / Guías */}
+                <div className="info-content-section" style={{ marginTop: '24px' }}>
+                  <div className="info-tab-header">
+                    <h4>Información de {selectedJuego.nombre}</h4>
+                  </div>
+                  <div className="info-body">
+                    {selectedJuego.caracteristicas_nota && (
+                      <div className="rich-text" style={{ marginBottom: '16px' }} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedJuego.caracteristicas_nota.replace(/\n/g, '<br/>')) }} />
+                    )}
+                    
+                    {selectedJuego.instrucciones_recarga && (
+                      <div className="rich-text" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedJuego.instrucciones_recarga.replace(/\n/g, '<br/>')) }} />
+                    )}
+
+                    {!selectedJuego.caracteristicas_nota && !selectedJuego.instrucciones_recarga && (
+                      <p style={{ color: 'var(--text-muted)' }}>No hay información adicional disponible para este producto.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* COLUMNA DERECHA: RESUMEN DE COMPRA ESTILO ASSAXSTORE */}
+              <aside className="detail-sidebar-area">
+                <div className="assax-summary-card">
+                  <h3 className="summary-title">
+                    <span className="highlight-green">RESUMEN DE VENTA</span>
+                  </h3>
+
+                  <div className="assax-summary-inner">
+                    {/* Game selection thumbnail */}
+                    <div className="assax-summary-game">
+                      <img 
+                        src={selectedJuego.icono_url ? (selectedJuego.icono_url.includes('?') ? `${selectedJuego.icono_url}&v=3` : `${selectedJuego.icono_url}?v=3`) : 'https://via.placeholder.com/60'} 
+                        alt={selectedJuego.nombre} 
+                      />
+                      <div className="game-details">
+                        <div className="game-name">{selectedJuego.nombre}</div>
+                        <div className="package-selection">
+                          {pendingItem ? (
+                            <span>💎 {pendingItem.p.nombre}</span>
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)' }}>💎 SELECCIONA UN PAQUETE</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="summary-divider"></div>
+
+                    {/* Combos quantity selector */}
+                    <div className="assax-summary-combos">
+                      <div className="combos-label-row">
+                        <span className="combos-title">COMBOS</span>
+                        <span className="combos-badge">X{quantity}</span>
+                      </div>
+                      <div className="assax-counter">
+                        <button 
+                          type="button" 
+                          onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                          disabled={!pendingItem}
+                        >
+                          -
+                        </button>
+                        <span>{quantity}</span>
+                        <button 
+                          type="button" 
+                          onClick={() => setQuantity(q => q + 1)}
+                          disabled={!pendingItem}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="summary-divider"></div>
+
+                    {/* Subtotal */}
+                    <div className="assax-summary-row">
+                      <span>SUBTOTAL</span>
+                      <span className="summary-val">
+                        {pendingItem ? (
+                          formatBsAssax(pendingItem.finalPrice.venta_bs * quantity)
+                        ) : (
+                          'Bs. 0,00'
+                        )}
+                        {pendingItem && selectedJuego.mostrar_precio_dual && (
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', textAlign: 'right', marginTop: '2px' }}>
+                            {formatUSD(pendingItem.finalPrice.venta_usd * quantity)}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+
+                    {/* Total a pagar */}
+                    <div className="assax-summary-total">
+                      <div className="total-label">TOTAL A PAGAR</div>
+                      <div className="total-price-box">
+                        <span className="total-price-val">
+                          {pendingItem ? (
+                            formatBsAssax(pendingItem.finalPrice.venta_bs * quantity)
+                          ) : (
+                            'Bs. 0,00'
+                          )}
+                          {pendingItem && selectedJuego.mostrar_precio_dual && (
+                            <span style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', textAlign: 'right', marginTop: '2px', fontWeight: 500 }}>
+                              {formatUSD(pendingItem.finalPrice.venta_usd * quantity)}
+                            </span>
+                          )}
+                        </span>
+                        {pendingItem && (
+                          <span className="badge-flash">FLASH</span>
                         )}
                       </div>
-                    </>
-                  ) : (
-                    <>
-                      <h3>¿Listo para recargar?</h3>
-                      <p>Inicia sesión o crea una cuenta para poder realizar compras y gestionar tus pedidos.</p>
-                      <div className="sidebar-buttons">
-                        <button className="btn-landing-primary w-full mb-12" onClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}>
-                          🔐 Iniciar Sesión
-                        </button>
-                        <button className="btn-landing-secondary w-full" onClick={() => { setAuthModalView('register'); setIsAuthModalOpen(true); }}>
-                          📝 Registrarse
-                        </button>
-                      </div>
-                    </>
-                  )}
+                    </div>
+
+                    <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                      Transacción segura SSL 🚀
+                    </div>
+                  </div>
                 </div>
 
+                {/* RULETA DE PREMIOS CARD */}
+                <div className="assax-roulette-card">
+                  <div className="roulette-ticket-icon">🎟️</div>
+                  <div className="roulette-info">
+                    <h4>RULETA DE PREMIOS</h4>
+                    <p>Obtén <b>1 ticket</b> por cada compra que realices hoy.</p>
+                  </div>
+                </div>
+
+                {/* Video tutorial */}
                 {selectedJuego.tutorial_video_url && (
                   <div 
                     className="tutorial-banner-card"
@@ -1526,191 +1934,6 @@ export default function Landing({ onNavigate }) {
                   </div>
                 )}
               </aside>
-
-              {/* LISTA DE PRECIOS E INFORMACIÓN */}
-              <div className="detail-content-area">
-                <div className="price-list-section">
-                  <h3>Selecciona un paquete</h3>
-                  {loadingProductos ? (
-                    <div className="spinner"></div>
-                  ) : (
-                    <>
-                      {(() => {
-                        const filteredProducts = productosJuego.filter(p => {
-                          if (currentViewType === 'gift_card') return p.tipo_producto === 'gift_card';
-                          if (currentViewType === 'paquete') return p.tipo_producto === 'paquete';
-                          return p.tipo_producto === 'recarga' || !p.tipo_producto;
-                        });
-
-                        return (
-                          <>
-                            {showTabs && (
-                              <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }}>
-                                {hasRecargas && (
-                                  <button 
-                                    onClick={() => setActiveProductType('recarga')}
-                                    style={{
-                                      flex: 1, padding: '10px', borderRadius: '12px', border: 'none',
-                                      backgroundColor: currentViewType === 'recarga' ? 'var(--accent-light)' : 'transparent',
-                                      color: currentViewType === 'recarga' ? 'var(--accent)' : 'var(--text-muted)',
-                                      border: currentViewType === 'recarga' ? '1px solid var(--accent)' : '1px solid var(--border)',
-                                      fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', minWidth: '120px'
-                                    }}
-                                  >
-                                    {selectedJuego?.metodo_recarga === 'cuenta_completa' || selectedJuego?.metodo_recarga === 'usuario_clave' ? 'Recarga Interna' : selectedJuego?.metodo_recarga === 'solo_usuario' ? 'Recarga por Usuario' : selectedJuego?.metodo_recarga === 'solo_correo' ? 'Recarga por Correo' : 'Recarga por ID'}
-                                  </button>
-                                )}
-                                {hasPaquetes && (
-                                  <button 
-                                    onClick={() => setActiveProductType('paquete')}
-                                    style={{
-                                      flex: 1, padding: '10px', borderRadius: '12px', border: 'none',
-                                      backgroundColor: currentViewType === 'paquete' ? 'var(--accent-light)' : 'transparent',
-                                      color: currentViewType === 'paquete' ? 'var(--accent)' : 'var(--text-muted)',
-                                      border: currentViewType === 'paquete' ? '1px solid var(--accent)' : '1px solid var(--border)',
-                                      fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', minWidth: '120px'
-                                    }}
-                                  >
-                                    Paquetes
-                                  </button>
-                                )}
-                                {hasGiftCards && (
-                                  <button 
-                                    onClick={() => setActiveProductType('gift_card')}
-                                    style={{
-                                      flex: 1, padding: '10px', borderRadius: '12px', border: 'none',
-                                      backgroundColor: currentViewType === 'gift_card' ? 'var(--accent-light)' : 'transparent',
-                                      color: currentViewType === 'gift_card' ? 'var(--accent)' : 'var(--text-muted)',
-                                      border: currentViewType === 'gift_card' ? '1px solid var(--accent)' : '1px solid var(--border)',
-                                      fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', minWidth: '120px'
-                                    }}
-                                  >
-                                    Gift Cards
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                            <div className="products-grid">
-                              {filteredProducts.map(prod => {
-                                const pricing = calcularPrecioVenta(prod, selectedJuego, config)
-                                const isSelected = pendingItem?.p?.id === prod.id;
-                                return (
-                                  <div 
-                                    key={prod.id} 
-                                    className={`product-card ${isSelected ? 'selected' : ''}`}
-                                    onClick={() => {
-                                      if (!user) {
-                                        setAuthModalView('login');
-                                        setIsAuthModalOpen(true);
-                                        return;
-                                      }
-                                      
-                                      const prodEffectiveMetodo = (prod.tipo_producto === 'gift_card') ? 'entrega_codigo' : effectiveMetodoRecarga;
-
-                                      if (prodEffectiveMetodo === 'sin_datos') {
-                                        // OK
-                                      } else if (prodEffectiveMetodo === 'solo_correo') {
-                                        if (!localRechargeData.account_email.trim()) {
-                                          alert('Por favor introduce el correo arriba primero.')
-                                          return
-                                        }
-                                      } else if (prodEffectiveMetodo === 'cuenta_completa') {
-                                        if (!localRechargeData.account_email.trim() || !localRechargeData.account_password.trim()) {
-                                          alert('Por favor introduce el correo y clave arriba primero.')
-                                          return
-                                        }
-                                      } else if (prodEffectiveMetodo === 'usuario_clave') {
-                                        if (!localRechargeData.account_user?.trim() || !localRechargeData.account_password.trim()) {
-                                          alert('Por favor introduce el usuario y clave arriba primero.')
-                                          return
-                                        }
-                                      } else if (prodEffectiveMetodo === 'sin_datos' || prodEffectiveMetodo === 'entrega_codigo') {
-                                        // No se requieren datos
-                                      } else {
-                                        if (!localRechargeData.player_id.trim()) {
-                                          alert('Por favor introduce el ID arriba primero.')
-                                          return
-                                        }
-                                        const isVerificationActive = selectedJuego.verificacion_api_activa || 
-                                            (selectedJuego.verificacion_api_activa === undefined && (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('bloodstrike')));
-
-                                        if (isVerificationActive) {
-                                          if (!verificacionResultado?.success || verificacionResultado.verified_id !== localRechargeData.player_id) {
-                                            alert('Debes verificar el nombre del jugador arriba antes de seleccionar un paquete.')
-                                            return
-                                          }
-                                        }
-                                      }
-                                      
-                                      const finalPrice = calcularPrecioVenta(prod, selectedJuego, config, perfil)
-                                      setPendingItem({ 
-                                        p: prod, 
-                                        selectedJuego, 
-                                        finalPrice, 
-                                        localRechargeData: {
-                                          ...localRechargeData,
-                                          nickname: (verificacionResultado?.success && verificacionResultado.verified_id === localRechargeData.player_id) 
-                                                    ? verificacionResultado.nickname : null
-                                        } 
-                                      })
-                                    }}
-                                  >
-                                    {/* CASHBACK BADGE */}
-                                    {(config?.cashback_activo === 'true' || config?.cashback_activo === '1') && (
-                                      <div className="product-cashback-badge">
-                                        ⚡ +{config?.cashback_porcentaje || '0'}% Cashback
-                                      </div>
-                                    )}
-                                    
-                                    {prod.icono_url && <img src={prod.icono_url.includes('?') ? `${prod.icono_url}&v=3` : `${prod.icono_url}?v=3`} alt="" className="product-icon" />}
-                                    <div className="product-name">{prod.nombre}</div>
-                                    <div className="product-price">
-                                      <span className="price-primary">{formatBs(pricing.venta_bs)}</span>
-                                      {selectedJuego.mostrar_precio_dual && (
-                                        <span className="price-secondary-usd">{formatUSD(pricing.venta_usd)}</span>
-                                      )}
-                                    </div>
-                                    
-                                    {(prod.info_adicional_texto || prod.info_adicional_imagen_url) && (
-                                      <div 
-                                        onClick={(e) => { e.stopPropagation(); setInfoProductModal(prod); }} 
-                                        className="product-info-trigger"
-                                        title="Información importante"
-                                      >
-                                        i
-                                      </div>
-                                    )}
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          </>
-                        )
-                      })()}
-                    </>
-                  )}
-                </div>
-
-                {/* Información / Guías */}
-                <div className="info-content-section">
-                  <div className="info-tab-header">
-                    <h4>Información de {selectedJuego.nombre}</h4>
-                  </div>
-                  <div className="info-body">
-                    {selectedJuego.caracteristicas_nota && (
-                      <div className="rich-text" style={{ marginBottom: '16px' }} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedJuego.caracteristicas_nota.replace(/\n/g, '<br/>')) }} />
-                    )}
-                    
-                    {selectedJuego.instrucciones_recarga && (
-                      <div className="rich-text" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedJuego.instrucciones_recarga.replace(/\n/g, '<br/>')) }} />
-                    )}
-
-                    {!selectedJuego.caracteristicas_nota && !selectedJuego.instrucciones_recarga && (
-                      <p style={{ color: 'var(--text-muted)' }}>No hay información adicional disponible para este producto.</p>
-                    )}
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         ) : (
