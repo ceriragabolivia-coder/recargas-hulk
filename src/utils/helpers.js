@@ -146,9 +146,33 @@ export function playAdminWelcomeSound() {
 }
 
 export function playOrderNotificationSound() {
-  if (localStorage.getItem('admin_sound_enabled') === 'false') return;
-  const audio = new Audio('/sounds/nuevo_pedido.mp3?v=2')
-  audio.play().catch(err => console.log('Error al reproducir sonido de pedido:', err))
+  if (localStorage.getItem('admin_sound_enabled') === 'false') {
+    console.log("Audio notificado cancelado: admin_sound_enabled es false");
+    return;
+  }
+  
+  console.log("Intentando reproducir sonido de nuevo pedido...");
+  let audioEl = document.getElementById('hulk-notification-audio');
+  if (!audioEl) {
+    audioEl = document.createElement('audio');
+    audioEl.id = 'hulk-notification-audio';
+    document.body.appendChild(audioEl);
+  }
+  
+  // Usar timestamp o versión para asegurar la descarga del archivo más reciente
+  audioEl.src = '/sounds/nuevo_pedido.mp3?v=' + Date.now();
+  
+  const playPromise = audioEl.play();
+  if (playPromise !== undefined) {
+    playPromise.then(() => {
+      console.log("Audio reproducido exitosamente.");
+    }).catch(err => {
+      console.warn("Bloqueo de autoplay o error al reproducir audio:", err);
+      // Fallback intentando con el constructor simple si el DOM falla
+      const fallbackAudio = new Audio('/sounds/nuevo_pedido.mp3?v=' + Date.now());
+      fallbackAudio.play().catch(e => console.error("Fallback audio falló también:", e));
+    });
+  }
 }
 
 export function playClientOrderSuccessSound() {
