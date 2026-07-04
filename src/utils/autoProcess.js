@@ -11,7 +11,7 @@ export async function processAutoDeliveryOrder(pedidoId) {
       return false;
     }
     
-    return data?.success || false;
+    return (data?.success && data?.completado) || false;
   } catch (error) {
     console.error('Error in auto-delivery processing:', error);
     return false;

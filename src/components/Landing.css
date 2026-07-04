@@ -1132,7 +1132,7 @@
 .marquee-content {
   display: inline-block;
   padding-left: 100%;
-  animation: marquee 30s linear infinite;
+  animation: marquee 120s linear infinite;
 }
 @keyframes marquee {
   0% { transform: translate3d(0, 0, 0); }
@@ -1375,7 +1375,7 @@
   .hidden-mobile { display: none !important; }
   .visible-mobile { display: flex !important; }
   .landing-header { height: 64px; }
-  .landing-header-inner { gap: 10px; }
+  .landing-header-inner { gap: 10px; padding-left: 0 !important; }
   .landing-header-left { gap: 10px; }
   .landing-header-right { gap: 12px; }
   .landing-logo-text { font-size: 16px; }

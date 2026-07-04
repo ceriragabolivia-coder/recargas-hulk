@@ -3303,7 +3303,7 @@ tr:last-child td { border-bottom: none; }
   .hidden-mobile { display: none !important; }
   .visible-mobile { display: flex !important; }
   .landing-header { height: 64px; }
-  .landing-header-inner { gap: 10px; }
+  .landing-header-inner { gap: 10px; padding-left: 0 !important; }
   .landing-header-left { gap: 10px; }
   .landing-header-right { gap: 12px; }
   .landing-logo-text { font-size: 16px; }

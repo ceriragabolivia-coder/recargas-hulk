@@ -437,8 +437,8 @@ export default function Checkout({ onFinish, embedded = false }) {
             p_description: `Reserva para pedido en proceso - USD`
           })
 
-          if (walletError || walletRes === false) {
-            alert(`ERROR COBRO USD: ${walletError?.message || 'Fondos insuficientes'}`);
+          if (walletError || walletRes === false || walletRes?.success === false) {
+            alert(`ERROR COBRO USD: ${walletError?.message || walletRes?.message || 'Fondos insuficientes'}`);
             setIsProcessing(false);
             return;
           }
@@ -459,8 +459,8 @@ export default function Checkout({ onFinish, embedded = false }) {
             p_description: `Pago Billetera Bs - Monto: ${amountBsToDeduct}`
           })
 
-          if (walletErrorBs || walletBsRes === false) {
-            alert(`ERROR COBRO BS: ${walletErrorBs?.message || 'Fondos insuficientes'}`);
+          if (walletErrorBs || walletBsRes === false || walletBsRes?.success === false) {
+            alert(`ERROR COBRO BS: ${walletErrorBs?.message || walletBsRes?.message || 'Fondos insuficientes'}`);
             setIsProcessing(false);
             return;
           }
@@ -536,12 +536,6 @@ export default function Checkout({ onFinish, embedded = false }) {
       
       // Reproducir sonido de caja (original)
       playCashRegisterSound()
-      
-      // Reproducir nuevo sonido de voz y mostrar notificación push (Solo para el cliente que lo crea)
-      try {
-        const audio = new Audio('/order-created-sound.mp3');
-        audio.play().catch(e => console.error("No se pudo reproducir sonido de pedido creado", e));
-      } catch (err) {}
       
       if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
         new Notification('¡Pedido Registrado!', {

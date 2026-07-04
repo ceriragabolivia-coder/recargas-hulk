@@ -28,6 +28,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
   const isNegocio = perfil?.rol?.toLowerCase() === 'negocio'
   const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
+  const canManage = isAdmin || isEmpleado
   
   // Utilidad para refrescar un pedido en la UI localmente
   const refreshPedidoData = async (pedidoId) => {
@@ -43,70 +44,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     }
   };
 
-  const processTiendaGiftVenOrder = async (pedidoId) => {
-    if (!config?.tiendagiftven_api_key) return false;
-    let anySent = false;
-    
-    const { data: pedidoActual } = await supabase
-      .from('pedidos')
-      .select('*, pedido_items(*, productos(*))')
-      .eq('id', pedidoId)
-      .single();
-      
-    if (!pedidoActual || !pedidoActual.pedido_items) return false;
 
-    for (const item of pedidoActual.pedido_items) {
-      if (item.productos?.proveedor_api_id && !item.proveedor_pedido_id && !item.estado_proveedor) {
-        anySent = true;
-        try {
-          console.log(`🚀 Enviando a API TiendaGiftVen item ${item.id}...`)
-          const payload = {
-            producto_id: parseInt(item.productos.proveedor_api_id, 10),
-            merchant_ref: `HULK-ITEM-${item.id}`
-          };
-          
-          if (item.player_id) {
-            payload.id_juego = item.player_id;
-            if (item.zone_id) payload.input2 = item.zone_id;
-          } else {
-            payload.cantidad = item.cantidad || 1;
-          }
-
-          const res = await fetch('/api/tiendagiftven/proxy?endpoint=comprar', {
-            method: 'POST',
-            headers: { 
-              'X-API-Key': config.tiendagiftven_api_key,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-          });
-          
-          if (!res.ok) {
-            const errData = await res.json().catch(()=>({}));
-            throw new Error(errData.error || 'Error HTTP ' + res.status);
-          }
-          const data = await res.json();
-          
-          if (data.ok) {
-            await supabase.from('pedido_items').update({
-              estado_proveedor: data.estado || 'procesando',
-              proveedor_pedido_id: data.pedido_id,
-              mensaje_proveedor: data.codigos ? data.codigos.join('\\n') : (data.mensaje || '')
-            }).eq('id', item.id);
-          } else {
-            throw new Error(data.error || 'Error respuesta proveedor');
-          }
-        } catch (e) {
-          console.error("❌ Error consumiendo API TiendaGiftVen:", e);
-          await supabase.from('pedido_items').update({
-            estado_proveedor: 'error',
-            mensaje_proveedor: e.message
-          }).eq('id', item.id);
-        }
-      }
-    }
-    return anySent;
-  };
   
   const maskSensitive = (val, type = 'text') => {
     if (!isEmpleado) return val;
@@ -169,6 +107,10 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   const [adminsList, setAdminsList] = useState([])
   const [loadingAdmins, setLoadingAdmins] = useState(false)
   const [adminSeleccionado, setAdminSeleccionado] = useState(null)
+  // Modal: verificar pago con opciones
+  const [showVerificarPagoModal, setShowVerificarPagoModal] = useState(false)
+  const [pedidoParaVerificar, setPedidoParaVerificar] = useState(null)
+  const [procesandoApi, setProcesandoApi] = useState(false)
 
 
   // Paginación
@@ -190,7 +132,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
       if (ownerId) {
         // Si es un negocio o admin de negocio, ve lo de su negocio o lo que él mismo pidió
         query = query.or(`owner_id.eq.${ownerId},cliente_id.eq.${user.id}`)
-      } else if (!isAdmin) {
+      } else if (!canManage) {
         // Si es cliente raso, solo ve lo suyo
         query = query.eq('cliente_id', user.id)
       }
@@ -507,12 +449,6 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
       updateData.fecha_respuesta = null
     }
 
-    // (Llamada a API TiendaGiftVen movida a función independiente processTiendaGiftVenOrder)
-    if (nuevoEstado === 'completado' || nuevoEstado === 'procesando') {
-      processTiendaGiftVenOrder(pedidoId).then(sent => {
-        if (sent) refreshPedidoData(pedidoId);
-      });
-    }
 
 
     // 2. Si el nuevo estado es COMPLETADO y no se ha registrado la venta aún, registrarla
@@ -532,7 +468,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
             p_account_email: item.account_email,
             p_account_password: item.account_password,
             p_vendedor_id: perfil?.cliente_uuid,
-            p_pedido_id: null,
+            p_pedido_id: pedidoActual.id,
             p_owner_id: perfil?.owner_id // Agregado para aislamiento de negocios
           })
           if (rpcError) {
@@ -654,6 +590,94 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
       }
     }
   }
+
+  const processTiendaGiftVenOrder = async (pedidoId, forceTrigger = false) => {
+    if (!forceTrigger) {
+      console.warn(`⚠️ Intento bloqueado de llamar a TiendaGiftVen para pedido #${pedidoId}. Razón: No se forzó el trigger desde el modal de Verificación.`);
+      return false;
+    }
+    console.log(`🚀 Iniciando proceso TiendaGiftVen seguro para pedido #${pedidoId}...`);
+    if (!config?.tiendagiftven_api_key) return false;
+    let anySent = false;
+    
+    const { data: pedidoActual } = await supabase
+      .from('pedidos')
+      .select('*, pedido_items(*, productos(*))')
+      .eq('id', pedidoId)
+      .single();
+      
+    if (!pedidoActual || !pedidoActual.pedido_items) return false;
+
+    for (const item of pedidoActual.pedido_items) {
+      if (item.productos?.proveedor_api_id && !item.proveedor_pedido_id && !item.estado_proveedor) {
+        anySent = true;
+        try {
+          console.log(`🚀 Enviando a API TiendaGiftVen item ${item.id}...`)
+          const payload = {
+            producto_id: parseInt(item.productos.proveedor_api_id, 10),
+            merchant_ref: `HULK-ITEM-${item.id}`
+          };
+          
+          if (item.player_id) {
+            payload.id_juego = item.player_id;
+            if (item.zone_id) payload.input2 = item.zone_id;
+          } else {
+            payload.cantidad = item.cantidad || 1;
+          }
+
+          const res = await fetch('/api/tiendagiftven/proxy?endpoint=comprar', {
+            method: 'POST',
+            headers: { 
+              'X-API-Key': config.tiendagiftven_api_key,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          });
+          
+          if (!res.ok) {
+            const errData = await res.json().catch(()=>({}));
+            throw new Error(errData.error || 'Error HTTP ' + res.status);
+          }
+          const data = await res.json();
+          
+          if (data.ok) {
+            const isCompleted = data.estado === 'completado';
+            await supabase.from('pedido_items').update({
+              estado_proveedor: data.estado || 'procesando',
+              proveedor_pedido_id: data.pedido_id,
+              mensaje_proveedor: data.codigos ? data.codigos.join('\n') : (data.mensaje || ''),
+              estado: isCompleted ? 'completado' : 'procesando'
+            }).eq('id', item.id);
+          } else {
+            throw new Error(data.error || 'Error respuesta proveedor');
+          }
+        } catch (e) {
+          console.error("❌ Error consumiendo API TiendaGiftVen:", e);
+          await supabase.from('pedido_items').update({
+            estado_proveedor: 'error',
+            mensaje_proveedor: e.message
+          }).eq('id', item.id);
+        }
+      }
+    }
+
+    if (anySent) {
+      const { data: updatedItems } = await supabase
+        .from('pedido_items')
+        .select('*')
+        .eq('pedido_id', pedidoId);
+
+      if (updatedItems && updatedItems.length > 0) {
+        const allCompleted = updatedItems.every(i => i.estado === 'completado');
+        if (allCompleted) {
+          console.log(`🎉 Todos los items completados inmediatamente por el proveedor. Completando pedido #${pedidoId}...`);
+          await updateEstado(pedidoId, 'completado');
+        }
+      }
+    }
+
+    return anySent;
+  };
 
   const handleReembolso = async (pedido) => {
     // Primero mostrar selector de moneda
@@ -845,43 +869,158 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
 
   const handleVerificarPago = async (pedido, esValido) => {
     if (esValido) {
-      const { data, error } = await supabase
-        .from('pedidos')
-        .update({ pago_verificado: true, updated_at: new Date().toISOString() })
-        .eq('id', pedido.id)
-        .select('*, pedido_items(*, productos(*))')
-        .single();
-
-      if (error) {
-        console.error("Error validando pago:", error);
-        showAlert("Error al verificar el pago: " + error.message, 'error');
-        return;
-      }
-
-      if (data) {
-        const pedFinal = { ...data, cliente: pedido.cliente, atendido_por: pedido.atendido_por }
-        setSelectedPedido(pedFinal);
-        setPedidos(prev => prev.map(p => p.id === data.id ? pedFinal : p));
-        playCashRegisterSound();
-
-        // Intentar autoprocesamiento en background si hay códigos (Baúl)
-        processAutoDeliveryOrder(data.id).then(processed => {
-          if (processed) {
-            console.log('Pedido auto-procesado tras verificación manual');
-            refreshPedidoData(data.id);
-          }
-        }).catch(console.error);
-
-        // Procesar TiendaGiftVen API
-        processTiendaGiftVenOrder(data.id).then(sent => {
-          if (sent) refreshPedidoData(data.id);
-        });
-      }
+      // Mostrar modal de opciones en lugar de procesar automáticamente
+      setPedidoParaVerificar(pedido);
+      setShowVerificarPagoModal(true);
     } else {
       // Si se rechaza el pago
       await updatePedidoField(pedido.id, 'pago_verificado', false);
       playErrorSound();
     }
+  }
+
+  const ejecutarVerificacionPago = async (pedido, modoApi) => {
+    setShowVerificarPagoModal(false);
+    setProcesandoApi(true);
+    try {
+      const updatePayload = { pago_verificado: true, updated_at: new Date().toISOString() };
+      if (modoApi) {
+        updatePayload.estado = 'procesando';
+        updatePayload.atendido_por_id = user?.id;
+      }
+
+      const { data, error } = await supabase
+        .from('pedidos')
+        .update(updatePayload)
+        .eq('id', pedido.id)
+        .select('*, pedido_items(*, productos(*))')
+        .single();
+
+      if (error) {
+        showAlert('Error al verificar el pago: ' + error.message, 'error');
+        return;
+      }
+
+      if (data) {
+        const pedFinal = { ...data, cliente: pedido.cliente, atendido_por: pedido.atendido_por };
+        setSelectedPedido(pedFinal);
+        setPedidos(prev => prev.map(p => p.id === data.id ? pedFinal : p));
+        playCashRegisterSound();
+
+        if (modoApi) {
+          // Modo API: intentar entrega automática de baúl + API proveedor
+          const baul = await processAutoDeliveryOrder(data.id).catch(() => false);
+          if (baul) {
+            refreshPedidoData(data.id);
+            showAlert('✅ Pago verificado y recarga procesada automáticamente desde el baúl.', 'success');
+            return;
+          }
+          const apiSent = await processTiendaGiftVenOrder(data.id, true);
+          if (apiSent) {
+            refreshPedidoData(data.id);
+            showAlert('🚀 Pago verificado. La recarga fue enviada al proveedor API. Espera la confirmación.', 'success');
+          } else {
+            showAlert('⚠️ Pago verificado, pero no hay API de proveedor configurada para este producto. Procesa manualmente.', 'warning');
+          }
+        } else {
+          // Modo manual: solo marcar como verificado
+          showAlert('✅ Pago verificado. El pedido está listo para ser tomado y procesado manualmente.', 'success');
+        }
+      }
+    } catch (err) {
+      showAlert('Error inesperado: ' + err.message, 'error');
+    } finally {
+      setProcesandoApi(false);
+      setPedidoParaVerificar(null);
+    }
+  }
+
+  const renderVerificarPagoModal = () => {
+    if (!showVerificarPagoModal || !pedidoParaVerificar) return null;
+    const p = pedidoParaVerificar;
+    const tieneApi = config?.tiendagiftven_api_key && p.pedido_items?.some(i => i.productos?.proveedor_api_id);
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.88)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 1300, animation: 'fadeIn 0.2s ease'
+      }} onClick={() => { setShowVerificarPagoModal(false); setPedidoParaVerificar(null); }}>
+        <div style={{
+          backgroundColor: '#16191e', width: '100%', maxWidth: '480px',
+          borderRadius: '24px', padding: '32px', border: '1px solid rgba(255,255,255,0.08)',
+          boxShadow: '0 30px 70px rgba(0,0,0,0.7)', position: 'relative', overflow: 'hidden'
+        }} onClick={e => e.stopPropagation()}>
+          {/* Barra superior verde */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #22c55e, #00d2ff)' }} />
+
+          <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+            <div style={{ fontSize: '40px', marginBottom: '10px' }}>✅</div>
+            <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', margin: '0 0 6px 0' }}>Pago Verificado</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>
+              Pedido <strong style={{ color: '#fff' }}>#{p.numero_pedido}</strong> — Ref: <strong style={{ color: '#22c55e' }}>{p.referencia_pago}</strong>
+            </p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '6px' }}>
+              ¿Cómo deseas procesar la recarga?
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {/* Opción 1: API Proveedor */}
+            <button
+              onClick={() => ejecutarVerificacionPago(p, true)}
+              disabled={procesandoApi}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '16px',
+                padding: '18px 20px', borderRadius: '16px', border: '2px solid rgba(0,210,255,0.4)',
+                backgroundColor: 'rgba(0,210,255,0.07)', cursor: procesandoApi ? 'not-allowed' : 'pointer',
+                textAlign: 'left', transition: 'all 0.2s', opacity: procesandoApi ? 0.6 : 1
+              }}
+              onMouseEnter={e => { if (!procesandoApi) e.currentTarget.style.borderColor = '#00d2ff'; e.currentTarget.style.backgroundColor = 'rgba(0,210,255,0.14)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(0,210,255,0.4)'; e.currentTarget.style.backgroundColor = 'rgba(0,210,255,0.07)'; }}
+            >
+              <div style={{ fontSize: '28px', flexShrink: 0 }}>🤖</div>
+              <div>
+                <div style={{ fontWeight: 700, color: '#00d2ff', fontSize: '15px', marginBottom: '3px' }}>Procesar con API del Proveedor</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                  {tieneApi
+                    ? 'Envía la orden automáticamente al proveedor (TiendaGiftVen) y realiza la recarga al jugador.'
+                    : 'Intenta entrega automática desde el baúl. Si no hay stock, deberás procesarlo manualmente.'}
+                </div>
+              </div>
+            </button>
+
+            {/* Opción 2: Manual */}
+            <button
+              onClick={() => ejecutarVerificacionPago(p, false)}
+              disabled={procesandoApi}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '16px',
+                padding: '18px 20px', borderRadius: '16px', border: '2px solid rgba(139,92,246,0.4)',
+                backgroundColor: 'rgba(139,92,246,0.07)', cursor: procesandoApi ? 'not-allowed' : 'pointer',
+                textAlign: 'left', transition: 'all 0.2s', opacity: procesandoApi ? 0.6 : 1
+              }}
+              onMouseEnter={e => { if (!procesandoApi) e.currentTarget.style.borderColor = '#8b5cf6'; e.currentTarget.style.backgroundColor = 'rgba(139,92,246,0.14)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.4)'; e.currentTarget.style.backgroundColor = 'rgba(139,92,246,0.07)'; }}
+            >
+              <div style={{ fontSize: '28px', flexShrink: 0 }}>👨‍💻</div>
+              <div>
+                <div style={{ fontWeight: 700, color: '#8b5cf6', fontSize: '15px', marginBottom: '3px' }}>Procesar Manualmente</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                  Solo marca el pago como verificado. Tú o un operario realizarán la recarga manualmente.
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => { setShowVerificarPagoModal(false); setPedidoParaVerificar(null); }}
+              style={{ padding: '12px', borderRadius: '12px', border: '1px solid var(--border-color)', backgroundColor: 'transparent', color: 'var(--text-muted)', fontWeight: 600, cursor: 'pointer', marginTop: '4px' }}
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const handleTomarPedido = async (pedido) => {
@@ -1715,7 +1854,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
           </div>
 
           {/* Acciones Rápidas en la Cabecera */}
-          {isAdmin && (
+          {canManage && (
             <div className="pedidos-header-actions" style={{ display: 'flex', gap: '6px' }}>
               <button
                 className="btn btn-ghost btn-sm"
@@ -1894,6 +2033,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
         {renderReembolsoModal()}
         {renderAsignarAdminModal()}
         {renderAtribuirModal()}
+        {renderVerificarPagoModal()}
 
         <div className="pedidos-grid-responsive">
           {renderAlertModal()}
@@ -1952,7 +2092,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                       {selectedPedido.pago_verificado === true ? 'Verificado' :
                         selectedPedido.pago_verificado === false ? 'Rechazado' : 'Sin Verificar'}
                     </span>
-                    {isAdmin && (
+                    {canManage && (
                       <div style={{ display: 'flex', gap: '4px' }}>
                         <button
                           onClick={() => handleVerificarPago(selectedPedido, true)}
@@ -1976,7 +2116,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                 </div>
 
                 {/* BLOQUE DE CANCELACIÓN ESPECIAL (PAGO NO ENCONTRADO) */}
-                {isAdmin && selectedPedido.pago_verificado === false && selectedPedido.estado !== 'cancelado' && (
+                {canManage && selectedPedido.pago_verificado === false && selectedPedido.estado !== 'cancelado' && (
                   <div style={{
                     marginTop: '12px',
                     padding: '16px',
@@ -2044,7 +2184,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                 <span className="summary-label">Total</span>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontWeight: 800, fontSize: '18px', color: 'var(--accent-success)' }}>{formatBs(selectedPedido.total_bs)}</div>
-                  {isAdmin && <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{formatUSD(selectedPedido.total_usd)}</div>}
+                  {canManage && <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{formatUSD(selectedPedido.total_usd)}</div>}
                 </div>
               </div>
 
@@ -2057,7 +2197,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                     <div translate="no" className="notranslate" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', backgroundColor: 'rgba(34, 197, 94, 0.08)', borderRadius: '6px', border: '1px solid rgba(34, 197, 94, 0.2)', marginTop: '4px' }}>
                       <span style={{ color: 'var(--text-muted)', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>💸 <span style={{color: '#22c55e', fontWeight: 600}}>Cash Back ({p}%)</span></span>
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontWeight: 800, color: 'var(--accent-success)', fontSize: '15px' }}>+{isBs ? formatBs(monto) : (isAdmin ? formatUSD(monto) : '')}</div>
+                        <div style={{ fontWeight: 800, color: 'var(--accent-success)', fontSize: '15px' }}>+{isBs ? formatBs(monto) : (canManage ? formatUSD(monto) : '')}</div>
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Monto retornado a Billetera</div>
                       </div>
                     </div>
@@ -2103,7 +2243,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                     </span>
 
                     {/* Botón Liberar Pedido */}
-                    {isAdmin && esElOperador(selectedPedido) && selectedPedido.estado === 'procesando' && (
+                    {canManage && esElOperador(selectedPedido) && selectedPedido.estado === 'procesando' && (
                       <button
                         onClick={() => handleLiberarPedido(selectedPedido)}
                         style={{
@@ -2197,7 +2337,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                           />
                           <div style={{ padding: '4px', textAlign: 'center', fontSize: '10px', color: 'var(--accent-primary)', backgroundColor: 'rgba(0,210,255,0.05)', fontWeight: 600 }}>Ampliar ↗</div>
                         </div>
-                        {isAdmin && (
+                        {canManage && (
                           <button 
                             onClick={(e) => { e.stopPropagation(); handleRemoveImage(url); }} 
                             style={{ position: 'absolute', top: -6, right: -6, width: 22, height: 22, borderRadius: '50%', backgroundColor: '#ef4444', color: '#fff', border: 'none', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.4)', zIndex: 10 }}
@@ -2213,7 +2353,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
             })()}
 
             {/* Panel de Gestión (Unificado) */}
-            {isAdmin && (
+            {canManage && (
               <div style={{ marginTop: '10px', borderTop: '1px solid var(--border-color)', paddingTop: '8px' }}>
                 <div className="pedidos-gestion-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px' }}>
                   <div>
@@ -2334,7 +2474,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                        <span className="product-item-price">{formatBs(item.precio_bs)}</span>
 
                        {/* BOTONES ADMIN */}
-                       {isAdmin && esElOperador(selectedPedido) && selectedPedido.estado === 'procesando' && (
+                       {canManage && esElOperador(selectedPedido) && selectedPedido.estado === 'procesando' && (
                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', marginTop: '6px' }}>
                             <button
                                onClick={() => updateItemEstado(item.id, item.estado === 'completado' ? 'pendiente' : 'completado', null)}
@@ -2359,7 +2499,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                   </div>
 
                   {/* CAJA DE REFERENCIA (ADMIN -> CLIENTE) */}
-                  {isAdmin && esElOperador(selectedPedido) && selectedPedido.estado === 'procesando' ? (
+                  {canManage && esElOperador(selectedPedido) && selectedPedido.estado === 'procesando' ? (
                      <div style={{ marginBottom: '8px' }}>
                         <input 
                            type="text" 
@@ -2465,7 +2605,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                   )}
                   
                   {/* CAJA DE SELECCIÓN DE RECHAZO (ADMIN) */}
-                  {rechazandoItem === item.id && isAdmin && (
+                  {rechazandoItem === item.id && canManage && (
                      <div style={{ marginTop: '12px', padding: '16px', backgroundColor: 'rgba(239, 68, 68, 0.08)', borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.3)', animation: 'fadeIn 0.2s' }}>
                        <label style={{ display: 'block', fontSize: '12px', color: '#ef4444', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px' }}>Motivo del Fallo de Recarga:</label>
                        
@@ -2511,6 +2651,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
 
   // Vista de lista
   return (
+    <>
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: embedded ? '0' : '0 32px 32px' }}>
       <style>{`
         .orders-table-wrapper {
@@ -2926,5 +3067,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
         </>
       )}
     </div>
+    {renderVerificarPagoModal()}
+    </>
   )
 }

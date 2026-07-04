@@ -546,7 +546,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
             localStorage.setItem(seenKey, 'true');
             
             try {
-              const audio = new Audio('/liquidation-sound.mp3');
+              const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3');
               audio.play().catch(e => console.error("No se pudo reproducir sonido de liquidación", e));
             } catch(err) {}
 
@@ -667,10 +667,9 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
                  notifiedAssignments.add(assignKey)
                  
                  // Sound
-                 try {
-                   const audio = new Audio('/assign-sound.mp3');
-                   audio.play().catch(e => console.error("No se pudo reproducir el sonido:", e));
-                 } catch (err) {}
+                  try {
+                    playOrderNotificationSound();
+                  } catch (err) {}
                  
                  // Push Noti
                  if (Notification.permission === 'granted') {
@@ -777,10 +776,10 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
             const seenKey = `liq_seen_${liq.id}`;
             localStorage.setItem(seenKey, 'true');
 
-            try {
-              const audio = new Audio('/liquidation-sound.mp3');
-              audio.play().catch(e => console.error("No se pudo reproducir sonido de liquidación", e));
-            } catch (err) {}
+             try {
+               const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3');
+               audio.play().catch(e => console.error("No se pudo reproducir sonido de liquidación", e));
+             } catch (err) {}
 
             const montoStr = liq.moneda === 'usd' ? formatUSD(liq.monto) : formatBs(liq.monto);
 

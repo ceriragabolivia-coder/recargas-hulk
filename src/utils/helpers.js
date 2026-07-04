@@ -141,23 +141,23 @@ export function playErrorSound() {
 
 export function playAdminWelcomeSound() {
   if (localStorage.getItem('admin_sound_enabled') === 'false') return;
-  const audio = new Audio('/assets/audio/admin_welcome.mp3')
+  const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3')
   audio.play().catch(err => console.log('Error al reproducir audio de bienvenida:', err))
 }
 
 export function playOrderNotificationSound() {
   if (localStorage.getItem('admin_sound_enabled') === 'false') return;
-  const audio = new Audio('/assets/audio/new_order.mp3')
+  const audio = new Audio('/sounds/nuevo_pedido.mp3')
   audio.play().catch(err => console.log('Error al reproducir sonido de pedido:', err))
 }
 
 export function playClientOrderSuccessSound() {
-  const audio = new Audio('/assets/audio/client_order_success.mp3')
+  const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3')
   audio.play().catch(err => console.log('Error al reproducir sonido de éxito de pedido:', err))
 }
 
 export function playClientWelcomeSound() {
-  const audio = new Audio('/assets/audio/client_welcome.mp3')
+  const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3')
   audio.play().catch(err => console.log('Error al reproducir sonido de bienvenida cliente:', err))
 }
 

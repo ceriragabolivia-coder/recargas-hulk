@@ -8,6 +8,12 @@ function buildRoles(rolPrincipal, rolesAdicionales) {
   return Array.from(new Set([rolPrincipal?.toLowerCase(), ...extra].filter(Boolean)))
 }
 
+// Verifica si el usuario está pendiente de aprobación y lo desconecta si es necesario
+async function checkAndBlockPendingUser(pData, authUser) {
+  // Permitimos que el usuario explore el catálogo y listas de precios incluso si está pendiente
+  return false
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [perfil, setPerfil] = useState(null)
@@ -216,8 +222,14 @@ export function AuthProvider({ children }) {
           
           // Actualización atómica para evitar parpadeos
           if (pData) {
-            setPerfil(pData)
-            setupRealtime(u.id)
+            const blocked = await checkAndBlockPendingUser(pData, u)
+            if (!blocked) {
+              setPerfil(pData)
+              setupRealtime(u.id)
+            } else {
+              setUser(null)
+              setPerfil(null)
+            }
           }
         }
       } catch (err) {
@@ -251,10 +263,16 @@ export function AuthProvider({ children }) {
         
         const pData = await fetchPerfilData(u.id, u)
         
-        // Actualización atómica
+        // Actualización atómica + bloqueo si está pendiente
         if (pData) {
-          setPerfil(pData)
-          setupRealtime(u.id)
+          const blocked = await checkAndBlockPendingUser(pData, u)
+          if (!blocked) {
+            setPerfil(pData)
+            setupRealtime(u.id)
+          } else {
+            setUser(null)
+            setPerfil(null)
+          }
         }
         setLoading(false)
       }
