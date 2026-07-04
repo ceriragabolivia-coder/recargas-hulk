@@ -147,7 +147,7 @@ export function playAdminWelcomeSound() {
 
 export function playOrderNotificationSound() {
   if (localStorage.getItem('admin_sound_enabled') === 'false') return;
-  const audio = new Audio('/sounds/nuevo_pedido.mp3')
+  const audio = new Audio('/sounds/nuevo_pedido.mp3?v=2')
   audio.play().catch(err => console.log('Error al reproducir sonido de pedido:', err))
 }
 
