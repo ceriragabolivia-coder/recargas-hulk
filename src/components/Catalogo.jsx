@@ -1009,10 +1009,15 @@ export default function Catalogo() {
                             alert('Por favor introduce el usuario y clave primero.')
                             return
                           }
+                        } else if (prodEffectiveMetodo === 'opcional_cuenta') {
+                          if (localRechargeData.cuentaOpcion === 'propia' && (!localRechargeData.account_email?.trim() || !localRechargeData.account_password?.trim())) { 
+                            alert('Por favor introduce el correo y clave primero.')
+                            return
+                          }
                         } else if (prodEffectiveMetodo === 'entrega_codigo') {
                           // No validation needed
                         } else {
-                          if (!localRechargeData.player_id.trim()) {
+                          if (!localRechargeData.player_id?.trim()) {
                             alert('Por favor introduce el ID del jugador primero.')
                             return
                           }

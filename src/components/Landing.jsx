@@ -1506,10 +1506,17 @@ export default function Landing({ onNavigate }) {
                                       if (!localRechargeData.account_email.trim() || !localRechargeData.account_password.trim()) { alert('Por favor introduce el correo y clave.'); return; }
                                     } else if (prodEffectiveMetodo === 'usuario_clave') {
                                       if (!localRechargeData.account_user?.trim() || !localRechargeData.account_password.trim()) { alert('Por favor introduce el usuario y clave.'); return; }
+                                    } else if (prodEffectiveMetodo === 'solo_usuario') {
+                                      if (!localRechargeData.account_user?.trim()) { alert('Por favor introduce el usuario.'); return; }
+                                    } else if (prodEffectiveMetodo === 'opcional_cuenta') {
+                                      if (localRechargeData.cuentaOpcion === 'propia' && (!localRechargeData.account_email?.trim() || !localRechargeData.account_password?.trim())) { 
+                                        alert('Por favor introduce el correo y clave.'); 
+                                        return; 
+                                      }
                                     } else if (prodEffectiveMetodo === 'sin_datos' || prodEffectiveMetodo === 'entrega_codigo') {
                                       // OK
                                     } else {
-                                      if (!localRechargeData.player_id.trim()) { alert('Por favor introduce el ID.'); return; }
+                                      if (!localRechargeData.player_id?.trim()) { alert('Por favor introduce el ID.'); return; }
                                       const isVerificationActive = selectedJuego.verificacion_api_activa || 
                                           (selectedJuego.verificacion_api_activa === undefined && (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('bloodstrike')));
 
