@@ -103,6 +103,14 @@ export default function PagosApk({ onNavigate }) {
                         >
                           Pedido #{pago.pedidos.numero_pedido}
                         </span>
+                      ) : pago.usuario_id && pago.status === 'usado' ? (
+                        <span 
+                          onClick={() => onNavigate && onNavigate('usuarios', { openWalletUserId: pago.usuario_id })}
+                          style={{ color: '#0ea5e9', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}
+                          title="Clic para ver billetera del usuario"
+                        >
+                          Recarga de Billetera
+                        </span>
                       ) : (
                         <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Sin relación</span>
                       )}

@@ -5,7 +5,7 @@ import { formatUSD, formatBs } from '../utils/helpers'
 import AlertModal from './AlertModal'
 import Pedidos from './Pedidos'
 
-export default function Usuarios({ onNavigate }) {
+export default function Usuarios({ onNavigate, params }) {
   const { clientes, loading, updateProfileRoleAndDiscount, updateRolesAdicionales, updateProfile, updateProfileStatus, ajustarSaldoWallet, ajustarSaldoWalletBs, resetUserPassword, deleteClienteDefinitivo, refetch } = useClientes()
   const { perfil } = useAuth()
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
@@ -407,6 +407,17 @@ export default function Usuarios({ onNavigate }) {
   }
 
   // Lógica de filtrado y paginación
+  const filterKey = params?.filterKey || ''
+
+  useEffect(() => {
+    if (params?.openWalletUserId && clientes.length > 0) {
+      const targetUser = clientes.find(c => c.auth_user_id === params.openWalletUserId)
+      if (targetUser) {
+        handleVerMovimientos(targetUser)
+      }
+    }
+  }, [params?.openWalletUserId, clientes.length])
+
   const filteredClientes = clientes.filter(c => {
     if (!searchTerm) return true
     const term = searchTerm.toLowerCase()
