@@ -82,6 +82,38 @@ export function WalletProvider({ children }) {
       comprobante_url: comprobanteUrl,
       moneda
     }).select()
+
+    // =========== INTEGRACIÓN APK: AUTO-APROBACIÓN ===========
+    if (!error && data && data.length > 0 && referencia) {
+      try {
+        const recargaId = data[0].id;
+        const { data: apkPago } = await supabase
+          .from('pagos_apk')
+          .select('id, monto')
+          .eq('referencia', referencia.trim())
+          .eq('status', 'disponible')
+          .single();
+          
+        if (apkPago) {
+          if (Math.abs(parseFloat(apkPago.monto) - parseFloat(monto)) <= 0.05) {
+            await supabase.from('pagos_apk').update({
+              status: 'usado',
+              usuario_id: user.id
+            }).eq('id', apkPago.id);
+
+            await supabase.rpc('aprobar_recarga_rpc', {
+              p_recarga_id: recargaId,
+              p_admin_id: user.id
+            });
+            console.log(`✅ Recarga ${recargaId} auto-aprobada desde el cliente (APK previo).`);
+          }
+        }
+      } catch (e) {
+        console.error('Error verificando pagos_apk desde billetera:', e);
+      }
+    }
+    // =======================================================
+
     return { data, error }
   }
 
