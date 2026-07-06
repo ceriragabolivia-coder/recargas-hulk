@@ -854,9 +854,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     }
   }
 
-      </div>
-    );
-  }
+
 
   const handleTomarPedido = async (pedido) => {
     // Si ya tiene dueño, no hacer nada (seguridad extra)
