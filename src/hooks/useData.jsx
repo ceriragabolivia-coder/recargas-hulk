@@ -280,8 +280,44 @@ export function useVentas() {
       p_vendedor_id: perfil?.cliente_uuid,
       p_owner_id: isNegocio ? user.id : null
     })
+
     if (!error) {
       await fetchVentasHoy()
+
+      // =========== INTEGRACIÓN APK: AUTO-DESPACHO ===========
+      try {
+        if (referencia_pago) {
+          // data suele contener el success y el pedido_id en este sistema, o el id directamente
+          const pedidoId = data?.pedido_id || data?.id || (typeof data === 'number' ? data : null);
+          
+          if (pedidoId) {
+            const { data: apkPago } = await supabase
+              .from('pagos_apk')
+              .select('id, monto')
+              .eq('referencia', referencia_pago)
+              .eq('status', 'disponible')
+              .single();
+              
+            if (apkPago) {
+              // Actualizamos pagos_apk para marcarlo como usado
+              await supabase.from('pagos_apk').update({
+                status: 'usado',
+                pedido_id: pedidoId,
+                usuario_id: perfil?.id || cliente_id
+              }).eq('id', apkPago.id);
+
+              // Auto-despachar el pedido recién creado
+              await supabase.rpc('procesar_pedido_automatico_rpc', {
+                p_pedido_id: pedidoId
+              });
+              console.log(`✅ Pedido ${pedidoId} auto-despachado desde el cliente (APK previo).`);
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Error verificando pagos_apk desde el registrarVenta:', e);
+      }
+      // =======================================================
     }
     return { data, error }
   }
@@ -298,6 +334,41 @@ export function useVentas() {
     if (data && !data.success) {
       throw new Error(data.message)
     }
+
+    // =========== INTEGRACIÓN APK: AUTO-DESPACHO ===========
+    // Si la referencia es válida y se registró, vamos a verificar si EL APK ya la había reportado previamente.
+    try {
+      if (origen === 'pedido' && data?.pedido_id) {
+        const { data: apkPago } = await supabase
+          .from('pagos_apk')
+          .select('id, monto')
+          .eq('referencia', referencia)
+          .eq('status', 'disponible')
+          .single();
+          
+        if (apkPago) {
+          // Validar el monto con una tolerancia de redondeo
+          if (Math.abs(parseFloat(apkPago.monto) - parseFloat(monto)) <= 0.05) {
+            // Actualizamos pagos_apk para marcarlo como usado
+            await supabase.from('pagos_apk').update({
+              status: 'usado',
+              pedido_id: data.pedido_id,
+              usuario_id: perfil?.id
+            }).eq('id', apkPago.id);
+
+            // Auto-despachar el pedido recién creado
+            await supabase.rpc('procesar_pedido_automatico_rpc', {
+              p_pedido_id: data.pedido_id
+            });
+            console.log(`✅ Pedido ${data.pedido_id} auto-despachado desde el cliente (APK previo).`);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error verificando pagos_apk desde el cliente:', e);
+    }
+    // =======================================================
+
     return data
   }
 

@@ -39,16 +39,39 @@ export default async function handler(req, res) {
     // 1. Buscar si existe un pedido con esta referencia para relacionarlo automáticamente
     let pedido_id = null;
     let usuario_id = null;
+    let auto_despachado = false;
 
     const { data: pedido, error: pedidoError } = await supabase
       .from('pedidos')
-      .select('id, cliente_id')
+      .select('id, cliente_id, estado, total_bs')
       .eq('referencia_pago', referencia.toString().trim())
       .single();
 
     if (pedido && !pedidoError) {
       pedido_id = pedido.id;
       usuario_id = pedido.cliente_id;
+      
+      // AUTO DESPACHO SI EL PEDIDO ESTÁ PENDIENTE Y EL MONTO COINCIDE
+      if (pedido.estado === 'pendiente') {
+        const montoRecibido = parseFloat(monto);
+        const montoEsperado = parseFloat(pedido.total_bs);
+        
+        // Tolerancia de 0.01 bs para evitar errores por redondeo
+        if (Math.abs(montoRecibido - montoEsperado) <= 0.05) {
+            // Aprobar pedido automáticamente a través del RPC
+            const { data: processData, error: processError } = await supabase.rpc('procesar_pedido_automatico_rpc', {
+                p_pedido_id: pedido.id
+            });
+            if (!processError && processData?.success) {
+                auto_despachado = true;
+                console.log(`✅ Pedido ${pedido.id} auto-despachado vía Webhook APK`);
+            } else {
+                console.error(`❌ Error en auto-despacho del pedido ${pedido.id}:`, processError || processData);
+            }
+        } else {
+            console.warn(`⚠️ Pedido ${pedido.id} no auto-despachado por diferencia de montos. Esperado: ${montoEsperado}, Recibido: ${montoRecibido}`);
+        }
+      }
     }
 
     // 2. Insertar el pago en la base de datos
@@ -63,6 +86,7 @@ export default async function handler(req, res) {
         fecha_pago: fecha ? new Date(fecha).toISOString() : new Date().toISOString(),
         pedido_id: pedido_id,
         usuario_id: usuario_id,
+        status: auto_despachado ? 'usado' : 'disponible',
         raw_data: payload // Guardamos todo por si hay datos extra
       })
       .select()
@@ -81,6 +105,7 @@ export default async function handler(req, res) {
       success: true, 
       message: 'Pago registrado exitosamente',
       relacionado_con_pedido: pedido_id !== null,
+      auto_despachado: auto_despachado,
       data 
     });
 
