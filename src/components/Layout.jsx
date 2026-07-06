@@ -23,6 +23,7 @@ const NAV_ITEMS = [
   { key: 'reportes', icon: '📈', label: 'Reportes', path: '/Reportes' },
   { key: 'pagos_admins', icon: '💸', label: 'Pagos Admins', path: '/Pagos-Admins' },
   { key: 'pagos_bdv', icon: '📱', label: 'Pagos Automáticos', path: '/Pagos-BDV' },
+  { key: 'pagos_apk', icon: '📲', label: 'Pagos APK', path: '/Pagos-Apk' },
   { key: 'gestion_socios', icon: '🤝', label: 'Socios y Utilidades', path: '/Gestion-Socios' },
   { key: 'mi_participacion', icon: '🤝', label: 'Mi Participación', path: '/Mi-Participacion' },
   { key: 'estadisticas', icon: '📈', label: 'Estadísticas Pro', path: '/Estadisticas' },
@@ -1043,7 +1044,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
               <div className="nav-section-label">Principal</div>
               {NAV_ITEMS.filter(i => ['dashboard', 'billetera', 'catalogo', 'ventas'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Gestión</div>
-              {NAV_ITEMS.filter(i => ['productos', 'pedidos', 'usuarios', 'revendedores', 'chats', 'proveedor_tgv', 'pagos_admins', 'gestion_socios', 'config', 'gestion_landing', 'gestion_paginas'].includes(i.key)).map(renderNavItem)}
+              {NAV_ITEMS.filter(i => ['productos', 'pedidos', 'usuarios', 'revendedores', 'chats', 'proveedor_tgv', 'pagos_admins', 'pagos_apk', 'gestion_socios', 'config', 'gestion_landing', 'gestion_paginas'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Análisis</div>
               {NAV_ITEMS.filter(i => ['reportes', 'estadisticas', 'gestion_ruleta'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Cuenta</div>
