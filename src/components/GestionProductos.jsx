@@ -105,6 +105,11 @@ export default function GestionProductos() {
     setIsGameModalOpen(true)
   }
 
+  const handleToggleProcesamientoApi = async (nuevoValor) => {
+    if (!selectedJuego) return
+    await updateJuego(selectedJuego.id, { procesamiento_automatico_api: nuevoValor })
+  }
+
   const handleGameSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
@@ -702,7 +707,7 @@ export default function GestionProductos() {
             </p>
           </div>
         </div>
-        <div className="flex gap-8" style={{ alignItems: 'center' }}>
+        <div className="flex gap-8" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', cursor: 'pointer', opacity: 0.8, color: 'var(--text-muted)', marginRight: '8px' }}>
             <input 
               type="checkbox" 
@@ -711,6 +716,48 @@ export default function GestionProductos() {
               style={{ cursor: 'pointer' }}
             />
             Auto-PNG (Quitar Fondo)
+          </label>
+          {/* Toggle: Procesamiento automático con API */}
+          <label
+            title="Cuando está activado, los pedidos de este juego/servicio se procesan automáticamente con la API del proveedor al verificarse el pago por el sistema APK, sin intervención del admin."
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer',
+              padding: '5px 10px', borderRadius: '20px',
+              border: selectedJuego.procesamiento_automatico_api
+                ? '1px solid rgba(0,210,255,0.5)'
+                : '1px solid rgba(255,255,255,0.1)',
+              backgroundColor: selectedJuego.procesamiento_automatico_api
+                ? 'rgba(0,210,255,0.1)'
+                : 'rgba(255,255,255,0.03)',
+              transition: 'all 0.2s'
+            }}
+          >
+            {/* Toggle switch custom */}
+            <div
+              onClick={() => handleToggleProcesamientoApi(!selectedJuego.procesamiento_automatico_api)}
+              style={{
+                width: 36, height: 20, borderRadius: 10, position: 'relative',
+                backgroundColor: selectedJuego.procesamiento_automatico_api ? '#00d2ff' : 'rgba(255,255,255,0.15)',
+                transition: 'background-color 0.2s', cursor: 'pointer', flexShrink: 0
+              }}
+            >
+              <div style={{
+                position: 'absolute', top: 2,
+                left: selectedJuego.procesamiento_automatico_api ? 18 : 2,
+                width: 16, height: 16, borderRadius: '50%',
+                backgroundColor: 'white',
+                transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+              }} />
+            </div>
+            <span style={{
+              fontSize: '11px',
+              color: selectedJuego.procesamiento_automatico_api ? '#00d2ff' : 'var(--text-muted)',
+              fontWeight: selectedJuego.procesamiento_automatico_api ? 700 : 400,
+              transition: 'color 0.2s',
+              whiteSpace: 'nowrap'
+            }}>
+              ⚡ Auto-procesar con API
+            </span>
           </label>
           <button className="btn btn-ghost btn-icon btn-sm" onClick={handleEditJuego} title="Editar Configuración del Juego">
             ✏️

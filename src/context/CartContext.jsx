@@ -2,6 +2,7 @@ import React, { useState, useEffect, createContext, useContext, useMemo } from '
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
 import { processAutoDeliveryOrder } from '../utils/autoProcess'
+import { processTiendaGiftVenOrder } from '../utils/apiProcessor'
 import { calcularPrecioVenta } from '../utils/helpers'
 
 const CartContext = createContext()
@@ -235,10 +236,16 @@ export function CartProvider({ children }) {
         }
       }
 
-      if (isAutomatic) {
+      if (isAutomatic || pagoVerificadoApk) {
         // Ejecutamos en background
-        processAutoDeliveryOrder(pedido.id).then(processed => {
-          if (processed) console.log('Pedido auto-procesado correctamente');
+        processAutoDeliveryOrder(pedido.id).then(async (processed) => {
+          if (processed) {
+             console.log('Pedido auto-procesado correctamente por baúl');
+          } else {
+             // Si no se procesó por el baúl, intentamos con la API
+             const apiProcessed = await processTiendaGiftVenOrder(pedido.id, null, false).catch(() => false);
+             if (apiProcessed) console.log('Pedido auto-procesado correctamente por API');
+          }
         }).catch(err => console.error(err));
       }
 

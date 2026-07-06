@@ -5,6 +5,7 @@ import { useConfigContext } from '../context/ConfigContext'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useWallet } from '../context/WalletContext'
+import { processTiendaGiftVenOrder } from '../utils/apiProcessor'
 
 // Re-exportar todo para mantener compatibilidad con el resto de la app
 export { useAuth, AuthProvider } from '../context/AuthContext'
@@ -306,10 +307,16 @@ export function useVentas() {
                 usuario_id: perfil?.id || cliente_id
               }).eq('id', apkPago.id);
 
-              // Auto-despachar el pedido recién creado
-              await supabase.rpc('procesar_pedido_automatico_rpc', {
+              // Auto-despachar el pedido recién creado (baúl)
+              const { data: rpcData } = await supabase.rpc('procesar_pedido_automatico_rpc', {
                 p_pedido_id: pedidoId
               });
+              const baulSuccess = (rpcData?.success && rpcData?.completado) || false;
+              
+              if (!baulSuccess) {
+                // Si no se procesó por el baúl, intentamos con la API
+                await processTiendaGiftVenOrder(pedidoId, null, false).catch(() => false);
+              }
               console.log(`✅ Pedido ${pedidoId} auto-despachado desde el cliente (APK previo).`);
             }
           }
@@ -356,10 +363,16 @@ export function useVentas() {
               usuario_id: perfil?.id
             }).eq('id', apkPago.id);
 
-            // Auto-despachar el pedido recién creado
-            await supabase.rpc('procesar_pedido_automatico_rpc', {
+            // Auto-despachar el pedido recién creado (baúl)
+            const { data: rpcData } = await supabase.rpc('procesar_pedido_automatico_rpc', {
               p_pedido_id: data.pedido_id
             });
+            const baulSuccess = (rpcData?.success && rpcData?.completado) || false;
+            
+            if (!baulSuccess) {
+              // Si no se procesó por el baúl, intentamos con la API
+              await processTiendaGiftVenOrder(data.pedido_id, null, false).catch(() => false);
+            }
             console.log(`✅ Pedido ${data.pedido_id} auto-despachado desde el cliente (APK previo).`);
           }
         }

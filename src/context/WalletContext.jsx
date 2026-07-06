@@ -87,25 +87,17 @@ export function WalletProvider({ children }) {
     if (!error && data && data.length > 0 && referencia) {
       try {
         const recargaId = data[0].id;
-        const { data: apkPago } = await supabase
-          .from('pagos_apk')
-          .select('id, monto')
-          .eq('referencia', referencia.trim())
-          .eq('status', 'disponible')
-          .single();
-          
-        if (apkPago) {
-          if (Math.abs(parseFloat(apkPago.monto) - parseFloat(monto)) <= 0.05) {
-            await supabase.from('pagos_apk').update({
-              status: 'usado',
-              usuario_id: user.id
-            }).eq('id', apkPago.id);
-
-            await supabase.rpc('procesar_recarga_automatica_rpc', {
-              p_recarga_id: recargaId
-            });
-            console.log(`✅ Recarga ${recargaId} auto-aprobada desde el cliente (APK previo).`);
-          }
+        const { data: result, error: rpcError } = await supabase.rpc('intentar_auto_aprobar_recarga_rpc', {
+          p_recarga_id: recargaId,
+          p_referencia: referencia.trim(),
+          p_monto: parseFloat(monto),
+          p_usuario_id: user.id
+        });
+        
+        if (result && result.success) {
+          console.log(`⚡ Recarga ${recargaId} auto-aprobada desde el cliente (APK previo).`);
+        } else {
+          console.log('No se pudo auto-aprobar:', result?.message);
         }
       } catch (e) {
         console.error('Error verificando pagos_apk desde billetera:', e);

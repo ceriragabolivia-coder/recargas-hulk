@@ -1,0 +1,15 @@
+import fs from 'fs';
+import { createClient } from '@supabase/supabase-js';
+const env = fs.readFileSync('.env', 'utf-8');
+const url = env.match(/VITE_SUPABASE_URL=(.*)/)[1].trim();
+const key = env.match(/VITE_SUPABASE_ANON_KEY=(.*)/)[1].trim();
+const supabase = createClient(url, key);
+async function test() {
+  const { data, error } = await supabase.rpc('run_sql', { query: `
+    SELECT conname, contype 
+    FROM pg_constraint 
+    WHERE conrelid = 'billeteras'::regclass;
+  `});
+  console.log('Constraints:', data, error);
+}
+test();
