@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatUSD, formatBs } from '../utils/helpers'
 
-export default function PagosApk() {
+export default function PagosApk({ onNavigate }) {
   const [pagos, setPagos] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -16,7 +16,7 @@ export default function PagosApk() {
     try {
       const { data, error } = await supabase
         .from('pagos_apk')
-        .select('*')
+        .select('*, pedidos(numero_pedido)')
         .order('created_at', { ascending: false })
         .limit(100)
 
@@ -96,7 +96,11 @@ export default function PagosApk() {
                     </td>
                     <td>
                       {pago.pedidos ? (
-                        <span style={{ color: '#00ff00', fontSize: '13px' }}>
+                        <span 
+                          onClick={() => onNavigate && onNavigate('pedidos', { orderNumber: pago.pedidos.numero_pedido })}
+                          style={{ color: '#00ff00', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}
+                          title="Clic para ir al pedido"
+                        >
                           Pedido #{pago.pedidos.numero_pedido}
                         </span>
                       ) : (
