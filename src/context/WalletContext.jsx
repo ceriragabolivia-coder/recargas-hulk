@@ -101,9 +101,8 @@ export function WalletProvider({ children }) {
               usuario_id: user.id
             }).eq('id', apkPago.id);
 
-            await supabase.rpc('aprobar_recarga_rpc', {
-              p_recarga_id: recargaId,
-              p_admin_id: user.id
+            await supabase.rpc('procesar_recarga_automatica_rpc', {
+              p_recarga_id: recargaId
             });
             console.log(`✅ Recarga ${recargaId} auto-aprobada desde el cliente (APK previo).`);
           }
