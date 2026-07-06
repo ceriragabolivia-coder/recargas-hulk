@@ -13,7 +13,12 @@ export default async function handler(req, res) {
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
     
     if (!supabaseUrl || !supabaseKey) {
-      return res.status(500).json({ error: 'Faltan variables de entorno de Supabase en Vercel', missingUrl: !supabaseUrl, missingKey: !supabaseKey });
+      return res.status(500).json({ 
+        error: 'Faltan variables de entorno de Supabase en Vercel', 
+        missingUrl: !supabaseUrl, 
+        missingKey: !supabaseKey,
+        envKeys: Object.keys(process.env)
+      });
     }
     
     if (!supabase) {
