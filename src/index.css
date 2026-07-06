@@ -2931,9 +2931,9 @@ tr:last-child td { border-bottom: none; }
 }
 
 .landing-logo-img {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  height: 56px;
+  width: auto;
+  max-width: 240px;
   object-fit: contain;
 }
 
@@ -3303,11 +3303,11 @@ tr:last-child td { border-bottom: none; }
   .hidden-mobile { display: none !important; }
   .visible-mobile { display: flex !important; }
   .landing-header { height: 64px; }
-  .landing-header-inner { gap: 10px; }
+  .landing-header-inner { gap: 10px; padding-left: 0 !important; }
   .landing-header-left { gap: 10px; }
   .landing-header-right { gap: 12px; }
   .landing-logo-text { font-size: 16px; }
-  .landing-logo-img { width: 32px; height: 32px; }
+  .landing-logo-img { height: 38px; width: auto; max-width: 160px; }
   .landing-logo-icon { width: 32px; height: 32px; font-size: 18px; }
   .user-avatar-small { width: 30px; height: 30px; font-size: 14px; }
   .hero-slider {

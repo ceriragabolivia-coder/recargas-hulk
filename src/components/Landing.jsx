@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate, useSearchParams, useLocation, useParams } from 'react-router-dom'
 import PaginaEstatica from './PaginaEstatica'
 import { supabase } from '../lib/supabase'
-import { useConfiguracion, useAuth, useCart, useCuentasGuardadas, useMetodosPago, useWallet } from '../hooks/useData'
+import { useConfiguracion, useAuth, useCart, useCuentasGuardadas, useWallet } from '../hooks/useData'
 import { formatUSD, formatBs, calcularPrecioVenta, playClientOrderSuccessSound, playClientWelcomeSound, hasRole } from '../utils/helpers'
 import LandingAuthModal from './LandingAuthModal'
 import Checkout from './Checkout'
@@ -24,8 +24,7 @@ export default function Landing({ onNavigate }) {
   const { config, loading: configLoading } = useConfiguracion()
   const { user, perfil, logout } = useAuth()
   const { wallet } = useWallet()
-  const { cart, addToCart, clearCart } = useCart()
-  const { metodos } = useMetodosPago()
+  const { addToCart, clearCart } = useCart()
   const isRevendedor = hasRole(perfil, 'revendedor')
   
   // Modal State
@@ -71,16 +70,14 @@ export default function Landing({ onNavigate }) {
 
   // Estados de Compra y Carrito
   const { cuentas, guardarCuenta, eliminarCuenta } = useCuentasGuardadas(selectedJuego?.id || null)
-  const [buyMode, setBuyMode] = useState('single')
+
   const [localRechargeData, setLocalRechargeData] = useState({
     player_id: '', zone_id: '', account_email: '', account_password: '', account_user: '', cuentaOpcion: 'propia'
   })
   const [shouldSaveData, setShouldSaveData] = useState(false)
-  const [showGuideModal, setShowGuideModal] = useState(false)
   const [pendingItem, setPendingItem] = useState(null)
   const [isVerificando, setIsVerificando] = useState(false)
   const [verificacionResultado, setVerificacionResultado] = useState(null)
-  const [addedItem, setAddedItem] = useState(null)
   
   const [activeCategory, setActiveCategory] = useState('Todos')
   const [activeProductType, setActiveProductType] = useState('recarga')
@@ -112,15 +109,24 @@ export default function Landing({ onNavigate }) {
   const [paginasFooter, setPaginasFooter] = useState([])
   
   // Modo Nocturno
-  const [darkMode, setDarkMode] = useState(true)
+  const [darkMode] = useState(true)
+  
+  const formatBsAssax = (value) => {
+    const num = Math.round(Number(value || 0)).toString();
+    let result = "";
+    for (let i = 0; i < num.length; i++) {
+      const posFromEnd = num.length - i;
+      result += num[i];
+      if (posFromEnd > 1 && (posFromEnd - 1) % 3 === 0) {
+        result += ".";
+      }
+    }
+    return `Bs. ${result},00`;
+  };
+
   const [infoProductModal, setInfoProductModal] = useState(null)
   const [expandedImage, setExpandedImage] = useState(null)
-  const [quantity, setQuantity] = useState(1)
   const [openFaqIndex, setOpenFaqIndex] = useState(null)
-
-  useEffect(() => {
-    setQuantity(1)
-  }, [pendingItem?.p?.id])
 
   const banners = useMemo(() => {
     // Si está cargando y no hay caché, no devolvemos nada para evitar el banner genérico
@@ -283,56 +289,7 @@ export default function Landing({ onNavigate }) {
     }
   }
 
-  const confirmAddToCart = async () => {
-    if (!pendingItem) return
-    const { p, selectedJuego, finalPrice, localRechargeData } = pendingItem
-    
-    // Clonar el juego para evitar mutaciones indeseadas y resolver 'opcional_cuenta'
-    let resolvedJuego = { ...selectedJuego }
-    if (resolvedJuego.metodo_recarga === 'opcional_cuenta') {
-      resolvedJuego.metodo_recarga = localRechargeData.cuentaOpcion === 'nueva' ? 'cuenta_nueva' : 'cuenta_completa'
-    }
 
-    if (buyMode === 'single') {
-      clearCart() // Limpiar carrito antes de compra directa
-      addToCart(p, resolvedJuego, finalPrice, localRechargeData)
-
-      if (shouldSaveData && localRechargeData.cuentaOpcion !== 'nueva') {
-        await guardarCuenta({
-          tipo_dato: resolvedJuego.metodo_recarga || 'id',
-          player_id: localRechargeData.player_id,
-          zone_id: localRechargeData.zone_id,
-          email: localRechargeData.account_email,
-          password: localRechargeData.account_password,
-          username: localRechargeData.account_user,
-          nombre_perfil: localRechargeData.player_id || localRechargeData.account_email || localRechargeData.account_user || 'Cuenta'
-        })
-      }
-
-      setPendingItem(null)
-      setShowCheckout(true)
-      window.scrollTo(0, 0)
-    } else {
-      addToCart(p, resolvedJuego, finalPrice, localRechargeData)
-      
-      if (shouldSaveData && localRechargeData.cuentaOpcion !== 'nueva') {
-        await guardarCuenta({
-          tipo_dato: resolvedJuego.metodo_recarga || 'id',
-          player_id: localRechargeData.player_id,
-          zone_id: localRechargeData.zone_id,
-          email: localRechargeData.account_email,
-          password: localRechargeData.account_password,
-          username: localRechargeData.account_user,
-          nombre_perfil: localRechargeData.player_id || localRechargeData.account_email || localRechargeData.account_user || 'Cuenta'
-        })
-      }
-
-      setAddedItem(p.id)
-      setTimeout(() => setAddedItem(null), 1000)
-      setPendingItem(null)
-    }
-    resetRechargeForm()
-  }
 
   useEffect(() => {
     async function fetchData() {
@@ -584,6 +541,7 @@ export default function Landing({ onNavigate }) {
   }, [searchParams.get('juego'), selectedJuego?.id, showCheckout, showOrders, showRuleta, showWallet, showProfile]);
 
   const handleSelectJuego = (juego) => {
+
     setActiveProductType('recarga')
     setShowCheckout(false)
     setShowOrders(false)
@@ -763,64 +721,157 @@ export default function Landing({ onNavigate }) {
               {config?.landing_logo ? (
                 <img src={config.landing_logo} alt="Logo" className="landing-logo-img" />
               ) : (
-                <div className="landing-logo-icon">⚡</div>
+                <>
+                  <div className="landing-logo-icon">⚡</div>
+                  <span className="landing-logo-text">{config?.landing_titulo || 'Recargas Hulk'}</span>
+                </>
               )}
-              <span className="landing-logo-text">{config?.landing_titulo || 'Recargas Hulk'}</span>
             </div>
-            
-            <nav className="landing-nav hidden-mobile">
-              <a href="#" className="nav-link active" onClick={(e) => { e.preventDefault(); handleSelectJuego(null); }}>Home</a>
-              {!isRevendedor && (
-                <a href="#" className={`nav-link ${showRuleta ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('/Ruleta'); }}>Ruleta</a>
-              )}
-              <a href="#" className="nav-link">Ayuda</a>
-            </nav>
+
+            {/* PASTILLA DE NAVEGACIÓN UNIFICADA (Estilo AssaxStore) */}
+            <div className="landing-nav-pill hidden-mobile">
+              <div className="nav-pill-links">
+                <a 
+                  href="#" 
+                  className={`nav-pill-link ${(!showRuleta && !selectedJuego && !showCheckout && !showOrders && !showWallet && !showProfile) ? 'active' : ''}`}
+                  onClick={(e) => { 
+                    e.preventDefault(); 
+                    handleSelectJuego(null); 
+                    setShowCheckout(false); 
+                    setShowOrders(false); 
+                    setShowRuleta(false); 
+                    setShowWallet(false); 
+                    setShowProfile(false); 
+                    window.scrollTo({ top: 0, behavior: 'smooth' }); 
+                  }}
+                >
+                  Inicio
+                </a>
+                <a 
+                  href="#" 
+                  className={`nav-pill-link ${(!showRuleta && selectedJuego && !showCheckout && !showOrders && !showWallet && !showProfile) ? 'active' : ''}`}
+                  onClick={(e) => { 
+                    e.preventDefault(); 
+                    handleSelectJuego(null); 
+                    setShowCheckout(false); 
+                    setShowOrders(false); 
+                    setShowRuleta(false); 
+                    setShowWallet(false); 
+                    setShowProfile(false); 
+                    setTimeout(() => {
+                      const el = document.getElementById('all-games');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  }}
+                >
+                  Catálogo
+                </a>
+                {!isRevendedor && (
+                  <a 
+                    href="#" 
+                    className={`nav-pill-link ${showRuleta ? 'active' : ''}`}
+                    onClick={(e) => { 
+                      e.preventDefault(); 
+                      navigate('/Ruleta'); 
+                      setShowRuleta(true); 
+                      setShowCheckout(false); 
+                      setShowOrders(false); 
+                      setShowWallet(false); 
+                      setShowProfile(false); 
+                      setSelectedJuego(null);
+                    }}
+                  >
+                    Ruleta
+                  </a>
+                )}
+                <a 
+                  href="#" 
+                  className="nav-pill-link"
+                  onClick={(e) => { 
+                    e.preventDefault(); 
+                    handleSelectJuego(null); 
+                    setShowCheckout(false); 
+                    setShowOrders(false); 
+                    setShowRuleta(false); 
+                    setShowWallet(false); 
+                    setShowProfile(false); 
+                    setTimeout(() => {
+                      const el = document.getElementById('reviews-section');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  }}
+                >
+                  Reseñas
+                </a>
+                <a 
+                  href="#" 
+                  className="nav-pill-link"
+                  onClick={(e) => { 
+                    e.preventDefault(); 
+                    handleSelectJuego(null); 
+                    setShowCheckout(false); 
+                    setShowOrders(false); 
+                    setShowRuleta(false); 
+                    setShowWallet(false); 
+                    setShowProfile(false); 
+                    setTimeout(() => {
+                      const el = document.getElementById('faq-section');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  }}
+                >
+                  Soporte
+                </a>
+              </div>
+              
+              <div className="nav-pill-divider"></div>
+              
+              <div className="nav-pill-search">
+                <span className="search-icon">🔍</span>
+                <input 
+                  type="text" 
+                  placeholder="Buscar..." 
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onBlur={() => setTimeout(() => setSearch(''), 200)}
+                />
+                
+                {search.trim().length > 0 && (
+                  <div className="search-results-dropdown">
+                    {juegos
+                      .filter(j => j.nombre.toLowerCase().includes(search.toLowerCase()))
+                      .slice(0, 8)
+                      .map(juego => (
+                        <div 
+                          key={juego.id} 
+                          className="search-result-item"
+                          onClick={() => {
+                            handleSelectJuego(juego);
+                            setSearch('');
+                          }}
+                        >
+                          <img src={juego.icono_url ? (juego.icono_url.includes('?') ? `${juego.icono_url}&v=3` : `${juego.icono_url}?v=3`) : 'https://via.placeholder.com/40'} alt={juego.nombre} />
+                          <div className="result-info">
+                            <div className="result-name">{juego.nombre}</div>
+                            <div className="result-cat">{juego.categoria}</div>
+                          </div>
+                        </div>
+                      ))
+                    }
+                    {juegos.filter(j => j.nombre.toLowerCase().includes(search.toLowerCase())).length === 0 && (
+                      <div className="search-no-results">No se encontraron resultados</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center landing-header-right">
-            <div className="landing-search hidden-mobile" style={{ position: 'relative' }}>
-              <input 
-                type="text" 
-                placeholder="Buscar juegos o servicios..." 
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onBlur={() => setTimeout(() => setSearch(''), 200)}
-              />
-              <span className="search-icon">🔍</span>
-              
-              {search.trim().length > 0 && (
-                <div className="search-results-dropdown">
-                  {juegos
-                    .filter(j => j.nombre.toLowerCase().includes(search.toLowerCase()))
-                    .slice(0, 8)
-                    .map(juego => (
-                      <div 
-                        key={juego.id} 
-                        className="search-result-item"
-                        onClick={() => {
-                          handleSelectJuego(juego);
-                          setSearch('');
-                        }}
-                      >
-                        <img src={juego.icono_url ? (juego.icono_url.includes('?') ? `${juego.icono_url}&v=3` : `${juego.icono_url}?v=3`) : 'https://via.placeholder.com/40'} alt={juego.nombre} />
-                        <div className="result-info">
-                          <div className="result-name">{juego.nombre}</div>
-                          <div className="result-cat">{juego.categoria}</div>
-                        </div>
-                      </div>
-                    ))
-                  }
-                  {juegos.filter(j => j.nombre.toLowerCase().includes(search.toLowerCase())).length === 0 && (
-                    <div className="search-no-results">No se encontraron resultados</div>
-                  )}
-                </div>
-              )}
-            </div>
-            
             {/* BILLETERA */}
             {user && (
               <div
-                className="header-wallet"
+                className="btn-header-wallet"
                 onClick={() => {
                   setShowWallet(true);
                   setShowCheckout(false);
@@ -828,31 +879,20 @@ export default function Landing({ onNavigate }) {
                   setSelectedJuego(null);
                   window.scrollTo(0, 0);
                 }}
-                style={{ 
-                  cursor: 'pointer', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '6px', 
-                  background: 'rgba(255,255,255,0.1)', 
-                  padding: '6px 12px', 
-                  borderRadius: '20px',
-                  marginRight: '8px',
-                  flexShrink: 0
-                }}
                 title="Billetera"
               >
                 {hasWalletUSD && (
                   <>
-                    <span style={{ fontSize: '18px' }}>💵</span>
-                    <span style={{ fontWeight: 'bold', fontSize: '14px', color: 'var(--accent-success)', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '16px' }}>💵</span>
+                    <span style={{ color: 'var(--accent-success)', whiteSpace: 'nowrap' }}>
                       {formatUSD(wallet?.saldo || 0)}
                     </span>
                   </>
                 )}
                 {!hasWalletUSD && hasWalletBs && (
                   <>
-                    <span style={{ fontSize: '18px' }}>🏦</span>
-                    <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#a855f7', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '16px' }}>🏦</span>
+                    <span style={{ color: '#a855f7', whiteSpace: 'nowrap' }}>
                       {formatBs(wallet?.saldo_bs || 0)}
                     </span>
                   </>
@@ -860,45 +900,24 @@ export default function Landing({ onNavigate }) {
               </div>
             )}
 
-            {/* CARRITO */}
-            {user && (
-              <div 
-                className="hidden-mobile"
-                style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center', marginRight: '8px' }} 
-                onClick={() => {
-                  setShowCheckout(true);
-                  setShowRuleta(false);
-                  setSelectedJuego(null);
-                  window.scrollTo(0, 0);
-                }}
-                title="Ver Carrito"
-              >
-                <span style={{ fontSize: '24px' }}>🛒</span>
-                {cart.length > 0 && (
-                  <div style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#ef4444', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
-                    {cart.length}
-                  </div>
-                )}
-              </div>
-            )}
+
 
             {/* CAMPANA DE NOTIFICACIONES */}
             {user && (
-              <div className="nav-dropdown hidden-mobile" style={{ position: 'relative', marginRight: '8px' }}>
+              <div className="nav-dropdown hidden-mobile" style={{ position: 'relative' }}>
                 <div 
-                  className="noti-bell-container" 
+                  className="btn-header-circle noti-bell-container" 
                   onClick={() => setShowNotiDropdown(!showNotiDropdown)}
-                  style={{ position: 'relative', cursor: 'pointer', fontSize: '22px', padding: '5px' }}
                 >
-                  🔔
+                  <span style={{ fontSize: '18px' }}>🔔</span>
                   {unreadCount > 0 && (
-                    <div style={{ position: 'absolute', top: '0', right: '0', background: '#ef4444', color: 'white', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold', border: '2px solid var(--bg-card)' }}>
+                    <div className="badge" style={{ top: '-4px', right: '-4px' }}>
                       {unreadCount}
                     </div>
                   )}
                 </div>
                 <div className={`dropdown-content ${showNotiDropdown ? 'show' : ''}`} style={{ right: 0, left: 'auto', width: '300px', maxHeight: '400px', overflowY: 'auto' }}>
-                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifycontent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontWeight: '700', fontSize: '14px' }}>Notificaciones</span>
                     {unreadCount > 0 && (
                       <button onClick={markAllAsRead} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}>Marcar todas como leídas</button>
@@ -935,33 +954,19 @@ export default function Landing({ onNavigate }) {
               </div>
             )}
 
+            {/* BOTÓN PRIMARIO NEÓN (INGRESAR / MI CUENTA) */}
             {user ? (
               <div className="nav-dropdown">
-                <div className="flex items-center" style={{ gap: '8px', cursor: 'pointer' }}>
-                  <div className="user-avatar-small" style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {perfil?.avatar_url ? (
-                      <img src={perfil.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      user.email?.charAt(0).toUpperCase()
-                    )}
-                  </div>
-                  <span className="hidden-mobile" style={{ fontWeight: '600' }}>Mi Cuenta ▾</span>
-                </div>
+                <button className="btn-assax-primary">
+                  <span>👤 MI CUENTA</span>
+                </button>
                 <div className="dropdown-content" style={{ right: 0, left: 'auto' }}>
                   <div style={{ padding: '10px 20px', borderBottom: '1px solid var(--border)', marginBottom: '4px' }}>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Conectado como</div>
-                    <div style={{ fontWeight: '600', fontSize: '14px' }}>{user.email}</div>
+                    <div style={{ fontWeight: '600', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>{user.email}</div>
                   </div>
                   
-                  <a href="#" className="visible-mobile" onClick={(e) => { 
-                    e.preventDefault(); 
-                    setShowCheckout(true);
-                    setShowRuleta(false);
-                    setSelectedJuego(null);
-                    window.scrollTo(0, 0); 
-                  }}>
-                    🛒 Carrito {cart.length > 0 && <span style={{ background: '#ef4444', color: 'white', borderRadius: '10px', padding: '2px 6px', fontSize: '10px', marginLeft: '4px' }}>{cart.length}</span>}
-                  </a>
+
                   <a href="#" className="visible-mobile" onClick={(e) => { 
                     e.preventDefault(); 
                     setShowNotiDropdown(!showNotiDropdown);
@@ -985,21 +990,16 @@ export default function Landing({ onNavigate }) {
               </div>
             ) : (
               <div className="flex items-center" style={{ gap: '10px' }}>
-                <button className="btn-landing-secondary hidden-mobile" onClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}>Entrar</button>
-                <button className="btn-landing-primary hidden-mobile" onClick={() => { setAuthModalView('register'); setIsAuthModalOpen(true); }}>Registrarse</button>
-                <div className="nav-dropdown visible-mobile">
-                  <button className="btn-mobile-auth-icon" title="Menú">
-                    👤
-                  </button>
-                  <div className="dropdown-content" style={{ right: 0, left: 'auto' }}>
-                    <a href="#" onClick={(e) => { e.preventDefault(); setAuthModalView('login'); setIsAuthModalOpen(true); }} style={{ fontWeight: 'bold' }}>Entrar</a>
-                    <a href="#" onClick={(e) => { e.preventDefault(); setAuthModalView('register'); setIsAuthModalOpen(true); }} style={{ fontWeight: 'bold' }}>Registrarse</a>
-                    <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }}></div>
-                    <a href="#" onClick={(e) => { e.preventDefault(); handleSelectJuego(null); setTimeout(() => { const element = document.getElementById('all-games'); if (element) element.scrollIntoView({ behavior: 'smooth' }); }, 100); }}>Servicios</a>
-                    <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Ruleta'); }}>Ruleta</a>
-                    <a href="#" onClick={(e) => { e.preventDefault(); }}>Ayuda</a>
-                  </div>
-                </div>
+                <button className="btn-assax-primary hidden-mobile" onClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}>
+                  <span>⚡ INGRESAR</span>
+                </button>
+                <button 
+                  className="btn-assax-primary visible-mobile" 
+                  onClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}
+                  style={{ padding: '8px 16px', fontSize: '12px' }}
+                >
+                  <span>Entrar</span>
+                </button>
               </div>
             )}
           </div>
@@ -1066,6 +1066,29 @@ export default function Landing({ onNavigate }) {
               <span className="marquee-item">⚡ COMPRA: <span>LUF*** acaba de recargar $5 Razer Gold PIN</span></span>
               <span className="marquee-item">⚡ COMPRA: <span>ELI*** acaba de recargar 50 Diamantes BloodStrike</span></span>
               <span className="marquee-item">⚡ COMPRA: <span>CAR*** acaba de recargar $10 Roblox Gift Card</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>GAB*** acaba de recargar 310 + 31 Diamantes Free Fire</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>ALE*** acaba de recargar 60 Bonds Arena Breakout</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>VAL*** acaba de recargar 86 Diamantes Mobile Legends</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>DAN*** acaba de recargar $10 Google Play Gift Card USA</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>FRA*** acaba de recargar 1000 Diamantes BloodStrike</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>JOS*** acaba de recargar Pase Mensual Free Fire</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>MAT*** acaba de recargar 800 Robux Roblox</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>ROB*** acaba de recargar 310 Bonds Arena Breakout</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>SOP*** acaba de recargar 42 Diamonds Bigo Live</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>LUF*** acaba de recargar 172 Diamantes Mobile Legends</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>DAV*** acaba de recargar $15 PlayStation Network Card</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>SAM*** acaba de recargar 520 + 52 Diamantes Free Fire</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>NIC*** acaba de recargar Premium 30 días Albion Online</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>CRIS*** acaba de recargar 297 Diamonds Bigo Live</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>EMA*** acaba de recargar 250 Diamantes BloodStrike</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>VIC*** acaba de recargar $10 Amazon Gift Card USA</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>FEL*** acaba de recargar 1060 + 106 Diamantes Free Fire</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>EST*** acaba de recargar Twilight Pass Mobile Legends</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>MARI*** acaba de recargar $20 Steam Wallet Code</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>JON*** acaba de recargar 600 + 60 CP Call of Duty Mobile</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>DOU*** acaba de recargar 325 UC PUBG Mobile</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>ALB*** acaba de recargar $25 Netflix Gift Card</span></span>
+              <span className="marquee-item">⚡ COMPRA: <span>SEB*** acaba de recargar 5600 + 560 Diamantes Free Fire</span></span>
             </div>
           </div>
         )}
@@ -1100,73 +1123,79 @@ export default function Landing({ onNavigate }) {
             </div>
 
             <div className="detail-layout">
-              {/* SECCIÓN CABECERA */}
+              {/* SECCIÓN CABECERA ESTILO ASSAXSTORE */}
               <div className="detail-header-area">
-                <div className={`detail-header-card ${selectedJuego.banner_url ? 'has-banner' : ''}`}>
-                  {selectedJuego.banner_url ? (
-                    <div className="detail-game-banner">
-                      <img 
-                        src={selectedJuego.banner_url} 
-                        alt={selectedJuego.nombre} 
-                        fetchpriority="high"
-                        loading="eager"
-                      />
-                    </div>
-                  ) : (
-                    <img src={selectedJuego.icono_url ? (selectedJuego.icono_url.includes('?') ? `${selectedJuego.icono_url}&v=3` : `${selectedJuego.icono_url}?v=3`) : ''} alt="" className="detail-header-icon" />
-                  )}
-                  <div className="detail-header-info">
-                    <h1>{selectedJuego.nombre}</h1>
-                    <div className="detail-stats">
-                      <span className="rating">⭐ 5.0 (200+ Reviews)</span>
-                      <span className="sold">🔥 200K+ Sold</span>
-                      <span className="badge-secure">✅ Secure</span>
+                <div className="assax-header-card">
+                  {/* FILA SUPERIOR: Imagen + Info del juego + Wizard de pasos en la misma línea */}
+                  <div className="assax-header-left">
+                    <img 
+                      src={selectedJuego.icono_url ? (selectedJuego.icono_url.includes('?') ? `${selectedJuego.icono_url}&v=3` : `${selectedJuego.icono_url}?v=3`) : 'https://via.placeholder.com/120'} 
+                      alt={selectedJuego.nombre} 
+                      className="assax-header-icon" 
+                    />
+                    <div className="assax-header-info">
+                      {/* Fila superior: Título + Wizard de pasos en la misma línea */}
+                      <div className="assax-title-steps-row">
+                        <h1 className="assax-game-title">{selectedJuego.nombre}</h1>
+                        <div className="detail-steps-path hidden-mobile">
+                          <span className="step-item active">
+                            <span className="step-num">1</span> DATOS Y PAQUETE
+                          </span>
+                          <span className="step-arrow">&gt;</span>
+                          <span className="step-item">
+                            <span className="step-num">2</span> PAGO
+                          </span>
+                        </div>
+                      </div>
+                      {/* Badges editables desde el panel admin */}
+                      <div className="assax-header-badges">
+                        {selectedJuego.caracteristicas_region && (
+                          <span className="assax-badge">
+                            🌐 {selectedJuego.caracteristicas_region}
+                          </span>
+                        )}
+                        {selectedJuego.caracteristicas_entrega && (
+                          <span className="assax-badge">
+                            ⚡ {selectedJuego.caracteristicas_entrega}
+                          </span>
+                        )}
+                        {selectedJuego.caracteristicas_tipo && (
+                          <span className="assax-badge">
+                            🛡️ {selectedJuego.caracteristicas_tipo}
+                          </span>
+                        )}
+                        {/* Fallbacks si no hay campos configurados */}
+                        {!selectedJuego.caracteristicas_region && !selectedJuego.caracteristicas_entrega && !selectedJuego.caracteristicas_tipo && (
+                          <>
+                            <span className="assax-badge">🌐 {selectedJuego.categoria || 'Global'}</span>
+                            <span className="assax-badge">⚡ Entrega instantánea</span>
+                            <span className="assax-badge">🛡️ Pago seguro</span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* SIDEBAR DE COMPRA */}
-              <aside className="detail-sidebar-area">
-                <div className="purchase-card">
-                  {user ? (
-                    <>
-                      <h3>Datos de Recarga</h3>
-                      
-                      <div className="buy-mode-toggle">
-                        <button 
-                          onClick={() => setBuyMode('single')}
-                          className={buyMode === 'single' ? 'active' : ''}
-                        >
-                          🛍️ Comprar uno
-                        </button>
-                        <button 
-                          onClick={() => setBuyMode('multiple')}
-                          className={buyMode === 'multiple' ? 'active' : ''}
-                        >
-                          🛒 Comprar varios
-                        </button>
-                      </div>
 
-                      {/* FORMULARIO DE DATOS */}
-                      <div className="card-recharge-info">
-                        {effectiveMetodoRecarga === 'sin_datos' ? (
-                          <div style={{ textAlign: 'center' }}>
-                            <p style={{ fontSize: '14px', color: 'var(--text)', fontWeight: 600, margin: 0 }}>⚡ Entrega inmediata</p>
-                            <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>No necesitas ingresar ningún dato.</p>
-                          </div>
-                        ) : effectiveMetodoRecarga === 'entrega_codigo' ? (
-                          <div style={{ textAlign: 'center' }}>
-                            <p style={{ fontSize: '14px', color: 'var(--text)', fontWeight: 600, margin: 0 }}>🎁 Entrega de Código</p>
-                            <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>Recibirás un código de Gift Card tras la compra.</p>
-                          </div>
-                        ) : effectiveMetodoRecarga === 'solo_correo' ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {/* COLUMNA IZQUIERDA: SELECCIÓN DE PRODUCTOS O INGRESO DE DATOS */}
+              <div className="detail-content-area">
+                {/* PASO 1: SELECCIONAR PAQUETE */}
+                <div className="price-list-section">
+                    {!(effectiveMetodoRecarga === 'sin_datos' || effectiveMetodoRecarga === 'entrega_codigo') && (
+                      <div className="card-recharge-info" style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', padding: '16px 20px', borderRadius: '16px', marginBottom: '24px' }}>
+                        <h3 className="assax-section-title" style={{ margin: '0 0 12px 0', borderLeft: 'none', paddingLeft: 0 }}>
+                          ❶ DATOS DE <span className="highlight-green">RECARGA</span>
+                        </h3>
+
+                        {effectiveMetodoRecarga === 'solo_correo' ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                <label className="form-label" style={{ fontSize: '12px', margin: 0 }}>📧 Correo Electrónico</label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                                <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>📧 Correo Electrónico</label>
                                 {selectedJuego?.guia_id_url && (
-                                  <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent)', color:'#000', width:'16px', height:'16px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:'bold' }} title="Ver guía">?</div>
+                                  <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent)', color:'#000', width:'18px', height:'18px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:'bold' }} title="Ver guía">?</div>
                                 )}
                               </div>
                               <input 
@@ -1175,16 +1204,17 @@ export default function Landing({ onNavigate }) {
                                 placeholder="ejemplo@correo.com"
                                 value={localRechargeData.account_email}
                                 onChange={e => setLocalRechargeData({...localRechargeData, account_email: e.target.value})}
+                                style={{ backgroundColor: 'var(--bg-card)', padding: '14px', fontSize: '15px' }}
                               />
                             </div>
                           </div>
                         ) : effectiveMetodoRecarga === 'solo_usuario' ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                <label className="form-label" style={{ fontSize: '12px', margin: 0 }}>👤 Usuario (@)</label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                                <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>👤 Usuario (@)</label>
                                 {selectedJuego?.guia_id_url && (
-                                  <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent)', color:'#000', width:'16px', height:'16px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:'bold' }} title="Ver guía">?</div>
+                                  <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent)', color:'#000', width:'18px', height:'18px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:'bold' }} title="Ver guía">?</div>
                                 )}
                               </div>
                               <input 
@@ -1193,16 +1223,17 @@ export default function Landing({ onNavigate }) {
                                 placeholder="@Usuario"
                                 value={localRechargeData.account_user || ''}
                                 onChange={e => setLocalRechargeData({...localRechargeData, account_user: e.target.value})}
+                                style={{ backgroundColor: 'var(--bg-card)', padding: '14px', fontSize: '15px' }}
                               />
                             </div>
                           </div>
                         ) : effectiveMetodoRecarga === 'cuenta_completa' ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                <label className="form-label" style={{ fontSize: '12px', margin: 0 }}>📧 Correo</label>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                                <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>📧 Correo</label>
                                 {selectedJuego?.guia_id_url && (
-                                  <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent)', color:'#000', width:'16px', height:'16px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:'bold' }} title="Ver guía">?</div>
+                                  <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent)', color:'#000', width:'18px', height:'18px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:'bold' }} title="Ver guía">?</div>
                                 )}
                               </div>
                               <input 
@@ -1211,16 +1242,18 @@ export default function Landing({ onNavigate }) {
                                 placeholder="ejemplo@correo.com"
                                 value={localRechargeData.account_email}
                                 onChange={e => setLocalRechargeData({...localRechargeData, account_email: e.target.value})}
+                                style={{ backgroundColor: 'var(--bg-card)', padding: '14px', fontSize: '15px' }}
                               />
                             </div>
                             <div>
-                              <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>🔑 Contraseña</label>
+                              <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>🔑 Contraseña</label>
                               <input 
                                 type="password" 
                                 className="form-input" 
                                 placeholder="********"
                                 value={localRechargeData.account_password}
                                 onChange={e => setLocalRechargeData({...localRechargeData, account_password: e.target.value})}
+                                style={{ backgroundColor: 'var(--bg-card)', padding: '14px', fontSize: '15px' }}
                               />
                             </div>
                           </div>
@@ -1231,7 +1264,7 @@ export default function Landing({ onNavigate }) {
                                 👤 Nombre de usuario
                                 {selectedJuego.guia_id_url && (
                                   <span 
-                                    onClick={() => setShowGuideModal(true)}
+                                    onClick={() => setExpandedImage(selectedJuego.guia_id_url)}
                                     style={{ 
                                       cursor: 'pointer', backgroundColor: 'var(--accent)', color: '#000', 
                                       width: '18px', height: '18px', borderRadius: '50%', display: 'flex', 
@@ -1296,9 +1329,10 @@ export default function Landing({ onNavigate }) {
                             )}
                           </div>
                         ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
+                            {/* Campo ID del jugador */}
+                            <div style={{ flex: '0 0 auto', minWidth: '180px', maxWidth: '260px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
                                 <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>🆔 ID del Jugador</label>
                                 {selectedJuego?.guia_id_url && (
                                   <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent)', color:'#000', width:'18px', height:'18px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:'bold' }} title="Ver guía">?</div>
@@ -1314,13 +1348,13 @@ export default function Landing({ onNavigate }) {
                                   setLocalRechargeData({...localRechargeData, player_id: val});
                                   if (verificacionResultado) setVerificacionResultado(null);
                                 }}
-                                style={{ fontSize: '16px', fontWeight: 'bold', letterSpacing: '1px' }}
+                                style={{ fontSize: '15px', fontWeight: 'bold', letterSpacing: '1px', backgroundColor: 'var(--bg-card)', padding: '11px 14px' }}
                               />
                             </div>
-                            
+
                             {effectiveMetodoRecarga === 'id_zone' && (
-                              <div>
-                                <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>🆔 Zone ID</label>
+                              <div style={{ flex: '0 0 auto', minWidth: '100px', maxWidth: '140px' }}>
+                                <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>🆔 Zone ID</label>
                                 <input 
                                   type="text" 
                                   className="form-input" 
@@ -1331,37 +1365,38 @@ export default function Landing({ onNavigate }) {
                                     const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
                                     setLocalRechargeData({...localRechargeData, zone_id: val});
                                   }}
-                                  style={{ fontSize: '16px', fontWeight: 'bold', letterSpacing: '1px' }}
+                                  style={{ fontSize: '15px', fontWeight: 'bold', letterSpacing: '1px', backgroundColor: 'var(--bg-card)', padding: '11px 14px' }}
                                 />
                               </div>
                             )}
 
                             {(selectedJuego.verificacion_api_activa || (selectedJuego.verificacion_api_activa === undefined && (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('bloodstrike')))) && (
-                              <div>
+                              <div style={{ flex: '0 0 auto' }}>
                                 <button 
                                   className="btn-verify-prominent"
                                   onClick={handleVerificarJugador}
                                   disabled={isVerificando}
                                   style={{ 
-                                    width: '100%', 
-                                    fontSize: '14px', 
-                                    padding: '12px',
-                                    marginTop: '8px'
+                                    fontSize: '13px', 
+                                    padding: '11px 20px',
+                                    whiteSpace: 'nowrap'
                                   }}
                                 >
-                                  {isVerificando ? 'Verificando...' : '🔍 Verificar Jugador'}
+                                  {isVerificando ? 'Verificando...' : '🔍 Verificar'}
                                 </button>
+                              </div>
+                            )}
 
-                                {verificacionResultado && (
-                                  <div style={{ 
-                                    marginTop: '10px', padding: '10px', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold',
-                                    backgroundColor: verificacionResultado.success ? 'rgba(0, 200, 83, 0.1)' : 'rgba(255, 82, 82, 0.1)',
-                                    color: verificacionResultado.success ? '#00c853' : '#ff5252',
-                                    border: `1px solid ${verificacionResultado.success ? '#00c853' : '#ff5252'}`
-                                  }}>
-                                    {verificacionResultado.success ? `✅ ${verificacionResultado.nickname}` : `❌ ${verificacionResultado.mensaje}`}
-                                  </div>
-                                )}
+                            {/* Resultado de verificación */}
+                            {verificacionResultado && (
+                              <div style={{ 
+                                flex: '0 0 auto',
+                                padding: '8px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold',
+                                backgroundColor: verificacionResultado.success ? 'rgba(0, 200, 83, 0.1)' : 'rgba(255, 82, 82, 0.1)',
+                                color: verificacionResultado.success ? '#00c853' : '#ff5252',
+                                border: `1px solid ${verificacionResultado.success ? '#00c853' : '#ff5252'}`
+                              }}>
+                                {verificacionResultado.success ? `✅ ${verificacionResultado.nickname}` : `❌ ${verificacionResultado.mensaje}`}
                               </div>
                             )}
                           </div>
@@ -1369,7 +1404,7 @@ export default function Landing({ onNavigate }) {
                         
                         {/* Cuentas Guardadas */}
                         {cuentas.length > 0 && (
-                          <div style={{ marginTop: '10px', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
+                          <div style={{ marginTop: '15px', borderTop: '1px solid var(--border)', paddingTop: '15px' }}>
                             <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Cuentas Guardadas</div>
                             <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
                               {cuentas.map(c => (
@@ -1386,7 +1421,7 @@ export default function Landing({ onNavigate }) {
                         )}
 
                         {!(effectiveMetodoRecarga === 'sin_datos' || effectiveMetodoRecarga === 'entrega_codigo') && (
-                          <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <input 
                               type="checkbox" 
                               id="save-data-checkbox-landing"
@@ -1397,23 +1432,290 @@ export default function Landing({ onNavigate }) {
                           </div>
                         )}
                       </div>
-                    </>
-                  ) : (
-                    <>
-                      <h3>¿Listo para recargar?</h3>
-                      <p>Inicia sesión o crea una cuenta para poder realizar compras y gestionar tus pedidos.</p>
-                      <div className="sidebar-buttons">
-                        <button className="btn-landing-primary w-full mb-12" onClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}>
-                          🔐 Iniciar Sesión
-                        </button>
-                        <button className="btn-landing-secondary w-full" onClick={() => { setAuthModalView('register'); setIsAuthModalOpen(true); }}>
-                          📝 Registrarse
-                        </button>
+                    )}
+
+                    <h3 className="assax-section-title">
+                      {!(effectiveMetodoRecarga === 'sin_datos' || effectiveMetodoRecarga === 'entrega_codigo') ? '❷' : '❶'} SELECCIONA TU <span className="highlight-green">PAQUETE</span>
+                    </h3>
+
+                    {loadingProductos ? (
+                      <div className="spinner"></div>
+                    ) : (
+                      <>
+                        {/* Selector de sub-categorías (Tabs) */}
+                        {showTabs && (
+                          <div className="assax-tab-toggles" style={{ display: 'flex', gap: '8px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '4px' }}>
+                            {hasRecargas && (
+                              <button 
+                                onClick={() => setActiveProductType('recarga')}
+                                className={`assax-tab-btn ${currentViewType === 'recarga' ? 'active' : ''}`}
+                              >
+                                {selectedJuego?.metodo_recarga === 'cuenta_completa' || selectedJuego?.metodo_recarga === 'usuario_clave' ? 'Recarga Interna' : selectedJuego?.metodo_recarga === 'solo_usuario' ? 'Recarga por Usuario' : selectedJuego?.metodo_recarga === 'solo_correo' ? 'Recarga por Correo' : 'DIAMANTES'}
+                              </button>
+                            )}
+                            {hasPaquetes && (
+                              <button 
+                                onClick={() => setActiveProductType('paquete')}
+                                className={`assax-tab-btn ${currentViewType === 'paquete' ? 'active' : ''}`}
+                              >
+                                PAQUETES
+                              </button>
+                            )}
+                            {hasGiftCards && (
+                              <button 
+                                onClick={() => setActiveProductType('gift_card')}
+                                className={`assax-tab-btn ${currentViewType === 'gift_card' ? 'active' : ''}`}
+                              >
+                                GIFT CARDS
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="assax-products-grid">
+                          {(() => {
+                            const filteredProducts = productosJuego.filter(p => {
+                              if (currentViewType === 'gift_card') return p.tipo_producto === 'gift_card';
+                              if (currentViewType === 'paquete') return p.tipo_producto === 'paquete';
+                              return p.tipo_producto === 'recarga' || !p.tipo_producto;
+                            });
+
+                            return filteredProducts.map(prod => {
+                              const pricing = calcularPrecioVenta(prod, selectedJuego, config, perfil)
+                              const isSelected = pendingItem?.p?.id === prod.id;
+                              return (
+                                <div 
+                                  key={prod.id} 
+                                  className={`assax-product-card ${isSelected ? 'selected' : ''}`}
+                                  onClick={async () => {
+                                    if (!user) {
+                                      setAuthModalView('login');
+                                      setIsAuthModalOpen(true);
+                                      return;
+                                    }
+                                    if (perfil?.estado === 'pendiente') {
+                                      alert('Su cuenta debe ser validada por un administrador.');
+                                      return;
+                                    }
+
+                                    const prodEffectiveMetodo = (prod.tipo_producto === 'gift_card') ? 'entrega_codigo' : effectiveMetodoRecarga;
+
+                                    if (prodEffectiveMetodo === 'solo_correo') {
+                                      if (!localRechargeData.account_email.trim()) { alert('Por favor introduce el correo.'); return; }
+                                    } else if (prodEffectiveMetodo === 'cuenta_completa') {
+                                      if (!localRechargeData.account_email.trim() || !localRechargeData.account_password.trim()) { alert('Por favor introduce el correo y clave.'); return; }
+                                    } else if (prodEffectiveMetodo === 'usuario_clave') {
+                                      if (!localRechargeData.account_user?.trim() || !localRechargeData.account_password.trim()) { alert('Por favor introduce el usuario y clave.'); return; }
+                                    } else if (prodEffectiveMetodo === 'solo_usuario') {
+                                      if (!localRechargeData.account_user?.trim()) { alert('Por favor introduce el usuario.'); return; }
+                                    } else if (prodEffectiveMetodo === 'opcional_cuenta') {
+                                      if (localRechargeData.cuentaOpcion === 'propia' && (!localRechargeData.account_email?.trim() || !localRechargeData.account_password?.trim())) { 
+                                        alert('Por favor introduce el correo y clave.'); 
+                                        return; 
+                                      }
+                                    } else if (prodEffectiveMetodo === 'sin_datos' || prodEffectiveMetodo === 'entrega_codigo') {
+                                      // OK
+                                    } else {
+                                      if (!localRechargeData.player_id?.trim()) { alert('Por favor introduce el ID.'); return; }
+                                      const isVerificationActive = selectedJuego.verificacion_api_activa || 
+                                          (selectedJuego.verificacion_api_activa === undefined && (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('bloodstrike')));
+
+                                      if (isVerificationActive) {
+                                        if (!verificacionResultado?.success || verificacionResultado.verified_id !== localRechargeData.player_id) {
+                                          alert('Debes verificar el nombre del jugador antes de comprar.');
+                                          return;
+                                        }
+                                      }
+                                    }
+
+                                    const finalPrice = calcularPrecioVenta(prod, selectedJuego, config, perfil)
+
+                                    // Clonar el juego para evitar mutaciones indeseadas y resolver 'opcional_cuenta'
+                                    let resolvedJuego = { ...selectedJuego }
+                                    if (resolvedJuego.metodo_recarga === 'opcional_cuenta') {
+                                      resolvedJuego.metodo_recarga = localRechargeData.cuentaOpcion === 'nueva' ? 'cuenta_nueva' : 'cuenta_completa'
+                                    }
+
+                                    clearCart()
+                                    addToCart(prod, resolvedJuego, finalPrice, {
+                                      ...localRechargeData,
+                                      nickname: (verificacionResultado?.success && verificacionResultado.verified_id === localRechargeData.player_id) 
+                                                ? verificacionResultado.nickname : null
+                                    })
+
+                                    if (shouldSaveData && localRechargeData.cuentaOpcion !== 'nueva') {
+                                      await guardarCuenta({
+                                        tipo_dato: resolvedJuego.metodo_recarga || 'id',
+                                        player_id: localRechargeData.player_id,
+                                        zone_id: localRechargeData.zone_id,
+                                        email: localRechargeData.account_email,
+                                        password: localRechargeData.account_password,
+                                        username: localRechargeData.account_user,
+                                        nombre_perfil: localRechargeData.player_id || localRechargeData.account_email || localRechargeData.account_user || 'Cuenta'
+                                      })
+                                    }
+
+                                    setPendingItem(null)
+                                    resetRechargeForm()
+                                    setShowCheckout(true)
+                                    window.scrollTo(0, 0)
+                                  }}
+                                >
+                                  {/* Icon container */}
+                                  <div className="assax-product-icon-box">
+                                    {prod.icono_url ? (
+                                      <img src={prod.icono_url.includes('?') ? `${prod.icono_url}&v=3` : `${prod.icono_url}?v=3`} alt="" />
+                                    ) : (
+                                      <span>💎</span>
+                                    )}
+                                  </div>
+
+                                  <div className="assax-product-info">
+                                    <div className="product-name">{prod.nombre}</div>
+                                    {(prod.info_adicional_texto || prod.info_adicional_imagen_url) && (
+                                      <div 
+                                        onClick={(e) => { e.stopPropagation(); setInfoProductModal(prod); }} 
+                                        className="product-info-trigger"
+                                        title="Información importante"
+                                      >
+                                        i
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <div className="assax-product-price-box">
+                                    <div className="assax-product-price">
+                                      {formatBsAssax(pricing.venta_bs)}
+                                    </div>
+                                    {selectedJuego.mostrar_precio_dual && (
+                                      <div className="price-secondary-usd">
+                                        ({formatUSD(pricing.venta_usd)})
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* CASHBACK BADGE */}
+                                  {(config?.cashback_activo === 'true' || config?.cashback_activo === '1') && (
+                                    <div className="product-cashback-badge">
+                                      ⚡ +{config?.cashback_porcentaje || '0'}%
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            });
+                          })()}
+                        </div>
+
+                      </>
+                    )}
+                  </div>
+
+                {/* Información / Guías */}
+                <div className="info-content-section" style={{ marginTop: '24px' }}>
+                  <div className="info-tab-header">
+                    <h4>Información de {selectedJuego.nombre}</h4>
+                  </div>
+                  <div className="info-body">
+                    {selectedJuego.caracteristicas_nota && (
+                      <div className="rich-text" style={{ marginBottom: '16px' }} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedJuego.caracteristicas_nota.replace(/\n/g, '<br/>')) }} />
+                    )}
+                    
+                    {selectedJuego.instrucciones_recarga && (
+                      <div className="rich-text" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedJuego.instrucciones_recarga.replace(/\n/g, '<br/>')) }} />
+                    )}
+
+                    {!selectedJuego.caracteristicas_nota && !selectedJuego.instrucciones_recarga && (
+                      <p style={{ color: 'var(--text-muted)' }}>No hay información adicional disponible para este producto.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* COLUMNA DERECHA: RESUMEN DE COMPRA ESTILO ASSAXSTORE */}
+              <aside className="detail-sidebar-area">
+                <div className="assax-summary-card">
+                  <h3 className="summary-title">
+                    <span className="highlight-green">RESUMEN DE VENTA</span>
+                  </h3>
+
+                  <div className="assax-summary-inner">
+                    {/* Game selection thumbnail */}
+                    <div className="assax-summary-game">
+                      <img 
+                        src={selectedJuego.icono_url ? (selectedJuego.icono_url.includes('?') ? `${selectedJuego.icono_url}&v=3` : `${selectedJuego.icono_url}?v=3`) : 'https://via.placeholder.com/60'} 
+                        alt={selectedJuego.nombre} 
+                      />
+                      <div className="game-details">
+                        <div className="game-name">{selectedJuego.nombre}</div>
+                        <div className="package-selection">
+                          {pendingItem ? (
+                            <span>💎 {pendingItem.p.nombre}</span>
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)' }}>💎 SELECCIONA UN PAQUETE</span>
+                          )}
+                        </div>
                       </div>
-                    </>
-                  )}
+                    </div>
+
+                    <div className="summary-divider"></div>
+
+
+
+                    {/* Subtotal */}
+                    <div className="assax-summary-row">
+                      <span>SUBTOTAL</span>
+                      <span className="summary-val">
+                        {pendingItem ? (
+                          formatBsAssax(pendingItem.finalPrice.venta_bs)
+                        ) : (
+                          'Bs. 0,00'
+                        )}
+                        {pendingItem && selectedJuego.mostrar_precio_dual && (
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', textAlign: 'right', marginTop: '2px' }}>
+                            {formatUSD(pendingItem.finalPrice.venta_usd)}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+
+                    {/* Total a pagar */}
+                    <div className="assax-summary-total">
+                      <div className="total-label">TOTAL A PAGAR</div>
+                      <div className="total-price-box">
+                        <span className="total-price-val">
+                          {pendingItem ? (
+                            formatBsAssax(pendingItem.finalPrice.venta_bs)
+                          ) : (
+                            'Bs. 0,00'
+                          )}
+                          {pendingItem && selectedJuego.mostrar_precio_dual && (
+                            <span style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', textAlign: 'right', marginTop: '2px', fontWeight: 500 }}>
+                              {formatUSD(pendingItem.finalPrice.venta_usd)}
+                            </span>
+                          )}
+                        </span>
+                        {pendingItem && (
+                          <span className="badge-flash">FLASH</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                      Transacción segura SSL 🚀
+                    </div>
+                  </div>
                 </div>
 
+                {/* RULETA DE PREMIOS CARD */}
+                <div className="assax-roulette-card">
+                  <div className="roulette-ticket-icon">🎟️</div>
+                  <div className="roulette-info">
+                    <h4>RULETA DE PREMIOS</h4>
+                    <p>Obtén <b>1 ticket</b> por cada compra que realices hoy.</p>
+                  </div>
+                </div>
+
+                {/* Video tutorial */}
                 {selectedJuego.tutorial_video_url && (
                   <div 
                     className="tutorial-banner-card"
@@ -1453,201 +1755,6 @@ export default function Landing({ onNavigate }) {
                   </div>
                 )}
               </aside>
-
-              {/* LISTA DE PRECIOS E INFORMACIÓN */}
-              <div className="detail-content-area">
-                <div className="price-list-section">
-                  <h3>Selecciona un paquete</h3>
-                  {loadingProductos ? (
-                    <div className="spinner"></div>
-                  ) : (
-                    <>
-                      {(() => {
-                        const filteredProducts = productosJuego.filter(p => {
-                          if (currentViewType === 'gift_card') return p.tipo_producto === 'gift_card';
-                          if (currentViewType === 'paquete') return p.tipo_producto === 'paquete';
-                          return p.tipo_producto === 'recarga' || !p.tipo_producto;
-                        });
-
-                        return (
-                          <>
-                            {showTabs && (
-                              <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }}>
-                                {hasRecargas && (
-                                  <button 
-                                    onClick={() => setActiveProductType('recarga')}
-                                    style={{
-                                      flex: 1, padding: '10px', borderRadius: '12px', border: 'none',
-                                      backgroundColor: currentViewType === 'recarga' ? 'var(--accent-light)' : 'transparent',
-                                      color: currentViewType === 'recarga' ? 'var(--accent)' : 'var(--text-muted)',
-                                      border: currentViewType === 'recarga' ? '1px solid var(--accent)' : '1px solid var(--border)',
-                                      fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', minWidth: '120px'
-                                    }}
-                                  >
-                                    {selectedJuego?.metodo_recarga === 'cuenta_completa' || selectedJuego?.metodo_recarga === 'usuario_clave' ? 'Recarga Interna' : selectedJuego?.metodo_recarga === 'solo_usuario' ? 'Recarga por Usuario' : selectedJuego?.metodo_recarga === 'solo_correo' ? 'Recarga por Correo' : 'Recarga por ID'}
-                                  </button>
-                                )}
-                                {hasPaquetes && (
-                                  <button 
-                                    onClick={() => setActiveProductType('paquete')}
-                                    style={{
-                                      flex: 1, padding: '10px', borderRadius: '12px', border: 'none',
-                                      backgroundColor: currentViewType === 'paquete' ? 'var(--accent-light)' : 'transparent',
-                                      color: currentViewType === 'paquete' ? 'var(--accent)' : 'var(--text-muted)',
-                                      border: currentViewType === 'paquete' ? '1px solid var(--accent)' : '1px solid var(--border)',
-                                      fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', minWidth: '120px'
-                                    }}
-                                  >
-                                    Paquetes
-                                  </button>
-                                )}
-                                {hasGiftCards && (
-                                  <button 
-                                    onClick={() => setActiveProductType('gift_card')}
-                                    style={{
-                                      flex: 1, padding: '10px', borderRadius: '12px', border: 'none',
-                                      backgroundColor: currentViewType === 'gift_card' ? 'var(--accent-light)' : 'transparent',
-                                      color: currentViewType === 'gift_card' ? 'var(--accent)' : 'var(--text-muted)',
-                                      border: currentViewType === 'gift_card' ? '1px solid var(--accent)' : '1px solid var(--border)',
-                                      fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', minWidth: '120px'
-                                    }}
-                                  >
-                                    Gift Cards
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                            <div className="products-grid">
-                              {filteredProducts.map(prod => {
-                                const pricing = calcularPrecioVenta(prod, selectedJuego, config)
-                                const isSelected = pendingItem?.p?.id === prod.id;
-                                return (
-                                  <div 
-                                    key={prod.id} 
-                                    className={`product-card ${isSelected ? 'selected' : ''}`}
-                                    onClick={() => {
-                                      if (!user) {
-                                        setAuthModalView('login');
-                                        setIsAuthModalOpen(true);
-                                        return;
-                                      }
-                                      
-                                      const prodEffectiveMetodo = (prod.tipo_producto === 'gift_card') ? 'entrega_codigo' : effectiveMetodoRecarga;
-
-                                      if (prodEffectiveMetodo === 'sin_datos') {
-                                        // OK
-                                      } else if (prodEffectiveMetodo === 'solo_correo') {
-                                        if (!localRechargeData.account_email.trim()) {
-                                          alert('Por favor introduce el correo arriba primero.')
-                                          return
-                                        }
-                                      } else if (prodEffectiveMetodo === 'cuenta_completa') {
-                                        if (!localRechargeData.account_email.trim() || !localRechargeData.account_password.trim()) {
-                                          alert('Por favor introduce el correo y clave arriba primero.')
-                                          return
-                                        }
-                                      } else if (prodEffectiveMetodo === 'usuario_clave') {
-                                        if (!localRechargeData.account_user?.trim() || !localRechargeData.account_password.trim()) {
-                                          alert('Por favor introduce el usuario y clave arriba primero.')
-                                          return
-                                        }
-                                      } else if (prodEffectiveMetodo === 'solo_usuario') {
-                                        if (!localRechargeData.account_user?.trim()) {
-                                          alert('Por favor introduce el usuario arriba primero.')
-                                          return
-                                        }
-                                      } else if (prodEffectiveMetodo === 'opcional_cuenta') {
-                                        if (localRechargeData.cuentaOpcion === 'propia' && (!localRechargeData.account_email?.trim() || !localRechargeData.account_password?.trim())) {
-                                          alert('Por favor introduce el correo y clave arriba primero.')
-                                          return
-                                        }
-                                      } else if (prodEffectiveMetodo === 'sin_datos' || prodEffectiveMetodo === 'entrega_codigo') {
-                                        // No se requieren datos
-                                      } else {
-                                        if (!localRechargeData.player_id.trim()) {
-                                          alert('Por favor introduce el ID arriba primero.')
-                                          return
-                                        }
-                                        const isVerificationActive = selectedJuego.verificacion_api_activa || 
-                                            (selectedJuego.verificacion_api_activa === undefined && (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('bloodstrike')));
-
-                                        if (isVerificationActive) {
-                                          if (!verificacionResultado?.success || verificacionResultado.verified_id !== localRechargeData.player_id) {
-                                            alert('Debes verificar el nombre del jugador arriba antes de seleccionar un paquete.')
-                                            return
-                                          }
-                                        }
-                                      }
-                                      
-                                      const finalPrice = calcularPrecioVenta(prod, selectedJuego, config, perfil)
-                                      setPendingItem({ 
-                                        p: prod, 
-                                        selectedJuego, 
-                                        finalPrice, 
-                                        localRechargeData: {
-                                          ...localRechargeData,
-                                          nickname: (verificacionResultado?.success && verificacionResultado.verified_id === localRechargeData.player_id) 
-                                                    ? verificacionResultado.nickname : null
-                                        } 
-                                      })
-                                    }}
-                                  >
-                                    {/* CASHBACK BADGE */}
-                                    {(config?.cashback_activo === 'true' || config?.cashback_activo === '1') && (
-                                      <div className="product-cashback-badge">
-                                        ⚡ +{config?.cashback_porcentaje || '0'}% Cashback
-                                      </div>
-                                    )}
-                                    
-                                    {prod.icono_url && <img src={prod.icono_url.includes('?') ? `${prod.icono_url}&v=3` : `${prod.icono_url}?v=3`} alt="" className="product-icon" />}
-                                    <div className="product-name">{prod.nombre}</div>
-                                    <div className="product-price">
-                                      <span className="price-primary">{formatBs(pricing.venta_bs)}</span>
-                                      {selectedJuego.mostrar_precio_dual && (
-                                        <span className="price-secondary-usd">{formatUSD(pricing.venta_usd)}</span>
-                                      )}
-                                    </div>
-                                    
-                                    {(prod.info_adicional_texto || prod.info_adicional_imagen_url) && (
-                                      <div 
-                                        onClick={(e) => { e.stopPropagation(); setInfoProductModal(prod); }} 
-                                        className="product-info-trigger"
-                                        title="Información importante"
-                                      >
-                                        i
-                                      </div>
-                                    )}
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          </>
-                        )
-                      })()}
-                    </>
-                  )}
-                </div>
-
-                {/* Información / Guías */}
-                <div className="info-content-section">
-                  <div className="info-tab-header">
-                    <h4>Información de {selectedJuego.nombre}</h4>
-                  </div>
-                  <div className="info-body">
-                    {selectedJuego.caracteristicas_nota && (
-                      <div className="rich-text" style={{ marginBottom: '16px' }} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedJuego.caracteristicas_nota.replace(/\n/g, '<br/>')) }} />
-                    )}
-                    
-                    {selectedJuego.instrucciones_recarga && (
-                      <div className="rich-text" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedJuego.instrucciones_recarga.replace(/\n/g, '<br/>')) }} />
-                    )}
-
-                    {!selectedJuego.caracteristicas_nota && !selectedJuego.instrucciones_recarga && (
-                      <p style={{ color: 'var(--text-muted)' }}>No hay información adicional disponible para este producto.</p>
-                    )}
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         ) : (
@@ -1663,7 +1770,7 @@ export default function Landing({ onNavigate }) {
                 <div className="games-grid">
                   {loading ? (
                     Array(8).fill(0).map((_, i) => (
-                      <div key={i} className="game-card-skeleton" style={{ height: '220px', backgroundColor: 'var(--bg-hover)', borderRadius: '16px', opacity: 0.5, animation: 'pulse 1.5s infinite' }}></div>
+                      <div key={i} className="game-card-skeleton" style={{ height: '220px', backgroundColor: 'var(--bg-hover)', borderRadius: '12px', opacity: 0.5, animation: 'pulse 1.5s infinite' }}></div>
                     ))
                   ) : bestsellers.length > 0 ? (
                     bestsellers.map(juego => (
@@ -1727,17 +1834,16 @@ export default function Landing({ onNavigate }) {
                   {loading && juegos.length === 0 ? (
                     Array(12).fill(0).map((_, i) => (
                       <div key={i} className="game-card-skeleton" style={{ 
-                        height: '240px', 
+                        height: '220px', 
                         backgroundColor: 'rgba(255,255,255,0.05)', 
-                        borderRadius: '16px', 
+                        borderRadius: '12px', 
                         overflow: 'hidden',
                         position: 'relative',
                         border: '1px solid rgba(255,255,255,0.05)'
                       }}>
                         <div style={{ height: '75%', background: 'rgba(255,255,255,0.03)', animation: 'pulse 1.5s infinite' }}></div>
-                        <div style={{ padding: '15px' }}>
-                          <div style={{ height: '12px', width: '70%', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', marginBottom: '8px', animation: 'pulse 1.5s infinite' }}></div>
-                          <div style={{ height: '10px', width: '40%', background: 'rgba(255,255,255,0.03)', borderRadius: '4px', animation: 'pulse 1.5s infinite' }}></div>
+                        <div style={{ padding: '10px 15px', background: '#000000', height: '25%' }}>
+                          <div style={{ height: '12px', width: '80%', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', margin: '4px auto 0', animation: 'pulse 1.5s infinite' }}></div>
                         </div>
                       </div>
                     ))
@@ -1789,7 +1895,7 @@ export default function Landing({ onNavigate }) {
 
             {/* SECCIÓN DE RESEÑAS / TESTIMONIOS */}
             {!slug && !selectedJuego && !showCheckout && !showOrders && !showRuleta && !showWallet && !showProfile && config?.landing_show_reviews !== '0' && (
-              <section className="landing-section landing-container" style={{ marginTop: '50px' }}>
+              <section id="reviews-section" className="landing-section landing-container" style={{ marginTop: '50px' }}>
                 <div className="section-header" style={{ justifyContent: 'center', textAlign: 'center', flexDirection: 'column', borderLeft: 'none', paddingLeft: 0, marginBottom: '24px' }}>
                   <h3 style={{ fontSize: '24px', fontWeight: 800 }}>Lo que dicen nuestros clientes</h3>
                   <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '4px' }}>Opiniones 100% reales y verificadas</p>
@@ -1823,7 +1929,7 @@ export default function Landing({ onNavigate }) {
 
             {/* SECCIÓN DE PREGUNTAS FRECUENTES (FAQs) */}
             {!slug && !selectedJuego && !showCheckout && !showOrders && !showRuleta && !showWallet && !showProfile && config?.landing_show_faq !== '0' && (
-              <section className="landing-section landing-container" style={{ marginTop: '50px', marginBottom: '40px' }}>
+              <section id="faq-section" className="landing-section landing-container" style={{ marginTop: '50px', marginBottom: '40px' }}>
                 <div className="section-header" style={{ justifyContent: 'center', textAlign: 'center', flexDirection: 'column', borderLeft: 'none', paddingLeft: 0, marginBottom: '24px' }}>
                   <h3 style={{ fontSize: '24px', fontWeight: 800 }}>Preguntas Frecuentes</h3>
                   <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '4px' }}>Resuelve tus dudas al instante</p>
@@ -1892,11 +1998,13 @@ export default function Landing({ onNavigate }) {
             <div className="footer-col-brand">
               <div className="landing-logo-container" onClick={() => handleSelectJuego(null)} style={{ marginBottom: '16px' }}>
                 {config?.landing_logo ? (
-                  <img src={config.landing_logo} alt="Logo" style={{ width: '44px', height: '44px', borderRadius: '12px', objectFit: 'contain' }} />
+                  <img src={config.landing_logo} alt="Logo" style={{ height: '44px', width: 'auto', maxWidth: '220px', objectFit: 'contain' }} />
                 ) : (
-                  <div className="landing-logo-icon">⚡</div>
+                  <>
+                    <div className="landing-logo-icon">⚡</div>
+                    <span className="landing-logo-text">{config?.landing_titulo || 'Recargas Hulk'}</span>
+                  </>
                 )}
-                <span className="landing-logo-text">{config?.landing_titulo || 'Recargas Hulk'}</span>
               </div>
             </div>
 
@@ -1944,96 +2052,7 @@ export default function Landing({ onNavigate }) {
         </div>
       </footer>
 
-      {/* STICKY BOTTOM PURCHASE BAR */}
-      {pendingItem && (
-        <div className="sticky-purchase-bar">
-          <div className="sticky-purchase-inner">
-            <div className="sticky-product-details">
-              {pendingItem.p.icono_url ? (
-                <img src={pendingItem.p.icono_url} alt="" className="sticky-product-icon" />
-              ) : (
-                <span className="sticky-placeholder-icon">💎</span>
-              )}
-              <div className="sticky-product-info">
-                <div className="sticky-product-title">{pendingItem.p.nombre}</div>
-                <div className="sticky-product-price">
-                  {formatBs(pendingItem.finalPrice.venta_bs * quantity)}
-                  {selectedJuego.mostrar_precio_dual && (
-                    <span className="sticky-price-usd"> ({formatUSD(pendingItem.finalPrice.venta_usd * quantity)})</span>
-                  )}
-                </div>
-              </div>
-            </div>
 
-            <div className="sticky-actions-container">
-              <div className="sticky-quantity-selector">
-                <button type="button" onClick={() => setQuantity(q => Math.max(1, q - 1))}>-</button>
-                <span>{quantity}</span>
-                <button type="button" onClick={() => setQuantity(q => q + 1)}>+</button>
-              </div>
-              
-              <div className="sticky-button-group">
-                <button 
-                  type="button"
-                  className="btn-sticky-cart"
-                  onClick={() => {
-                    for (let i = 0; i < quantity; i++) {
-                      addToCart(pendingItem.p, selectedJuego, pendingItem.finalPrice, pendingItem.localRechargeData)
-                    }
-                    setAddedItem(pendingItem.p.id)
-                    setTimeout(() => setAddedItem(null), 1200)
-                    setPendingItem(null)
-                    resetRechargeForm()
-                  }}
-                >
-                  🛒 Añadir
-                </button>
-                <button 
-                  type="button"
-                  className="btn-sticky-buy"
-                  onClick={async () => {
-                    clearCart()
-                    for (let i = 0; i < quantity; i++) {
-                      addToCart(pendingItem.p, selectedJuego, pendingItem.finalPrice, pendingItem.localRechargeData)
-                    }
-                    if (shouldSaveData && pendingItem.localRechargeData.cuentaOpcion !== 'nueva') {
-                      await guardarCuenta({
-                        tipo_dato: selectedJuego.metodo_recarga || 'id',
-                        player_id: pendingItem.localRechargeData.player_id,
-                        zone_id: pendingItem.localRechargeData.zone_id,
-                        email: pendingItem.localRechargeData.account_email,
-                        password: pendingItem.localRechargeData.account_password,
-                        username: pendingItem.localRechargeData.account_user,
-                        nombre_perfil: pendingItem.localRechargeData.player_id || pendingItem.localRechargeData.account_email || pendingItem.localRechargeData.account_user || 'Cuenta'
-                      })
-                    }
-                    setPendingItem(null)
-                    resetRechargeForm()
-                    setShowCheckout(true)
-                    window.scrollTo(0, 0)
-                  }}
-                >
-                  Comprar ahora 🚀
-                </button>
-                <button type="button" className="btn-sticky-close" onClick={() => setPendingItem(null)} title="Cerrar selección">✕</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {addedItem && (
-        <div style={{
-          position: 'fixed', bottom: '30px', left: '50%', transform: 'translateX(-50%)',
-          backgroundColor: '#00c853', color: '#fff', padding: '12px 24px',
-          borderRadius: '30px', fontWeight: 'bold', fontSize: '14px',
-          boxShadow: '0 10px 30px rgba(0,200,83,0.4)', zIndex: 10001,
-          animation: 'slideUpFade 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          display: 'flex', alignItems: 'center', gap: '8px'
-        }}>
-          <span style={{ fontSize: '18px' }}>✨</span> Paquete añadido al carrito
-        </div>
-      )}
 
       {/* CHAT DE SOPORTE */}
       {perfil && (
@@ -2170,7 +2189,7 @@ export default function Landing({ onNavigate }) {
       <style dangerouslySetInnerHTML={{ __html: `
         /* Estilos Conecta2VE */
         .marquee-container { width: 100%; overflow: hidden; background: var(--bg-hover); padding: 10px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-        .marquee-content { display: flex; animation: marquee 30s linear infinite; gap: 40px; }
+        .marquee-content { display: flex; animation: marquee 120s linear infinite; gap: 40px; }
         .marquee-item { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
         .marquee-item span { color: var(--text-main); font-weight: 600; }
         @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
@@ -2216,11 +2235,6 @@ export default function Landing({ onNavigate }) {
 }
 
 function GameCard({ juego, onSelect }) {
-  const sold = useMemo(() => {
-    const seed = (juego.id || 0).toString().split('').reduce((a, b) => a + b.charCodeAt(0), 0)
-    return (10 + (seed % 190)).toFixed(1) + 'K'
-  }, [juego.id])
-
   return (
     <div className="game-card" onClick={onSelect}>
       {juego.etiqueta_descuento && <div className="badge-discount">{juego.etiqueta_descuento}</div>}
@@ -2235,11 +2249,6 @@ function GameCard({ juego, onSelect }) {
       </div>
       <div className="game-info">
         <div className="game-name">{juego.nombre}</div>
-        <div className="game-meta hidden-mobile">
-          <span className="rating">⭐ 5.0</span>
-          <span>•</span>
-          <span>{sold} Sold</span>
-        </div>
       </div>
     </div>
   )
