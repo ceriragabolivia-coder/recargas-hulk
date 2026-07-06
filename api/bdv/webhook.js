@@ -1,9 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Inicializar Supabase con Service Role Key para tener permisos de escritura sin RLS
-const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Inicializar cliente dentro del handler para evitar crashes en el inicio de Vercel
+let supabase = null;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -11,18 +9,29 @@ export default async function handler(req, res) {
   }
 
   try {
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      return res.status(500).json({ error: 'Faltan variables de entorno de Supabase en Vercel', missingUrl: !supabaseUrl, missingKey: !supabaseKey });
+    }
+    
+    if (!supabase) {
+      supabase = createClient(supabaseUrl, supabaseKey);
+    }
+
     // 1. Validar la autorización (Token Secreto)
     const authHeader = req.headers['authorization'];
     const expectedSecret = process.env.BDV_WEBHOOK_SECRET;
 
     if (!expectedSecret) {
       console.error('⚠️ BDV_WEBHOOK_SECRET no está configurado en el servidor.');
-      return res.status(500).json({ error: 'Server configuration error' });
+      return res.status(500).json({ error: 'Server configuration error, missing BDV_WEBHOOK_SECRET' });
     }
 
     if (!authHeader || authHeader !== `Bearer ${expectedSecret}`) {
       console.warn('⛔ Intento de acceso no autorizado al webhook de BDV.');
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: 'Unauthorized', receivedHeader: authHeader });
     }
 
     // 2. Extraer datos de la petición
