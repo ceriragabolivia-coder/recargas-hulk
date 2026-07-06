@@ -39,6 +39,7 @@ const PaginaEstatica = lazy(() => import('./components/PaginaEstatica'))
 const ProveedorCatalogo = lazy(() => import('./components/ProveedorCatalogo'))
 const GestionSocios = lazy(() => import('./components/GestionSocios'))
 const MiParticipacion = lazy(() => import('./components/MiParticipacion'))
+const PagosBdv = lazy(() => import('./components/PagosBdv'))
 
 const Placeholder = ({ title }) => (
   <div className="page-content">
@@ -386,6 +387,7 @@ const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
         <Route path="/Usuarios" element={(isAdmin || isEmpleado) ? <Usuarios onNavigate={handleNavigate} /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Reportes" element={(isAdmin || isNegocio) ? <Reportes /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Pagos-Admins" element={isAdmin ? <PagosAdmins /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Pagos-BDV" element={isAdmin ? <PagosBdv /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Revendedores" element={isAdmin ? <Revendedores onNavigate={handleNavigate} /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Gestion-Ruleta" element={isAdmin ? <GestionRuleta /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Estadisticas" element={isAdmin ? <Estadisticas /> : <Navigate to="/Lista-De-Precios" replace />} />
@@ -443,6 +445,7 @@ export default function App() {
       'reportes': '/Reportes',
       'revendedores': '/Revendedores',
       'pagos_admins': '/Pagos-Admins',
+      'pagos_bdv': '/Pagos-BDV',
       'ruleta': '/Ruleta',
       'gestion_ruleta': '/Gestion-Ruleta',
       'perfil': '/Mi-Perfil',

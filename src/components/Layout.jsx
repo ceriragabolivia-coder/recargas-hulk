@@ -22,6 +22,7 @@ const NAV_ITEMS = [
   { key: 'config', icon: '⚙️', label: 'Configuración', path: '/Configuracion' },
   { key: 'reportes', icon: '📈', label: 'Reportes', path: '/Reportes' },
   { key: 'pagos_admins', icon: '💸', label: 'Pagos Admins', path: '/Pagos-Admins' },
+  { key: 'pagos_bdv', icon: '📱', label: 'Pagos Automáticos', path: '/Pagos-BDV' },
   { key: 'gestion_socios', icon: '🤝', label: 'Socios y Utilidades', path: '/Gestion-Socios' },
   { key: 'mi_participacion', icon: '🤝', label: 'Mi Participación', path: '/Mi-Participacion' },
   { key: 'estadisticas', icon: '📈', label: 'Estadísticas Pro', path: '/Estadisticas' },
