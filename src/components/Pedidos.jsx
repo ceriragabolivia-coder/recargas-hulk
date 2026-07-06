@@ -108,8 +108,8 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   const [loadingAdmins, setLoadingAdmins] = useState(false)
   const [adminSeleccionado, setAdminSeleccionado] = useState(null)
   // Modal: verificar pago con opciones
-  const [showVerificarPagoModal, setShowVerificarPagoModal] = useState(false)
-  const [pedidoParaVerificar, setPedidoParaVerificar] = useState(null)
+
+
   const [procesandoApi, setProcesandoApi] = useState(false)
 
 
@@ -783,9 +783,70 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
 
   const handleVerificarPago = async (pedido, esValido) => {
     if (esValido) {
-      // Mostrar modal de opciones en lugar de procesar automáticamente
-      setPedidoParaVerificar(pedido);
-      setShowVerificarPagoModal(true);
+      setProcesandoApi(true);
+      try {
+        // Consultar el pedido completo para saber si tiene API y AutoProcess activo
+        const { data: pedidoFull } = await supabase
+          .from('pedidos')
+          .select('*, pedido_items(*, productos(*, juegos(procesamiento_automatico_api)))')
+          .eq('id', pedido.id)
+          .single();
+
+        const tieneApiItems = pedidoFull?.pedido_items?.some(i => i.productos?.proveedor_api_id);
+        const juegoAutoProcess = pedidoFull?.pedido_items?.some(i => i.productos?.juegos?.procesamiento_automatico_api === true);
+        
+        // Si tiene API y auto-procesamiento, intentamos API. Si no, solo verificamos.
+        const modoApi = tieneApiItems && juegoAutoProcess;
+
+        const updatePayload = { pago_verificado: true, updated_at: new Date().toISOString() };
+        if (modoApi) {
+          updatePayload.estado = 'procesando';
+          updatePayload.atendido_por_id = user?.id;
+        }
+
+        const { data, error } = await supabase
+          .from('pedidos')
+          .update(updatePayload)
+          .eq('id', pedido.id)
+          .select('*, pedido_items(*, productos(*))')
+          .single();
+
+        if (error) {
+          showAlert('Error al verificar el pago: ' + error.message, 'error');
+          return;
+        }
+
+        if (data) {
+          const pedFinal = { ...data, cliente: pedido.cliente, atendido_por: pedido.atendido_por };
+          setSelectedPedido(pedFinal);
+          setPedidos(prev => prev.map(p => p.id === data.id ? pedFinal : p));
+          playCashRegisterSound();
+
+          if (modoApi) {
+            // Intentar baúl primero
+            const baul = await processAutoDeliveryOrder(data.id).catch(() => false);
+            if (baul) {
+              refreshPedidoData(data.id);
+              showAlert('✅ Pago verificado y recarga procesada automáticamente desde el baúl.', 'success');
+              return;
+            }
+            // Luego API
+            const apiSent = await processTiendaGiftVenOrder(data.id, true);
+            if (apiSent) {
+              refreshPedidoData(data.id);
+              showAlert('🚀 Pago verificado. La recarga fue enviada al proveedor API automáticamente.', 'success');
+            } else {
+              showAlert('⚠️ Pago verificado, pero hubo un problema al enviar al proveedor. Procesa manualmente.', 'warning');
+            }
+          } else {
+            showAlert('✅ Pago verificado. El pedido está listo para ser tomado y procesado manualmente.', 'success');
+          }
+        }
+      } catch (err) {
+        showAlert('Error inesperado: ' + err.message, 'error');
+      } finally {
+        setProcesandoApi(false);
+      }
     } else {
       // Si se rechaza el pago
       await updatePedidoField(pedido.id, 'pago_verificado', false);
@@ -793,146 +854,6 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     }
   }
 
-  const ejecutarVerificacionPago = async (pedido, modoApi) => {
-    setShowVerificarPagoModal(false);
-    setProcesandoApi(true);
-    try {
-      const updatePayload = { pago_verificado: true, updated_at: new Date().toISOString() };
-      if (modoApi) {
-        updatePayload.estado = 'procesando';
-        updatePayload.atendido_por_id = user?.id;
-      }
-
-      const { data, error } = await supabase
-        .from('pedidos')
-        .update(updatePayload)
-        .eq('id', pedido.id)
-        .select('*, pedido_items(*, productos(*))')
-        .single();
-
-      if (error) {
-        showAlert('Error al verificar el pago: ' + error.message, 'error');
-        return;
-      }
-
-      if (data) {
-        const pedFinal = { ...data, cliente: pedido.cliente, atendido_por: pedido.atendido_por };
-        setSelectedPedido(pedFinal);
-        setPedidos(prev => prev.map(p => p.id === data.id ? pedFinal : p));
-        playCashRegisterSound();
-
-        if (modoApi) {
-          // Modo API: intentar entrega automática de baúl + API proveedor
-          const baul = await processAutoDeliveryOrder(data.id).catch(() => false);
-          if (baul) {
-            refreshPedidoData(data.id);
-            showAlert('✅ Pago verificado y recarga procesada automáticamente desde el baúl.', 'success');
-            return;
-          }
-          const apiSent = await processTiendaGiftVenOrder(data.id, true);
-          if (apiSent) {
-            refreshPedidoData(data.id);
-            showAlert('🚀 Pago verificado. La recarga fue enviada al proveedor API. Espera la confirmación.', 'success');
-          } else {
-            showAlert('⚠️ Pago verificado, pero no hay API de proveedor configurada para este producto. Procesa manualmente.', 'warning');
-          }
-        } else {
-          // Modo manual: solo marcar como verificado
-          showAlert('✅ Pago verificado. El pedido está listo para ser tomado y procesado manualmente.', 'success');
-        }
-      }
-    } catch (err) {
-      showAlert('Error inesperado: ' + err.message, 'error');
-    } finally {
-      setProcesandoApi(false);
-      setPedidoParaVerificar(null);
-    }
-  }
-
-  const renderVerificarPagoModal = () => {
-    if (!showVerificarPagoModal || !pedidoParaVerificar) return null;
-    const p = pedidoParaVerificar;
-    const tieneApi = config?.tiendagiftven_api_key && p.pedido_items?.some(i => i.productos?.proveedor_api_id);
-    return (
-      <div style={{
-        position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.88)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 1300, animation: 'fadeIn 0.2s ease'
-      }} onClick={() => { setShowVerificarPagoModal(false); setPedidoParaVerificar(null); }}>
-        <div style={{
-          backgroundColor: '#16191e', width: '100%', maxWidth: '480px',
-          borderRadius: '24px', padding: '32px', border: '1px solid rgba(255,255,255,0.08)',
-          boxShadow: '0 30px 70px rgba(0,0,0,0.7)', position: 'relative', overflow: 'hidden'
-        }} onClick={e => e.stopPropagation()}>
-          {/* Barra superior verde */}
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #22c55e, #00d2ff)' }} />
-
-          <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-            <div style={{ fontSize: '40px', marginBottom: '10px' }}>✅</div>
-            <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', margin: '0 0 6px 0' }}>Pago Verificado</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>
-              Pedido <strong style={{ color: '#fff' }}>#{p.numero_pedido}</strong> — Ref: <strong style={{ color: '#22c55e' }}>{p.referencia_pago}</strong>
-            </p>
-            <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '6px' }}>
-              ¿Cómo deseas procesar la recarga?
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {/* Opción 1: API Proveedor */}
-            <button
-              onClick={() => ejecutarVerificacionPago(p, true)}
-              disabled={procesandoApi}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '16px',
-                padding: '18px 20px', borderRadius: '16px', border: '2px solid rgba(0,210,255,0.4)',
-                backgroundColor: 'rgba(0,210,255,0.07)', cursor: procesandoApi ? 'not-allowed' : 'pointer',
-                textAlign: 'left', transition: 'all 0.2s', opacity: procesandoApi ? 0.6 : 1
-              }}
-              onMouseEnter={e => { if (!procesandoApi) e.currentTarget.style.borderColor = '#00d2ff'; e.currentTarget.style.backgroundColor = 'rgba(0,210,255,0.14)'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(0,210,255,0.4)'; e.currentTarget.style.backgroundColor = 'rgba(0,210,255,0.07)'; }}
-            >
-              <div style={{ fontSize: '28px', flexShrink: 0 }}>🤖</div>
-              <div>
-                <div style={{ fontWeight: 700, color: '#00d2ff', fontSize: '15px', marginBottom: '3px' }}>Procesar con API del Proveedor</div>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
-                  {tieneApi
-                    ? 'Envía la orden automáticamente al proveedor (TiendaGiftVen) y realiza la recarga al jugador.'
-                    : 'Intenta entrega automática desde el baúl. Si no hay stock, deberás procesarlo manualmente.'}
-                </div>
-              </div>
-            </button>
-
-            {/* Opción 2: Manual */}
-            <button
-              onClick={() => ejecutarVerificacionPago(p, false)}
-              disabled={procesandoApi}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '16px',
-                padding: '18px 20px', borderRadius: '16px', border: '2px solid rgba(139,92,246,0.4)',
-                backgroundColor: 'rgba(139,92,246,0.07)', cursor: procesandoApi ? 'not-allowed' : 'pointer',
-                textAlign: 'left', transition: 'all 0.2s', opacity: procesandoApi ? 0.6 : 1
-              }}
-              onMouseEnter={e => { if (!procesandoApi) e.currentTarget.style.borderColor = '#8b5cf6'; e.currentTarget.style.backgroundColor = 'rgba(139,92,246,0.14)'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.4)'; e.currentTarget.style.backgroundColor = 'rgba(139,92,246,0.07)'; }}
-            >
-              <div style={{ fontSize: '28px', flexShrink: 0 }}>👨‍💻</div>
-              <div>
-                <div style={{ fontWeight: 700, color: '#8b5cf6', fontSize: '15px', marginBottom: '3px' }}>Procesar Manualmente</div>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
-                  Solo marca el pago como verificado. Tú o un operario realizarán la recarga manualmente.
-                </div>
-              </div>
-            </button>
-
-            <button
-              onClick={() => { setShowVerificarPagoModal(false); setPedidoParaVerificar(null); }}
-              style={{ padding: '12px', borderRadius: '12px', border: '1px solid var(--border-color)', backgroundColor: 'transparent', color: 'var(--text-muted)', fontWeight: 600, cursor: 'pointer', marginTop: '4px' }}
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
       </div>
     );
   }
@@ -1947,7 +1868,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
         {renderReembolsoModal()}
         {renderAsignarAdminModal()}
         {renderAtribuirModal()}
-        {renderVerificarPagoModal()}
+
 
         <div className="pedidos-grid-responsive">
           {renderAlertModal()}
