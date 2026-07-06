@@ -16,11 +16,7 @@ export default function PagosApk() {
     try {
       const { data, error } = await supabase
         .from('pagos_apk')
-        .select(`
-          *,
-          pedidos ( numero_pedido, total_bs, total_usd ),
-          perfiles!usuario_id ( nombres, apellidos, usuario )
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(100)
 
