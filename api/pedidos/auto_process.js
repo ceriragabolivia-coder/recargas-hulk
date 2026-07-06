@@ -122,16 +122,29 @@ export default async function handler(req, res) {
     // --- Obtener items del pedido para checar auto-procesamiento ---
     const { data: pedidoConItems } = await supabase
       .from('pedidos')
-      .select('pedido_items(*, productos(proveedor_api_id, juego_id, juegos(procesamiento_automatico_api)))')
+      .select('pedido_items(*, productos(proveedor_api_id, juego_id))')
       .eq('id', pedido.id)
       .single();
 
     const tieneApiItems = pedidoConItems?.pedido_items?.some(
       i => i.productos?.proveedor_api_id
     );
-    const juegoAutoProcess = pedidoConItems?.pedido_items?.some(
-      i => i.productos?.juegos?.procesamiento_automatico_api === true
-    );
+    
+    let juegoAutoProcess = false;
+    if (tieneApiItems) {
+      const juegoIds = pedidoConItems.pedido_items.map(i => i.productos?.juego_id).filter(Boolean);
+      if (juegoIds.length > 0) {
+        const { data: juegos } = await supabase
+          .from('juegos')
+          .select('procesamiento_automatico_api')
+          .in('id', juegoIds)
+          .eq('procesamiento_automatico_api', true);
+          
+        if (juegos && juegos.length > 0) {
+          juegoAutoProcess = true;
+        }
+      }
+    }
 
     if (tieneApiItems && (juegoAutoProcess || force)) {
       console.log(`⚡ Procesando API para pedido ${pedido.id} (Auto: ${juegoAutoProcess}, Force: ${force})...`);
