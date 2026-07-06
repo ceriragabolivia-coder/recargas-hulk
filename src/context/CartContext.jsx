@@ -119,6 +119,9 @@ export function CartProvider({ children }) {
       const isAutomatic = (referencia && (referencia.includes('BILLETERA') || referencia.includes('PAGO_TOTAL')))
       
       // DOBLE VERIFICACIÓN CONTRA DUPLICADOS (Blindaje extra cliente a nivel inserción)
+      let pagoVerificadoApk = false;
+      let apkPagoId = null;
+
       if (referencia && !isAutomatic && referencia !== 'N/A') {
         const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
         const { data: existingPedidos } = await supabase
@@ -131,6 +134,23 @@ export function CartProvider({ children }) {
         if (existingPedidos && existingPedidos.length > 0 && (!existingPedidoId || existingPedidos[0].id !== existingPedidoId)) {
           return [{ id: 'pedido', error: `La referencia de pago ${referencia} ya ha sido registrada en otro pedido. No se pueden duplicar referencias.` }]
         }
+
+        // VERIFICACIÓN CON PAGOS APK (AUTO-APROBACIÓN DE PAGO)
+        try {
+          const { data: apkPago } = await supabase
+            .from('pagos_apk')
+            .select('id, monto')
+            .eq('referencia', referencia.trim())
+            .eq('status', 'disponible')
+            .single();
+
+          if (apkPago && Math.abs(parseFloat(apkPago.monto) - parseFloat(finalBs)) <= 0.05) {
+            pagoVerificadoApk = true;
+            apkPagoId = apkPago.id;
+          }
+        } catch (err) {
+          console.error("Error verificando APK en checkout:", err);
+        }
       }
 
       const pedidoData = {
@@ -141,7 +161,7 @@ export function CartProvider({ children }) {
         total_bs: finalBs,
         estado: 'pendiente',
         comprobante_url: comprobanteUrl || null,
-        pago_verificado: isAutomatic ? true : null
+        pago_verificado: (isAutomatic || pagoVerificadoApk) ? true : null
       }
 
       let pedido;
@@ -201,6 +221,19 @@ export function CartProvider({ children }) {
       if (itemsError) throw itemsError
 
       clearCart()
+
+      if (pagoVerificadoApk && apkPagoId) {
+        try {
+          await supabase.from('pagos_apk').update({
+            status: 'usado',
+            pedido_id: pedido.id,
+            usuario_id: user.id
+          }).eq('id', apkPagoId);
+          console.log(`✅ Pago del pedido ${pedido.id} auto-aprobado por APK.`);
+        } catch (err) {
+          console.error("Error al actualizar pagos_apk:", err);
+        }
+      }
 
       if (isAutomatic) {
         // Ejecutamos en background
