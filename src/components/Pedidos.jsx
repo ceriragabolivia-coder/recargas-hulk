@@ -2900,7 +2900,6 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
         </>
       )}
     </div>
-    {renderVerificarPagoModal()}
     </>
   )
 }
