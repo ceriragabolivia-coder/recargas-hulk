@@ -20,6 +20,12 @@ export default async function handler(req, res) {
   }
 
   try {
+    const secret = req.headers.authorization;
+    if (secret !== 'Bearer BdvSecret_Hulk_2026!') {
+      console.warn('Intento de acceso no autorizado al webhook APK:', secret);
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
     const payload = req.body;
     console.log('📦 Webhook Pagos APK Recibido:', payload);
 
