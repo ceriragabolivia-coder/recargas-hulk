@@ -17,7 +17,9 @@ export default async function handler(req, res) {
         error: 'Faltan variables de entorno de Supabase en Vercel', 
         missingUrl: !supabaseUrl, 
         missingKey: !supabaseKey,
-        envKeys: Object.keys(process.env)
+        envKeys: Object.keys(process.env),
+        projectName: process.env.VERCEL_PROJECT_NAME,
+        vercelUrl: process.env.VERCEL_URL
       });
     }
     
