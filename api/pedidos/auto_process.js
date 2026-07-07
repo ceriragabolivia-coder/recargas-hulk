@@ -18,7 +18,8 @@ async function procesarPedidoConApi(pedidoId, apiKey) {
   if (!pedidoActual?.pedido_items) return { anySent: false, allCompleted: false };
 
   for (const item of pedidoActual.pedido_items) {
-    if (item.productos?.proveedor_api_id && !item.proveedor_pedido_id && !item.estado_proveedor) {
+    const isPendingOrFailed = !item.estado_proveedor || item.estado_proveedor === 'error' || item.estado_proveedor === 'fallido';
+    if (item.productos?.proveedor_api_id && !item.proveedor_pedido_id && isPendingOrFailed) {
       anySent = true;
       try {
         console.log(`🚀 [AutoProcess] Enviando item ${item.id} a TiendaGiftVen...`);
