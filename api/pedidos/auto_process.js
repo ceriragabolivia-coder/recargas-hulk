@@ -29,8 +29,8 @@ async function procesarPedidoConApi(pedidoId, apiKey) {
         };
 
         if (item.player_id) {
-          payload.id_juego = item.player_id;
-          if (item.zone_id) payload.input2 = item.zone_id;
+          payload.id_juego = String(item.player_id).trim();
+          if (item.zone_id) payload.input2 = String(item.zone_id).trim();
         } else {
           payload.cantidad = item.cantidad || 1;
         }
