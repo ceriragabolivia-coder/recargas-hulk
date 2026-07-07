@@ -2262,11 +2262,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'flex-start' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       {(() => {
-                        // Búsqueda exhaustiva del ícono en todas las posibles estructuras de Supabase
-                        const iconUrl = item.producto_icono || 
-                                      (Array.isArray(item.productos) ? item.productos[0]?.icono_url : item.productos?.icono_url) ||
-                                      (Array.isArray(item.producto) ? item.producto[0]?.icono_url : item.producto?.icono_url) ||
-                                      item.icono_url; // Fallback final si viniera plano
+                        const iconUrl = item.productos?.icono_url || item.icono_url;
 
                         if (!iconUrl) return null;
 
@@ -2280,7 +2276,9 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                         );
                       })()}
                       <div>
-                        <div className="product-item-title">{item.producto_nombre}</div>
+                        <div className="product-item-title" style={{ fontSize: '14px', marginBottom: '4px' }}>
+                          {item.productos?.nombre || 'Producto'}
+                        </div>
                         {/* ESTADO LABEL CLIENTE/GENERAL */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
                           {item.estado === 'completado' && <span style={{ backgroundColor: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{fontSize: '14px'}}>✅</span> Recargado</span>}
@@ -2304,7 +2302,9 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                     </div>
                     
                     <div translate="no" className="notranslate" style={{ textAlign: 'right' }}>
-                       <span className="product-item-price">{formatBs(item.precio_bs)}</span>
+                       <div className="product-item-price" style={{ fontSize: '15px' }}>
+                        {formatBs(item.subtotal)}
+                      </div>
 
                        {/* BOTONES ADMIN */}
                        {canManage && esElOperador(selectedPedido) && selectedPedido.estado === 'procesando' && (
@@ -2324,11 +2324,8 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                     </div>
                   </div>
 
-                <div style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    🎮 {item.juego_nombre} · Cantidad: {item.cantidad}
-                    {((item.productos || item.producto || (Array.isArray(item.productos) ? item.productos[0] : null))?.entrega_automatica) && !item.codigo_entregado && stockCounts[(item.productos || item.producto || (Array.isArray(item.productos) ? item.productos[0] : null))?.id] === 0 && (
-                      <span style={{ backgroundColor: '#ef4444', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 800 }}>⚠️ Sin Stock en Baúl</span>
-                    )}
+                  <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                    🎮 {item.productos?.juegos?.nombre || 'Juego'} · Cantidad: {item.cantidad}
                   </div>
 
                   {/* CAJA DE REFERENCIA (ADMIN -> CLIENTE) */}
@@ -2737,8 +2734,8 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                     {currentPedidos.map(pedido => {
                       const est = getEstadoStyle(pedido.estado)
                       const items = pedido.pedido_items || []
-                      const juegos = [...new Set(items.map(i => i.juego_nombre))]
-                      const paquetes = items.map(i => `${i.producto_nombre}${i.cantidad > 1 ? ` x${i.cantidad}` : ''}`)
+                      const juegos = [...new Set(items.map(i => i.productos?.juegos?.nombre))]
+                      const paquetes = items.map(i => `${i.productos?.nombre || 'Producto'}${i.cantidad > 1 ? ` x${i.cantidad}` : ''}`)
 
                       return (
                         <tr 

@@ -223,7 +223,7 @@ export function useVentas() {
         vendedor:vendedor_id(nombres, apellidos, nickname),
         pedido:pedido_id(
           *,
-          pedido_items(*)
+          pedido_items(*, productos(*, juegos(*)))
         )
       `)
       .gte('created_at', start)
@@ -432,7 +432,7 @@ export function useVentas() {
         vendedor:vendedor_id(nombres, apellidos, nickname),
         pedido:pedido_id(
           *,
-          pedido_items(*)
+          pedido_items(*, productos(*, juegos(*)))
         )
       `)
       .gte('created_at', startISO)

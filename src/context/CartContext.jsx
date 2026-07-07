@@ -200,19 +200,13 @@ export function CartProvider({ children }) {
           rows.push({
             pedido_id: pedido.id,
             producto_id: item.id,
-            juego_nombre: item.juego,
-            producto_nombre: item.nombre,
             cantidad: 1, // Dividimos en registros individuales para checks separados
-            precio_usd: item.venta_usd,
-            precio_bs: item.venta_bs,
-            metodo_recarga: item.metodo_recarga,
+            precio_unitario: +(item.venta_usd).toFixed(2),
+            subtotal: +(item.venta_usd).toFixed(2),
             player_id: item.player_id || null,
-            nickname: item.nickname || null,
-            account_email: item.account_email || null,
-            account_password: item.account_password || null,
-            account_user: item.account_user || null,
             zone_id: item.zone_id || null,
-            producto_icono: item.icono_url || null
+            account_email: item.account_email || item.account_user || null,
+            account_password: item.account_password || null
           })
         }
         return rows
