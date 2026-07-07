@@ -201,8 +201,8 @@ export function CartProvider({ children }) {
             pedido_id: pedido.id,
             producto_id: item.id,
             cantidad: 1, // Dividimos en registros individuales para checks separados
-            precio_unitario: +(item.venta_usd).toFixed(2),
-            subtotal: +(item.venta_usd).toFixed(2),
+            precio_usd: +(item.venta_usd).toFixed(2),
+            precio_bs: item.venta_bs,
             player_id: item.player_id || null,
             zone_id: item.zone_id || null,
             account_email: item.account_email || item.account_user || null,

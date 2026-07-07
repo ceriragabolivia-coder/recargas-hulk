@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // --- HELPER: Procesar pedido con TiendaGiftVen API ---
@@ -18,13 +18,14 @@ async function procesarPedidoConApi(pedidoId, apiKey) {
   if (!pedidoActual?.pedido_items) return { anySent: false, allCompleted: false };
 
   for (const item of pedidoActual.pedido_items) {
+    const prod = Array.isArray(item.productos) ? item.productos[0] : item.productos;
     const isPendingOrFailed = !item.estado_proveedor || item.estado_proveedor === 'error' || item.estado_proveedor === 'fallido';
-    if (item.productos?.proveedor_api_id && !item.proveedor_pedido_id && isPendingOrFailed) {
+    if (prod?.proveedor_api_id && !item.proveedor_pedido_id && isPendingOrFailed) {
       anySent = true;
       try {
         console.log(`🚀 [AutoProcess] Enviando item ${item.id} a TiendaGiftVen...`);
         const payload = {
-          producto_id: parseInt(item.productos.proveedor_api_id, 10),
+          producto_id: parseInt(prod.proveedor_api_id, 10),
           merchant_ref: `HULK-ITEM-${item.id}`
         };
 
@@ -129,7 +130,10 @@ export default async function handler(req, res) {
       .single();
 
     const tieneApiItems = pedidoConItems?.pedido_items?.some(
-      i => i.productos?.proveedor_api_id
+      i => {
+        const p = Array.isArray(i.productos) ? i.productos[0] : i.productos;
+        return p?.proveedor_api_id;
+      }
     );
     
     if (tieneApiItems) {

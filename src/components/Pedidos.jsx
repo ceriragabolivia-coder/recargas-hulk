@@ -2303,7 +2303,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                     
                     <div translate="no" className="notranslate" style={{ textAlign: 'right' }}>
                        <div className="product-item-price" style={{ fontSize: '15px' }}>
-                        {formatBs(item.subtotal)}
+                        {formatBs(item.precio_bs)}
                       </div>
 
                        {/* BOTONES ADMIN */}
