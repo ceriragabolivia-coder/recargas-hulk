@@ -236,16 +236,19 @@ export function CartProvider({ children }) {
       }
 
       if (isAutomatic || pagoVerificadoApk) {
-        // Ejecutamos en background
-        processAutoDeliveryOrder(pedido.id).then(async (processed) => {
+        try {
+          console.log('⏳ Ejecutando auto-procesamiento antes de finalizar...');
+          const processed = await processAutoDeliveryOrder(pedido.id);
           if (processed) {
-             console.log('Pedido auto-procesado correctamente por baúl');
+             console.log('✅ Pedido auto-procesado correctamente por baúl');
           } else {
              // Si no se procesó por el baúl, intentamos con la API
              const apiProcessed = await processTiendaGiftVenOrder(pedido.id, null, false).catch(() => false);
-             if (apiProcessed) console.log('Pedido auto-procesado correctamente por API');
+             if (apiProcessed) console.log('✅ Pedido auto-procesado correctamente por API');
           }
-        }).catch(err => console.error(err));
+        } catch (err) {
+          console.error('Error en auto-procesamiento:', err);
+        }
       }
 
       return [{ id: 'pedido', data: pedido, error: null }]
