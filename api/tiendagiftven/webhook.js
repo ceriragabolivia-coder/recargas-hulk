@@ -20,8 +20,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing merchant_ref' });
     }
 
-    // Extraer el ID del item de pedido. Asumimos el formato 'HULK-ITEM-123' o similar
-    const itemIdMatch = merchant_ref.match(/ITEM-(\d+)$/);
+    // Extraer el ID del item de pedido. Formato: 'HULK-ITEM-123' o 'HULK-ITEM-123-timestamp'
+    const itemIdMatch = merchant_ref.match(/ITEM-(\d+)(?:-\d+)?$/);
     if (!itemIdMatch) {
       return res.status(400).json({ error: 'Invalid merchant_ref format' });
     }
