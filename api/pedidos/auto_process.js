@@ -39,7 +39,8 @@ async function procesarPedidoConApi(pedidoId, apiKey) {
           method: 'POST',
           headers: {
             'X-API-Key': apiKey,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
           },
           body: JSON.stringify(payload)
         });
