@@ -2262,7 +2262,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'flex-start' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       {(() => {
-                        const iconUrl = item.productos?.icono_url || item.icono_url;
+                        const iconUrl = item.producto_icono || item.productos?.icono_url || item.icono_url;
 
                         if (!iconUrl) return null;
 
@@ -2277,7 +2277,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                       })()}
                       <div>
                         <div className="product-item-title" style={{ fontSize: '14px', marginBottom: '4px' }}>
-                          {item.productos?.nombre || 'Producto'}
+                          {item.producto_nombre || item.productos?.nombre || 'Producto'}
                         </div>
                         {/* ESTADO LABEL CLIENTE/GENERAL */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
@@ -2325,7 +2325,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                   </div>
 
                   <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                    🎮 {item.productos?.juegos?.nombre || 'Juego'} · Cantidad: {item.cantidad}
+                    🎮 {item.juego_nombre || item.productos?.juegos?.nombre || 'Juego'} · Cantidad: {item.cantidad}
                   </div>
 
                   {/* CAJA DE REFERENCIA (ADMIN -> CLIENTE) */}
@@ -2734,8 +2734,8 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                     {currentPedidos.map(pedido => {
                       const est = getEstadoStyle(pedido.estado)
                       const items = pedido.pedido_items || []
-                      const juegos = [...new Set(items.map(i => i.productos?.juegos?.nombre))]
-                      const paquetes = items.map(i => `${i.productos?.nombre || 'Producto'}${i.cantidad > 1 ? ` x${i.cantidad}` : ''}`)
+                      const juegos = [...new Set(items.map(i => i.juego_nombre || i.productos?.juegos?.nombre))]
+                      const paquetes = items.map(i => `${i.producto_nombre || i.productos?.nombre || 'Producto'}${i.cantidad > 1 ? ` x${i.cantidad}` : ''}`)
 
                       return (
                         <tr 
