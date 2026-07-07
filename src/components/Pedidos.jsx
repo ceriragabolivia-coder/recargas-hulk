@@ -121,7 +121,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     setLoading(true)
     let query = supabase
       .from('pedidos')
-      .select('*, pedido_items(*, productos(*))')
+      .select('*, pedido_items(*, productos(*, juegos(*)))')
       .order('created_at', { ascending: false })
 
     if (normalizedParams.userId) {

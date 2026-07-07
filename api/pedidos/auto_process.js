@@ -132,24 +132,8 @@ export default async function handler(req, res) {
       i => i.productos?.proveedor_api_id
     );
     
-    let juegoAutoProcess = false;
     if (tieneApiItems) {
-      const juegoIds = pedidoConItems.pedido_items.map(i => i.productos?.juego_id).filter(Boolean);
-      if (juegoIds.length > 0) {
-        const { data: juegos } = await supabase
-          .from('juegos')
-          .select('procesamiento_automatico_api')
-          .in('id', juegoIds)
-          .eq('procesamiento_automatico_api', true);
-          
-        if (juegos && juegos.length > 0) {
-          juegoAutoProcess = true;
-        }
-      }
-    }
-
-    if (tieneApiItems && (juegoAutoProcess || force)) {
-      console.log(`⚡ Procesando API para pedido ${pedido.id} (Auto: ${juegoAutoProcess}, Force: ${force})...`);
+      console.log(`⚡ Procesando API para pedido ${pedido.id} (Force: ${force})...`);
 
       // Obtener API key
       const { data: configRow } = await supabase
