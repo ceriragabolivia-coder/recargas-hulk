@@ -121,7 +121,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     setLoading(true)
     let query = supabase
       .from('pedidos')
-      .select('*, pedido_items(*, productos(*, juegos(*)))')
+      .select('*, pedido_items(*, productos(*, juegos(*))), cupones(*)')
       .order('created_at', { ascending: false })
 
     if (normalizedParams.userId) {
@@ -2020,6 +2020,16 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                   {canManage && <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{formatUSD(selectedPedido.total_usd)}</div>}
                 </div>
               </div>
+
+              {selectedPedido.cupon_id && selectedPedido.cupones && (
+                <div className="summary-row" translate="no" className="notranslate" style={{ backgroundColor: 'rgba(0, 210, 255, 0.05)', borderRadius: '8px', padding: '8px 12px', marginTop: '8px', border: '1px dashed rgba(0, 210, 255, 0.3)' }}>
+                  <span className="summary-label" style={{ color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>🎟️ Cupón Aplicado</span>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontWeight: 800, fontSize: '15px', color: '#fff' }}>{selectedPedido.cupones.codigo}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--accent-success)', fontWeight: 600 }}>-{selectedPedido.cupones.porcentaje_descuento}% de descuento</div>
+                  </div>
+                </div>
+              )}
 
               {selectedPedido.cashback_aplicado && (
                 (() => {
