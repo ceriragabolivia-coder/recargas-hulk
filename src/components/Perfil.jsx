@@ -13,12 +13,41 @@ export default function Perfil() {
   const [loading, setLoading] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
+  
+  const [misCupones, setMisCupones] = useState([])
+  const [loadingCupones, setLoadingCupones] = useState(true)
 
   useEffect(() => {
     if (perfil?.whatsapp) {
       setWhatsapp(perfil.whatsapp)
     }
   }, [perfil])
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchMisCupones()
+    }
+  }, [user?.id])
+
+  const fetchMisCupones = async () => {
+    setLoadingCupones(true)
+    const { data, error } = await supabase
+      .from('cupones_usuarios')
+      .select('usos, cupones(*)')
+      .eq('usuario_id', user.id)
+      
+    if (!error && data) {
+      // Filtrar los que están activos y donde usos < max_usos_usuario
+      const validos = data.filter(item => 
+        item.cupones && 
+        item.cupones.activo && 
+        (!item.cupones.fecha_fin || new Date() < new Date(item.cupones.fecha_fin)) &&
+        (!item.cupones.max_usos_usuario || item.usos < item.cupones.max_usos_usuario)
+      )
+      setMisCupones(validos)
+    }
+    setLoadingCupones(false)
+  }
 
   const handleUpdateWhatsApp = async (e) => {
     e.preventDefault()
@@ -256,6 +285,43 @@ export default function Perfil() {
           }</div>
           <div><strong>País:</strong> {perfil?.pais || 'No especificado'}</div>
         </div>
+      </div>
+
+      {/* Mis Cupones */}
+      <div className="card mt-24">
+        <h3 style={{ marginBottom: '16px', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>🎟️</span> Mis Cupones
+        </h3>
+        {loadingCupones ? (
+          <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Cargando cupones...</div>
+        ) : misCupones.length === 0 ? (
+          <div style={{ padding: '20px', textAlign: 'center', backgroundColor: 'rgba(0, 210, 255, 0.05)', borderRadius: '12px', border: '1px solid rgba(0, 210, 255, 0.1)' }}>
+            <span style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }}>🎫</span>
+            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px' }}>Aún no tienes cupones de descuento disponibles.</p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+            {misCupones.map((c, i) => (
+              <div key={i} style={{ padding: '16px', borderRadius: '12px', background: 'linear-gradient(135deg, rgba(168,85,247,0.1) 0%, rgba(216,180,254,0.05) 100%)', border: '1px solid rgba(168,85,247,0.3)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 900, fontSize: '18px', color: '#a855f7' }}>{c.cupones.codigo}</span>
+                  <span style={{ fontWeight: 800, fontSize: '16px', color: 'var(--text-primary)' }}>-{c.cupones.porcentaje_descuento}%</span>
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                  <div>Usos restantes: {(c.cupones.max_usos_usuario || 1) - c.usos}</div>
+                  {c.cupones.fecha_fin && <div>Vence: {new Date(c.cupones.fecha_fin).toLocaleDateString()}</div>}
+                </div>
+                <button 
+                  className="btn btn-sm" 
+                  onClick={() => { navigator.clipboard.writeText(c.cupones.codigo); alert("¡Código copiado!") }}
+                  style={{ marginTop: '4px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)' }}
+                >
+                  📋 Copiar Código
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

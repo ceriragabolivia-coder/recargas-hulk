@@ -31,6 +31,7 @@ const NAV_ITEMS = [
   { key: 'gestion_paginas', icon: '📄', label: 'Páginas del Footer', path: '/Gestion-Paginas' },
   { key: 'gestion_ruleta', icon: '🎡', label: 'Gestión de Ruleta', path: '/Gestion-Ruleta' },
   { key: 'ruleta', icon: '🎡', label: 'Ruleta de Premios', path: '/Ruleta' },
+  { key: 'gestion_cupones', icon: '🎟️', label: 'Cupones de Descuento', path: '/Gestion-Cupones' },
   { key: 'perfil', icon: '👤', label: 'Mi Perfil', path: '/Mi-Perfil' },
 ]
 

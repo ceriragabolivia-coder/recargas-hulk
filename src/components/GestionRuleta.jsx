@@ -105,11 +105,18 @@ export default function GestionRuleta() {
         { clave: 'ruleta_descripcion', valor_texto: config.ruleta_descripcion, valor: 0, descripcion: 'Descripción de la Ruleta' }
       ]
       
-      const { error } = await supabase
-        .from('configuracion')
-        .upsert(updates, { onConflict: 'clave' })
+      for (const item of updates) {
+        const { error } = await supabase
+          .from('configuracion')
+          .update(item)
+          .eq('clave', item.clave)
+        
+        if (error) {
+          // Si falla la actualización, intentamos insertarlo (por si no existía)
+          await supabase.from('configuracion').insert(item)
+        }
+      }
       
-      if (error) throw error
       alert('✅ Configuración guardada correctamente')
     } catch (err) {
       console.error("Error saveConfig:", err)

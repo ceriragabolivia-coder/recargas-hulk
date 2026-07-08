@@ -102,7 +102,7 @@ export function CartProvider({ children }) {
     }
   };
 
-  const checkout = async (registrarVenta, clienteId, metodoPagoId, referencia, whatsapp, ruletaDesc, existingPedidoId, comprobanteUrl, shouldUpdate) => {
+  const checkout = async (registrarVenta, clienteId, metodoPagoId, referencia, whatsapp, ruletaDesc, existingPedidoId, comprobanteUrl, shouldUpdate, activeCupon) => {
     if (!user || cart.length === 0) return [{ id: 'pedido', error: 'Carrito vacío o sesión no iniciada' }]
 
     if (perfil && ['baneado', 'suspendido', 'rechazado'].includes(perfil.estado?.toLowerCase())) {
@@ -114,8 +114,13 @@ export function CartProvider({ children }) {
       const totalBs = cart.reduce((acc, item) => acc + (item.venta_bs * item.quantity), 0)
       
       const ruletaFactor = ruletaDesc ? (1 - ruletaDesc.porcentaje / 100) : 1
-      const finalUSD = +(totalUSD * ruletaFactor).toFixed(2)
-      const finalBs = Math.round(totalBs * ruletaFactor)
+      const cuponFactor = activeCupon ? (1 - activeCupon.porcentaje_descuento / 100) : 1
+      
+      const finalUSD = +(totalUSD * ruletaFactor * cuponFactor).toFixed(2)
+      const finalBs = Math.round(totalBs * ruletaFactor * cuponFactor)
+      
+      const descuento_cupon_usd = activeCupon ? (totalUSD * ruletaFactor - finalUSD) : 0
+      const descuento_cupon_bs = activeCupon ? (Math.round(totalBs * ruletaFactor) - finalBs) : 0
 
       const isAutomatic = (referencia && (referencia.includes('BILLETERA') || referencia.includes('PAGO_TOTAL')))
       
@@ -162,7 +167,10 @@ export function CartProvider({ children }) {
         total_bs: finalBs,
         estado: 'pendiente',
         comprobante_url: comprobanteUrl || null,
-        pago_verificado: (isAutomatic || pagoVerificadoApk) ? true : null
+        pago_verificado: (isAutomatic || pagoVerificadoApk) ? true : null,
+        cupon_id: activeCupon?.id || null,
+        descuento_cupon_usd: descuento_cupon_usd,
+        descuento_cupon_bs: descuento_cupon_bs
       }
 
       let pedido;

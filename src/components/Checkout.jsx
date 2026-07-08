@@ -86,6 +86,9 @@ export default function Checkout({ onFinish, embedded = false }) {
   const [useWalletPartial, setUseWalletPartial] = useState(false) // Toggle para usar saldo USD
   const [useWalletBs, setUseWalletBs] = useState(false) // Toggle para usar saldo Bs
   const [useRuletaDesc, setUseRuletaDesc] = useState(false) // Toggle para usar descuento de ruleta
+  const [cuponInput, setCuponInput] = useState('')
+  const [activeCupon, setActiveCupon] = useState(null)
+  const [validatingCupon, setValidatingCupon] = useState(false)
   
   const [isProcessing, setIsProcessing] = useState(false)
   const [orderFinished, setOrderFinished] = useState(false)
@@ -251,8 +254,10 @@ export default function Checkout({ onFinish, embedded = false }) {
 
   const activeRuletaDesc = useRuletaDesc ? selectedRuletaDesc : null
   const ruletaFactor = activeRuletaDesc ? (1 - activeRuletaDesc.porcentaje / 100) : 1
-  const discountedTotalUSD = +(totalUSD * ruletaFactor).toFixed(2)
-  const discountedTotalBs  = Math.round(totalBs * ruletaFactor)
+  const cuponFactor = activeCupon ? (1 - activeCupon.porcentaje_descuento / 100) : 1
+  
+  const discountedTotalUSD = +(totalUSD * ruletaFactor * cuponFactor).toFixed(2)
+  const discountedTotalBs  = Math.round(totalBs * ruletaFactor * cuponFactor)
 
   const isGratis = discountedTotalUSD <= 0 && totalUSD > 0
 
@@ -325,6 +330,31 @@ export default function Checkout({ onFinish, embedded = false }) {
     if (newVal && ruletaDescuentos.length > 0 && !selectedRuletaDesc) {
       setSelectedRuletaDesc(ruletaDescuentos[0])
     }
+  }
+
+  const handleApplyCupon = async () => {
+    if (!cuponInput.trim()) return
+    setValidatingCupon(true)
+    const { data, error } = await supabase.rpc('validar_cupon_rpc', {
+      p_codigo: cuponInput.trim().toUpperCase(),
+      p_usuario_id: user?.id || perfil?.id || perfil?.cliente_uuid
+    })
+    setValidatingCupon(false)
+
+    if (error) {
+      setAlertModal({ type: 'error', message: 'Error al validar el cupón: ' + error.message })
+    } else if (data && !data.valido) {
+      setAlertModal({ type: 'warning', message: data.mensaje })
+      setActiveCupon(null)
+    } else if (data && data.valido) {
+      setActiveCupon(data)
+      setAlertModal({ type: 'success', message: `¡Cupón aplicado! Se ha aplicado un ${data.porcentaje_descuento}% de descuento.` })
+    }
+  }
+
+  const handleRemoveCupon = () => {
+    setActiveCupon(null)
+    setCuponInput('')
   }
 
   const handleOrderExpired = useCallback(async () => {
@@ -489,7 +519,7 @@ export default function Checkout({ onFinish, embedded = false }) {
         finalReferencia = 'PENDIENTE_BINANCE_PAY';
       }
 
-      const results = await checkout(registrarVenta, user?.id || perfil?.id, finalMetodoId, finalReferencia, null, activeRuletaDesc, createdPedidoId, comprobanteUrl, true)
+      const results = await checkout(registrarVenta, user?.id || perfil?.id, finalMetodoId, finalReferencia, null, activeRuletaDesc, createdPedidoId, comprobanteUrl, true, activeCupon)
       
       const pedidoResult = results.find(r => r.id === 'pedido')
       
@@ -921,6 +951,39 @@ export default function Checkout({ onFinish, embedded = false }) {
                        </div>
                      ))}
                    </div>
+                )}
+
+                {!isGratis && (
+                  <div style={{ marginBottom: '20px', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '8px', color: 'var(--text-primary)' }}>🎟️ ¿Tienes un código de descuento?</div>
+                    {!activeCupon ? (
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <input
+                          type="text"
+                          value={cuponInput}
+                          onChange={(e) => setCuponInput(e.target.value.replace(/\s+/g, '').toUpperCase())}
+                          placeholder="Ingresa tu cupón"
+                          style={{ flex: 1, padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-panel)', color: 'var(--text-primary)', outline: 'none' }}
+                        />
+                        <button
+                          onClick={handleApplyCupon}
+                          disabled={validatingCupon || !cuponInput.trim()}
+                          className="btn btn-secondary"
+                          style={{ padding: '0 16px', borderRadius: '8px' }}
+                        >
+                          {validatingCupon ? 'Validando...' : 'Aplicar'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: '8px', backgroundColor: 'rgba(0, 210, 255, 0.1)', border: '1px solid rgba(0, 210, 255, 0.3)' }}>
+                        <div>
+                          <span style={{ fontWeight: 800, color: 'var(--accent-primary)' }}>{activeCupon.codigo}</span>
+                          <span style={{ fontSize: '12px', marginLeft: '8px', color: 'var(--accent-success)', fontWeight: 700 }}>(-{activeCupon.porcentaje_descuento}%)</span>
+                        </div>
+                        <button onClick={handleRemoveCupon} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 800 }}>✕</button>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginBottom: '12px' }}>

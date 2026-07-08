@@ -128,15 +128,12 @@ export default async function handler(req, res) {
               }
 
               // Actualizar estado del pedido a completado y venta_registrada a true
-              const { error: orderUpdateError } = await supabase
-                .from('pedidos')
-                .update({
-                  estado: 'completado',
-                  venta_registrada: true,
-                  fecha_respuesta: new Date().toISOString(),
-                  updated_at: new Date().toISOString()
-                })
-                .eq('id', pedidoId);
+              const { error: orderUpdateError } = await supabase.rpc('webhook_update_pedido', {
+                p_pedido_id: pedidoId,
+                p_estado: 'completado',
+                p_venta_registrada: true,
+                p_fecha_respuesta: new Date().toISOString()
+              });
 
               if (orderUpdateError) {
                 console.error(`❌ Error actualizando pedido #${order.numero_pedido} a completado:`, orderUpdateError);
