@@ -223,83 +223,107 @@ export default function GestionCupones({ onNavigate }) {
 
         {/* Modal Crear Cupón */}
         {showModal && (
-          <div className="modal-overlay" onClick={() => setShowModal(false)}>
-            <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
-              <div className="modal-header">
-                <h3>Crear Nuevo Cupón</h3>
-                <button className="btn-close" onClick={() => setShowModal(false)}>×</button>
+          <div className="modal-overlay" style={{ backdropFilter: 'blur(8px)', zIndex: 1000 }} onClick={() => setShowModal(false)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()} style={{ 
+              maxWidth: '650px', 
+              width: '95%', 
+              padding: '40px', 
+              borderRadius: '28px', 
+              background: 'var(--bg-card)', 
+              border: '1px solid var(--border-color)', 
+              boxShadow: '0 24px 64px rgba(0,0,0,0.4)' 
+            }}>
+              <div className="modal-header" style={{ marginBottom: '32px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '16px' }}>
+                <h3 style={{ fontSize: '28px', fontWeight: 900, color: 'var(--text-primary)', margin: 0 }}>Crear Nuevo Cupón</h3>
+                <button className="btn-close" style={{ fontSize: '28px', width: '40px', height: '40px' }} onClick={() => setShowModal(false)}>×</button>
               </div>
               <div className="modal-body">
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div className="form-group">
-                    <label>Código del Cupón (Ej: VERANO20) *</label>
-                    <input 
-                      type="text" 
-                      className="input-field" 
-                      value={formData.codigo} 
-                      onChange={e => setFormData({...formData, codigo: e.target.value.replace(/\s+/g, '').toUpperCase()})}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label>Porcentaje de Descuento (%) *</label>
-                    <input 
-                      type="number" 
-                      min="1" max="100" step="0.01"
-                      className="input-field" 
-                      value={formData.porcentaje_descuento} 
-                      onChange={e => setFormData({...formData, porcentaje_descuento: e.target.value})}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Límite de usos global (Dejar vacío para ilimitado)</label>
-                    <input 
-                      type="number" min="1"
-                      className="input-field" 
-                      value={formData.max_usos_global} 
-                      onChange={e => setFormData({...formData, max_usos_global: e.target.value})}
-                      placeholder="Ej: 100 usuarios máximos"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Límite de usos por persona</label>
-                    <input 
-                      type="number" min="1"
-                      className="input-field" 
-                      value={formData.max_usos_usuario} 
-                      onChange={e => setFormData({...formData, max_usos_usuario: e.target.value})}
-                      placeholder="Ej: 1 (Por defecto)"
-                    />
-                  </div>
-
-                  <div className="form-row" style={{ display: 'flex', gap: '16px' }}>
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  <div className="form-row" style={{ display: 'flex', gap: '20px' }}>
+                    <div className="form-group" style={{ flex: 2 }}>
+                      <label style={{ fontSize: '15px', fontWeight: 700, marginBottom: '8px', display: 'block', color: 'var(--accent-primary)' }}>🎟️ Código del Cupón *</label>
+                      <input 
+                        type="text" 
+                        className="input-field" 
+                        value={formData.codigo} 
+                        onChange={e => setFormData({...formData, codigo: e.target.value.replace(/\s+/g, '').toUpperCase()})}
+                        placeholder="Ej: VERANO20"
+                        style={{ height: '56px', fontSize: '18px', fontWeight: 800, letterSpacing: '2px', textAlign: 'center', textTransform: 'uppercase' }}
+                        required
+                      />
+                    </div>
+                    
                     <div className="form-group" style={{ flex: 1 }}>
-                      <label>Fecha de Inicio (Opcional)</label>
+                      <label style={{ fontSize: '15px', fontWeight: 700, marginBottom: '8px', display: 'block', color: 'var(--accent-success)' }}>💰 Descuento (%) *</label>
+                      <input 
+                        type="number" 
+                        min="1" max="100" step="0.01"
+                        className="input-field" 
+                        value={formData.porcentaje_descuento} 
+                        onChange={e => setFormData({...formData, porcentaje_descuento: e.target.value})}
+                        placeholder="20"
+                        style={{ height: '56px', fontSize: '22px', fontWeight: 900, textAlign: 'center', color: 'var(--accent-success)' }}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-row" style={{ display: 'flex', gap: '20px', background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div className="form-group" style={{ flex: 1 }}>
+                      <label style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', display: 'block', color: 'var(--text-muted)' }}>🌎 Límite de usos global</label>
+                      <input 
+                        type="number" min="1"
+                        className="input-field" 
+                        value={formData.max_usos_global} 
+                        onChange={e => setFormData({...formData, max_usos_global: e.target.value})}
+                        placeholder="Ilimitado"
+                        style={{ height: '48px', fontSize: '16px' }}
+                      />
+                      <small style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '4px', display: 'block' }}>Total de veces que se puede usar en toda la web.</small>
+                    </div>
+
+                    <div className="form-group" style={{ flex: 1 }}>
+                      <label style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', display: 'block', color: 'var(--text-muted)' }}>👤 Límite por persona</label>
+                      <input 
+                        type="number" min="1"
+                        className="input-field" 
+                        value={formData.max_usos_usuario} 
+                        onChange={e => setFormData({...formData, max_usos_usuario: e.target.value})}
+                        placeholder="1"
+                        style={{ height: '48px', fontSize: '16px' }}
+                      />
+                      <small style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '4px', display: 'block' }}>Veces que cada usuario puede usar este código.</small>
+                    </div>
+                  </div>
+
+                  <div className="form-row" style={{ display: 'flex', gap: '20px' }}>
+                    <div className="form-group" style={{ flex: 1 }}>
+                      <label style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', display: 'block', color: 'var(--text-muted)' }}>🕒 Fecha de Inicio (Opcional)</label>
                       <input 
                         type="datetime-local" 
                         className="input-field" 
                         value={formData.fecha_inicio} 
                         onChange={e => setFormData({...formData, fecha_inicio: e.target.value})}
+                        style={{ height: '48px', color: formData.fecha_inicio ? 'var(--text-primary)' : 'var(--text-muted)' }}
                       />
                     </div>
                     <div className="form-group" style={{ flex: 1 }}>
-                      <label>Fecha de Vencimiento (Opcional)</label>
+                      <label style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', display: 'block', color: 'var(--text-muted)' }}>⏳ Fecha de Vencimiento (Opcional)</label>
                       <input 
                         type="datetime-local" 
                         className="input-field" 
                         value={formData.fecha_fin} 
                         onChange={e => setFormData({...formData, fecha_fin: e.target.value})}
+                        style={{ height: '48px', color: formData.fecha_fin ? 'var(--text-primary)' : 'var(--text-muted)' }}
                       />
                     </div>
                   </div>
 
-                  <div className="form-actions mt-4" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                    <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancelar</button>
-                    <button type="submit" className="btn btn-primary">Crear Cupón</button>
+                  <div className="form-actions mt-4" style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                    <button type="button" className="btn btn-ghost" style={{ fontSize: '16px', padding: '0 24px' }} onClick={() => setShowModal(false)}>Cancelar</button>
+                    <button type="submit" className="btn btn-primary" style={{ fontSize: '16px', fontWeight: 800, padding: '0 32px', height: '52px', background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0088ff 100%)', borderRadius: '14px' }}>
+                      Guardar Cupón
+                    </button>
                   </div>
                 </form>
               </div>
