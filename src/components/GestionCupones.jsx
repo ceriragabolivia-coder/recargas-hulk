@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useData'
 import FloatingBackground from './FloatingBackground'
 import { hasRole } from '../utils/helpers'
+import AlertModal from './AlertModal'
 
 export default function GestionCupones({ onNavigate }) {
   const { perfil, user } = useAuth()
@@ -11,6 +12,7 @@ export default function GestionCupones({ onNavigate }) {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [showAssignModal, setShowAssignModal] = useState(false)
+  const [alertModal, setAlertModal] = useState(null)
   
   const [formData, setFormData] = useState({
     codigo: '',
@@ -49,7 +51,7 @@ export default function GestionCupones({ onNavigate }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!formData.codigo || !formData.porcentaje_descuento) {
-      alert("El código y el porcentaje son obligatorios")
+      setAlertModal({ type: 'warning', message: 'El código y el porcentaje son obligatorios' })
       return
     }
     
@@ -65,9 +67,9 @@ export default function GestionCupones({ onNavigate }) {
     const { error } = await supabase.from('cupones').insert([payload])
     
     if (error) {
-      alert('Error al crear el cupón: ' + error.message)
+      setAlertModal({ type: 'error', message: 'Error al crear el cupón: ' + error.message })
     } else {
-      alert('Cupón creado exitosamente')
+      setAlertModal({ type: 'success', message: 'Cupón creado exitosamente' })
       setShowModal(false)
       fetchCupones()
       setFormData({
@@ -86,12 +88,18 @@ export default function GestionCupones({ onNavigate }) {
     if (!error) fetchCupones()
   }
   
-  const deleteCupon = async (id) => {
-    if (confirm("¿Estás seguro de eliminar este cupón? Esta acción no se puede deshacer y borrará los usos del mismo.")) {
-      const { error } = await supabase.from('cupones').delete().eq('id', id)
-      if (!error) fetchCupones()
-      else alert("Error al eliminar: " + error.message)
-    }
+  const deleteCupon = (id) => {
+    setAlertModal({
+      type: 'confirm',
+      title: 'Eliminar Cupón',
+      message: '¿Estás seguro de eliminar este cupón? Esta acción no se puede deshacer y borrará los usos del mismo.',
+      onConfirm: async () => {
+        setAlertModal(null)
+        const { error } = await supabase.from('cupones').delete().eq('id', id)
+        if (!error) fetchCupones()
+        else setAlertModal({ type: 'error', message: "Error al eliminar: " + error.message })
+      }
+    })
   }
 
   const searchUser = async (emailOrNickname) => {
@@ -110,7 +118,7 @@ export default function GestionCupones({ onNavigate }) {
   const handleAssignSubmit = async (e) => {
     e.preventDefault()
     if (!assignData.cupon_id || !assignData.selectedUser) {
-      alert("Selecciona un cupón y un usuario")
+      setAlertModal({ type: 'warning', message: "Selecciona un cupón y un usuario" })
       return
     }
 
@@ -120,11 +128,11 @@ export default function GestionCupones({ onNavigate }) {
     })
 
     if (error) {
-      alert("Error al asignar: " + error.message)
+      setAlertModal({ type: 'error', message: "Error al asignar: " + error.message })
     } else if (data && !data.success) {
-      alert(data.message)
+      setAlertModal({ type: 'warning', message: data.message })
     } else {
-      alert("Cupón asignado y notificado exitosamente al usuario")
+      setAlertModal({ type: 'success', message: "Cupón asignado y notificado exitosamente al usuario" })
       setShowAssignModal(false)
       setAssignData({ cupon_id: null, searchEmail: '', searchResults: [], isSearching: false, selectedUser: null })
     }
@@ -414,6 +422,23 @@ export default function GestionCupones({ onNavigate }) {
               </div>
             </div>
           </div>
+        )}
+
+        {alertModal && (
+          <AlertModal
+            isOpen={true}
+            type={alertModal.type}
+            title={alertModal.title}
+            message={alertModal.message}
+            onConfirm={() => {
+              if (alertModal.onConfirm) alertModal.onConfirm()
+              else setAlertModal(null)
+            }}
+            onCancel={() => {
+              if (alertModal.onCancel) alertModal.onCancel()
+              setAlertModal(null)
+            }}
+          />
         )}
 
       </div>
