@@ -1990,7 +1990,6 @@ export default function Landing({ onNavigate }) {
       </main>
 
       <footer className="landing-footer">
-        <div style={{ height: '3px', background: 'linear-gradient(90deg, var(--accent), #00d2ff, var(--accent))' }} />
 
         <div className="landing-container" style={{ padding: '56px 20px 40px' }}>
           <div className="footer-grid-new">
