@@ -655,7 +655,7 @@ export default function Landing({ onNavigate }) {
       
       {/* DINAMIC CSS THEME VARIABLES */}
       <style dangerouslySetInnerHTML={{ __html: `
-        :root {
+        :root, .landing-page, .landing-page.dark {
           --bg-page: ${config?.landing_bg_color || '#0f0f10'};
           --bg-card: ${config?.landing_card_bg || '#1a1d21'};
           --bg-header: ${config?.landing_bg_color || '#0f0f10'};
