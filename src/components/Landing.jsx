@@ -983,6 +983,7 @@ export default function Landing({ onNavigate }) {
                   )}
                   <a href="#" className="visible-mobile" onClick={(e) => { e.preventDefault(); }}>Ayuda</a>
                   <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Mi-Perfil'); }}>Mi Perfil</a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Mi-Perfil#mis-cupones'); setTimeout(() => { const el = document.getElementById('mis-cupones'); if(el) el.scrollIntoView({behavior: 'smooth'}) }, 100); }}>Mis Cupones</a>
                   <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Mis-Pedidos'); }}>Mis Pedidos</a>
                   <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Billetera'); }}>Billetera</a>
                   <a href="#" onClick={(e) => { e.preventDefault(); logout() }} style={{ color: '#ef4444' }}>Cerrar Sesión</a>

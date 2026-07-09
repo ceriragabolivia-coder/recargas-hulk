@@ -18,6 +18,15 @@ export default function Perfil() {
   const [loadingCupones, setLoadingCupones] = useState(true)
 
   useEffect(() => {
+    if (window.location.hash === '#mis-cupones') {
+      setTimeout(() => {
+        const el = document.getElementById('mis-cupones')
+        if (el) el.scrollIntoView({ behavior: 'smooth' })
+      }, 500)
+    }
+  }, [])
+
+  useEffect(() => {
     if (perfil?.whatsapp) {
       setWhatsapp(perfil.whatsapp)
     }
@@ -288,7 +297,7 @@ export default function Perfil() {
       </div>
 
       {/* Mis Cupones */}
-      <div className="card mt-24">
+      <div id="mis-cupones" className="card mt-24" style={{ scrollMarginTop: '80px' }}>
         <h3 style={{ marginBottom: '16px', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span>🎟️</span> Mis Cupones
         </h3>
