@@ -40,22 +40,47 @@ export default function Perfil() {
 
   const fetchMisCupones = async () => {
     setLoadingCupones(true)
-    const { data, error } = await supabase
-      .from('cupones_usuarios')
-      .select('usos, cupones(*)')
-      .eq('usuario_id', user.id)
-      
-    if (!error && data) {
-      // Filtrar los que están activos y donde usos < max_usos_usuario
-      const validos = data.filter(item => 
+    try {
+      const { data: usrCupones, error } = await supabase
+        .from('cupones_usuarios')
+        .select('usos, cupon_id')
+        .eq('usuario_id', perfil?.id || user.id)
+
+      if (error) throw error
+
+      if (!usrCupones || usrCupones.length === 0) {
+        setMisCupones([])
+        return
+      }
+
+      const cuponIds = usrCupones.map(c => c.cupon_id)
+      const { data: cuponesData, error: errC } = await supabase
+        .from('cupones')
+        .select('*')
+        .in('id', cuponIds)
+
+      if (errC) throw errC
+
+      const merged = usrCupones.map(uc => {
+        const cData = cuponesData?.find(c => c.id === uc.cupon_id)
+        return {
+          usos: uc.usos,
+          cupones: cData
+        }
+      })
+
+      const validos = merged.filter(item => 
         item.cupones && 
         item.cupones.activo && 
         (!item.cupones.fecha_fin || new Date() < new Date(item.cupones.fecha_fin)) &&
         (!item.cupones.max_usos_usuario || item.usos < item.cupones.max_usos_usuario)
       )
       setMisCupones(validos)
+    } catch (err) {
+      console.error('Error fetching cupones:', err)
+    } finally {
+      setLoadingCupones(false)
     }
-    setLoadingCupones(false)
   }
 
   const handleUpdateWhatsApp = async (e) => {

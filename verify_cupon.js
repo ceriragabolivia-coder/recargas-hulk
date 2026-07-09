@@ -7,35 +7,44 @@ const key = env.match(/VITE_SUPABASE_ANON_KEY=(.*)/)[1].trim();
 const supabase = createClient(url, key);
 
 async function test() {
-  // First find the user
-  const { data: users, error: errU } = await supabase.from('perfiles').select('id').limit(1);
-  if (errU || !users || users.length === 0) {
-    console.error("No users found");
-    return;
-  }
-  const userId = users[0].id;
+  const testEmail = `test_${Date.now()}@test.com`;
+  const password = "password123";
   
-  // Find a valid cupon
-  const { data: cupones, error: errC } = await supabase.from('cupones').select('*').eq('activo', true).limit(1);
-  if (errC || !cupones || cupones.length === 0) {
-    console.error("No active cupones found");
-    return;
-  }
-  const cupon = cupones[0];
+  console.log("Signing up test user:", testEmail);
+  const { data: authData, error: authErr } = await supabase.auth.signUp({
+    email: testEmail,
+    password: password
+  });
 
-  console.log(`Validating cupon ${cupon.codigo} for user ${userId}`);
+  if (authErr) {
+    console.error("Signup error:", authErr);
+    return;
+  }
+
+  const userId = authData.user.id;
+  console.log("Test user created with ID:", userId);
+
+  // Call the RPC
+  const couponCode = "MUSCULO";
+  console.log(`Calling validar_cupon_rpc with ${couponCode} for user ${userId}`);
   
-  const { data: res, error: err } = await supabase.rpc('validar_cupon_rpc', {
-    p_codigo: cupon.codigo,
+  const { data: rpcData, error: rpcErr } = await supabase.rpc('validar_cupon_rpc', {
+    p_codigo: couponCode,
     p_usuario_id: userId
   });
-  
-  console.log("RPC Data:", res);
-  console.log("RPC Error:", err);
-  
-  // Verify if it was inserted
-  const { data: check } = await supabase.from('cupones_usuarios').select('*').eq('usuario_id', userId).eq('cupon_id', cupon.id);
-  console.log("Cupones_usuarios row:", check);
+
+  console.log("RPC Data:", rpcData);
+  if (rpcErr) console.error("RPC Error:", rpcErr);
+
+  // Fetch cupones_usuarios
+  console.log("Fetching cupones_usuarios...");
+  const { data: cuponesData, error: fetchErr } = await supabase
+    .from('cupones_usuarios')
+    .select('usos, cupon_id, usuario_id, cupones(*)')
+    .eq('usuario_id', userId);
+
+  console.log("Cupones usuarios fetched:", cuponesData);
+  if (fetchErr) console.error("Fetch error:", fetchErr);
 }
 
 test();
