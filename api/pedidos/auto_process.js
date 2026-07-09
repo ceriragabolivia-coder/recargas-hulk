@@ -125,7 +125,7 @@ export default async function handler(req, res) {
     // --- Obtener items del pedido para checar auto-procesamiento ---
     const { data: pedidoConItems } = await supabase
       .from('pedidos')
-      .select('pedido_items(*, productos(proveedor_api_id, juego_id))')
+      .select('*, pedido_items(*, productos(proveedor_api_id, juego_id))')
       .eq('id', pedido.id)
       .single();
 
@@ -157,6 +157,40 @@ export default async function handler(req, res) {
         const { anySent, allCompleted } = await procesarPedidoConApi(pedido.id, apiKey);
 
         if (anySent && allCompleted) {
+          // Fallback: Assign to SuperAdmin if automatically processed
+          let vendedorClientUuid = null;
+          const { data: superAdmin } = await supabase
+            .from('clientes')
+            .select('id')
+            .eq('usuario', 'recargashulk@gmail.com')
+            .single();
+            
+          if (superAdmin) {
+            vendedorClientUuid = superAdmin.id;
+          }
+
+          // Registrar la venta para cada item
+          for (const item of pedidoConItems.pedido_items) {
+             const { error: rpcErr } = await supabase.rpc('registrar_venta_rpc', {
+                p_producto_id: item.producto_id,
+                p_cantidad: item.cantidad,
+                p_notas: `Pedido #${pedidoConItems.numero_pedido} (API Sync)`,
+                p_cliente_id: pedidoConItems.cliente_id,
+                p_vendedor_id: vendedorClientUuid,
+                p_metodo_pago_id: pedidoConItems.metodo_pago_id,
+                p_referencia_pago: pedidoConItems.referencia_pago,
+                p_player_id: item.player_id,
+                p_account_email: item.account_email,
+                p_account_password: item.account_password,
+                p_pedido_id: pedido.id,
+                p_owner_id: pedidoConItems.owner_id
+             });
+             
+             if (rpcErr) {
+               console.error(`❌ Error registrando venta API Sync para item ${item.id}:`, rpcErr);
+             }
+          }
+
           await supabase.rpc('webhook_update_pedido', {
             p_pedido_id: pedido.id,
             p_estado: 'completado',

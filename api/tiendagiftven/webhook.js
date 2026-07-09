@@ -90,7 +90,6 @@ export default async function handler(req, res) {
             if (order && order.estado !== 'completado') {
               console.log(`🏁 Todos los items completados. Cerrando pedido #${order.numero_pedido}...`);
 
-              // Resolver cliente_uuid del operador para el registro de ventas
               let vendedorClientUuid = null;
               if (order.atendido_por_id) {
                 const { data: perf } = await supabase
@@ -99,6 +98,19 @@ export default async function handler(req, res) {
                   .eq('id', order.atendido_por_id)
                   .single();
                 vendedorClientUuid = perf?.cliente_uuid;
+              }
+
+              if (!vendedorClientUuid) {
+                // Fallback: Assign to SuperAdmin if automatically processed without an admin taking it
+                const { data: superAdmin } = await supabase
+                  .from('clientes')
+                  .select('id')
+                  .eq('usuario', 'recargashulk@gmail.com')
+                  .single();
+                  
+                if (superAdmin) {
+                  vendedorClientUuid = superAdmin.id;
+                }
               }
 
               // Registrar ventas por cada item si no se han registrado
