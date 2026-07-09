@@ -47,13 +47,9 @@ export default function LandingPerfil({ onClose }) {
 
       if (error) throw error
 
-      const validos = data.filter(item => 
-        item.cupones && 
-        item.cupones.activo && 
-        (!item.cupones.fecha_fin || new Date() < new Date(item.cupones.fecha_fin)) &&
-        (!item.cupones.max_usos_usuario || item.usos < item.cupones.max_usos_usuario)
-      )
-      setMisCupones(validos)
+      // TEMPORARY DEBUG: Show all records without filtering
+      console.log("Raw cupones data:", data);
+      setMisCupones(data || [])
     } catch (err) {
       console.error('Error fetching cupones:', err)
     } finally {
