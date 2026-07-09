@@ -29,6 +29,35 @@ export default function PagosApk({ onNavigate }) {
     }
   }
 
+  const handleMarkAsUsed = async (pago) => {
+    const relacion = window.prompt('Ingrese la relación (ej. Pedido #123, Pago manual, etc.):')
+    if (relacion === null) return // Canceled
+    if (!relacion.trim()) {
+      alert('Debe ingresar una relación válida.')
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('pagos_apk')
+        .update({ 
+          status: 'usado',
+          relacion_manual: relacion.trim()
+        })
+        .eq('id', pago.id)
+
+      if (error) throw error
+      
+      // Update local state
+      setPagos(prev => prev.map(p => 
+        p.id === pago.id ? { ...p, status: 'usado', relacion_manual: relacion.trim() } : p
+      ))
+    } catch (err) {
+      console.error('Error al marcar como usado:', err)
+      alert('Hubo un error al actualizar el pago.')
+    }
+  }
+
   const filteredPagos = pagos.filter(p => 
     p.referencia?.toLowerCase().includes(search.toLowerCase()) ||
     p.telefono?.toLowerCase().includes(search.toLowerCase())
@@ -74,6 +103,7 @@ export default function PagosApk({ onNavigate }) {
                   <th>Teléfono</th>
                   <th>Relación</th>
                   <th>Estado</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -111,14 +141,30 @@ export default function PagosApk({ onNavigate }) {
                         >
                           Recarga de Billetera
                         </span>
+                      ) : pago.relacion_manual ? (
+                        <span style={{ color: 'var(--text-light)', fontSize: '13px' }}>
+                          {pago.relacion_manual}
+                        </span>
                       ) : (
                         <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Sin relación</span>
                       )}
                     </td>
                     <td>
-                      <span className="status-badge status-completed">
+                      <span className={`status-badge ${pago.status === 'usado' ? 'status-completed' : 'status-pending'}`}>
                         {pago.status}
                       </span>
+                    </td>
+                    <td>
+                      {pago.status !== 'usado' && (
+                        <button 
+                          className="btn-secondary" 
+                          style={{ fontSize: '12px', padding: '4px 8px' }}
+                          onClick={() => handleMarkAsUsed(pago)}
+                          title="Marcar pago como usado manualmente"
+                        >
+                          Marcar Usado
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

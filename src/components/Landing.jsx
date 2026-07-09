@@ -1184,8 +1184,8 @@ export default function Landing({ onNavigate }) {
                 {/* PASO 1: SELECCIONAR PAQUETE */}
                 <div className="price-list-section">
                     {!(effectiveMetodoRecarga === 'sin_datos' || effectiveMetodoRecarga === 'entrega_codigo') && (
-                      <div className="card-recharge-info" style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', padding: '16px 20px', borderRadius: '16px', marginBottom: '24px' }}>
-                        <h3 className="assax-section-title" style={{ margin: '0 0 12px 0', borderLeft: 'none', paddingLeft: 0 }}>
+                      <div className="card-recharge-info" style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', padding: '12px 14px', borderRadius: '16px', marginBottom: '12px' }}>
+                        <h3 className="assax-section-title" style={{ margin: '0 0 8px 0', borderLeft: 'none', paddingLeft: 0 }}>
                           ❶ DATOS DE <span className="highlight-green">RECARGA</span>
                         </h3>
 
@@ -1329,10 +1329,10 @@ export default function Landing({ onNavigate }) {
                             )}
                           </div>
                         ) : (
-                          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', flexWrap: 'wrap' }}>
                             {/* Campo ID del jugador */}
                             <div style={{ flex: '0 0 auto', minWidth: '180px', maxWidth: '260px' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
                                 <label className="form-label" style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>🆔 ID del Jugador</label>
                                 {selectedJuego?.guia_id_url && (
                                   <div onClick={() => setExpandedImage(selectedJuego.guia_id_url)} style={{ cursor:'pointer', background:'var(--accent)', color:'#000', width:'18px', height:'18px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:'bold' }} title="Ver guía">?</div>
@@ -1421,7 +1421,7 @@ export default function Landing({ onNavigate }) {
                         )}
 
                         {!(effectiveMetodoRecarga === 'sin_datos' || effectiveMetodoRecarga === 'entrega_codigo') && (
-                          <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <input 
                               type="checkbox" 
                               id="save-data-checkbox-landing"
@@ -1444,7 +1444,7 @@ export default function Landing({ onNavigate }) {
                       <>
                         {/* Selector de sub-categorías (Tabs) */}
                         {showTabs && (
-                          <div className="assax-tab-toggles" style={{ display: 'flex', gap: '8px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '4px' }}>
+                          <div className="assax-tab-toggles" style={{ display: 'flex', gap: '8px', marginBottom: '10px', overflowX: 'auto', paddingBottom: '4px' }}>
                             {hasRecargas && (
                               <button 
                                 onClick={() => setActiveProductType('recarga')}

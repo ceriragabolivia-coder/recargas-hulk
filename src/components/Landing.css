@@ -2370,38 +2370,41 @@
 /* Responsividad para móviles */
 @media (max-width: 768px) {
   .assax-header-card {
-    padding: 16px;
+    padding: 12px;
   }
   
   .assax-header-left {
     width: 100%;
-    flex-direction: column;
+    flex-direction: row !important;
     gap: 12px;
     align-items: center;
-    text-align: center;
+    text-align: left;
   }
 
   .assax-header-icon {
-    width: 100%;
-    height: 140px;
-    object-fit: cover;
-    border-radius: 12px;
+    width: 110px !important;
+    min-width: 110px !important;
+    height: auto !important;
+    object-fit: contain !important;
+    border-radius: 8px;
   }
 
   .assax-title-steps-row {
     flex-direction: column;
-    align-items: center;
-    gap: 8px;
+    align-items: flex-start;
+    gap: 4px;
   }
 
   .assax-header-badges {
-    justify-content: center;
+    justify-content: flex-start;
     flex-wrap: wrap;
+    gap: 4px;
   }
 
   .assax-game-title {
-    font-size: 18px;
+    font-size: 15px;
     white-space: normal;
+    margin: 0;
   }
 
   .assax-products-grid {
@@ -2418,5 +2421,39 @@
 
   .assax-product-price {
     font-size: 15px;
+  }
+
+  /* --- Reducción extrema de espacios verticales en móviles --- */
+  .landing-container {
+    margin-top: -12px !important;
+  }
+  .detail-layout {
+    gap: 8px !important;
+  }
+  .breadcrumb {
+    margin: 0 0 6px 0 !important;
+  }
+  .assax-header-card {
+    margin-bottom: 4px !important;
+    padding: 8px 12px !important;
+  }
+  .card-recharge-info {
+    padding: 8px 12px !important;
+    margin-bottom: 8px !important;
+  }
+  .assax-section-title {
+    margin-bottom: 6px !important;
+  }
+  .card-recharge-info > div {
+    gap: 6px !important;
+  }
+  .card-recharge-info .form-input {
+    padding: 8px 12px !important;
+  }
+  .card-recharge-info .form-label {
+    margin-bottom: 2px !important;
+  }
+  .buy-mode-toggle {
+    margin-bottom: 6px !important;
   }
 }

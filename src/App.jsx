@@ -184,66 +184,153 @@ function ScheduleModal({ show, onClose, config }) {
 
 const PendingView = ({ onLogout, onRefresh }) => (
   <div className="login-container">
-    <div className="login-card" style={{ textAlign: 'center', maxWidth: '450px' }}>
-      <div style={{ fontSize: '64px', marginBottom: '24px' }}>⏳</div>
-      <h2 className="login-title">Pendiente Por Validar</h2>
-      <p style={{ color: 'var(--text-muted)', marginBottom: '32px', lineHeight: '1.6' }}>
-        Tu registro ha sido recibido, Pero Por seguridad debes comunicarte a través de Whatsapp desde el mismo número que usaste para registrarte en la página y de esa manera solicitar la aprobación de tu cuenta y poder acceder a la plataforma.
+    <div className="login-card" style={{ 
+      textAlign: 'center', 
+      maxWidth: '460px', 
+      padding: '40px 32px',
+      background: 'rgba(20, 20, 50, 0.8)',
+      backdropFilter: 'blur(24px)',
+      WebkitBackdropFilter: 'blur(24px)',
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      borderRadius: '24px',
+      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.1)',
+      animation: 'modalIn 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
+    }}>
+      {/* Icono animado */}
+      <div style={{
+        width: '88px',
+        height: '88px',
+        margin: '0 auto 28px',
+        background: 'linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(217,119,6,0.05) 100%)',
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        border: '1px solid rgba(245,158,11,0.3)',
+        boxShadow: '0 0 30px rgba(245,158,11,0.2), inset 0 0 20px rgba(245,158,11,0.1)',
+      }}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '44px', height: '44px' }}>
+          <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+
+      <h2 style={{ 
+        fontSize: '28px', 
+        fontWeight: '800', 
+        color: '#ffffff', 
+        marginBottom: '16px',
+        letterSpacing: '-0.02em',
+        background: 'linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent'
+      }}>
+        Cuenta en Revisión
+      </h2>
+      
+      <p style={{ 
+        color: '#94a3b8', 
+        marginBottom: '32px', 
+        lineHeight: '1.7',
+        fontSize: '15px'
+      }}>
+        Tu registro se completó con éxito. Para proteger nuestra comunidad, realizamos una rápida validación manual de cada usuario nuevo.
       </p>
 
       <div style={{ 
-        padding: '16px', 
-        backgroundColor: 'rgba(255, 193, 7, 0.1)', 
-        borderRadius: '12px', 
-        color: '#ffc107', 
-        marginBottom: '24px', 
-        fontSize: '13px',
-        fontWeight: '600',
-        lineHeight: '1.5',
-        border: '1px solid rgba(255, 193, 7, 0.2)'
+        padding: '18px 24px', 
+        background: 'linear-gradient(to right, rgba(245,158,11,0.15), rgba(245,158,11,0.05))', 
+        borderRadius: '16px', 
+        color: '#fcd34d', 
+        marginBottom: '32px', 
+        fontSize: '14px',
+        fontWeight: '500',
+        lineHeight: '1.6',
+        borderLeft: '4px solid #f59e0b',
+        textAlign: 'left'
       }}>
-        Debes solicitar la aprobación de tu cuenta para ingresar a la plataforma, haz click en el botón verde de abajo "Solicitar Aprobación"
+        <strong>Paso final:</strong> Envíanos un mensaje desde el mismo número de WhatsApp que registraste para activar tu acceso.
       </div>
 
-      <button
-        className="btn btn-primary"
-        style={{ width: '100%', height: '48px', marginBottom: '12px', fontWeight: '700' }}
-        onClick={() => { onRefresh(); setTimeout(() => window.location.reload(), 1500); }}
-      >
-        🔄 Actualizar
-      </button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <a
+          href="https://api.whatsapp.com/send/?phone=584145078108&text=Hola%2C+quiero+validar+mi+cuenta+en+el+sistema+de+recargas&type=phone_number&app_absent=0"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn"
+          style={{
+            width: '100%',
+            height: '56px',
+            background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '12px',
+            textDecoration: 'none',
+            fontWeight: '700',
+            borderRadius: '16px',
+            border: '1px solid rgba(255,255,255,0.2)',
+            boxShadow: '0 8px 20px rgba(37, 211, 102, 0.3)',
+            fontSize: '16px',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 12px 25px rgba(37, 211, 102, 0.4)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(37, 211, 102, 0.3)'; }}
+        >
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.181-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793 0-.853.448-1.273.607-1.446.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.101-.177.211-.077.383.101.173.449.743.964 1.203.664.591 1.221.774 1.394.86.173.088.274.072.376-.043.101-.116.433-.506.548-.68.116-.173.231-.144.39-.087.158.058 1.011.477 1.184.564.173.087.289.129.332.202.043.073.043.419-.101.824z"/>
+          </svg>
+          Contactar por WhatsApp
+        </a>
 
-      <a
-        href="https://api.whatsapp.com/send/?phone=584164287761&text=Hola%2C+quiero+validar+mi+cuenta+en+el+sistema+de+recargas&type=phone_number&app_absent=0"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="btn"
-        style={{
-          width: '100%',
-          height: '48px',
-          backgroundColor: '#25D366',
-          color: 'white',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '12px',
-          textDecoration: 'none',
-          marginBottom: '16px',
-          fontWeight: '700',
-          border: 'none',
-          boxShadow: '0 4px 14px rgba(37, 211, 102, 0.4)',
-          fontSize: '15px'
-        }}
-      >
-        <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor">
-          <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.181-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793 0-.853.448-1.273.607-1.446.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.101-.177.211-.077.383.101.173.449.743.964 1.203.664.591 1.221.774 1.394.86.173.088.274.072.376-.043.101-.116.433-.506.548-.68.116-.173.231-.144.39-.087.158.058 1.011.477 1.184.564.173.087.289.129.332.202.043.073.043.419-.101.824z"/>
-        </svg>
-        Solicitar Aprobación
-      </a>
+        <button
+          style={{ 
+            width: '100%', 
+            height: '56px', 
+            fontWeight: '600',
+            background: 'rgba(255, 255, 255, 0.05)',
+            color: '#ffffff',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            fontSize: '15px',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px'
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+          onClick={() => { onRefresh(); setTimeout(() => window.location.reload(), 1500); }}
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          Actualizar Estado
+        </button>
 
-      <button className="btn btn-ghost" style={{ width: '100%', height: '48px' }} onClick={onLogout}>
-        Cerrar Sesión
-      </button>
+        <button 
+          style={{ 
+            background: 'transparent',
+            border: 'none',
+            color: '#64748b',
+            fontSize: '14px',
+            fontWeight: '500',
+            cursor: 'pointer',
+            marginTop: '12px',
+            padding: '8px',
+            transition: 'color 0.2s ease',
+            textDecoration: 'underline',
+            textUnderlineOffset: '4px'
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = '#cbd5e1'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = '#64748b'; }}
+          onClick={onLogout}
+        >
+          Cerrar sesión
+        </button>
+      </div>
     </div>
   </div>
 )
@@ -296,7 +383,7 @@ const SuspendedView = ({ onLogout, onRefresh, type = 'suspendido', motivo }) => 
 
       {type === 'baneado' && (
         <a
-          href="https://api.whatsapp.com/send/?phone=584164287761&text=Hola%2C+mi+cuenta+ha+sido+baneada+y+quisiera+consultar+el+motivo&type=phone_number&app_absent=0"
+          href="https://api.whatsapp.com/send/?phone=584145078108&text=Hola%2C+mi+cuenta+ha+sido+baneada+y+quisiera+consultar+el+motivo&type=phone_number&app_absent=0"
           target="_blank"
           rel="noopener noreferrer"
           className="btn"
@@ -810,36 +897,23 @@ export default function App() {
 
     if (user) {
       // Prevent access while perfil is loading or null
-      if (!perfil || loading) {
-        return (
-          <div className="loading-screen-modern">
-            <div className="spinner" style={{ marginBottom: '20px' }}></div>
-            <div className="loading-text-dynamic">Verificando sesión...</div>
-          </div>
-        )
-      }
+      // Removed full-screen loading screens for 'Verificando sesión...' and 'Verificando conexión...'
+      // to allow the UI and components to render their internal loading states.
 
       const estado = perfil?.estado?.toLowerCase()
       
-      if (estado === 'cargando') {
-        if (forceLoad) {
-           return (
-             <div className="login-container">
-               <div className="login-card" style={{ textAlign: 'center' }}>
-                 <h2>Error de Conexión</h2>
-                 <p>No se pudo verificar el estado de tu cuenta de forma segura.</p>
-                 <button className="btn btn-primary" onClick={refetch} style={{width: '100%', marginBottom: '12px'}}>Reintentar</button>
-                 <button className="btn btn-ghost" onClick={logout} style={{width: '100%'}}>Cerrar Sesión</button>
-               </div>
+      // If forceLoad is true and estado is cargando, we keep the error fallback
+      if (estado === 'cargando' && forceLoad) {
+         return (
+           <div className="login-container">
+             <div className="login-card" style={{ textAlign: 'center' }}>
+               <h2>Error de Conexión</h2>
+               <p>No se pudo verificar el estado de tu cuenta de forma segura.</p>
+               <button className="btn btn-primary" onClick={refetch} style={{width: '100%', marginBottom: '12px'}}>Reintentar</button>
+               <button className="btn btn-ghost" onClick={logout} style={{width: '100%'}}>Cerrar Sesión</button>
              </div>
-           )
-        }
-        return (
-          <div className="loading-screen-modern">
-            <div className="spinner" style={{ marginBottom: '20px' }}></div>
-            <div className="loading-text-dynamic">Verificando conexión...</div>
-          </div>
-        )
+           </div>
+         )
       }
 
       if (estado === 'pendiente') return <PendingView onLogout={logout} onRefresh={refetch} />
