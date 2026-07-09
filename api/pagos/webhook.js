@@ -260,7 +260,7 @@ export default async function handler(req, res) {
         fecha_pago: fecha ? new Date(fecha).toISOString() : new Date().toISOString(),
         pedido_id: pedido_id,
         usuario_id: usuario_id,
-        status: auto_despachado ? 'usado' : 'disponible',
+        status: (pedido_id || usuario_id || auto_despachado) ? 'usado' : 'disponible',
         raw_data: payload
       })
       .select()
