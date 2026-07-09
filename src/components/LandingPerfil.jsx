@@ -18,6 +18,48 @@ export default function LandingPerfil({ onClose }) {
   const [alert, setAlert] = useState(null)
   const [localAvatar, setLocalAvatar] = useState(null)
   const [imageToCrop, setImageToCrop] = useState(null)
+  
+  const [misCupones, setMisCupones] = useState([])
+  const [loadingCupones, setLoadingCupones] = useState(true)
+
+  useEffect(() => {
+    if (window.location.hash === '#mis-cupones') {
+      setTimeout(() => {
+        const el = document.getElementById('mis-cupones')
+        if (el) el.scrollIntoView({ behavior: 'smooth' })
+      }, 500)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (user) {
+      fetchMisCupones()
+    }
+  }, [user])
+
+  const fetchMisCupones = async () => {
+    setLoadingCupones(true)
+    try {
+      const { data, error } = await supabase
+        .from('cupones_usuarios')
+        .select('usos, cupones(*)')
+        .eq('usuario_id', user.id)
+
+      if (error) throw error
+
+      const validos = data.filter(item => 
+        item.cupones && 
+        item.cupones.activo && 
+        (!item.cupones.fecha_fin || new Date() < new Date(item.cupones.fecha_fin)) &&
+        (!item.cupones.max_usos_usuario || item.usos < item.cupones.max_usos_usuario)
+      )
+      setMisCupones(validos)
+    } catch (err) {
+      console.error('Error fetching cupones:', err)
+    } finally {
+      setLoadingCupones(false)
+    }
+  }
 
   useEffect(() => {
     if (perfil?.whatsapp) {
@@ -229,6 +271,41 @@ export default function LandingPerfil({ onClose }) {
                   {loading ? 'Cambiando...' : 'Cambiar Contraseña'}
                 </button>
               </form>
+            </div>
+
+            {/* Mis Cupones */}
+            <div id="mis-cupones" className="perfil-form-card" style={{ scrollMarginTop: '80px' }}>
+              <h3><span className="icon">🎟️</span> Mis Cupones</h3>
+              {loadingCupones ? (
+                <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Cargando cupones...</div>
+              ) : misCupones.length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', backgroundColor: 'rgba(0, 210, 255, 0.05)', borderRadius: '12px', border: '1px solid rgba(0, 210, 255, 0.1)' }}>
+                  <span style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }}>🎫</span>
+                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px' }}>Aún no tienes cupones de descuento disponibles.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+                  {misCupones.map((c, i) => (
+                    <div key={i} style={{ padding: '16px', background: 'var(--bg-hover)', borderRadius: '12px', border: '1px solid rgba(168, 85, 247, 0.2)', textAlign: 'center' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                        <span style={{ fontWeight: 900, fontSize: '18px', color: '#a855f7' }}>{c.cupones.codigo}</span>
+                        <span style={{ fontWeight: 800, fontSize: '16px', color: 'var(--text-primary)' }}>-{c.cupones.porcentaje_descuento}%</span>
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                        <div>Usos restantes: {(c.cupones.max_usos_usuario || 1) - c.usos}</div>
+                        {c.cupones.fecha_fin && <div>Vence: {new Date(c.cupones.fecha_fin).toLocaleDateString()}</div>}
+                      </div>
+                      <button 
+                        className="btn-secondary" 
+                        style={{ width: '100%', fontSize: '12px', padding: '8px', background: 'rgba(168, 85, 247, 0.1)', color: '#a855f7', border: '1px solid rgba(168, 85, 247, 0.3)', borderRadius: '8px', cursor: 'pointer' }}
+                        onClick={() => { navigator.clipboard.writeText(c.cupones.codigo); alert("¡Código copiado!") }}
+                      >
+                        Copiar Código
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
          </div>
