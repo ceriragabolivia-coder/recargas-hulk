@@ -13,6 +13,7 @@ export default function GestionCupones({ onNavigate }) {
   const [showModal, setShowModal] = useState(false)
   const [showAssignModal, setShowAssignModal] = useState(false)
   const [alertModal, setAlertModal] = useState(null)
+  const [editingId, setEditingId] = useState(null)
   
   const [formData, setFormData] = useState({
     codigo: '',
@@ -48,6 +49,32 @@ export default function GestionCupones({ onNavigate }) {
     setLoading(false)
   }
 
+  const openNewModal = () => {
+    setEditingId(null)
+    setFormData({
+      codigo: '',
+      porcentaje_descuento: '',
+      max_usos_global: '',
+      max_usos_usuario: '1',
+      fecha_inicio: '',
+      fecha_fin: ''
+    })
+    setShowModal(true)
+  }
+
+  const openEditModal = (c) => {
+    setEditingId(c.id)
+    setFormData({
+      codigo: c.codigo,
+      porcentaje_descuento: c.porcentaje_descuento,
+      max_usos_global: c.max_usos_global || '',
+      max_usos_usuario: c.max_usos_usuario || '',
+      fecha_inicio: c.fecha_inicio ? new Date(new Date(c.fecha_inicio).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : '',
+      fecha_fin: c.fecha_fin ? new Date(new Date(c.fecha_fin).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''
+    })
+    setShowModal(true)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!formData.codigo || !formData.porcentaje_descuento) {
@@ -64,22 +91,22 @@ export default function GestionCupones({ onNavigate }) {
       fecha_fin: formData.fecha_fin ? new Date(formData.fecha_fin).toISOString() : null
     }
 
-    const { error } = await supabase.from('cupones').insert([payload])
+    let error;
+    if (editingId) {
+      const { error: updateError } = await supabase.from('cupones').update(payload).eq('id', editingId)
+      error = updateError
+    } else {
+      const { error: insertError } = await supabase.from('cupones').insert([payload])
+      error = insertError
+    }
     
     if (error) {
-      setAlertModal({ type: 'error', message: 'Error al crear el cupón: ' + error.message })
+      setAlertModal({ type: 'error', message: `Error al ${editingId ? 'actualizar' : 'crear'} el cupón: ` + error.message })
     } else {
-      setAlertModal({ type: 'success', message: 'Cupón creado exitosamente' })
+      setAlertModal({ type: 'success', message: `Cupón ${editingId ? 'actualizado' : 'creado'} exitosamente` })
       setShowModal(false)
+      setEditingId(null)
       fetchCupones()
-      setFormData({
-        codigo: '',
-        porcentaje_descuento: '',
-        max_usos_global: '',
-        max_usos_usuario: '1',
-        fecha_inicio: '',
-        fecha_fin: ''
-      })
     }
   }
 
@@ -152,7 +179,7 @@ export default function GestionCupones({ onNavigate }) {
             <h2 style={{ fontSize: '32px', fontWeight: 900, marginBottom: '8px' }}>Gestión de Cupones 🎟️</h2>
             <p style={{ color: 'var(--text-muted)' }}>Crea y administra códigos de descuento</p>
           </div>
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+          <button className="btn btn-primary" onClick={openNewModal}>
             + Nuevo Cupón
           </button>
         </div>
@@ -196,6 +223,14 @@ export default function GestionCupones({ onNavigate }) {
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: '8px' }}>
+                          <button 
+                            className="btn btn-icon"
+                            title="Editar"
+                            style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}
+                            onClick={() => openEditModal(c)}
+                          >
+                            ✏️
+                          </button>
                           <button 
                             className="btn btn-icon"
                             title="Regalar a usuario"
@@ -242,7 +277,7 @@ export default function GestionCupones({ onNavigate }) {
               boxShadow: '0 24px 64px rgba(0,0,0,0.4)' 
             }}>
               <div className="modal-header" style={{ marginBottom: '32px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '16px' }}>
-                <h3 style={{ fontSize: '28px', fontWeight: 900, color: 'var(--text-primary)', margin: 0 }}>Crear Nuevo Cupón</h3>
+                <h3 style={{ fontSize: '28px', fontWeight: 900, color: 'var(--text-primary)', margin: 0 }}>{editingId ? 'Editar Cupón' : 'Crear Nuevo Cupón'}</h3>
                 <button className="btn-close" style={{ fontSize: '28px', width: '40px', height: '40px' }} onClick={() => setShowModal(false)}>×</button>
               </div>
               <div className="modal-body">
@@ -330,7 +365,7 @@ export default function GestionCupones({ onNavigate }) {
                   <div className="form-actions mt-4" style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                     <button type="button" className="btn btn-ghost" style={{ fontSize: '16px', padding: '0 24px' }} onClick={() => setShowModal(false)}>Cancelar</button>
                     <button type="submit" className="btn btn-primary" style={{ fontSize: '16px', fontWeight: 800, padding: '0 32px', height: '52px', background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0088ff 100%)', borderRadius: '14px' }}>
-                      Guardar Cupón
+                      {editingId ? 'Actualizar Cupón' : 'Guardar Cupón'}
                     </button>
                   </div>
                 </form>
