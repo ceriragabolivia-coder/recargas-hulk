@@ -278,6 +278,13 @@ export default function LandingPerfil({ onClose }) {
                 <div style={{ padding: '20px', textAlign: 'center', backgroundColor: 'rgba(0, 210, 255, 0.05)', borderRadius: '12px', border: '1px solid rgba(0, 210, 255, 0.1)' }}>
                   <span style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }}>🎫</span>
                   <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px' }}>Aún no tienes cupones de descuento disponibles.</p>
+                  <button onClick={async () => {
+                    const code = prompt("Ingrese el código a testear:");
+                    if (!code) return;
+                    const res = await supabase.rpc('validar_cupon_rpc', { p_codigo: code, p_usuario_id: user.id });
+                    alert(JSON.stringify(res));
+                    fetchMisCupones();
+                  }} style={{ marginTop: '10px', padding: '5px 10px', background: '#333', color: 'white' }}>Forzar Test RPC</button>
                 </div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
