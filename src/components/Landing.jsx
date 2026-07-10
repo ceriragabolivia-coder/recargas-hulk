@@ -1708,13 +1708,15 @@ export default function Landing({ onNavigate }) {
                 </div>
 
                 {/* RULETA DE PREMIOS CARD */}
-                <div className="assax-roulette-card">
-                  <div className="roulette-ticket-icon">🎟️</div>
-                  <div className="roulette-info">
-                    <h4>RULETA DE PREMIOS</h4>
-                    <p>Obtén <b>1 ticket</b> por cada compra que realices hoy.</p>
+                {config?.ruleta_activa !== '0' && config?.ruleta_activa !== 'false' && (
+                  <div className="assax-roulette-card">
+                    <div className="roulette-ticket-icon">🎟️</div>
+                    <div className="roulette-info">
+                      <h4>RULETA DE PREMIOS</h4>
+                      <p>Obtén <b>1 ticket</b> por cada compra que realices hoy.</p>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Video tutorial */}
                 {selectedJuego.tutorial_video_url && (
