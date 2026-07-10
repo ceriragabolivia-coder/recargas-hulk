@@ -765,7 +765,8 @@ export default function GestionProductos() {
               Fórmula base: {selectedJuego.tipo_calculo}
             </p>
             <button 
-              onClick={handleOpenOpciones}
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleOpenOpciones(); }}
               style={{
                 marginTop: '8px', fontSize: '11px', padding: '4px 12px', borderRadius: '12px',
                 backgroundColor: 'rgba(0, 210, 255, 0.1)', color: 'var(--accent-primary)',
