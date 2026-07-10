@@ -106,17 +106,23 @@ export default function GestionRuleta() {
       ]
       
       for (const item of updates) {
-        const { error } = await supabase
+        // Primero verificamos si existe
+        const { data: existing } = await supabase
           .from('configuracion')
-          .update(item)
+          .select('id')
           .eq('clave', item.clave)
-        
-        if (error) {
-          // Si falla la actualización, intentamos insertarlo (por si no existía)
-          await supabase.from('configuracion').insert(item)
+          .single()
+
+        if (existing) {
+          const { error: err1 } = await supabase.from('configuracion').update(item).eq('clave', item.clave)
+          if (err1) throw err1
+        } else {
+          const { error: err2 } = await supabase.from('configuracion').insert(item)
+          if (err2) throw err2
         }
       }
       
+      localStorage.removeItem('cached_system_config')
       alert('✅ Configuración guardada correctamente')
     } catch (err) {
       console.error("Error saveConfig:", err)
