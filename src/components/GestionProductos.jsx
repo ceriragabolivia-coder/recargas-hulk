@@ -30,7 +30,8 @@ export default function GestionProductos() {
   const [savingOpciones, setSavingOpciones] = useState(false)
 
   const handleOpenOpciones = () => {
-    setOpcionesRecarga(selectedJuego.opciones_recarga || [])
+    window.alert('Has hecho clic en Opciones de Recarga para ' + selectedJuego?.nombre)
+    setOpcionesRecarga(selectedJuego?.opciones_recarga || [])
     setShowOpcionesModal(true)
   }
 
