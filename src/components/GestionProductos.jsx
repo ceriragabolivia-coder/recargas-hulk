@@ -2352,7 +2352,7 @@ function ProductVault({ productoId, setAlertModal }) {
                       </>
                     ) : item.metodo_recarga === 'usuario_clave' ? (
                       <>
-                        <div>👤 Usuario: <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>{item.account_user}</span></div>
+                        <div>👤 Usuario: <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>{item.account_user || item.account_email}</span></div>
                         <div style={{ marginTop: '2px' }}>🔑 Clave: <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold', fontFamily: 'monospace' }}>{item.account_password}</span></div>
                       </>
                     ) : item.metodo_recarga === 'id_zone' ? (

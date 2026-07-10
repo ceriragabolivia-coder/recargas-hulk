@@ -1011,7 +1011,7 @@ export default function Billetera({ onNavigate }) {
                         {item.metodo_recarga === 'solo_correo' ? (
                           <>📧 Correo: {item.account_email}</>
                         ) : item.metodo_recarga === 'solo_usuario' ? (
-                          <>👤 Usuario: {item.account_user}</>
+                          <>👤 Usuario: {item.account_user || item.account_email}</>
                         ) : item.metodo_recarga === 'id_jugador' ? (
                           <>🆔 ID del Jugador: {item.player_id}</>
                         ) : item.metodo_recarga === 'id_zone' ? (
@@ -1022,7 +1022,7 @@ export default function Billetera({ onNavigate }) {
                           <>✨ Cuenta Nueva (Nosotros la proporcionamos)</>
                         ) : (
                           <>
-                            👤 {item.account_user} <br/>
+                            👤 {item.account_user || item.account_email} <br/>
                             🔑 {item.account_password}
                           </>
                         )}

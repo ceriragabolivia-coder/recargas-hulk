@@ -217,7 +217,8 @@ export function CartProvider({ children }) {
             player_id: item.player_id || null,
             zone_id: item.zone_id || null,
             nickname: item.nickname || null,
-            account_email: item.account_email || item.account_user || null,
+            account_email: item.account_email || null,
+            account_user: item.account_user || null,
             account_password: item.account_password || null,
             producto_icono: item.icono_url || null
           })

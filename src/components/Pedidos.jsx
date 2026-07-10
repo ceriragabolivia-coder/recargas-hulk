@@ -2382,7 +2382,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                       </div>
                     ) : item.metodo_recarga === 'solo_usuario' ? (
                       <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
-                        <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>👤 {item.account_user}</div>
+                        <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>👤 {item.account_user || item.account_email}</div>
                       </div>
                     ) : item.metodo_recarga === 'cuenta_completa' ? (
                       <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
@@ -2391,7 +2391,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                       </div>
                     ) : item.metodo_recarga === 'usuario_clave' ? (
                       <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
-                        <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>👤 {item.account_user}</div>
+                        <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>👤 {item.account_user || item.account_email}</div>
                         <div style={{ color: 'var(--accent-primary)', marginTop: '4px', fontFamily: 'monospace' }}>🔑 {item.account_password}</div>
                       </div>
                     ) : item.metodo_recarga === 'cuenta_nueva' ? (
