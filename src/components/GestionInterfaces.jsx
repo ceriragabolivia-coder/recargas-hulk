@@ -35,8 +35,8 @@ export default function GestionInterfaces() {
       onConfirm: async () => {
         setAlertModal(null);
         setIsUpdating(true);
-        // Bypass DB update completely for now to avoid RLS issues
-        // const { error } = await updateConfig('admin_interface', ifaceId, true);
+        // Try DB update, but it won't crash if it fails
+        await updateConfig('admin_interface', ifaceId, true);
         setIsUpdating(false);
         
         localStorage.setItem('local_admin_interface', ifaceId);
