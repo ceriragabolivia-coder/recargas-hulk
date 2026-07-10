@@ -589,7 +589,8 @@ export default function App() {
 
   // Inject LootAdmin CSS if active
   React.useEffect(() => {
-    if (config?.admin_interface === 'lootadmin') {
+    const localAdmin = localStorage.getItem('local_admin_interface');
+    if (config?.admin_interface === 'lootadmin' || localAdmin === 'lootadmin') {
       import('./lootadmin.css')
     }
   }, [config?.admin_interface])
@@ -941,7 +942,7 @@ export default function App() {
           ) : (
             <Landing onNavigate={handleNavigate} />
           )
-        ) : config?.admin_interface === 'lootadmin' && isAdmin ? (
+        ) : (localStorage.getItem('local_admin_interface') === 'lootadmin' || config?.admin_interface === 'lootadmin') && isAdmin ? (
           <LayoutLootAdmin currentPage={currentPage} onNavigate={handleNavigate}>
             <AppRoutes 
               isAdmin={isAdmin} 
