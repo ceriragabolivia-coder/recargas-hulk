@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs */
 import React, { useState, useMemo, useRef } from 'react'
 import { useJuegos, useProductos, useConfiguracion, useProductoCodigos } from '../hooks/useData'
 import { useAuth } from '../context/AuthContext'
@@ -53,6 +54,23 @@ export default function GestionProductos() {
     const newOpciones = [...opcionesRecarga]
     newOpciones.splice(index, 1)
     setOpcionesRecarga(newOpciones)
+  }
+
+  const handleAddOpcionProd = () => {
+    const current = Array.isArray(formData.opciones_recarga) ? formData.opciones_recarga : []
+    setFormData({ ...formData, opciones_recarga: [...current, { nombre: '', mensaje: '', url: '' }] })
+  }
+
+  const handleRemoveOpcionProd = (index) => {
+    const newOptions = [...(formData.opciones_recarga || [])]
+    newOptions.splice(index, 1)
+    setFormData({ ...formData, opciones_recarga: newOptions })
+  }
+
+  const handleOpcionProdChange = (index, field, value) => {
+    const newOptions = [...(formData.opciones_recarga || [])]
+    newOptions[index][field] = value
+    setFormData({ ...formData, opciones_recarga: newOptions })
   }
 
   const handleSaveOpciones = async () => {
@@ -282,7 +300,8 @@ export default function GestionProductos() {
     info_adicional_imagen_url: '',
     entrega_automatica: false,
     tipo_producto: 'recarga',
-    proveedor_api_id: ''
+    proveedor_api_id: '',
+    opciones_recarga: []
   })
   const [newIconFile, setNewIconFile] = useState(null)
   const [iconPreview, setIconPreview] = useState(null)
@@ -361,7 +380,7 @@ export default function GestionProductos() {
   }
 
   const handleOpenModal = () => {
-    setFormData({ id: null, nombre: '', costo_base: '', margen_ganancia: '30', icono_url: null, descuento_revendedor: '', info_adicional_texto: '', info_adicional_imagen_url: null, entrega_automatica: false, tipo_producto: 'recarga', proveedor_api_id: '' })
+    setFormData({ id: null, nombre: '', costo_base: '', margen_ganancia: '30', icono_url: null, descuento_revendedor: '', info_adicional_texto: '', info_adicional_imagen_url: null, entrega_automatica: false, tipo_producto: 'recarga', proveedor_api_id: '', opciones_recarga: [] })
     lastProveedorIdSincronizado.current = null
     setNewIconFile(null)
     setIconPreview(null)
@@ -382,7 +401,8 @@ export default function GestionProductos() {
       info_adicional_imagen_url: prod.info_adicional_imagen_url || null,
       entrega_automatica: prod.entrega_automatica || false,
       tipo_producto: prod.tipo_producto || 'recarga',
-      proveedor_api_id: prod.proveedor_api_id || ''
+      proveedor_api_id: prod.proveedor_api_id || '',
+      opciones_recarga: prod.opciones_recarga || []
     })
     lastProveedorIdSincronizado.current = prod.proveedor_api_id || null
     setNewIconFile(null)
@@ -403,7 +423,8 @@ export default function GestionProductos() {
       info_adicional_imagen_url: prod.info_adicional_imagen_url || null,
       entrega_automatica: prod.entrega_automatica || false,
       tipo_producto: prod.tipo_producto || 'recarga',
-      proveedor_api_id: prod.proveedor_api_id || ''
+      proveedor_api_id: prod.proveedor_api_id || '',
+      opciones_recarga: prod.opciones_recarga || []
     })
     lastProveedorIdSincronizado.current = null
     setNewIconFile(null)
@@ -465,7 +486,8 @@ export default function GestionProductos() {
         info_adicional_imagen_url: finalInfoUrl,
         entrega_automatica: formData.entrega_automatica,
         tipo_producto: formData.tipo_producto,
-        proveedor_api_id: formData.proveedor_api_id ? parseInt(formData.proveedor_api_id, 10) : null
+        proveedor_api_id: formData.proveedor_api_id ? parseInt(formData.proveedor_api_id, 10) : null,
+        opciones_recarga: formData.opciones_recarga || []
       }
 
       if (formData.id) {
@@ -1285,6 +1307,66 @@ export default function GestionProductos() {
                 <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Si se activa, el sistema entregará un código del baúl automáticamente al completar el pedido.</p>
               </div>
             </label>
+          </div>
+
+          <div style={{ marginBottom: '24px' }}>
+            <h4 style={{ fontSize: '13px', color: 'var(--accent-primary)', marginBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '6px' }}>⚙️ Opciones de Recarga Exclusivas de este Paquete ({formData.opciones_recarga?.length || 0}) </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {(formData.opciones_recarga || []).map((opcion, idx) => (
+                <div key={idx} style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+                  <button 
+                    type="button"
+                    onClick={() => handleRemoveOpcionProd(idx)}
+                    style={{ position: 'absolute', top: '8px', right: '8px', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 'bold' }}
+                    title="Eliminar Opción"
+                  >✕</button>
+                  
+                  <div style={{ marginBottom: '8px', paddingRight: '20px' }}>
+                    <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Título del Botón</label>
+                    <input 
+                      type="text" 
+                      value={opcion.nombre} 
+                      onChange={e => handleOpcionProdChange(idx, 'nombre', e.target.value)} 
+                      placeholder="Ej: Opción 1"
+                      className="input-field" 
+                      style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', fontSize: '12px' }}
+                    />
+                  </div>
+                  
+                  <div style={{ marginBottom: '8px' }}>
+                    <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Mensaje</label>
+                    <textarea 
+                      value={opcion.mensaje} 
+                      onChange={e => handleOpcionProdChange(idx, 'mensaje', e.target.value)} 
+                      placeholder="Ej: Pasos a seguir..."
+                      className="input-field" 
+                      style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', minHeight: '40px', resize: 'vertical', fontSize: '12px' }}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Enlace de Redirección (Opcional)</label>
+                    <input 
+                      type="url" 
+                      value={opcion.url} 
+                      onChange={e => handleOpcionProdChange(idx, 'url', e.target.value)} 
+                      placeholder="https://..."
+                      className="input-field" 
+                      style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', fontSize: '12px' }}
+                    />
+                  </div>
+                </div>
+              ))}
+              
+              <button 
+                type="button"
+                onClick={handleAddOpcionProd}
+                className="btn btn-secondary btn-sm"
+                style={{ alignSelf: 'flex-start', padding: '6px 12px', borderRadius: '8px', fontSize: '12px' }}
+              >
+                + Añadir Opción
+              </button>
+            </div>
           </div>
 
           {formData.id && formData.entrega_automatica && (

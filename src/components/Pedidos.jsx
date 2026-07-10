@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { compressImage } from '../utils/imageCompression'
 import { useAuth, useConfiguracion } from '../hooks/useData'
@@ -2482,44 +2482,54 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                        <div style={{ fontSize: '14px', color: '#ffb3b3', whiteSpace: 'pre-line' }}>{item.notas_admin}</div>
                      </div>
                   )}
+
+                  {/* OPCIONES DE RECARGA (JUEGO + PRODUCTO) */}
+                  {(() => {
+                    let opcionesJuego = item.productos?.juegos?.opciones_recarga || [];
+                    if (typeof opcionesJuego === 'string') {
+                      try { opcionesJuego = JSON.parse(opcionesJuego) } catch(e) { opcionesJuego = [] }
+                    }
+                    if (!Array.isArray(opcionesJuego)) opcionesJuego = [];
+                    
+                    let opcionesProd = item.productos?.opciones_recarga || [];
+                    if (typeof opcionesProd === 'string') {
+                      try { opcionesProd = JSON.parse(opcionesProd) } catch(e) { opcionesProd = [] }
+                    }
+                    if (!Array.isArray(opcionesProd)) opcionesProd = [];
+                    
+                    const opciones = [...opcionesJuego, ...opcionesProd];
+                    
+                    if (opciones.length === 0) return null;
+                    return (
+                      <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                        <h3 style={{ marginBottom: '12px', color: 'var(--text-primary)', fontWeight: 800, fontSize: '12px', textTransform: 'uppercase' }}>Opciones de Recarga</h3>
+                        <div style={{ display: 'grid', gap: '8px' }}>
+                          {opciones.map((op, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => setViewingOpcion(op)}
+                              style={{
+                                padding: '10px 14px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px',
+                                border: '1px solid rgba(255,255,255,0.05)', color: 'var(--accent-primary)',
+                                fontWeight: 600, cursor: 'pointer', display: 'flex', justifyContent: 'space-between',
+                                alignItems: 'center', transition: 'all 0.2s', textAlign: 'left', fontSize: '12px'
+                              }}
+                              onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--accent-primary)'; e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.05)' }}
+                              onMouseOut={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)' }}
+                            >
+                              <span>ℹ️ {op.nombre}</span>
+                              <span>›</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })()}
+
                 </div>
               ))}
             </div>
           </div>
-
-          {/* OPCIONES DE RECARGA */}
-          {(() => {
-            let opciones = selectedPedido?.pedido_items?.[0]?.productos?.juegos?.opciones_recarga || [];
-            if (typeof opciones === 'string') {
-              try { opciones = JSON.parse(opciones) } catch(e) { opciones = [] }
-            }
-            if (!Array.isArray(opciones)) opciones = [];
-            if (opciones.length === 0) return null;
-            return (
-              <div className="card" style={{ padding: '12px', marginTop: '16px' }}>
-                <h3 style={{ marginBottom: '12px', color: 'var(--text-primary)', fontWeight: 800, fontSize: '16px', textTransform: 'uppercase' }}>Opciones de Recarga</h3>
-                <div style={{ display: 'grid', gap: '8px' }}>
-                  {opciones.map((op, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setViewingOpcion(op)}
-                      style={{
-                        padding: '12px 16px', backgroundColor: 'var(--bg-panel)', borderRadius: '12px',
-                        border: '1px solid var(--border-color)', color: 'var(--accent-primary)',
-                        fontWeight: 600, cursor: 'pointer', display: 'flex', justifyContent: 'space-between',
-                        alignItems: 'center', transition: 'all 0.2s', textAlign: 'left'
-                      }}
-                      onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--accent-primary)'; e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.05)' }}
-                      onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.backgroundColor = 'var(--bg-panel)' }}
-                    >
-                      <span>ℹ️ {op.nombre}</span>
-                      <span>›</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )
-          })()}
 
         </div>
       </div>
@@ -2584,7 +2594,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
       <React.Suspense fallback={<div style={{padding: '40px', color: 'white'}}>Cargando interfaz...</div>}>
         <LootAdminComponent 
           states={{ pedidos, loading, filtroEstado, selectedPedido }} 
-          actions={{ setFiltroEstado, handleCompletarPedido, setMotivoRechazo, rechazarConMotivo, setRechazandoItem, rechazandoItem }} 
+          actions={{ setFiltroEstado, updateItemEstado, setMotivoRechazo, handleConfirmRechazo, setRechazandoItem, rechazandoItem }} 
         />
       </React.Suspense>
     );

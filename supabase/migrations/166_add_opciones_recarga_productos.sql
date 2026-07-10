@@ -1,0 +1,1 @@
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS opciones_recarga JSONB DEFAULT '[]'::jsonb;
