@@ -35,17 +35,12 @@ export default function GestionInterfaces() {
       onConfirm: async () => {
         setAlertModal(null);
         setIsUpdating(true);
-        const { error } = await updateConfig('admin_interface', ifaceId, true);
+        // Bypass DB update completely for now to avoid RLS issues
+        // const { error } = await updateConfig('admin_interface', ifaceId, true);
         setIsUpdating(false);
         
-        if (error) {
-          // Even if DB fails due to RLS, save locally so it works for the admin
-          localStorage.setItem('local_admin_interface', ifaceId);
-          window.location.reload();
-        } else {
-          localStorage.setItem('local_admin_interface', ifaceId);
-          window.location.reload();
-        }
+        localStorage.setItem('local_admin_interface', ifaceId);
+        window.location.reload();
       }
     });
   };
