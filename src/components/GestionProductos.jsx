@@ -1842,6 +1842,106 @@ export default function GestionProductos() {
     </div>
 )}
 
+      {/* MODAL: OPCIONES DE RECARGA PARA EL JUEGO */}
+      {showOpcionesModal && (
+        <div className="modal-overlay" style={{ zIndex: 12000 }}>
+          <div style={{ 
+            backgroundColor: 'var(--bg-card)', padding: '24px', 
+            borderRadius: '20px', width: '90%', maxWidth: '600px', 
+            position: 'relative', zIndex: 12001, border: '1px solid var(--border-color)',
+            maxHeight: '90vh', display: 'flex', flexDirection: 'column'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '20px', margin: 0, color: 'var(--text-primary)' }}>
+                ⚙️ Opciones de Recarga ({selectedJuego.nombre})
+              </h3>
+              <button 
+                onClick={() => setShowOpcionesModal(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '20px', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '20px' }}>
+              Agrega botones de información rápida o redirecciones (Ej: tutoriales, páginas de recarga) que serán visibles para el administrador en los pedidos de este juego.
+            </p>
+
+            <div style={{ overflowY: 'auto', flex: 1, paddingRight: '8px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {opcionesRecarga.map((opcion, idx) => (
+                <div key={idx} style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+                  <button 
+                    onClick={() => handleRemoveOpcion(idx)}
+                    style={{ position: 'absolute', top: '12px', right: '12px', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 'bold' }}
+                    title="Eliminar Opción"
+                  >✕</button>
+                  
+                  <div style={{ marginBottom: '12px', paddingRight: '24px' }}>
+                    <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Título del Botón</label>
+                    <input 
+                      type="text" 
+                      value={opcion.nombre} 
+                      onChange={e => handleOpcionChange(idx, 'nombre', e.target.value)} 
+                      placeholder="Ej: Tutorial de Compra"
+                      className="input-field" 
+                      style={{ width: '100%', padding: '8px', borderRadius: '8px' }}
+                    />
+                  </div>
+                  
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Mensaje/Instrucciones</label>
+                    <textarea 
+                      value={opcion.mensaje} 
+                      onChange={e => handleOpcionChange(idx, 'mensaje', e.target.value)} 
+                      placeholder="Ej: Pasos para recargar..."
+                      className="input-field" 
+                      style={{ width: '100%', padding: '8px', borderRadius: '8px', minHeight: '60px', resize: 'vertical' }}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Enlace de Redirección (Opcional)</label>
+                    <input 
+                      type="url" 
+                      value={opcion.url} 
+                      onChange={e => handleOpcionChange(idx, 'url', e.target.value)} 
+                      placeholder="https://..."
+                      className="input-field" 
+                      style={{ width: '100%', padding: '8px', borderRadius: '8px' }}
+                    />
+                  </div>
+                </div>
+              ))}
+              
+              {opcionesRecarga.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                  No hay opciones configuradas para este juego.
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', paddingTop: '20px', borderTop: '1px solid var(--border-color)' }}>
+              <button 
+                onClick={handleAddOpcion}
+                className="btn btn-secondary"
+                style={{ padding: '10px 16px', borderRadius: '10px' }}
+              >
+                + Añadir Opción
+              </button>
+              
+              <button 
+                onClick={handleSaveOpciones}
+                disabled={savingOpciones}
+                className="btn btn-primary"
+                style={{ padding: '10px 24px', borderRadius: '10px' }}
+              >
+                {savingOpciones ? 'Guardando...' : 'Guardar Opciones'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
   <AlertModal
     isOpen={!!alertModal}
     type={alertModal?.type}
@@ -2460,105 +2560,6 @@ function ProductVault({ productoId, setAlertModal }) {
         </div>
       )}
 
-      {/* MODAL: OPCIONES DE RECARGA PARA EL JUEGO */}
-      {showOpcionesModal && (
-        <div className="modal-overlay" style={{ zIndex: 12000 }}>
-          <div style={{ 
-            backgroundColor: 'var(--bg-card)', padding: '24px', 
-            borderRadius: '20px', width: '90%', maxWidth: '600px', 
-            position: 'relative', zIndex: 12001, border: '1px solid var(--border-color)',
-            maxHeight: '90vh', display: 'flex', flexDirection: 'column'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '20px', margin: 0, color: 'var(--text-primary)' }}>
-                ⚙️ Opciones de Recarga ({selectedJuego.nombre})
-              </h3>
-              <button 
-                onClick={() => setShowOpcionesModal(false)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '20px', cursor: 'pointer' }}
-              >
-                ✕
-              </button>
-            </div>
-
-            <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '20px' }}>
-              Agrega botones de información rápida o redirecciones (Ej: tutoriales, páginas de recarga) que serán visibles para el administrador en los pedidos de este juego.
-            </p>
-
-            <div style={{ overflowY: 'auto', flex: 1, paddingRight: '8px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {opcionesRecarga.map((opcion, idx) => (
-                <div key={idx} style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
-                  <button 
-                    onClick={() => handleRemoveOpcion(idx)}
-                    style={{ position: 'absolute', top: '12px', right: '12px', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 'bold' }}
-                    title="Eliminar Opción"
-                  >✕</button>
-                  
-                  <div style={{ marginBottom: '12px', paddingRight: '24px' }}>
-                    <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Título del Botón</label>
-                    <input 
-                      type="text" 
-                      value={opcion.nombre} 
-                      onChange={e => handleOpcionChange(idx, 'nombre', e.target.value)} 
-                      placeholder="Ej: Tutorial de Compra"
-                      className="input-field" 
-                      style={{ width: '100%', padding: '8px', borderRadius: '8px' }}
-                    />
-                  </div>
-                  
-                  <div style={{ marginBottom: '12px' }}>
-                    <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Mensaje/Instrucciones</label>
-                    <textarea 
-                      value={opcion.mensaje} 
-                      onChange={e => handleOpcionChange(idx, 'mensaje', e.target.value)} 
-                      placeholder="Ej: Pasos para recargar..."
-                      className="input-field" 
-                      style={{ width: '100%', padding: '8px', borderRadius: '8px', minHeight: '60px', resize: 'vertical' }}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Enlace de Redirección (Opcional)</label>
-                    <input 
-                      type="url" 
-                      value={opcion.url} 
-                      onChange={e => handleOpcionChange(idx, 'url', e.target.value)} 
-                      placeholder="https://..."
-                      className="input-field" 
-                      style={{ width: '100%', padding: '8px', borderRadius: '8px' }}
-                    />
-                  </div>
-                </div>
-              ))}
-              
-              {opcionesRecarga.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.1)' }}>
-                  No hay opciones configuradas para este juego.
-                </div>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', paddingTop: '20px', borderTop: '1px solid var(--border-color)' }}>
-              <button 
-                onClick={handleAddOpcion}
-                className="btn btn-secondary"
-                style={{ padding: '10px 16px', borderRadius: '10px' }}
-              >
-                + Añadir Opción
-              </button>
-              
-              <button 
-                onClick={handleSaveOpciones}
-                disabled={savingOpciones}
-                className="btn btn-primary"
-                style={{ padding: '10px 24px', borderRadius: '10px' }}
-              >
-                {savingOpciones ? 'Guardando...' : 'Guardar Opciones'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
