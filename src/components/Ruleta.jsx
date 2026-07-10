@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useAuth } from '../hooks/useData'
+import { useAuth, useConfiguracion } from '../hooks/useData'
 import { supabase } from '../lib/supabase'
 import { formatUSD, formatBs } from '../utils/helpers'
 
@@ -24,9 +24,9 @@ const COLORS = [
 // ── Main Component ─────────────────────────────────────────────
 export default function Ruleta() {
   const { user, perfil } = useAuth()
+  const { config } = useConfiguracion()
   const isCliente = perfil?.rol?.toLowerCase() === 'cliente'
   const [premios, setPremios]             = useState([])
-  const [config, setConfig]               = useState({ ruleta_activa: 'true', ruleta_titulo: '¡Gira y Gana!', ruleta_descripcion: '' })
   const [girosDisp, setGirosDisp]         = useState(0)
   const [spinning, setSpinning]           = useState(false)
   const [rotation, setRotation]           = useState(0)
@@ -59,13 +59,11 @@ export default function Ruleta() {
 
   const fetchAll = async () => {
     setLoading(true)
-    const [cfgRes, premiosRes, girosRes, histRes] = await Promise.all([
-      supabase.from('configuracion').select('ruleta_activa,ruleta_titulo,ruleta_descripcion').single(),
+    const [premiosRes, girosRes, histRes] = await Promise.all([
       supabase.from('ruleta_premios').select('id,nombre,descripcion,tipo,valor,color,emoji,activo').eq('activo', true).order('created_at'),
       supabase.from('ruleta_giros_disponibles').select('giros_disponibles').eq('cliente_id', user.id).maybeSingle(),
       supabase.from('ruleta_giros').select('premio_nombre,tipo,valor,created_at').eq('cliente_id', user.id).order('created_at', { ascending: false }).limit(10)
     ])
-    if (cfgRes.data) setConfig(prev => ({ ...prev, ...cfgRes.data }))
     setPremios(premiosRes.data || [])
     setGirosDisp(girosRes.data?.giros_disponibles || 0)
     setHistorial(histRes.data || [])
@@ -165,7 +163,7 @@ export default function Ruleta() {
     }, 6000)
   }
 
-  const isActive = config.ruleta_activa !== 'false'
+  const isActive = config?.ruleta_activa !== '0' && config?.ruleta_activa !== 'false'
 
   // ── Empty / Inactive states ────────────────────────────────
   if (loading) return <div className="page-content" style={{ textAlign: 'center', padding: 80 }}><div className="spinner" /></div>
@@ -194,9 +192,9 @@ export default function Ruleta() {
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: 20, paddingTop: 0 }}>
         <h1 style={{ fontSize: 38, fontWeight: 900, margin: '0 0 10px', background: 'linear-gradient(135deg,#FFD700,#FF6B6B)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          {config.ruleta_titulo}
+          {config?.ruleta_titulo || '¡Gira y Gana!'}
         </h1>
-        {config.ruleta_descripcion && <p style={{ color: 'var(--text-muted)', fontSize: 16, margin: 0 }}>{config.ruleta_descripcion}</p>}
+        {config?.ruleta_descripcion && <p style={{ color: 'var(--text-muted)', fontSize: 16, margin: 0 }}>{config.ruleta_descripcion}</p>}
       </div>
 
       <div className="responsive-flex-ruleta" style={{ display: 'flex', gap: '40px', alignItems: 'flex-start', justifyContent: 'center', flexWrap: 'wrap' }}>

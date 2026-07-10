@@ -1076,7 +1076,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
               <div className="nav-section-label">Catálogo</div>
               {NAV_ITEMS.filter(item => ['catalogo', 'pedidos'].includes(item.key)).map(renderNavItem)}
               <div className="nav-section-label">Extras</div>
-              {NAV_ITEMS.filter(item => (isRevendedor ? ['chats'] : ['ruleta', 'chats']).includes(item.key)).map(renderNavItem)}
+              {NAV_ITEMS.filter(item => (isRevendedor || config?.ruleta_activa === '0' || config?.ruleta_activa === 'false' ? ['chats'] : ['ruleta', 'chats']).includes(item.key)).map(renderNavItem)}
               <div className="nav-section-label">Cuenta</div>
               {NAV_ITEMS.filter(i => ['billetera', 'perfil'].includes(i.key)).map(renderNavItem)}
             </>

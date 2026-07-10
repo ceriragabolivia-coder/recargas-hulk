@@ -766,7 +766,7 @@ export default function Landing({ onNavigate }) {
                 >
                   Catálogo
                 </a>
-                {!isRevendedor && (
+                {!isRevendedor && config?.ruleta_activa !== '0' && config?.ruleta_activa !== 'false' && (
                   <a 
                     href="#" 
                     className={`nav-pill-link ${showRuleta ? 'active' : ''}`}
@@ -978,7 +978,7 @@ export default function Landing({ onNavigate }) {
                     <a href="#" onClick={(e) => { e.preventDefault(); navigate('/Dashboard') }} style={{ color: 'var(--accent)', fontWeight: 'bold' }}>Panel de Control</a>
                   )}
                   <a href="#" className="visible-mobile" onClick={(e) => { e.preventDefault(); handleSelectJuego(null); setTimeout(() => { const element = document.getElementById('all-games'); if (element) element.scrollIntoView({ behavior: 'smooth' }); }, 100); }}>Servicios</a>
-                  {!isRevendedor && (
+                  {!isRevendedor && config?.ruleta_activa !== '0' && config?.ruleta_activa !== 'false' && (
                     <a href="#" className="visible-mobile" onClick={(e) => { e.preventDefault(); navigate('/Ruleta'); }}>Ruleta</a>
                   )}
                   <a href="#" className="visible-mobile" onClick={(e) => { e.preventDefault(); }}>Ayuda</a>
