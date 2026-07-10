@@ -1671,8 +1671,9 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   if (selectedPedido) {
     const est = getEstadoStyle(selectedPedido.estado)
     return (
-      <div style={{ paddingLeft: embedded ? '0' : '16px', paddingBottom: '32px' }}>
-        <div className="page-header mb-8 pedidos-header-responsive">
+      <>
+        <div style={{ paddingLeft: embedded ? '0' : '16px', paddingBottom: '32px' }}>
+          <div className="page-header mb-8 pedidos-header-responsive">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button className="btn btn-ghost btn-sm" onClick={() => setSelectedPedido(null)} style={{ padding: '4px 10px', backgroundColor: 'var(--bg-panel)', fontSize: '11px' }}>
               ← Volver
@@ -2522,6 +2523,57 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
 
         </div>
       </div>
+      
+      {/* MODAL OPCIÓN DE RECARGA */}
+      {viewingOpcion && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 14000, 
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
+          animation: 'fadeIn 0.2s'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--bg-card)', padding: '24px', 
+            border: '1px solid var(--border-color)', borderRadius: '20px', 
+            width: '100%', maxWidth: '500px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '20px', margin: 0, color: 'var(--text-primary)' }}>{viewingOpcion.nombre}</h3>
+              <button 
+                onClick={() => setViewingOpcion(null)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '18px', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px', fontSize: '14px', lineHeight: '1.6', color: 'var(--text-secondary)', whiteSpace: 'pre-line', marginBottom: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              {viewingOpcion.mensaje || 'No hay instrucciones para esta opción.'}
+            </div>
+
+            {viewingOpcion.url && (
+              <a 
+                href={viewingOpcion.url} 
+                target="_blank" 
+                rel="noreferrer"
+                style={{ 
+                  display: 'block', width: '100%', padding: '14px', textAlign: 'center',
+                  backgroundColor: 'var(--accent-primary)', color: 'white', borderRadius: '12px',
+                  fontWeight: 'bold', textDecoration: 'none', transition: 'all 0.2s'
+                }}
+              >
+                Ir a la página
+              </a>
+            )}
+            {!viewingOpcion.url && (
+              <button onClick={() => setViewingOpcion(null)} className="btn btn-ghost" style={{ width: '100%' }}>
+                Cerrar
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+      </>
     )
   }
 
@@ -2955,56 +3007,6 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
             </>
           )}
         </>
-      )}
-
-      {/* MODAL OPCIÓN DE RECARGA */}
-      {viewingOpcion && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 14000, 
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
-          animation: 'fadeIn 0.2s'
-        }}>
-          <div style={{
-            backgroundColor: 'var(--bg-card)', padding: '24px', 
-            border: '1px solid var(--border-color)', borderRadius: '20px', 
-            width: '100%', maxWidth: '500px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '20px', margin: 0, color: 'var(--text-primary)' }}>{viewingOpcion.nombre}</h3>
-              <button 
-                onClick={() => setViewingOpcion(null)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '18px', cursor: 'pointer' }}
-              >
-                ✕
-              </button>
-            </div>
-            
-            <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px', fontSize: '14px', lineHeight: '1.6', color: 'var(--text-secondary)', whiteSpace: 'pre-line', marginBottom: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              {viewingOpcion.mensaje || 'No hay instrucciones para esta opción.'}
-            </div>
-
-            {viewingOpcion.url && (
-              <a 
-                href={viewingOpcion.url} 
-                target="_blank" 
-                rel="noreferrer"
-                style={{ 
-                  display: 'block', width: '100%', padding: '14px', textAlign: 'center',
-                  backgroundColor: 'var(--accent-primary)', color: 'white', borderRadius: '12px',
-                  fontWeight: 'bold', textDecoration: 'none', transition: 'all 0.2s'
-                }}
-              >
-                Ir a la página
-              </a>
-            )}
-            {!viewingOpcion.url && (
-              <button onClick={() => setViewingOpcion(null)} className="btn btn-ghost" style={{ width: '100%' }}>
-                Cerrar
-              </button>
-            )}
-          </div>
-        </div>
       )}
     </div>
     </>
