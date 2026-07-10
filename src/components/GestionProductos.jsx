@@ -2456,8 +2456,7 @@ function ProductVault({ productoId, setAlertModal }) {
 
       {/* MODAL: OPCIONES DE RECARGA PARA EL JUEGO */}
       {showOpcionesModal && (
-        <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 12000 }}>
-          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)' }} onClick={() => setShowOpcionesModal(false)}></div>
+        <div className="modal-overlay" style={{ zIndex: 12000 }}>
           <div style={{ 
             backgroundColor: 'var(--bg-card)', padding: '24px', 
             borderRadius: '20px', width: '90%', maxWidth: '600px', 
