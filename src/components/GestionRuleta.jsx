@@ -100,7 +100,7 @@ export default function GestionRuleta() {
     setSaving(true)
     try {
       const updates = [
-        { clave: 'ruleta_activa', valor: config.ruleta_activa === 'true' ? 1 : 0, descripcion: 'Estado de la Ruleta' },
+        { clave: 'ruleta_activa', valor: config.ruleta_activa === 'true' ? 1 : 0, valor_texto: config.ruleta_activa === 'true' ? 'true' : 'false', descripcion: 'Estado de la Ruleta' },
         { clave: 'ruleta_titulo', valor_texto: config.ruleta_titulo, valor: 0, descripcion: 'Título de la Ruleta' },
         { clave: 'ruleta_descripcion', valor_texto: config.ruleta_descripcion, valor: 0, descripcion: 'Descripción de la Ruleta' }
       ]
