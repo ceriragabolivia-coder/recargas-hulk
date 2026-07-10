@@ -2484,7 +2484,7 @@ function ProductVault({ productoId, setAlertModal }) {
               {opcionesRecarga.map((opcion, idx) => (
                 <div key={idx} style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
                   <button 
-                    onClick={() => removeOpcion(idx)}
+                    onClick={() => handleRemoveOpcion(idx)}
                     style={{ position: 'absolute', top: '12px', right: '12px', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 'bold' }}
                     title="Eliminar Opción"
                   >✕</button>
