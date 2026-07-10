@@ -2488,8 +2488,12 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
 
           {/* OPCIONES DE RECARGA */}
           {(() => {
-            const opciones = selectedPedido?.pedido_items?.[0]?.productos?.juegos?.opciones_recarga || [];
-            if (!opciones || opciones.length === 0) return null;
+            let opciones = selectedPedido?.pedido_items?.[0]?.productos?.juegos?.opciones_recarga || [];
+            if (typeof opciones === 'string') {
+              try { opciones = JSON.parse(opciones) } catch(e) { opciones = [] }
+            }
+            if (!Array.isArray(opciones)) opciones = [];
+            if (opciones.length === 0) return null;
             return (
               <div className="card" style={{ padding: '12px', marginTop: '16px' }}>
                 <h3 style={{ marginBottom: '12px', color: 'var(--text-primary)', fontWeight: 800, fontSize: '16px', textTransform: 'uppercase' }}>Opciones de Recarga</h3>
