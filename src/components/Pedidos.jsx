@@ -2484,7 +2484,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                   )}
 
                   {/* OPCIONES DE RECARGA (JUEGO + PRODUCTO) */}
-                  {(() => {
+                  {canManage && (() => {
                     let opcionesJuego = item.productos?.juegos?.opciones_recarga || [];
                     if (typeof opcionesJuego === 'string') {
                       try { opcionesJuego = JSON.parse(opcionesJuego) } catch(e) { opcionesJuego = [] }
