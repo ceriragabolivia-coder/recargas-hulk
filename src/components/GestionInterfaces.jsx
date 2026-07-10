@@ -7,7 +7,13 @@ const INTERFACES = [
     id: 'default',
     name: 'Interfaz Actual',
     description: 'El diseño oscuro y neón clásico de Hulk.',
-    preview: '🎨' // Opcionalmente podríamos usar una URL de imagen, pero dejaremos un emoji/icono temporal.
+    preview: '🎨'
+  },
+  {
+    id: 'lootadmin',
+    name: 'LootAdmin Pro',
+    description: 'Diseño premium oscuro con estilo minimalista.',
+    preview: '🎮'
   }
 ];
 

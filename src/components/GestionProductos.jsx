@@ -620,6 +620,20 @@ export default function GestionProductos() {
   const iconosExistentes = Array.from(new Set(productos.filter(p => p?.icono_url).map(p => p.icono_url)));
   const infoImagesExistentes = Array.from(new Set(productos.filter(p => p?.info_adicional_imagen_url).map(p => p.info_adicional_imagen_url)));
 
+  // ---- INTERCEPT LOOTADMIN RENDER ----
+  if (config?.admin_interface === 'lootadmin') {
+    const LootAdminComponent = React.lazy(() => import('./lootadmin/GestionProductosLootAdmin'));
+    return (
+      <React.Suspense fallback={<div style={{padding: '40px', color: 'white'}}>Cargando interfaz...</div>}>
+        <LootAdminComponent 
+          states={{ juegos, categorias, productos, selectedJuegoId, searchJuego, allCategorias, loadingJuegos, loadingProductos }} 
+          actions={{ setSelectedJuegoId, setSearchJuego, handleOpenGameModal, setIsCategoryModalOpen, handleOpenProductModal, toggleProducto, deleteProducto }} 
+        />
+      </React.Suspense>
+    );
+  }
+  // ------------------------------------
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div className="page-header">

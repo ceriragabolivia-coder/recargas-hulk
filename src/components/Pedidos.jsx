@@ -2489,6 +2489,20 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     )
   }
 
+  // ---- INTERCEPT LOOTADMIN RENDER ----
+  if (config?.admin_interface === 'lootadmin' && canManage && !embedded) {
+    const LootAdminComponent = React.lazy(() => import('./lootadmin/PedidosLootAdmin'));
+    return (
+      <React.Suspense fallback={<div style={{padding: '40px', color: 'white'}}>Cargando interfaz...</div>}>
+        <LootAdminComponent 
+          states={{ pedidos, loading, filtroEstado, selectedPedido }} 
+          actions={{ setFiltroEstado, handleCompletarPedido, setMotivoRechazo, rechazarConMotivo, setRechazandoItem, rechazandoItem }} 
+        />
+      </React.Suspense>
+    );
+  }
+  // ------------------------------------
+
   // Vista de lista
   return (
     <>

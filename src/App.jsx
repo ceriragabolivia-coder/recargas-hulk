@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react'
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import Layout from './components/Layout'
+import LayoutLootAdmin from './components/lootadmin/LayoutLootAdmin'
 import Login from './components/Login'
 import Register from './components/Register'
 import { useAuth, useConfiguracion } from './hooks/useData'
@@ -586,6 +587,13 @@ export default function App() {
     }
   }, [config?.fondo_global_url])
 
+  // Inject LootAdmin CSS if active
+  React.useEffect(() => {
+    if (config?.admin_interface === 'lootadmin') {
+      import('./lootadmin.css')
+    }
+  }, [config?.admin_interface])
+
    // Guardamos en localStorage cada vez que cambia la página
   React.useEffect(() => {
     localStorage.setItem('lastPage', currentPage)
@@ -933,6 +941,15 @@ export default function App() {
           ) : (
             <Landing onNavigate={handleNavigate} />
           )
+        ) : config?.admin_interface === 'lootadmin' && isAdmin ? (
+          <LayoutLootAdmin currentPage={currentPage} onNavigate={handleNavigate}>
+            <AppRoutes 
+              isAdmin={isAdmin} 
+              perfil={perfil} 
+              currentParams={currentParams} 
+              handleNavigate={handleNavigate} 
+            />
+          </LayoutLootAdmin>
         ) : (
           <>
             <Layout currentPage={currentPage} onNavigate={handleNavigate} onOpenChat={() => navigate('/Soporte')} onlineUsers={onlineUsers}>
