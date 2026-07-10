@@ -24,6 +24,51 @@ export default function GestionProductos() {
   const [alertModal, setAlertModal] = useState(null) // { type, title, message, onConfirm }
   const [shouldRemoveBg, setShouldRemoveBg] = useState(true)
 
+  // Opciones de Recarga
+  const [showOpcionesModal, setShowOpcionesModal] = useState(false)
+  const [opcionesRecarga, setOpcionesRecarga] = useState([])
+  const [savingOpciones, setSavingOpciones] = useState(false)
+
+  const handleOpenOpciones = () => {
+    setOpcionesRecarga(selectedJuego.opciones_recarga || [])
+    setShowOpcionesModal(true)
+  }
+
+  const handleAddOpcion = () => {
+    setOpcionesRecarga([...opcionesRecarga, { nombre: `Opción ${opcionesRecarga.length + 1}`, mensaje: '', url: '' }])
+  }
+
+  const handleOpcionChange = (index, field, value) => {
+    const newOpciones = [...opcionesRecarga]
+    newOpciones[index][field] = value
+    setOpcionesRecarga(newOpciones)
+  }
+
+  const handleRemoveOpcion = (index) => {
+    const newOpciones = [...opcionesRecarga]
+    newOpciones.splice(index, 1)
+    setOpcionesRecarga(newOpciones)
+  }
+
+  const handleSaveOpciones = async () => {
+    setSavingOpciones(true)
+    try {
+      const { error } = await supabase
+        .from('juegos')
+        .update({ opciones_recarga: opcionesRecarga })
+        .eq('id', selectedJuego.id)
+
+      if (error) throw error
+
+      setAlertModal({ type: 'success', message: 'Opciones de recarga guardadas correctamente' })
+      setShowOpcionesModal(false)
+    } catch (error) {
+      console.error(error)
+      setAlertModal({ type: 'error', message: 'Error al guardar opciones de recarga' })
+    }
+    setSavingOpciones(false)
+  }
+
   // Formulario de nuevo/editar juego
   const [formGame, setFormGame] = useState({
     id: null,
@@ -627,7 +672,7 @@ export default function GestionProductos() {
       <React.Suspense fallback={<div style={{padding: '40px', color: 'white'}}>Cargando interfaz...</div>}>
         <LootAdminComponent 
           states={{ juegos, categorias, productos, selectedJuegoId, searchJuego, allCategorias, loadingJuegos, loadingProductos }} 
-          actions={{ setSelectedJuegoId, setSearchJuego, handleOpenGameModal, setIsCategoryModalOpen, handleOpenProductModal, toggleProducto, deleteProducto }} 
+          actions={{ setSelectedJuegoId, setSearchJuego, handleOpenGameModal, setIsCategoryModalOpen, handleOpenProductModal: handleOpenModal, toggleProducto, deleteProducto }} 
         />
       </React.Suspense>
     );
@@ -719,6 +764,17 @@ export default function GestionProductos() {
             <p style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'none', marginTop: 4 }}>
               Fórmula base: {selectedJuego.tipo_calculo}
             </p>
+            <button 
+              onClick={handleOpenOpciones}
+              style={{
+                marginTop: '8px', fontSize: '11px', padding: '4px 12px', borderRadius: '12px',
+                backgroundColor: 'rgba(0, 210, 255, 0.1)', color: 'var(--accent-primary)',
+                border: '1px solid rgba(0, 210, 255, 0.3)', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: '6px'
+              }}
+            >
+              ⚙️ Opciones de Recarga ({selectedJuego.opciones_recarga?.length || 0})
+            </button>
           </div>
         </div>
         <div className="flex gap-8" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
