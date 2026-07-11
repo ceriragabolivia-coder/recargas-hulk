@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { compressImage } from '../utils/imageCompression'
 import { useAuth, useConfiguracion } from '../hooks/useData'
 import AlertModal from './AlertModal'
+import TutorialVideoModal from './TutorialVideoModal'
 import { playSuccessSound, playCashRegisterSound, playErrorSound, formatBs, formatUSD, getOptimizedImageUrl } from '../utils/helpers'
 import { processAutoDeliveryOrder } from '../utils/autoProcess'
 import { processTiendaGiftVenOrder } from '../utils/apiProcessor'
@@ -108,6 +109,8 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   const [loadingAdmins, setLoadingAdmins] = useState(false)
   const [adminSeleccionado, setAdminSeleccionado] = useState(null)
   const [viewingOpcion, setViewingOpcion] = useState(null)
+  const [showTutorialModal, setShowTutorialModal] = useState(false)
+  const [tutorialVideoUrl, setTutorialVideoUrl] = useState(null)
 
 
 
@@ -2526,6 +2529,51 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                     )
                   })()}
 
+                  {/* TUTORIAL DEL JUEGO SI LO HAY */}
+                  {(item.productos?.juegos?.tutorial_banner_img || item.productos?.juegos?.tutorial_video_url) && (
+                    <div 
+                      className="tutorial-banner-card"
+                      onClick={() => {
+                        if (item.productos?.juegos?.tutorial_video_url) {
+                          setTutorialVideoUrl(item.productos.juegos.tutorial_video_url);
+                          setShowTutorialModal(true);
+                        }
+                      }}
+                      style={{
+                        position: 'relative',
+                        cursor: item.productos?.juegos?.tutorial_video_url ? 'pointer' : 'default',
+                        borderRadius: '16px',
+                        overflow: 'hidden',
+                        marginTop: '16px',
+                        border: '1px solid var(--accent)',
+                        background: 'var(--bg-card)',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+                        transition: 'all 0.3s ease'
+                      }}
+                    >
+                      {item.productos.juegos.tutorial_banner_img ? (
+                        <img src={item.productos.juegos.tutorial_banner_img} alt="Tutorial" style={{ width: '100%', display: 'block' }} />
+                      ) : (
+                        <div style={{ padding: '16px', display: 'flex', gap: '16px', alignItems: 'center', background: 'var(--accent-light)' }}>
+                          <div style={{ 
+                            width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)', 
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0
+                          }}>
+                            🔔
+                          </div>
+                          <div>
+                            <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 800, color: 'var(--text-main)' }}>
+                              {item.productos.juegos.tutorial_banner_texto || `¿Cómo recargar?`}
+                            </h4>
+                            <p style={{ margin: '2px 0 0 0', fontSize: '10px', color: 'var(--accent)', fontWeight: 600 }}>
+                              Ver video tutorial
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                 </div>
               ))}
             </div>
@@ -2534,6 +2582,14 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
         </div>
       </div>
       
+      {/* MODAL TUTORIAL */}
+      <TutorialVideoModal 
+        isOpen={showTutorialModal} 
+        onClose={() => setShowTutorialModal(false)} 
+        videoUrl={tutorialVideoUrl} 
+        title="¿Cómo recargar?" 
+      />
+
       {/* MODAL OPCIÓN DE RECARGA */}
       {viewingOpcion && (
         <div style={{
