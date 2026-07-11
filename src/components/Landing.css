@@ -677,6 +677,7 @@
 .detail-layout {
   display: grid;
   grid-template-columns: 1fr 350px;
+  grid-template-rows: auto 1fr;
   grid-template-areas: 
     "header  sidebar"
     "content sidebar";
