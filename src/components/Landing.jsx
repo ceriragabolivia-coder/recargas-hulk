@@ -350,7 +350,27 @@ export default function Landing({ onNavigate }) {
       
       if (!error && data) {
         setNotificaciones(data);
-        setUnreadCount(data.filter(n => !n.leido).length);
+        const unreads = data.filter(n => !n.leido);
+        setUnreadCount(unreads.length);
+        
+        if (unreads.length > 0) {
+          const latestUnread = unreads[0];
+          setActiveToast(latestUnread);
+          setTimeout(() => setActiveToast(null), 8000);
+          playNotificationSound();
+          
+          if (typeof Notification !== 'undefined') {
+            if (Notification.permission === 'granted') {
+              new Notification(latestUnread.titulo || 'Notificación', { body: latestUnread.mensaje || '' });
+            } else if (Notification.permission !== 'denied') {
+              Notification.requestPermission().then(perm => {
+                if (perm === 'granted') {
+                  new Notification(latestUnread.titulo || 'Notificación', { body: latestUnread.mensaje || '' });
+                }
+              });
+            }
+          }
+        }
       }
     };
 
