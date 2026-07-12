@@ -2463,23 +2463,24 @@
 
 /* OVERRIDES ABSOLUTOS PARA EL HEADER MÓVIL (BILLETERA, MI CUENTA, LOGO) */
 @media (max-width: 768px) {
-  .landing-header { height: auto !important; padding: 10px 4px 6px 4px !important; min-height: 64px !important; }
-  .landing-header-inner { gap: 4px !important; padding-left: 0 !important; padding-right: 0 !important; justify-content: space-between !important; align-items: flex-start !important; }
-  .landing-header-left { gap: 4px !important; flex: 1 1 auto !important; min-width: 0 !important; }
+  .landing-header { height: auto !important; padding: 12px 6px 12px 6px !important; min-height: 0 !important; }
+  .landing-header-inner { gap: 6px !important; padding-left: 0 !important; padding-right: 0 !important; justify-content: space-between !important; align-items: center !important; }
+  .landing-header-left { gap: 6px !important; flex: 1 1 auto !important; min-width: 0 !important; }
   .landing-header-right { 
-    gap: 4px !important; 
+    gap: 6px !important; 
     flex: 0 0 auto !important; 
     flex-direction: column-reverse !important; 
     align-items: stretch !important;
-    min-width: 100px !important;
-    margin-top: 2px !important;
+    min-width: 105px !important;
+    margin-top: 0 !important;
   }
   
-  .landing-logo-container { width: 100% !important; max-width: 330px !important; }
+  .landing-logo-container { width: 100% !important; max-width: 270px !important; display: flex !important; align-items: center !important; }
   .landing-logo-img { 
-    height: 85px !important; 
+    height: auto !important; 
+    max-height: 65px !important; 
     width: 100% !important; 
-    max-width: 330px !important; 
+    max-width: 270px !important; 
     object-fit: contain !important; 
     object-position: left center !important;
   }
