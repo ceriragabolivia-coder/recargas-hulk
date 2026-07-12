@@ -2658,7 +2658,7 @@
 
 /* OVERRIDES ABSOLUTOS PARA EL HEADER MÓVIL (BILLETERA, MI CUENTA, LOGO) */
 @media (max-width: 768px) {
-  .landing-header { height: auto !important; padding: 18px 12px 6px 12px !important; min-height: 64px !important; }
+  .landing-header { height: auto !important; padding: 24px 12px 6px 12px !important; min-height: 64px !important; }
   .landing-header-inner { gap: 8px !important; padding-left: 0 !important; padding-right: 0 !important; justify-content: space-between !important; align-items: center !important; }
   .landing-header-left { gap: 8px !important; flex: 1 1 auto !important; min-width: 0 !important; }
   .landing-header-right { 
@@ -2667,14 +2667,14 @@
     flex-direction: column-reverse !important; 
     align-items: stretch !important;
     min-width: 110px !important;
-    margin-top: 6px !important;
+    margin-top: 12px !important;
   }
   
-  .landing-logo-container { width: 100% !important; max-width: 280px !important; }
+  .landing-logo-container { width: 100% !important; max-width: 300px !important; }
   .landing-logo-img { 
-    height: 64px !important; 
+    height: 75px !important; 
     width: 100% !important; 
-    max-width: 280px !important; 
+    max-width: 300px !important; 
     object-fit: contain !important; 
     object-position: left center !important;
   }
