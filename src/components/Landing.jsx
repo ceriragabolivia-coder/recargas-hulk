@@ -1055,45 +1055,6 @@ export default function Landing({ onNavigate }) {
           </section>
         )}
 
-        {/* RECENT PURCHASES TICKER */}
-        {!slug && !selectedJuego && !showCheckout && !showOrders && !showRuleta && !showWallet && !showProfile && !search.trim() && (
-          <div className="marquee-container">
-            <div className="marquee-content">
-              <span className="marquee-item">⚡ COMPRA: <span>AND*** acaba de recargar 100 + 10 Diamantes Free Fire</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>PED*** acaba de recargar 500 Diamantes BloodStrike</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>MAR*** acaba de recargar $10 Apple Gift Card USA</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>JUA*** acaba de recargar Pase Semanal Free Fire</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>YUL*** acaba de recargar 310 Diamantes Free Fire</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>LUF*** acaba de recargar $5 Razer Gold PIN</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>ELI*** acaba de recargar 50 Diamantes BloodStrike</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>CAR*** acaba de recargar $10 Roblox Gift Card</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>GAB*** acaba de recargar 310 + 31 Diamantes Free Fire</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>ALE*** acaba de recargar 60 Bonds Arena Breakout</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>VAL*** acaba de recargar 86 Diamantes Mobile Legends</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>DAN*** acaba de recargar $10 Google Play Gift Card USA</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>FRA*** acaba de recargar 1000 Diamantes BloodStrike</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>JOS*** acaba de recargar Pase Mensual Free Fire</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>MAT*** acaba de recargar 800 Robux Roblox</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>ROB*** acaba de recargar 310 Bonds Arena Breakout</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>SOP*** acaba de recargar 42 Diamonds Bigo Live</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>LUF*** acaba de recargar 172 Diamantes Mobile Legends</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>DAV*** acaba de recargar $15 PlayStation Network Card</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>SAM*** acaba de recargar 520 + 52 Diamantes Free Fire</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>NIC*** acaba de recargar Premium 30 días Albion Online</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>CRIS*** acaba de recargar 297 Diamonds Bigo Live</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>EMA*** acaba de recargar 250 Diamantes BloodStrike</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>VIC*** acaba de recargar $10 Amazon Gift Card USA</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>FEL*** acaba de recargar 1060 + 106 Diamantes Free Fire</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>EST*** acaba de recargar Twilight Pass Mobile Legends</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>MARI*** acaba de recargar $20 Steam Wallet Code</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>JON*** acaba de recargar 600 + 60 CP Call of Duty Mobile</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>DOU*** acaba de recargar 325 UC PUBG Mobile</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>ALB*** acaba de recargar $25 Netflix Gift Card</span></span>
-              <span className="marquee-item">⚡ COMPRA: <span>SEB*** acaba de recargar 5600 + 560 Diamantes Free Fire</span></span>
-            </div>
-          </div>
-        )}
-
         {slug ? (
           <div className="fade-in landing-container" style={{ width: '100%', minHeight: '60vh', padding: '40px 20px' }}>
             <PaginaEstatica slug={slug} />
