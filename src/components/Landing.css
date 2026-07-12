@@ -2658,23 +2658,23 @@
 
 /* OVERRIDES ABSOLUTOS PARA EL HEADER MÓVIL (BILLETERA, MI CUENTA, LOGO) */
 @media (max-width: 768px) {
-  .landing-header { height: auto !important; padding: 24px 12px 6px 12px !important; min-height: 64px !important; }
-  .landing-header-inner { gap: 8px !important; padding-left: 0 !important; padding-right: 0 !important; justify-content: space-between !important; align-items: center !important; }
-  .landing-header-left { gap: 8px !important; flex: 1 1 auto !important; min-width: 0 !important; }
+  .landing-header { height: auto !important; padding: 10px 4px 6px 4px !important; min-height: 64px !important; }
+  .landing-header-inner { gap: 4px !important; padding-left: 0 !important; padding-right: 0 !important; justify-content: space-between !important; align-items: flex-start !important; }
+  .landing-header-left { gap: 4px !important; flex: 1 1 auto !important; min-width: 0 !important; }
   .landing-header-right { 
     gap: 4px !important; 
     flex: 0 0 auto !important; 
     flex-direction: column-reverse !important; 
     align-items: stretch !important;
-    min-width: 110px !important;
-    margin-top: 12px !important;
+    min-width: 100px !important;
+    margin-top: 2px !important;
   }
   
-  .landing-logo-container { width: 100% !important; max-width: 300px !important; }
+  .landing-logo-container { width: 100% !important; max-width: 330px !important; }
   .landing-logo-img { 
-    height: 75px !important; 
+    height: 85px !important; 
     width: 100% !important; 
-    max-width: 300px !important; 
+    max-width: 330px !important; 
     object-fit: contain !important; 
     object-position: left center !important;
   }
@@ -2683,9 +2683,9 @@
   
   .nav-dropdown { display: flex !important; flex-direction: column !important; width: 100% !important; }
   
-  .btn-header-wallet { padding: 0 8px !important; height: 28px !important; font-size: 11px !important; gap: 4px !important; justify-content: center !important; width: 100% !important; border-radius: 6px !important; }
+  .btn-header-wallet { padding: 0 6px !important; height: 28px !important; font-size: 11px !important; gap: 4px !important; justify-content: center !important; width: 100% !important; border-radius: 6px !important; }
   .btn-header-wallet img { width: 16px !important; height: 16px !important; }
   
-  .btn-assax-primary { padding: 0 8px !important; height: 28px !important; font-size: 11px !important; justify-content: center !important; width: 100% !important; border-radius: 6px !important; }
+  .btn-assax-primary { padding: 0 6px !important; height: 28px !important; font-size: 11px !important; justify-content: center !important; width: 100% !important; border-radius: 6px !important; }
   .btn-assax-primary span { gap: 4px !important; font-size: 11px !important; }
 }
