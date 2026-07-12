@@ -557,9 +557,11 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
 
             const montoStr = liq.moneda === 'usd' ? formatUSD(liq.monto) : formatBs(liq.monto);
 
-            if (Notification.permission === 'granted') {
-              new Notification('💰 Saldo Liquidado', { body: `Se ha liquidado tu saldo por ${montoStr}.` });
-            }
+            try {
+              if (Notification.permission === 'granted') {
+                new Notification('💰 Saldo Liquidado', { body: `Se ha liquidado tu saldo por ${montoStr}.` });
+              }
+            } catch (e) { console.log(e); }
 
             const toast = {
               id: Date.now() + Math.random(),
@@ -677,13 +679,15 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
                   } catch (err) {}
                  
                  // Push Noti
-                 if (Notification.permission === 'granted') {
-                   new Notification('Nuevo Pedido Asignado', {
-                     body: `Se te ha asignado el pedido #${payload.new.numero_pedido || payload.new.id.substring(0,6)}`,
-                   });
-                 } else if (Notification.permission !== 'denied') {
-                   Notification.requestPermission();
-                 }
+                 try {
+                   if (Notification.permission === 'granted') {
+                     new Notification('Nuevo Pedido Asignado', {
+                       body: `Se te ha asignado el pedido #${payload.new.numero_pedido || payload.new.id.substring(0,6)}`,
+                     });
+                   } else if (Notification.permission !== 'denied') {
+                     Notification.requestPermission();
+                   }
+                 } catch (e) { console.log(e); }
 
                  // Toast
                  const orderToast = {
@@ -788,11 +792,13 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
 
             const montoStr = liq.moneda === 'usd' ? formatUSD(liq.monto) : formatBs(liq.monto);
 
-            if (Notification.permission === 'granted') {
-              new Notification('💰 Saldo Liquidado', { body: `Se ha liquidado tu saldo por ${montoStr}.` });
-            } else if (Notification.permission !== 'denied') {
-              Notification.requestPermission();
-            }
+            try {
+              if (Notification.permission === 'granted') {
+                new Notification('💰 Saldo Liquidado', { body: `Se ha liquidado tu saldo por ${montoStr}.` });
+              } else if (Notification.permission !== 'denied') {
+                Notification.requestPermission();
+              }
+            } catch (e) { console.log(e); }
 
             const toast = {
               id: Date.now() + Math.random(),

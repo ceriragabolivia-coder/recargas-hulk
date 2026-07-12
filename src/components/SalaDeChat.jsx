@@ -279,14 +279,17 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
     const cliente = chats.find(c => c.id === msg.cliente_id)
     const senderName = cliente ? cliente.display_name : "Cliente"
 
-    const notification = new Notification(`Mensaje de ${senderName}`, {
-      body: msg.mensaje || "Has recibido un nuevo mensaje de soporte",
-      icon: "/favicon.ico"
-    })
-
-    notification.onclick = () => {
-      window.focus()
-      if (cliente) handleSelectChat(cliente)
+    try {
+      const notification = new Notification(`Mensaje de ${senderName}`, {
+        body: msg.mensaje || "Has recibido un nuevo mensaje de soporte",
+        icon: "/favicon.ico"
+      })
+      notification.onclick = () => {
+        window.focus()
+        if (cliente) handleSelectChat(cliente)
+      }
+    } catch (e) {
+      console.log('Error de notificación push:', e);
     }
   }
 

@@ -207,12 +207,12 @@ export default function Checkout({ onFinish, embedded = false }) {
   const [ruletaDescuentos, setRuletaDescuentos] = useState([])
   const [selectedRuletaDesc, setSelectedRuletaDesc] = useState(null)
   
-  // Cerramos el checkout si el carrito se queda vacío tras una eliminación (pero no si estamos procesando el pago)
   useEffect(() => {
-    if (!orderFinished && !isProcessing && cart.length === 0 && currentStep === 1) {
+    // Cerramos el checkout si el carrito se queda vacío de forma manual
+    if (!orderFinished && !isProcessing && cart.length === 0 && currentStep === 1 && !createdPedidoData) {
       onFinish();
     }
-  }, [cart, orderFinished, isProcessing, onFinish, currentStep]);
+  }, [cart, orderFinished, isProcessing, onFinish, currentStep, createdPedidoData]);
 
   useEffect(() => {
     const targetUserId = user?.id || perfil?.cliente_uuid || perfil?.id
@@ -593,12 +593,16 @@ export default function Checkout({ onFinish, embedded = false }) {
       // Reproducir sonido de caja (original)
       playCashRegisterSound()
       
-      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-        new Notification('¡Pedido Registrado!', {
-          body: `Tu pedido ha sido creado exitosamente y está siendo verificado.`,
-        });
-      } else if (typeof Notification !== 'undefined' && Notification.permission !== 'denied') {
-        Notification.requestPermission();
+      try {
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          new Notification('¡Pedido Registrado!', {
+            body: `Tu pedido ha sido creado exitosamente y está siendo verificado.`,
+          });
+        } else if (typeof Notification !== 'undefined' && Notification.permission !== 'denied') {
+          Notification.requestPermission();
+        }
+      } catch (notifErr) {
+        console.log('Error con notificaciones push:', notifErr);
       }
 
       setIsAutomaticResult(isGratis || currentIsWalletOnly || currentIsWalletBsOnly)
