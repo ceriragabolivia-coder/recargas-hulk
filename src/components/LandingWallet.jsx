@@ -17,6 +17,11 @@ export default function LandingWallet({ onClose }) {
     return config.montos_billetera_bs.split(',').map(v => v.trim()).filter(v => !isNaN(v) && v !== '')
   }, [config?.montos_billetera_bs])
 
+  const montosUsdFijos = useMemo(() => {
+    if (!config?.montos_billetera_usd) return []
+    return config.montos_billetera_usd.split(',').map(v => v.trim()).filter(v => !isNaN(v) && v !== '')
+  }, [config?.montos_billetera_usd])
+
   const [monto, setMonto] = useState('')
   const [monedaRecarga, setMonedaRecarga] = useState(isCliente ? 'bs' : 'usd')
   const [metodoId, setMetodoId] = useState('')
@@ -379,6 +384,29 @@ export default function LandingWallet({ onClose }) {
                         </p>
                       </div>
                     )}
+                  </>
+                ) : monedaRecarga === 'usd' && montosUsdFijos.length > 0 ? (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '10px' }}>
+                      {montosUsdFijos.map((m, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setMonto(m)}
+                          className={`btn ${monto === m ? 'btn-primary' : 'btn-ghost'}`}
+                          style={{
+                            height: 'auto', padding: '12px 8px',
+                            border: monto === m ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                            backgroundColor: monto === m ? 'var(--accent-primary)' : 'var(--bg-panel)',
+                            color: monto === m ? '#fff' : 'var(--text-muted)',
+                            fontWeight: monto === m ? 'bold' : 'normal',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <span translate="no" className="notranslate">${m}</span>
+                        </button>
+                      ))}
+                    </div>
                   </>
                 ) : (
                   <input 

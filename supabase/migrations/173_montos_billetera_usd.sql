@@ -1,0 +1,1 @@
+ALTER TABLE configuracion ADD COLUMN IF NOT EXISTS montos_billetera_usd text;

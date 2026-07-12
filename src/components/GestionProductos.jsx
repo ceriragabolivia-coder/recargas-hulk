@@ -369,7 +369,7 @@ export default function GestionProductos() {
     // Convertir el margen que el usuario escribe (ej. 30%) a decimal (0.30)
     const margenDecimal = formData.margen_ganancia ? parseFloat(formData.margen_ganancia) / 100 : 0
 
-    return calcularPrecioVenta(
+    const normal = calcularPrecioVenta(
       {
         costo_base: parseFloat(formData.costo_base),
         margen_ganancia: margenDecimal
@@ -377,6 +377,19 @@ export default function GestionProductos() {
       selectedJuego,
       config
     )
+
+    const revendedor = calcularPrecioVenta(
+      {
+        costo_base: parseFloat(formData.costo_base),
+        margen_ganancia: margenDecimal,
+        descuento_revendedor: formData.descuento_revendedor
+      },
+      selectedJuego,
+      config,
+      { rol: 'revendedor' }
+    )
+
+    return { normal, revendedor }
   }
 
   const handleOpenModal = () => {
@@ -1377,20 +1390,43 @@ export default function GestionProductos() {
           <div style={{ background: 'var(--bg-primary)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--border-active)', marginBottom: 20 }}>
             <h4 style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--accent-primary)', marginBottom: 12 }}>Proyección del precio final al cliente</h4>
             {calculoRealTime ? (
-              <div className="flex justify-between items-center text-center">
-                <div>
-                  <div className="form-label" style={{ marginBottom: 4 }}>Precio Venta USD</div>
-                  <div className="font-bold" style={{ fontSize: 20, color: 'var(--text-primary)' }}>{formatUSD(calculoRealTime.venta_usd)}</div>
+              <>
+                <div className="flex justify-between items-center text-center">
+                  <div>
+                    <div className="form-label" style={{ marginBottom: 4 }}>Precio Venta USD</div>
+                    <div className="font-bold" style={{ fontSize: 20, color: 'var(--text-primary)' }}>{formatUSD(calculoRealTime.normal.venta_usd)}</div>
+                  </div>
+                  <div>
+                    <div className="form-label" style={{ marginBottom: 4 }}>Precio Final Bs</div>
+                    <div className="font-bold" style={{ fontSize: 20, color: 'var(--accent-success)' }}>{formatBs(calculoRealTime.normal.venta_bs)}</div>
+                  </div>
+                  <div>
+                    <div className="form-label" style={{ marginBottom: 4 }}>Tu Ganancia Neta</div>
+                    <div className="font-bold" style={{ fontSize: 20, color: 'var(--accent-warning)' }}>{formatUSD(calculoRealTime.normal.ganancia_usd)}</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="form-label" style={{ marginBottom: 4 }}>Precio Final Bs</div>
-                  <div className="font-bold" style={{ fontSize: 20, color: 'var(--accent-success)' }}>{formatBs(calculoRealTime.venta_bs)}</div>
-                </div>
-                <div>
-                  <div className="form-label" style={{ marginBottom: 4 }}>Tu Ganancia Neta</div>
-                  <div className="font-bold" style={{ fontSize: 20, color: 'var(--accent-warning)' }}>{formatUSD(calculoRealTime.ganancia_usd)}</div>
-                </div>
-              </div>
+
+                {calculoRealTime.revendedor && calculoRealTime.revendedor.venta_usd !== calculoRealTime.normal.venta_usd && (
+                  <>
+                    <hr style={{ borderColor: 'var(--border-active)', margin: '16px 0' }} />
+                    <h4 style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--accent-info)', marginBottom: 12 }}>Proyección del precio final al revendedor</h4>
+                    <div className="flex justify-between items-center text-center">
+                      <div>
+                        <div className="form-label" style={{ marginBottom: 4 }}>Precio Venta USD</div>
+                        <div className="font-bold" style={{ fontSize: 20, color: 'var(--text-primary)' }}>{formatUSD(calculoRealTime.revendedor.venta_usd)}</div>
+                      </div>
+                      <div>
+                        <div className="form-label" style={{ marginBottom: 4 }}>Precio Final Bs</div>
+                        <div className="font-bold" style={{ fontSize: 20, color: 'var(--accent-info)' }}>{formatBs(calculoRealTime.revendedor.venta_bs)}</div>
+                      </div>
+                      <div>
+                        <div className="form-label" style={{ marginBottom: 4 }}>Tu Ganancia Neta</div>
+                        <div className="font-bold" style={{ fontSize: 20, color: 'var(--accent-warning)' }}>{formatUSD(calculoRealTime.revendedor.ganancia_usd)}</div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </>
             ) : (
               <div className="text-muted text-sm text-center">Escribe un costo para ver el cálculo...</div>
             )}

@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { key: 'usuarios', label: 'Usuarios', path: '/Usuarios', icon: '👥' },
   { key: 'config', label: 'Config. Financiera', path: '/Configuracion', icon: '💳' },
   { key: 'gestion_cupones', label: 'Cupones', path: '/Gestion-Cupones', icon: '🎟️' },
+  { key: 'gestion_creadores', label: 'Creadores', path: '/Gestion-Creadores', icon: '🌟' },
   { key: 'proveedor_tgv', label: 'Integración API', path: '/Proveedor-TiendaGiftVen', icon: '🔌' },
   { key: 'gestion_landing', label: 'Media', path: '/Gestion-Landing', icon: '🖼️' },
   { key: 'chats', label: 'Soporte Chat', path: '/Soporte', icon: '💬' },

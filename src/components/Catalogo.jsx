@@ -299,7 +299,11 @@ export default function Catalogo() {
                 <span style={{ textAlign: 'right' }}>
                   <div style={{ color: 'var(--accent-success)', fontWeight: 800, fontSize: '16px' }}>{pendingItem.p.nombre}</div>
                   <div translate="no" className="notranslate" style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    <span>{formatBs(pendingItem.finalPrice.venta_bs)}</span>
+                    {perfil?.rol === 'revendedor' ? (
+                      <span style={{ color: '#00d2ff', fontWeight: 'bold' }}>{formatUSD(pendingItem.finalPrice.venta_usd)}</span>
+                    ) : (
+                      <span>{formatBs(pendingItem.finalPrice.venta_bs)}</span>
+                    )}
                   </div>
                 </span>
               </div>
@@ -1056,9 +1060,15 @@ export default function Catalogo() {
                       </strong>
                       
                       <div translate="no" className="notranslate" style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontSize: '20px', fontWeight: 900, lineHeight: 1 }}>{formatBs(finalPrice.venta_bs)}</span>
-                        {(!isCliente || selectedJuego.mostrar_precio_dual) && (
-                          <span style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px', fontWeight: 600 }}>{formatUSD(finalPrice.venta_usd)}</span>
+                        {perfil?.rol === 'revendedor' ? (
+                          <span style={{ fontSize: '20px', fontWeight: 900, lineHeight: 1, color: '#00d2ff' }}>{formatUSD(finalPrice.venta_usd)}</span>
+                        ) : (
+                          <>
+                            <span style={{ fontSize: '20px', fontWeight: 900, lineHeight: 1 }}>{formatBs(finalPrice.venta_bs)}</span>
+                            {(!isCliente || selectedJuego.mostrar_precio_dual) && (
+                              <span style={{ fontSize: '12px', opacity: 0.8, marginTop: '4px', fontWeight: 600 }}>{formatUSD(finalPrice.venta_usd)}</span>
+                            )}
+                          </>
                         )}
                       </div>
 

@@ -50,9 +50,16 @@ export function WalletProvider({ children }) {
   }
 
   async function solicitarRecarga(monto, metodoId, referencia, comprobanteUrl = null, moneda = 'usd') {
-    // Validación de seguridad para montos fijos en Bs
+    // Validación de seguridad para montos fijos
     if (moneda === 'bs' && config?.montos_billetera_bs) {
       const allowedAmounts = config.montos_billetera_bs.split(',').map(v => Number(v.trim())).filter(v => !isNaN(v) && v > 0)
+      if (allowedAmounts.length > 0 && !allowedAmounts.includes(Number(monto))) {
+        return { error: new Error('El monto ingresado no es válido. Seleccione uno de los montos permitidos.') }
+      }
+    }
+    
+    if (moneda === 'usd' && config?.montos_billetera_usd) {
+      const allowedAmounts = config.montos_billetera_usd.split(',').map(v => Number(v.trim())).filter(v => !isNaN(v) && v > 0)
       if (allowedAmounts.length > 0 && !allowedAmounts.includes(Number(monto))) {
         return { error: new Error('El monto ingresado no es válido. Seleccione uno de los montos permitidos.') }
       }

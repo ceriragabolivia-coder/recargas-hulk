@@ -720,33 +720,53 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       
       {/* Ventana de Chat */}
       {(isOpen || isPage) && (
-        <div className={`card support-chat-window ${isPage ? 'is-page' : ''}`}>
+        <div className={`support-chat-window ${isPage ? 'is-page' : ''}`} style={{
+          backgroundColor: '#0f111a',
+          borderRadius: isPage ? '0' : '24px',
+          boxShadow: isPage ? 'none' : '0 30px 60px rgba(0,0,0,0.8), 0 0 40px rgba(17, 153, 142, 0.15)',
+          border: isPage ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
+          display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 9998,
+          position: isPage || isEmbedded ? 'relative' : 'fixed',
+          bottom: isPage || isEmbedded ? 'auto' : '100px',
+          right: isPage || isEmbedded ? 'auto' : '30px',
+          width: isPage || isEmbedded ? '100%' : '380px',
+          height: isPage || isEmbedded ? '100%' : '600px',
+          maxHeight: isPage || isEmbedded ? 'none' : 'calc(100vh - 120px)'
+        }}>
           
           {/* Header */}
-          <div style={{ backgroundColor: 'var(--bg-panel)', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800 }}>
+          <div style={{ background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, boxShadow: '0 4px 15px rgba(0,0,0,0.1)', borderTopLeftRadius: isPage ? '0' : '24px', borderTopRightRadius: isPage ? '0' : '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '40px', height: '40px', backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '20px', boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.2)' }}>💬</div>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
                 {isAdmin ? (
                   selectedChatClient ? `Chat con ${selectedChatClient.nombres}` : 'Sala de Soporte'
                 ) : (
-                  'Chat de Soporte'
+                  'Soporte Hulk'
                 )}
               </h3>
               {isAdmin && selectedChatClient && (
                 <button 
                   className="btn btn-ghost btn-sm" 
-                  style={{ padding: '4px 8px' }}
+                  style={{ padding: '4px 10px', backgroundColor: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', borderRadius: '12px' }}
                   onClick={() => setSelectedChatClient(null)}
                 >
-                  ←
+                  ← Volver
                 </button>
               )}
             </div>
-            <button className="btn btn-ghost btn-icon btn-sm" onClick={() => { setIsOpen(false); if(onClose) onClose(); }} style={{ display: isPage ? 'none' : 'flex' }}>×</button>
+            <button 
+              style={{ display: isPage ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.2)', border: 'none', color: '#fff', cursor: 'pointer', transition: 'background 0.2s' }}
+              onClick={() => { setIsOpen(false); if(onClose) onClose(); }} 
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.4)'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.2)'}
+            >
+              ✕
+            </button>
           </div>
 
           {/* Body */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '16px', backgroundColor: 'var(--bg-card)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '20px', backgroundColor: '#0f111a', backgroundImage: 'radial-gradient(circle at top, rgba(56, 239, 125, 0.03) 0%, transparent 80%)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             
             {/* Vista Admin Principal (Lista de Chats) */}
             {isAdmin && !selectedChatClient ? (
@@ -795,25 +815,40 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                     <div style={{ marginBottom: '20px', fontWeight: 'bold', fontSize: '15px' }}>
                       Selecciona el motivo de tu ticket:
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       <button 
-                        className="btn btn-primary btn-sm" 
                         onClick={() => handleSelectTicket('Pedido no completado')}
-                        style={{ height: '45px', borderRadius: '12px' }}
+                        style={{ 
+                          height: '45px', borderRadius: '25px', border: 'none', color: '#fff', fontWeight: 'bold', cursor: 'pointer',
+                          background: 'linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)',
+                          boxShadow: '0 4px 10px rgba(0, 114, 255, 0.3)', transition: 'transform 0.2s'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
+                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                       >
                         📦 Pedido no completado
                       </button>
                       <button 
-                        className="btn btn-primary btn-sm" 
                         onClick={() => handleSelectTicket('Problema con un pago')}
-                        style={{ height: '45px', borderRadius: '12px' }}
+                        style={{ 
+                          height: '45px', borderRadius: '25px', border: 'none', color: '#fff', fontWeight: 'bold', cursor: 'pointer',
+                          background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                          boxShadow: '0 4px 10px rgba(56, 239, 125, 0.3)', transition: 'transform 0.2s'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
+                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                       >
                         💳 Problema con un pago
                       </button>
                       <button 
-                        className="btn btn-primary btn-sm" 
                         onClick={() => handleSelectTicket('Otro motivo')}
-                        style={{ height: '45px', borderRadius: '12px' }}
+                        style={{ 
+                          height: '45px', borderRadius: '25px', border: 'none', color: '#fff', fontWeight: 'bold', cursor: 'pointer',
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          boxShadow: '0 4px 10px rgba(118, 75, 162, 0.3)', transition: 'transform 0.2s'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
+                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                       >
                         ❓ Otro motivo
                       </button>
@@ -856,16 +891,17 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                               </div>
                             )}
                             <div className={`message-bubble ${m.es_sistema ? 'system' : ''}`} style={{ 
-                              backgroundColor: m.es_sistema ? undefined : (isMine ? 'var(--accent-primary)' : 'var(--bg-panel)'),
-                              color: m.es_sistema ? undefined : (isMine ? '#000' : 'var(--text-primary)'),
-                              padding: m.es_sistema ? undefined : '10px 14px', 
-                              borderRadius: m.es_sistema ? undefined : '16px',
-                              borderBottomRightRadius: !m.es_sistema && isMine ? '4px' : undefined,
-                              borderBottomLeftRadius: !m.es_sistema && !isMine ? '4px' : undefined,
-                              maxWidth: m.es_sistema ? undefined : '85%', 
+                              background: m.es_sistema ? 'rgba(255, 171, 0, 0.1)' : (isMine ? 'linear-gradient(135deg, #00d2ff, #3a7bd5)' : 'rgba(255,255,255,0.05)'),
+                              color: m.es_sistema ? '#ffd166' : '#fff',
+                              padding: m.es_sistema ? '12px 16px' : '12px 18px', 
+                              borderRadius: '20px',
+                              borderBottomRightRadius: !m.es_sistema && isMine ? '4px' : '20px',
+                              borderBottomLeftRadius: !m.es_sistema && !isMine ? '4px' : '20px',
+                              maxWidth: m.es_sistema ? '100%' : '85%', 
                               wordBreak: 'break-word', 
-                              fontSize: m.es_sistema ? undefined : '14px',
-                              border: m.es_sistema ? undefined : 'none',
+                              fontSize: '14px',
+                              border: m.es_sistema ? '1px solid rgba(255, 171, 0, 0.3)' : (isMine ? 'none' : '1px solid rgba(255,255,255,0.1)'),
+                              boxShadow: isMine ? '0 4px 15px rgba(0, 210, 255, 0.3)' : '0 2px 10px rgba(0,0,0,0.1)',
                               position: 'relative'
                             }}>
                               {m.quoted_id && (
@@ -924,7 +960,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
     
           {/* Footer Input */}
           {(!isAdmin || selectedChatClient) && (
-            <div style={{ borderTop: '1px solid var(--border-color)' }}>
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', backgroundColor: '#0f111a', borderBottomLeftRadius: isPage ? '0' : '24px', borderBottomRightRadius: isPage ? '0' : '24px' }}>
               {isResolved ? (
                 <div style={{ backgroundColor: 'var(--bg-panel)', padding: '20px', textAlign: 'center' }}>
                   <div style={{ color: 'var(--accent-success)', fontWeight: 'bold', marginBottom: '12px', fontSize: '14px' }}>
@@ -981,10 +1017,43 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                   <div style={{ marginBottom: '12px', fontWeight: 'bold', fontSize: '14px' }}>
                     Selecciona el motivo de tu nuevo ticket:
                   </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
-                    <button className="btn btn-primary btn-sm" onClick={() => handleSelectTicket('Pedido no completado')}>📦 Pedido</button>
-                    <button className="btn btn-primary btn-sm" onClick={() => handleSelectTicket('Problema con un pago')}>💳 Pago</button>
-                    <button className="btn btn-primary btn-sm" onClick={() => handleSelectTicket('Otro motivo')}>❓ Otro</button>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
+                      <button 
+                        onClick={() => handleSelectTicket('Pedido no completado')}
+                        style={{ 
+                          padding: '8px 16px', borderRadius: '20px', border: 'none', color: '#fff', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px',
+                          background: 'linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)',
+                          boxShadow: '0 4px 10px rgba(0, 114, 255, 0.3)', transition: 'transform 0.2s'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                      >
+                        📦 Pedido
+                      </button>
+                      <button 
+                        onClick={() => handleSelectTicket('Problema con un pago')}
+                        style={{ 
+                          padding: '8px 16px', borderRadius: '20px', border: 'none', color: '#fff', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px',
+                          background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                          boxShadow: '0 4px 10px rgba(56, 239, 125, 0.3)', transition: 'transform 0.2s'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                      >
+                        💳 Pago
+                      </button>
+                      <button 
+                        onClick={() => handleSelectTicket('Otro motivo')}
+                        style={{ 
+                          padding: '8px 16px', borderRadius: '20px', border: 'none', color: '#fff', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px',
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          boxShadow: '0 4px 10px rgba(118, 75, 162, 0.3)', transition: 'transform 0.2s'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                      >
+                        ❓ Otro
+                      </button>
                   </div>
                 </div>
               ) : (
@@ -1013,9 +1082,9 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                     <button className="btn btn-primary btn-sm" onClick={sendAudio}>Enviar</button>
                   </div>
                 )}
-                <form onSubmit={handleSendMessage} style={{ padding: '12px', backgroundColor: 'var(--bg-panel)', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <label style={{ cursor: 'pointer', opacity: isUploading ? 0.5 : 1 }}>
-                    📎
+                <form onSubmit={handleSendMessage} style={{ padding: '16px', backgroundColor: 'rgba(15, 17, 26, 0.95)', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '12px', alignItems: 'center', backdropFilter: 'blur(10px)' }}>
+                  <label style={{ cursor: 'pointer', opacity: isUploading ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.05)', transition: 'background 0.2s', flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}>
+                    <span style={{ fontSize: '18px' }}>📎</span>
                     <input type="file" hidden onChange={handleFileSelect} accept="image/*,video/*" disabled={isUploading} />
                   </label>
 
@@ -1058,11 +1127,15 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                       style={{ 
                         flex: 1, 
                         fontSize: '14px', 
-                        borderRadius: '20px', 
-                        padding: '8px 16px', 
+                        borderRadius: '24px', 
+                        padding: '12px 20px', 
+                        backgroundColor: 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        color: '#fff',
+                        outline: 'none',
                         opacity: (isThrottled && !isAdmin) || isResolved ? 0.6 : 1 
                       }}
-                      placeholder={isResolved ? "Ticket resuelto" : ((isThrottled && !isAdmin) ? "Bloqueado" : "Escribe...")}
+                      placeholder={isResolved ? "Ticket resuelto" : ((isThrottled && !isAdmin) ? "Bloqueado" : "Escribe tu mensaje...")}
                       value={newMessage}
                       onChange={e => setNewMessage(e.target.value)}
                       disabled={(isThrottled && !isAdmin) || isResolved || loadingThrottle || isUploading || !!audioBlob}
@@ -1070,18 +1143,19 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                   )}
 
                   {!isRecording && !audioBlob && isAdmin && (
-                    <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }} onClick={startRecording}>
+                    <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', padding: '8px', transition: 'transform 0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'} onClick={startRecording}>
                        🎙️
                     </button>
                   )}
 
                   <button 
                     type="submit" 
-                    className="btn btn-primary" 
-                    style={{ borderRadius: '50%', width: '40px', height: '40px', padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+                    style={{ borderRadius: '50%', width: '45px', height: '45px', flexShrink: 0, padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)', border: 'none', color: '#000', fontSize: '18px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(56, 239, 125, 0.4)', transition: 'transform 0.2s' }}
+                    onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                     disabled={(!newMessage.trim() && !pendingFile && !isAdmin) || (!isAdmin && mensajes.length === 0 && !ticketSubject) || (isThrottled && !isAdmin) || loadingThrottle || isUploading || !!audioBlob}
                   >
-                    {isUploading ? '...' : (pendingFile ? '📤' : '➔')}
+                    {isUploading ? '⌛' : (pendingFile ? '📤' : '➤')}
                   </button>
                 </form>
                 </>
@@ -1098,14 +1172,18 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
           className="floating-chat-btn"
           style={{ 
             position: 'fixed', bottom: '30px', right: '30px',
-            width: '65px', height: '65px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, #00d2ff 0%, #7b2ff7 100%)',
-            color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '30px', cursor: 'pointer',
-            boxShadow: '0 10px 30px rgba(123, 47, 247, 0.5)', zIndex: 9999,
+            padding: isOpen ? '0' : '12px 24px',
+            width: isOpen ? '65px' : 'auto', 
+            height: isOpen ? '65px' : 'auto', 
+            borderRadius: '35px',
+            background: isOpen ? 'var(--bg-panel)' : '#25D366',
+            color: isOpen ? 'var(--text-primary)' : 'white', 
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: isOpen ? '30px' : '18px', fontWeight: 'bold', cursor: 'pointer',
+            boxShadow: isOpen ? '0 10px 30px rgba(0, 0, 0, 0.2)' : '0 10px 30px rgba(37, 211, 102, 0.4)', 
+            zIndex: 9999,
             transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-            border: '2px solid rgba(255, 255, 255, 0.2)',
-            padding: 0
+            border: isOpen ? '1px solid var(--border-color)' : 'none',
           }}
           onClick={() => {
             if ("Notification" in window && Notification.permission === "default") {
@@ -1118,19 +1196,20 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          <span style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
             {isOpen ? '✕' : (
               <>
-                <svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
                   <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.181-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793 0-.853.448-1.273.607-1.446.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.101-.177.211-.077.383.101.173.449.743.964 1.203.664.591 1.221.774 1.394.86.173.088.274.072.376-.043.101-.116.433-.506.548-.68.116-.173.231-.144.39-.087.158.058 1.011.477 1.184.564.173.087.289.129.332.202.043.073.043.419-.101.824z"/>
                 </svg>
+                <span>Soporte</span>
                 {unreadCount > 0 && (
                   <span style={{
-                    position: 'absolute', top: '-12px', right: '-12px',
+                    position: 'absolute', top: '-15px', right: '-15px',
                     backgroundColor: '#ff4757', color: '#fff',
                     fontSize: '12px', minWidth: '22px', height: '22px',
                     borderRadius: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: '0 5px', fontWeight: '900', border: '2px solid #fff',
+                    padding: '0 5px', fontWeight: '900', border: '2px solid #25D366',
                     boxShadow: '0 4px 10px rgba(255, 71, 87, 0.5)',
                     zIndex: 10000,
                     animation: 'pulse 2s infinite'

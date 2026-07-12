@@ -88,6 +88,7 @@ export default function Checkout({ onFinish, embedded = false }) {
   const [useRuletaDesc, setUseRuletaDesc] = useState(false) // Toggle para usar descuento de ruleta
   const [cuponInput, setCuponInput] = useState('')
   const [activeCupon, setActiveCupon] = useState(null)
+  const [creadorDescuento, setCreadorDescuento] = useState(null)
   const [validatingCupon, setValidatingCupon] = useState(false)
   
   const [isProcessing, setIsProcessing] = useState(false)
@@ -249,15 +250,33 @@ export default function Checkout({ onFinish, embedded = false }) {
     }
   }, [user?.id, perfil?.id, perfil?.cliente_uuid])
 
+  useEffect(() => {
+    const targetUserId = user?.id || perfil?.cliente_uuid || perfil?.id
+    if (!targetUserId) return
+
+    const fetchCreadorDesc = async () => {
+      const { data: userData } = await supabase.from('clientes').select('creador_codigo_id, compras_con_codigo_creador').eq('auth_user_id', targetUserId).single()
+      if (userData && userData.creador_codigo_id) {
+        const { data: codeData } = await supabase.from('codigos_creadores').select('*').eq('id', userData.creador_codigo_id).single()
+        if (codeData && codeData.activo && userData.compras_con_codigo_creador < codeData.compras_con_descuento_por_usuario) {
+          setCreadorDescuento(codeData)
+        }
+      }
+    }
+    fetchCreadorDesc()
+  }, [user?.id, perfil?.id, perfil?.cliente_uuid])
+
   const walletSaldo = wallet?.saldo || 0
   const walletSaldoBs = wallet?.saldo_bs || 0
 
   const activeRuletaDesc = useRuletaDesc ? selectedRuletaDesc : null
   const ruletaFactor = activeRuletaDesc ? (1 - activeRuletaDesc.porcentaje / 100) : 1
   const cuponFactor = activeCupon ? (1 - activeCupon.porcentaje_descuento / 100) : 1
+  const creadorFactor = creadorDescuento ? (1 - creadorDescuento.porcentaje_descuento / 100) : 1
+  const finalCuponFactor = creadorDescuento ? creadorFactor : cuponFactor
   
-  const discountedTotalUSD = +(totalUSD * ruletaFactor * cuponFactor).toFixed(2)
-  const discountedTotalBs  = Math.round(totalBs * ruletaFactor * cuponFactor)
+  const discountedTotalUSD = +(totalUSD * ruletaFactor * finalCuponFactor).toFixed(2)
+  const discountedTotalBs  = Math.round(totalBs * ruletaFactor * finalCuponFactor)
 
   const isGratis = discountedTotalUSD <= 0 && totalUSD > 0
 
@@ -561,6 +580,13 @@ export default function Checkout({ onFinish, embedded = false }) {
         await supabase.from('ruleta_descuentos_pendientes').update({ usado: true, pedido_id: pedidoId }).eq('id', activeRuletaDesc.id)
       }
 
+      if (creadorDescuento) {
+        await supabase.rpc('registrar_uso_codigo_creador', {
+          p_codigo_id: creadorDescuento.id,
+          p_usuario_id: targetUserId
+        });
+      }
+
       // Actualizar el perfil para reflejar el nuevo saldo de la billetera
       refreshPerfil();
       
@@ -812,52 +838,57 @@ export default function Checkout({ onFinish, embedded = false }) {
           </div>
         </section>
 
-        <div className="landing-container" style={{ paddingTop: '24px', paddingBottom: '60px', position: 'relative', zIndex: 10 }}>
-        <div className="page-header mb-8" style={{ paddingBottom: 0, display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div className="landing-container" style={{ paddingTop: '40px', paddingBottom: '80px', position: 'relative', zIndex: 10, overflowX: 'hidden', maxWidth: '100%', boxSizing: 'border-box' }}>
+        <div className="page-header mb-10" style={{ paddingBottom: 0, display: 'flex', alignItems: 'center', gap: '20px' }}>
           <button 
             className="btn btn-ghost btn-icon" 
             onClick={onFinish}
             title="Regresar"
             style={{ 
-              borderRadius: '50%', 
-              width: '44px', 
-              height: '44px',
+              borderRadius: '16px', 
+              width: '48px', 
+              height: '48px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '18px',
-              backgroundColor: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              flexShrink: 0
+              fontSize: '20px',
+              backgroundColor: 'rgba(255,255,255,0.08)',
+              border: 'none',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+              flexShrink: 0,
+              transition: 'all 0.3s'
             }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.transform = 'translateY(0)'; }}
           >
             ←
           </button>
           <div>
-            <h1 className="page-title" style={{ margin: 0, fontSize: '24px', fontWeight: 800 }}>Confirmación de Compra</h1>
-            <p className="page-subtitle" style={{ margin: 0, fontSize: '14px', opacity: 0.8 }}>
+            <h1 className="page-title" style={{ margin: 0, fontSize: '32px', fontWeight: 900, background: 'linear-gradient(90deg, #11998e, #38ef7d)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.5px' }}>Confirmación de Compra</h1>
+            <p className="page-subtitle" style={{ margin: 0, fontSize: '15px', color: 'rgba(255,255,255,0.6)', marginTop: '4px' }}>
               {currentStep === 1 ? 'Revisa tus productos y selecciona tu método de pago.' : 'Completa los datos de tu pago para procesar la orden.'}
             </p>
           </div>
         </div>
 
-      <div className="responsive-grid-2col" style={{ display: 'grid', gap: '8px' }}>
-        <div className="card">
+      <div className="responsive-grid-2col" style={{ display: 'grid', gap: '24px', alignItems: 'start', maxWidth: '100%' }}>
+        <div style={{ backgroundColor: '#10121b', borderRadius: '24px', padding: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.03)', minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}>
           {currentStep === 1 ? (
             <>
-              <div className="card-header">
-                <h3 className="card-title">Resumen de Productos</h3>
+              <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '8px', height: '24px', background: 'linear-gradient(to bottom, #11998e, #38ef7d)', borderRadius: '4px' }}></div>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Tus Productos</h3>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', backgroundColor: 'var(--border-color)', overflow: 'hidden', borderRadius: '0 0 12px 12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {cart.map(item => (
-                  <div key={item.id} className="checkout-item" style={{ display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: 'var(--bg-card)', padding: '16px', position: 'relative' }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 8, overflow: 'hidden', backgroundColor: 'var(--bg-panel)', flexShrink: 0 }}>
-                      {item.icono_url ? <img src={item.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : '📦'}
+                  <div key={item.id} className="checkout-item" style={{ display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative', transition: 'all 0.3s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'}>
+                    <div style={{ width: 56, height: 56, borderRadius: '12px', overflow: 'hidden', backgroundColor: '#1a1d2d', flexShrink: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      {item.icono_url ? <img src={item.icono_url} alt="" style={{ width: '80%', height: '80%', objectFit: 'contain' }} /> : '📦'}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.nombre}</div>
-                      <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>{item.juego}</div>
-                      <div className="checkout-details-box" style={{ marginTop: '8px', padding: '8px', backgroundColor: 'var(--bg-primary)', borderRadius: '8px', fontSize: '12px' }}>
+                      <div style={{ fontWeight: 800, fontSize: '16px', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.nombre}</div>
+                      <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>{item.juego}</div>
+                      <div className="checkout-details-box" style={{ display: 'inline-block', padding: '6px 12px', backgroundColor: 'rgba(56, 239, 125, 0.1)', color: '#38ef7d', borderRadius: '20px', fontSize: '11px', fontWeight: 700, border: '1px solid rgba(56, 239, 125, 0.2)', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', boxSizing: 'border-box' }}>
                          {item.metodo_recarga === 'solo_correo' ? `📧 ${item.account_email}`
                           : item.metodo_recarga === 'solo_usuario' ? `👤 ${item.account_user}`
                           : item.metodo_recarga === 'cuenta_completa' ? `📧 ${item.account_email}` 
@@ -870,17 +901,17 @@ export default function Checkout({ onFinish, embedded = false }) {
                       </div>
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ color: 'var(--accent-success)', fontWeight: 800 }}>{formatBs(item.venta_bs * item.quantity)}</div>
+                      <div style={{ color: '#fff', fontSize: '18px', fontWeight: 900 }}>{formatBs(item.venta_bs * item.quantity)}</div>
                     </div>
                     {/* Botón quitar del carrito */}
                     <button
                       onClick={() => removeFromCart(item.cart_id)}
                       title="Quitar del carrito"
                       style={{
-                        flexShrink: 0,
-                        background: 'rgba(239,68,68,0.1)',
-                        border: '1px solid rgba(239,68,68,0.3)',
-                        color: '#ef4444',
+                        position: 'absolute', top: '6px', right: '6px',
+                        background: '#ef4444',
+                        border: '2px solid #10121b',
+                        color: '#fff',
                         borderRadius: '50%',
                         width: '28px',
                         height: '28px',
@@ -888,57 +919,72 @@ export default function Checkout({ onFinish, embedded = false }) {
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        fontSize: '16px',
+                        fontSize: '14px',
                         lineHeight: 1,
-                        fontWeight: 700,
+                        fontWeight: 800,
                         transition: 'all 0.2s',
+                        boxShadow: '0 4px 10px rgba(239, 68, 68, 0.4)'
                       }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.25)'; e.currentTarget.style.transform = 'scale(1.1)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; e.currentTarget.style.transform = 'scale(1)'; }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
                     >
-                      ×
+                      ✕
                     </button>
                   </div>
                 ))}
               </div>
             </>
           ) : (
-             <div style={{ padding: '24px', textAlign: 'center' }}>
-               <div style={{ fontSize: '40px', marginBottom: '16px' }}>⌛</div>
-               <p>Esperando confirmación de {selectedMetodo?.nombre}</p>
+             <div style={{ padding: '40px 24px', textAlign: 'center' }}>
+               <div style={{ fontSize: '48px', marginBottom: '20px', animation: 'pulse 2s infinite' }}>⌛</div>
+               <h3 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '8px' }}>Esperando Confirmación</h3>
+               <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '24px' }}>Por favor, completa tu pago mediante {selectedMetodo?.nombre}</p>
                {expiresAt && <CountdownTimer expiryDate={expiresAt} onExpire={handleOrderExpired} />}
              </div>
           )}
-          <div className="card-footer" style={{ display: 'flex', justifyContent: 'space-between', padding: '16px' }}>
-            <button className="btn btn-ghost" onClick={() => currentStep === 1 ? onFinish() : setCurrentStep(1)}>
-              {currentStep === 1 ? 'Cancelar' : '← Atrás'}
+          <div style={{ display: 'flex', justifyContent: 'flex-start', paddingTop: '24px', marginTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+            <button 
+               onClick={() => currentStep === 1 ? onFinish() : setCurrentStep(1)}
+               style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)', padding: '10px 24px', borderRadius: '12px', fontWeight: 700, fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s' }}
+               onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#fff'; }}
+               onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
+            >
+              {currentStep === 1 ? 'Cancelar Compra' : '← Modificar Pedido'}
             </button>
           </div>
         </div>
 
-        <div className="card" style={{ alignSelf: 'start', padding: '12px' }}>
-          <div className="card-header" style={{ marginBottom: '8px' }}>
-            <h3 className="card-title">Método de Pago</h3>
+        <div style={{ backgroundColor: '#10121b', borderRadius: '24px', padding: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.03)', minWidth: 0, overflow: 'hidden', boxSizing: 'border-box' }}>
+          <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: '8px', height: '24px', background: 'linear-gradient(to bottom, #f12711, #f5af19)', borderRadius: '4px' }}></div>
+            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Pago y Descuentos</h3>
           </div>
-          <div style={{ padding: 0 }}>
+          <div>
             {currentStep === 1 ? (
               <>
-                <div className="form-group mb-8" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
                   {hasAnySaldo && !isGratis && hasWalletUSD && (
-                    <div onClick={handleToggleWalletPartial} className="checkout-toggle-card" style={{ border: `2px solid ${useWalletPartial ? 'var(--accent-success)' : 'var(--border-color)'}`, opacity: useWalletBs ? 0.5 : 1 }}>
-                      <span>💵 Usar Saldo USD</span>
-                      <small>Disp: {formatBs(Math.round(walletSaldo * (Number(config?.tasa_dolar) || 1)))}</small>
+                    <div onClick={handleToggleWalletPartial} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '16px', backgroundColor: useWalletPartial ? 'rgba(56, 239, 125, 0.1)' : 'rgba(255,255,255,0.02)', border: `2px solid ${useWalletPartial ? '#38ef7d' : 'rgba(255,255,255,0.05)'}`, cursor: 'pointer', transition: 'all 0.2s', opacity: useWalletBs ? 0.5 : 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontSize: '24px' }}>💵</span>
+                        <span style={{ fontWeight: 700, fontSize: '15px' }}>Usar Saldo USD</span>
+                      </div>
+                      <span style={{ fontWeight: 800, color: '#38ef7d' }}>{formatBs(Math.round(walletSaldo * (Number(config?.tasa_dolar) || 1)))}</span>
                     </div>
                   )}
                   {hasAnySaldoBs && !isGratis && hasWalletBs && (
-                    <div onClick={handleToggleWalletBs} className="checkout-toggle-card" style={{ border: `2px solid ${useWalletBs ? '#a855f7' : 'var(--border-color)'}`, opacity: useWalletPartial ? 0.5 : 1 }}>
-                      <span>🏦 Usar Saldo Bs</span>
-                      <small>Disp: {formatBs(walletSaldoBs)}</small>
+                    <div onClick={handleToggleWalletBs} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '16px', backgroundColor: useWalletBs ? 'rgba(168, 85, 247, 0.1)' : 'rgba(255,255,255,0.02)', border: `2px solid ${useWalletBs ? '#a855f7' : 'rgba(255,255,255,0.05)'}`, cursor: 'pointer', transition: 'all 0.2s', opacity: useWalletPartial ? 0.5 : 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontSize: '24px' }}>🏦</span>
+                        <span style={{ fontWeight: 700, fontSize: '15px' }}>Usar Saldo Bs</span>
+                      </div>
+                      <span style={{ fontWeight: 800, color: '#a855f7' }}>{formatBs(walletSaldoBs)}</span>
                     </div>
                   )}
-                  {!isGratis && (
-                    <div onClick={handleToggleRuletaDesc} className="checkout-toggle-card" style={{ border: `2px solid ${useRuletaDesc ? '#FFD700' : 'var(--border-color)'}`, opacity: ruletaDescuentos.length === 0 ? 0.5 : 1 }}>
-                      <span>🎡 Descuento Ruleta</span>
+                  {!isGratis && config?.ruleta_activa !== '0' && config?.ruleta_activa !== 'false' && (
+                    <div onClick={handleToggleRuletaDesc} style={{ display: 'flex', alignItems: 'center', padding: '16px', borderRadius: '16px', backgroundColor: useRuletaDesc ? 'rgba(255, 215, 0, 0.1)' : 'rgba(255,255,255,0.02)', border: `2px solid ${useRuletaDesc ? '#FFD700' : 'rgba(255,255,255,0.05)'}`, cursor: 'pointer', transition: 'all 0.2s', opacity: ruletaDescuentos.length === 0 ? 0.5 : 1 }}>
+                      <span style={{ fontSize: '24px', marginRight: '12px' }}>🎡</span>
+                      <span style={{ fontWeight: 700, fontSize: '15px' }}>Aplicar Descuento de Ruleta</span>
                     </div>
                   )}
                 </div>
@@ -950,38 +996,50 @@ export default function Checkout({ onFinish, embedded = false }) {
                          {d.nombre} (-{d.porcentaje}%)
                        </div>
                      ))}
-                   </div>
+                  </div>
                 )}
 
                 {!isGratis && (
-                  <div style={{ marginBottom: '20px', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '8px', color: 'var(--text-primary)' }}>🎟️ ¿Tienes un código de descuento?</div>
-                    {!activeCupon ? (
+                  <div style={{ marginBottom: '24px', padding: '20px', borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                    {creadorDescuento ? (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderRadius: '12px', backgroundColor: 'rgba(56, 239, 125, 0.1)', border: '1px solid rgba(56, 239, 125, 0.3)' }}>
+                        <div>
+                          <div style={{ fontWeight: 800, color: '#38ef7d', fontSize: '14px', textTransform: 'uppercase' }}>🌟 Código de Creador Aplicado</div>
+                          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>{creadorDescuento.codigo} (-{creadorDescuento.porcentaje_descuento}%)</div>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: '14px', fontWeight: 800, marginBottom: '12px', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🎟️ Código Promocional</div>
+                        {!activeCupon ? (
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <input
                           type="text"
                           value={cuponInput}
                           onChange={(e) => setCuponInput(e.target.value.replace(/\s+/g, '').toUpperCase())}
                           placeholder="Ingresa tu cupón"
-                          style={{ flex: 1, padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-panel)', color: 'var(--text-primary)', outline: 'none' }}
+                          style={{ flex: 1, minWidth: 0, padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(0,0,0,0.2)', color: '#fff', outline: 'none', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', boxSizing: 'border-box' }}
                         />
                         <button
                           onClick={handleApplyCupon}
                           disabled={validatingCupon || !cuponInput.trim()}
-                          className="btn btn-secondary"
-                          style={{ padding: '0 16px', borderRadius: '8px' }}
+                          style={{ padding: '0 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', fontWeight: 700, cursor: validatingCupon || !cuponInput.trim() ? 'not-allowed' : 'pointer', transition: 'all 0.2s', flexShrink: 0, whiteSpace: 'nowrap' }}
+                          onMouseEnter={e => { if(!validatingCupon && cuponInput.trim()) e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
                         >
-                          {validatingCupon ? 'Validando...' : 'Aplicar'}
+                          {validatingCupon ? '...' : 'Aplicar'}
                         </button>
                       </div>
                     ) : (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: '8px', backgroundColor: 'rgba(0, 210, 255, 0.1)', border: '1px solid rgba(0, 210, 255, 0.3)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderRadius: '12px', backgroundColor: 'rgba(56, 239, 125, 0.1)', border: '1px solid rgba(56, 239, 125, 0.3)' }}>
                         <div>
-                          <span style={{ fontWeight: 800, color: 'var(--accent-primary)' }}>{activeCupon.codigo}</span>
-                          <span style={{ fontSize: '12px', marginLeft: '8px', color: 'var(--accent-success)', fontWeight: 700 }}>(-{activeCupon.porcentaje_descuento}%)</span>
+                          <span style={{ fontWeight: 900, color: '#38ef7d', fontSize: '16px' }}>{activeCupon.codigo}</span>
+                          <span style={{ fontSize: '13px', marginLeft: '8px', color: '#fff', fontWeight: 700, backgroundColor: 'rgba(56, 239, 125, 0.2)', padding: '2px 8px', borderRadius: '12px' }}>-{activeCupon.porcentaje_descuento}% OFF</span>
                         </div>
-                        <button onClick={handleRemoveCupon} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 800 }}>✕</button>
+                        <button onClick={handleRemoveCupon} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', fontWeight: 800 }}>✕</button>
                       </div>
+                    )}
+                      </>
                     )}
                   </div>
                 )}
@@ -1019,47 +1077,49 @@ export default function Checkout({ onFinish, embedded = false }) {
                     <>
                       {selectedMetodoId && !isWalletOnly && !isWalletBsOnly ? (
                         <div className="selected-method-details fade-in">
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                              <div style={{ width: 60, height: 60, borderRadius: '16px', backgroundColor: 'var(--bg-panel)', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-color)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', backgroundColor: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                              <div style={{ width: 56, height: 56, borderRadius: '14px', backgroundColor: '#fff', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 16px rgba(0,0,0,0.2)' }}>
                                 <img src={selectedMetodo?.icono_url || ''} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <span style={{ fontSize: '18px', fontWeight: 800 }}>{selectedMetodo?.nombre}</span>
-                                <span style={{ fontSize: '12px', color: 'var(--accent-primary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Datos para reportar:</span>
+                                <span style={{ fontSize: '18px', fontWeight: 900, color: '#fff' }}>{selectedMetodo?.nombre}</span>
+                                <span style={{ fontSize: '11px', color: '#38ef7d', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Datos para reportar:</span>
                               </div>
                             </div>
                             <button 
                               className="btn btn-ghost btn-sm" 
                               onClick={() => setSelectedMetodoId('')}
-                              style={{ color: '#ff5252', border: '1px solid rgba(255, 82, 82, 0.15)', borderRadius: '10px', padding: '6px 12px', fontSize: '12px', fontWeight: 700 }}
+                              style={{ color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: 'none', borderRadius: '12px', padding: '8px 16px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' }}
+                              onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'; }}
+                              onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'; }}
                             >
-                              <span style={{ marginRight: '4px' }}>✕</span> Cambiar
+                              ✕ Cambiar
                             </button>
                           </div>
 
                           {/* ── RESUMEN DE TOTALES ── */}
                           <div style={{
-                            backgroundColor: 'rgba(168, 85, 247, 0.08)',
-                            border: '1px solid rgba(168, 85, 247, 0.3)',
+                            backgroundColor: 'rgba(168, 85, 247, 0.05)',
+                            border: '1px solid rgba(168, 85, 247, 0.2)',
                             borderRadius: '16px',
-                            padding: '14px 16px',
-                            marginBottom: '20px'
+                            padding: '20px',
+                            marginBottom: '24px'
                           }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-                              <span style={{ color: 'var(--text-muted)' }}>Monto del Pedido:</span>
-                              <span style={{ fontWeight: 600 }}>{isBinanceSelected ? formatUSD(discountedTotalUSD) : formatBs(discountedTotalBs)}</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '14px' }}>
+                              <span style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>Monto del Pedido:</span>
+                              <span style={{ fontWeight: 800, color: '#fff' }}>{isBinanceSelected ? formatUSD(discountedTotalUSD) : formatBs(discountedTotalBs)}</span>
                             </div>
                             {((isBinanceSelected && useWalletPartial) || (!isBinanceSelected && useWalletBs)) && (
-                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px', color: '#a855f7' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '14px', color: '#a855f7' }}>
                                 <span style={{ fontWeight: 700 }}>🏦 Saldo Billetera:</span>
-                                <span style={{ fontWeight: 800 }}>-{isBinanceSelected ? formatUSD(Math.min(walletSaldo, discountedTotalUSD)) : formatBs(Math.min(walletSaldoBs, discountedTotalBs))}</span>
+                                <span style={{ fontWeight: 900 }}>-{isBinanceSelected ? formatUSD(Math.min(walletSaldo, discountedTotalUSD)) : formatBs(Math.min(walletSaldoBs, discountedTotalBs))}</span>
                               </div>
                             )}
-                            <div style={{ borderTop: '1px solid rgba(168, 85, 247, 0.2)', marginTop: '8px', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontWeight: 800, fontSize: '14px' }}>Resta por Pagar:</span>
+                            <div style={{ borderTop: '1px dashed rgba(168, 85, 247, 0.3)', marginTop: '12px', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontWeight: 900, fontSize: '16px', color: '#fff' }}>Resta por Pagar:</span>
                               <div style={{ textAlign: 'right' }}>
-                                <div style={{ color: '#a855f7', fontSize: '20px', fontWeight: 900 }}>
+                                <div style={{ color: '#a855f7', fontSize: '24px', fontWeight: 900, textShadow: '0 2px 10px rgba(168, 85, 247, 0.3)' }}>
                                   {isBinanceSelected 
                                     ? formatUSD(Math.max(0, discountedTotalUSD - (useWalletPartial ? walletSaldo : 0)))
                                     : formatBs(Math.max(0, discountedTotalBs - (useWalletBs ? walletSaldoBs : 0)))
@@ -1067,7 +1127,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                                 </div>
                               </div>
                             </div>
-                            <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '6px', textAlign: 'center' }}>
+                            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginTop: '12px', textAlign: 'center', fontWeight: 600 }}>
                               Selecciona un método abajo para pagar la diferencia.
                             </p>
                           </div>
@@ -1075,19 +1135,29 @@ export default function Checkout({ onFinish, embedded = false }) {
                           {selectedMetodo?.datos && (
                             <button 
                               className="btn btn-ghost btn-sm"
-                              style={{ width: '100%', marginBottom: '16px', border: '1px dashed var(--accent-primary)', borderRadius: '12px', color: 'var(--accent-primary)', fontWeight: 700, padding: '12px' }}
+                              style={{ width: '100%', marginBottom: '24px', border: '1px dashed rgba(0, 210, 255, 0.4)', borderRadius: '14px', color: '#00d2ff', fontWeight: 800, padding: '14px', backgroundColor: 'rgba(0, 210, 255, 0.05)', transition: 'all 0.2s' }}
                               onClick={(e) => {
                                 navigator.clipboard.writeText(selectedMetodo.datos);
                                 const btn = e.currentTarget;
                                 btn.innerText = '✅ ¡Datos de Pago Copiados!';
-                                setTimeout(() => { btn.innerText = '📋 Copiar Todos los Datos'; }, 2000);
+                                btn.style.backgroundColor = 'rgba(56, 239, 125, 0.1)';
+                                btn.style.color = '#38ef7d';
+                                btn.style.borderColor = '#38ef7d';
+                                setTimeout(() => { 
+                                  btn.innerText = '📋 Copiar Todos los Datos'; 
+                                  btn.style.backgroundColor = 'rgba(0, 210, 255, 0.05)';
+                                  btn.style.color = '#00d2ff';
+                                  btn.style.borderColor = 'rgba(0, 210, 255, 0.4)';
+                                }, 2000);
                               }}
+                              onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.1)'; }}
+                              onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.05)'; }}
                             >
                               📋 Copiar Todos los Datos
                             </button>
                           )}
 
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
                             {selectedMetodo?.datos && typeof selectedMetodo.datos === 'string' && selectedMetodo.datos.split('\n').filter(l => l.trim()).map((line, i) => {
                               const [label, ...valParts] = line.split(':');
                               const value = valParts.join(':').trim();
@@ -1095,18 +1165,18 @@ export default function Checkout({ onFinish, embedded = false }) {
                               return (
                                 <div key={i} style={{ 
                                   display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
-                                  padding: '12px 16px', backgroundColor: 'var(--bg-card)', borderRadius: '14px', 
-                                  border: '1px solid var(--border-color)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                                  gap: '12px'
-                                }}>
+                                  padding: '16px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '16px', 
+                                  border: '1px solid rgba(255,255,255,0.05)',
+                                  gap: '12px', transition: 'all 0.3s'
+                                }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'}>
                                   <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
                                     {label && value ? (
                                       <>
-                                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>{label.trim()}</span>
-                                        <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', wordBreak: 'break-word' }}>{value}</span>
+                                        <span style={{ fontSize: '11px', color: '#00d2ff', textTransform: 'uppercase', fontWeight: 900, letterSpacing: '1px', marginBottom: '4px' }}>{label.trim()}</span>
+                                        <span style={{ fontSize: '15px', fontWeight: 800, color: '#fff', wordBreak: 'break-word' }}>{value}</span>
                                       </>
                                     ) : (
-                                      <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', wordBreak: 'break-word' }}>{line}</span>
+                                      <span style={{ fontSize: '15px', fontWeight: 800, color: '#fff', wordBreak: 'break-word' }}>{line}</span>
                                     )}
                                   </div>
                                   <button 
@@ -1114,11 +1184,14 @@ export default function Checkout({ onFinish, embedded = false }) {
                                       navigator.clipboard.writeText(value || line);
                                     }} 
                                     style={{ 
-                                      padding: '10px', borderRadius: '12px', background: 'rgba(0, 210, 255, 0.1)', 
-                                      border: '1px solid rgba(0, 210, 255, 0.2)', color: 'var(--accent-primary)', 
+                                      padding: '12px', borderRadius: '12px', background: 'rgba(0, 210, 255, 0.1)', 
+                                      border: 'none', color: '#00d2ff', 
                                       cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0,
-                                      display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      fontSize: '16px'
                                     }}
+                                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(0, 210, 255, 0.2)'}
+                                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(0, 210, 255, 0.1)'}
                                     onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.9)'}
                                     onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
                                   >📋</button>
@@ -1142,8 +1215,8 @@ export default function Checkout({ onFinish, embedded = false }) {
 
                           {selectedMetodoId !== 'binance_pay_auto' && (
                             <div className="form-group mb-16">
-                              <label className="form-label" style={{ color: 'var(--accent-success)', fontWeight: 700, fontSize: '13px', marginBottom: '8px', display: 'block' }}>
-                                Número de Referencia <span style={{ fontSize: '10px', opacity: 0.8 }}>(Últimos 6 dígitos)</span>
+                              <label className="form-label" style={{ color: '#00d2ff', fontWeight: 900, fontSize: '13px', marginBottom: '12px', display: 'block', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                Número de Referencia <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: 600 }}>(Últimos 6 dígitos)</span>
                               </label>
                               <input 
                                 type="text" 
@@ -1160,10 +1233,24 @@ export default function Checkout({ onFinish, embedded = false }) {
                                   const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
                                   setReferencia(pasteData);
                                 }}
-                                style={{ border: '1px solid var(--accent-success)', borderRadius: '12px', height: '48px', padding: '0 16px', letterSpacing: '2px', fontSize: '16px', fontWeight: 600 }}
+                                style={{ 
+                                  border: '2px solid rgba(0, 210, 255, 0.3)', 
+                                  backgroundColor: 'rgba(0,0,0,0.2)',
+                                  color: '#fff',
+                                  borderRadius: '16px', 
+                                  height: '56px', 
+                                  padding: '0 20px', 
+                                  letterSpacing: '3px', 
+                                  fontSize: '18px', 
+                                  fontWeight: 800,
+                                  outline: 'none',
+                                  transition: 'all 0.3s'
+                                }}
+                                onFocus={e => e.target.style.borderColor = '#00d2ff'}
+                                onBlur={e => e.target.style.borderColor = 'rgba(0, 210, 255, 0.3)'}
                               />
-                              <div style={{ fontSize: '11px', color: 'var(--accent-warning)', marginTop: '6px', fontWeight: 600 }}>
-                                ⚠️ Recuerda que debes colocar exactamente los 6 últimos números de la referencia del pago.
+                              <div style={{ fontSize: '12px', color: '#f5af19', marginTop: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                ⚠️ Recuerda que debes colocar exactamente los 6 últimos números de la referencia.
                               </div>
                             </div>
                           )}
@@ -1172,33 +1259,36 @@ export default function Checkout({ onFinish, embedded = false }) {
                           <button
                             className="btn btn-primary btn-lg"
                             style={{
-                              width: '100%', marginBottom: '16px', height: '52px', fontSize: '17px', fontWeight: 800,
-                              borderRadius: '18px', background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0088ff 100%)',
-                              boxShadow: '0 8px 24px rgba(0, 180, 255, 0.4)', border: 'none', color: 'white',
+                              width: '100%', marginBottom: '24px', height: '60px', fontSize: '18px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px',
+                              borderRadius: '16px', background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                              boxShadow: '0 10px 30px rgba(56, 239, 125, 0.4)', border: 'none', color: '#000',
                               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: isProcessing ? 'default' : 'pointer'
                             }}
                             disabled={isProcessing || (!isGratis && !isWalletOnly && !isWalletBsOnly && selectedMetodoId !== 'binance_pay_auto' && selectedMetodoId && (referencia.trim().length !== 6))}
                             onClick={handleFinalizar}
-                            onMouseEnter={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(-2px)')}
+                            onMouseEnter={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(-3px)')}
                             onMouseLeave={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(0)')}
                           >
                             {isProcessing ? (
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                                <div className="spinner-border spinner-border-sm" role="status" />
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                                <div className="spinner-border spinner-border-sm" role="status" style={{ color: '#000' }} />
                                 <span>PROCESANDO...</span>
                               </div>
                             ) : 'Confirmar y Pagar'}
                           </button>
 
                           <div className="form-group mb-0">
-                            <label className="form-label" style={{ fontSize: '13px', fontWeight: 600 }}>Adjuntar Comprobante (Opcional)</label>
+                            <label className="form-label" style={{ fontSize: '13px', fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', display: 'block' }}>Adjuntar Comprobante (Opcional)</label>
                             <div style={{ 
-                              padding: '16px', border: '2px dashed var(--border-color)', borderRadius: '16px', 
+                              padding: '24px', border: '2px dashed rgba(255,255,255,0.1)', borderRadius: '16px', 
                               textAlign: 'center', position: 'relative', backgroundColor: 'rgba(255,255,255,0.02)',
-                              transition: 'all 0.3s'
-                            }}>
-                              <div style={{ fontSize: '24px', marginBottom: '6px' }}>{uploadingComprobante ? '⏳' : comprobanteUrl ? '✅' : '📤'}</div>
-                              <span style={{ fontSize: '13px', fontWeight: 600 }}>{uploadingComprobante ? 'Subiendo...' : comprobanteUrl ? 'Comprobante Listo' : 'Toca para subir captura'}</span>
+                              transition: 'all 0.3s', cursor: 'pointer'
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                            >
+                              <div style={{ fontSize: '32px', marginBottom: '8px' }}>{uploadingComprobante ? '⏳' : comprobanteUrl ? '✅' : '📤'}</div>
+                              <span style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>{uploadingComprobante ? 'Subiendo...' : comprobanteUrl ? 'Comprobante Listo' : 'Toca para subir captura'}</span>
                               <input type="file" accept="image/*" onChange={handleComprobanteUpload} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
                             </div>
                           </div>

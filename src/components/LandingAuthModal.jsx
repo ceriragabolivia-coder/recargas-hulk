@@ -46,6 +46,7 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
   const [regConfirmPassword, setRegConfirmPassword] = useState('')
   const [regNombre, setRegNombre] = useState('')
   const [regTelefono, setRegTelefono] = useState('')
+  const [regCreadorCodigo, setRegCreadorCodigo] = useState('')
   const [regRole, setRegRole] = useState('cliente')
   const [ageOption, setAgeOption] = useState('')
   const [termsAccepted, setTermsAccepted] = useState(false)
@@ -138,6 +139,19 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
         throw new Error('Este número de WhatsApp ya se encuentra asociado a otra cuenta.')
       }
 
+      if (regCreadorCodigo.trim()) {
+        const { data: codeData, error: codeErr } = await supabase
+          .from('codigos_creadores')
+          .select('id, activo, usos_totales, limite_global')
+          .ilike('codigo', regCreadorCodigo.trim())
+          .maybeSingle();
+        
+        if (codeErr) throw new Error('Error al validar el código de creador');
+        if (!codeData) throw new Error('El Código de Creador ingresado no existe.');
+        if (!codeData.activo) throw new Error('El Código de Creador ingresado ya no está activo.');
+        if (codeData.limite_global > 0 && codeData.usos_totales >= codeData.limite_global) throw new Error('Este Código de Creador ya alcanzó su límite máximo de usos.');
+      }
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: regEmail,
         password: regPassword,
@@ -149,6 +163,7 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
             pais: 'Venezuela',
             estado: '',
             nickname: '',
+            creador_codigo: regCreadorCodigo.trim().toUpperCase(),
             role_requested: regRole
           }
         }
@@ -339,7 +354,19 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
                   minLength={6}
                 />
               </div>
+              
               <div className="form-group">
+                <label>Código de Creador (Opcional)</label>
+                <input
+                  type="text"
+                  placeholder="Si tienes un código, ingrésalo aquí"
+                  value={regCreadorCodigo}
+                  onChange={(e) => setRegCreadorCodigo(e.target.value.toUpperCase())}
+                  maxLength={20}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '16px' }}>
                 <label>Confirmar Contraseña</label>
                 <input
                   type="password"

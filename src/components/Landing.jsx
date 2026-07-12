@@ -1586,9 +1586,9 @@ export default function Landing({ onNavigate }) {
 
                                   <div className="assax-product-price-box">
                                     <div className="assax-product-price">
-                                      {formatBsAssax(pricing.venta_bs)}
+                                      {isRevendedor ? formatUSD(pricing.venta_usd) : formatBsAssax(pricing.venta_bs)}
                                     </div>
-                                    {selectedJuego.mostrar_precio_dual && (
+                                    {selectedJuego.mostrar_precio_dual && !isRevendedor && (
                                       <div className="price-secondary-usd">
                                         ({formatUSD(pricing.venta_usd)})
                                       </div>
@@ -1667,11 +1667,11 @@ export default function Landing({ onNavigate }) {
                       <span>SUBTOTAL</span>
                       <span className="summary-val">
                         {pendingItem ? (
-                          formatBsAssax(pendingItem.finalPrice.venta_bs)
+                          isRevendedor ? formatUSD(pendingItem.finalPrice.venta_usd) : formatBsAssax(pendingItem.finalPrice.venta_bs)
                         ) : (
-                          'Bs. 0,00'
+                          isRevendedor ? '$ 0.00' : 'Bs. 0,00'
                         )}
-                        {pendingItem && selectedJuego.mostrar_precio_dual && (
+                        {pendingItem && selectedJuego.mostrar_precio_dual && !isRevendedor && (
                           <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', textAlign: 'right', marginTop: '2px' }}>
                             {formatUSD(pendingItem.finalPrice.venta_usd)}
                           </span>
@@ -1685,11 +1685,11 @@ export default function Landing({ onNavigate }) {
                       <div className="total-price-box">
                         <span className="total-price-val">
                           {pendingItem ? (
-                            formatBsAssax(pendingItem.finalPrice.venta_bs)
+                            isRevendedor ? formatUSD(pendingItem.finalPrice.venta_usd) : formatBsAssax(pendingItem.finalPrice.venta_bs)
                           ) : (
-                            'Bs. 0,00'
+                            isRevendedor ? '$ 0.00' : 'Bs. 0,00'
                           )}
-                          {pendingItem && selectedJuego.mostrar_precio_dual && (
+                          {pendingItem && selectedJuego.mostrar_precio_dual && !isRevendedor && (
                             <span style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', textAlign: 'right', marginTop: '2px', fontWeight: 500 }}>
                               {formatUSD(pendingItem.finalPrice.venta_usd)}
                             </span>

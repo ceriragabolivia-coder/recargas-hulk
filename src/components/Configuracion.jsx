@@ -38,6 +38,7 @@ export default function Configuracion() {
 
   const [tiempoLimitePago, setTiempoLimitePago] = useState('15')
   const [montosBilleteraBs, setMontosBilleteraBs] = useState('')
+  const [montosBilleteraUsd, setMontosBilleteraUsd] = useState('')
   
   // Estados para Banners dinámicos
   const [promoBannerTexto, setPromoBannerTexto] = useState('')
@@ -91,6 +92,7 @@ export default function Configuracion() {
       setCashbackActivo(config.cashback_activo === 'true')
       setTiempoLimitePago(config.tiempo_limite_pago || '15')
       setMontosBilleteraBs(config.montos_billetera_bs || '')
+      setMontosBilleteraUsd(config.montos_billetera_usd || '')
       
       // Banners
       setPromoBannerTexto(config.promo_banner_texto || '')
@@ -605,6 +607,36 @@ export default function Configuracion() {
                         <button 
                           className="btn btn-primary btn-sm" 
                           onClick={() => updateConfig('montos_billetera_bs', montosBilleteraBs, true).then(() => setAlertModal({ type: 'success', message: 'Montos fijos actualizados' }))}
+                        >
+                          Guardar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'rgba(72, 191, 227, 0.05)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: '300px' }}>
+                        <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '4px' }}>💵 Montos Fijos Billetera (USD)</h3>
+                        <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                          Opcional. Separa los montos por comas (Ej: 5, 10, 20). Si lo dejas vacío, los clientes podrán escribir cualquier monto.
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                          <input 
+                            type="text" 
+                            className="form-input" 
+                            style={{ width: '200px' }}
+                            placeholder="Ej: 5, 10, 20, 50"
+                            value={montosBilleteraUsd}
+                            onChange={(e) => setMontosBilleteraUsd(e.target.value)}
+                            onBlur={(e) => updateConfig('montos_billetera_usd', e.target.value, true)}
+                          />
+                        </div>
+                        <button 
+                          className="btn btn-primary btn-sm" 
+                          onClick={() => updateConfig('montos_billetera_usd', montosBilleteraUsd, true).then(() => setAlertModal({ type: 'success', message: 'Montos fijos USD actualizados' }))}
                         >
                           Guardar
                         </button>

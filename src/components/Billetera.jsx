@@ -18,6 +18,11 @@ export default function Billetera({ onNavigate }) {
     return config.montos_billetera_bs.split(',').map(v => v.trim()).filter(v => !isNaN(v) && v !== '')
   }, [config?.montos_billetera_bs])
 
+  const montosUsdFijos = useMemo(() => {
+    if (!config?.montos_billetera_usd) return []
+    return config.montos_billetera_usd.split(',').map(v => v.trim()).filter(v => !isNaN(v) && v !== '')
+  }, [config?.montos_billetera_usd])
+
   const [monto, setMonto] = useState('')
   const [monedaRecarga, setMonedaRecarga] = useState('bs') // Cambiado a 'bs' por defecto
   const [metodoId, setMetodoId] = useState('')
@@ -33,6 +38,7 @@ export default function Billetera({ onNavigate }) {
   // Estado para solicitudes pendientes (Solo Admin)
   const [pendingRecargas, setPendingRecargas] = useState([])
   const [approvedRecargas, setApprovedRecargas] = useState([])
+  const [rejectedRecargas, setRejectedRecargas] = useState([])
   const [loadingAdmin, setLoadingAdmin] = useState(false)
 
   const hasWalletUSD = useMemo(() => {
@@ -88,6 +94,26 @@ export default function Billetera({ onNavigate }) {
       setApprovedRecargas(rawApproved.map(r => ({ ...r, clientes: approvedUserMap.get(r.auth_user_id) })))
     } else {
       setApprovedRecargas([])
+    }
+
+    // También obtener recargas rechazadas recientes
+    const { data: rawRejected } = await supabase
+      .from('billetera_recargas')
+      .select('*, metodos_pago(nombre)')
+      .eq('estado', 'rechazado')
+      .order('updated_at', { ascending: false })
+      .limit(20)
+
+    if (rawRejected && rawRejected.length > 0) {
+      const rejectedUserIds = [...new Set(rawRejected.map(r => r.auth_user_id))]
+      const { data: rejectedUsersData } = await supabase
+        .from('clientes')
+        .select('auth_user_id, nombres, apellidos, nickname')
+        .in('auth_user_id', rejectedUserIds)
+      const rejectedUserMap = new Map((rejectedUsersData || []).map(u => [u.auth_user_id, u]))
+      setRejectedRecargas(rawRejected.map(r => ({ ...r, clientes: rejectedUserMap.get(r.auth_user_id) })))
+    } else {
+      setRejectedRecargas([])
     }
 
     setLoadingAdmin(false)
@@ -495,6 +521,65 @@ export default function Billetera({ onNavigate }) {
             </div>
           )}
 
+          {/* Recargas Rechazadas */}
+          {isAdmin && (
+            <div className="card">
+              <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 className="card-title">Recargas Rechazadas Recientes</h3>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Últimas 20</span>
+              </div>
+              <div style={{ padding: '24px' }}>
+                {rejectedRecargas.length === 0 ? (
+                  <p className="text-muted center-text">No hay recargas rechazadas recientes.</p>
+                ) : (
+                  <div className="table-container" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    <table className="table table-cards-mobile">
+                      <thead>
+                        <tr>
+                          <th>Usuario</th>
+                          <th>Monto</th>
+                          <th>Método / Ref</th>
+                          <th>Fecha</th>
+                          <th>Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rejectedRecargas.map(r => (
+                          <tr key={r.id}>
+                            <td data-label="Usuario">
+                              <div>
+                                <div style={{ fontWeight: 600, fontSize: '13px' }}>{r.clientes?.nombres} {r.clientes?.apellidos}</div>
+                                <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>@{r.clientes?.nickname}</div>
+                              </div>
+                            </td>
+                            <td data-label="Monto" translate="no" className="notranslate">
+                              <span translate="no" className="notranslate" style={{ fontWeight: 700, color: r.moneda === 'bs' ? '#a855f7' : 'var(--accent-success)' }}>{r.moneda === 'bs' ? formatBs(r.monto) : formatUSD(r.monto)}</span>
+                              <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{r.moneda === 'bs' ? 'Bolívares' : 'Dólares'}</div>
+                            </td>
+                            <td data-label="Método/Ref">
+                              <div>
+                                <div style={{ fontSize: '12px' }}>{r.metodos_pago?.nombre}</div>
+                                <div style={{ fontSize: '10px', opacity: 0.6 }}>Ref: {r.referencia_pago}</div>
+                              </div>
+                            </td>
+                            <td data-label="Fecha" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                              {new Date(r.updated_at || r.created_at).toLocaleDateString()}
+                            </td>
+                            <td data-label="Estado">
+                              <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '8px', backgroundColor: 'rgba(239,68,68,0.15)', color: '#ef4444', fontWeight: 700 }}>
+                                ❌ Rechazado
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Historial de Movimientos (Combinado: recargas + transacciones) */}
           <div className="card">
             <div className="card-header">
@@ -664,6 +749,28 @@ export default function Billetera({ onNavigate }) {
                         </p>
                       </div>
                     )}
+                  </>
+                ) : monedaRecarga === 'usd' && montosUsdFijos.length > 0 ? (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '10px' }}>
+                      {montosUsdFijos.map((m, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setMonto(m)}
+                          className={`btn ${monto === m ? 'btn-primary' : 'btn-ghost'}`}
+                          style={{
+                            height: 'auto', padding: '12px 8px',
+                            border: monto === m ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                            backgroundColor: monto === m ? 'var(--accent-primary)' : 'var(--bg-panel)',
+                            color: monto === m ? '#fff' : 'var(--text-primary)',
+                            fontWeight: 700, fontSize: '15px', borderRadius: '12px'
+                          }}
+                        >
+                          ${m}
+                        </button>
+                      ))}
+                    </div>
                   </>
                 ) : (
                   <>
