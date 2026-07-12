@@ -1376,13 +1376,15 @@
   .hidden-mobile { display: none !important; }
   .visible-mobile { display: flex !important; }
   .landing-header { height: 64px; }
-  .landing-header-inner { gap: 10px; padding-left: 0 !important; }
-  .landing-header-left { gap: 10px; }
-  .landing-header-right { gap: 12px; }
+  .landing-header-inner { gap: 6px; padding-left: 0 !important; }
+  .landing-header-left { gap: 6px; }
+  .landing-header-right { gap: 6px; }
   .landing-logo-text { font-size: 16px; }
-  .landing-logo-img { height: 38px; width: auto; max-width: 160px; }
+  .landing-logo-img { height: 36px; width: auto; max-width: 190px; object-fit: contain; }
   .landing-logo-icon { width: 32px; height: 32px; font-size: 18px; }
   .user-avatar-small { width: 30px; height: 30px; font-size: 14px; }
+  .btn-header-wallet { padding: 6px 10px; font-size: 11px; gap: 4px; }
+  .btn-assax-primary { padding: 6px 12px; font-size: 11px; }
   .hero-slider {
     height: auto; 
     aspect-ratio: 3.5 / 1; 
