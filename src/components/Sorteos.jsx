@@ -2,6 +2,24 @@ import React, { useState, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatUSD, formatBs } from '../utils/helpers'
 
+// ── SVG Wheel helpers ──────────────────────────────────────────
+const polar = (cx, cy, r, deg) => {
+  const rad = ((deg - 90) * Math.PI) / 180
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) }
+}
+const arc = (cx, cy, r, a1, a2) => {
+  const s = polar(cx, cy, r, a1)
+  const e = polar(cx, cy, r, a2)
+  const lg = a2 - a1 > 180 ? 1 : 0
+  return `M ${cx} ${cy} L ${s.x.toFixed(2)} ${s.y.toFixed(2)} A ${r} ${r} 0 ${lg} 1 ${e.x.toFixed(2)} ${e.y.toFixed(2)} Z`
+}
+
+const COLORS = [
+  '#FF6B6B','#FF8E53','#FFCA28','#66BB6A',
+  '#26C6DA','#5C6BC0','#AB47BC','#EC407A',
+  '#FF7043','#26A69A','#FFA726','#8D6E63'
+]
+
 export default function Sorteos() {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -11,6 +29,12 @@ export default function Sorteos() {
   const [hasSearched, setHasSearched] = useState(false)
   const [debugText, setDebugText] = useState('')
   const [ventasPorCliente, setVentasPorCliente] = useState({})
+
+  // Estados de la Ruleta
+  const [spinning, setSpinning] = useState(false)
+  const [rotation, setRotation] = useState(0)
+  const [animateWheel, setAnimateWheel] = useState(false)
+  const [winner, setWinner] = useState(null)
   
   const handleFiltrar = async () => {
     if (!startDate || !endDate) {
@@ -147,7 +171,46 @@ export default function Sorteos() {
     return Array.from(mapa.values()).sort((a, b) => b.totalGastadoUSD - a.totalGastadoUSD)
   }, [pedidos, ventasPorCliente])
 
-  // Random winner select removed
+  // Lógica de la Ruleta
+  const segDeg = usuariosAgrupados.length > 0 ? 360 / usuariosAgrupados.length : 0
+  const segments = []
+  let accA = 0
+  usuariosAgrupados.forEach((user, i) => {
+    segments.push({ 
+      ...user, 
+      startAngle: accA, 
+      endAngle: accA + segDeg, 
+      midAngle: accA + segDeg / 2, 
+      colorFallback: COLORS[i % COLORS.length] 
+    })
+    accA += segDeg
+  })
+
+  const handleSpin = () => {
+    if (spinning || usuariosAgrupados.length === 0) return
+    setSpinning(true)
+    setWinner(null)
+
+    const randomIndex = Math.floor(Math.random() * usuariosAgrupados.length)
+    const winnerSegment = segments[randomIndex]
+    const targetAngle = winnerSegment.midAngle
+
+    // Spin: 6-8 full turns + land on segment
+    const extraTurns = 6 + Math.floor(Math.random() * 3)
+    const currentModulo = rotation % 360
+    const finalModulo = (360 - (targetAngle % 360)) % 360
+    const neededDelta = (finalModulo - currentModulo + 360) % 360
+    const newRotation = rotation + (extraTurns * 360) + neededDelta
+
+    setAnimateWheel(true)
+    setRotation(newRotation)
+
+    setTimeout(() => {
+      setAnimateWheel(false)
+      setWinner(winnerSegment)
+      setSpinning(false)
+    }, 6000)
+  }
 
   return (
     <div className="page-content fade-in" style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
@@ -325,7 +388,115 @@ export default function Sorteos() {
             </div>
           </div>
 
-          {/* Acción Sorteo removida */}
+          {/* Ruleta Local */}
+          <div className="card glass-morphism" style={{ 
+            padding: '40px', textAlign: 'center', 
+            background: 'linear-gradient(145deg, rgba(20,20,30,0.6) 0%, rgba(30,20,40,0.4) 100%)',
+            border: '1px solid rgba(236,72,153,0.15)', borderRadius: '24px',
+            display: 'flex', flexDirection: 'column', alignItems: 'center'
+          }}>
+            <h2 style={{ fontSize: '24px', fontWeight: '900', color: '#fbcfe8', marginBottom: '8px' }}>Gira y Gana (Sorteo Local)</h2>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '32px' }}>Escoge un ganador al azar de la lista filtrada.</p>
+            
+            <div className="wheel-container" style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ zIndex: 10, marginBottom: -18, position: 'relative' }}>
+                <div style={{ width: 0, height: 0, borderLeft: '16px solid transparent', borderRight: '16px solid transparent', borderTop: '34px solid #FF3333', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.5))' }} />
+                <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 8, height: 8, borderRadius: '50%', background: '#fff', marginTop: -5 }} />
+              </div>
+              <div style={{
+                transform: `rotate(${rotation}deg)`,
+                transition: animateWheel ? 'transform 6s cubic-bezier(0.17,0.67,0.08,1)' : 'none',
+                willChange: 'transform',
+                borderRadius: '50%',
+                boxShadow: '0 0 0 8px #0d1b4b, 0 0 0 14px #1a3a8f, 0 0 0 20px #FFD700, 0 25px 60px rgba(0,0,0,.7)'
+              }}>
+                <svg viewBox="0 0 300 300" width="380" height="380" style={{ display: 'block' }}>
+                  <defs>
+                    <radialGradient id="hubG" cx="40%" cy="35%"><stop offset="0%" stopColor="#60a5fa" /><stop offset="100%" stopColor="#1e3a8a" /></radialGradient>
+                  </defs>
+                  <circle cx={150} cy={150} r={138} fill="#0d1b4b" />
+                  <circle cx={150} cy={150} r={134} fill="none" stroke="#FFD700" strokeWidth="2" strokeDasharray="5 3" />
+                  
+                  {segments.length === 0 ? (
+                    <circle cx={150} cy={150} r={128} fill="#1e2a4a" />
+                  ) : segments.map((seg, idx) => {
+                    const fontSize = segments.length > 50 ? 3 : segments.length > 25 ? 4.5 : segments.length > 12 ? 6.5 : 9
+                    // Mostrar solo el nombre y el primer apellido (truncado) para mantener la privacidad y diseño
+                    const shortName = seg.nombres.split(' ').slice(0, 2).join(' ')
+                    return (
+                      <g key={seg.id}>
+                        <path d={arc(150, 150, 128, seg.startAngle, seg.endAngle)} fill={seg.colorFallback} stroke="rgba(255,255,255,.2)" strokeWidth="1.5" />
+                        <g transform={`rotate(${seg.midAngle - 90}, 150, 150)`}>
+                          <text x={192} y={150} textAnchor="start" dominantBaseline="middle"
+                            fontSize={fontSize} fontWeight="800" fill="white"
+                            style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.8))' }}>
+                            {shortName}
+                          </text>
+                        </g>
+                      </g>
+                    )
+                  })}
+                  
+                  <circle cx={150} cy={150} r={42} fill="#0d1b4b" />
+                  <circle cx={150} cy={150} r={38} fill="url(#hubG)" />
+                  <circle cx={150} cy={150} r={32} fill="#1e3a8a" stroke="#FFD700" strokeWidth="2" />
+                  <text x={150} y={150} textAnchor="middle" dominantBaseline="middle" fontSize="22">⭐</text>
+                </svg>
+              </div>
+
+              {/* Decorative base */}
+              <div style={{ marginTop: -8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ width: 44, height: 64, background: 'linear-gradient(180deg,#1a3a8f,#0d1f5c)', borderRadius: '4px 4px 0 0' }} />
+                <div style={{ width: 180, height: 28, background: 'linear-gradient(180deg,#1a3a8f,#0d1f5c)', borderRadius: '8px 8px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  {[...Array(6)].map((_, i) => <div key={i} style={{ width: 12, height: 12, borderRadius: '50%', background: '#FFD700', boxShadow: '0 0 10px #FFD700' }} />)}
+                </div>
+                <div style={{ width: 220, height: 14, background: '#07123d', borderRadius: '0 0 10px 10px' }} />
+              </div>
+
+              <button onClick={handleSpin} disabled={spinning || usuariosAgrupados.length === 0}
+                style={{
+                  marginTop: 40, padding: '16px 40px', fontSize: 18, fontWeight: 900,
+                  borderRadius: 50, border: 'none', cursor: spinning || usuariosAgrupados.length === 0 ? 'not-allowed' : 'pointer',
+                  background: spinning || usuariosAgrupados.length === 0 ? 'rgba(255,255,255,.07)' : 'linear-gradient(135deg,#FFD700,#FF8C00)',
+                  color: spinning || usuariosAgrupados.length === 0 ? 'var(--text-muted)' : '#1a1a2e',
+                  transition: 'all .3s', boxShadow: spinning || usuariosAgrupados.length === 0 ? 'none' : '0 12px 35px rgba(255,215,0,.5)',
+                  textTransform: 'uppercase', letterSpacing: 2
+                }}>
+                {spinning ? 'Girando...' : '🎲 GIRAR RULETA'}
+              </button>
+            </div>
+
+            {winner && !spinning && (
+              <div style={{
+                marginTop: '32px', padding: '32px', borderRadius: '24px', width: '100%',
+                background: 'linear-gradient(135deg, rgba(34,197,94,0.1) 0%, rgba(20,83,45,0.2) 100%)',
+                border: '1px solid rgba(34,197,94,0.3)',
+                animation: 'bounceIn 0.5s'
+              }}>
+                <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏆</div>
+                <h2 style={{ fontSize: '14px', color: '#86efac', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 'bold', margin: '0 0 8px 0' }}>
+                  ¡Tenemos un Ganador!
+                </h2>
+                <h1 style={{ fontSize: '32px', color: '#fff', fontWeight: '900', margin: '0 0 16px 0' }}>
+                  {winner.nombres}
+                </h1>
+                <div style={{ display: 'inline-flex', flexWrap: 'wrap', justifyContent: 'center', gap: '24px', backgroundColor: 'rgba(0,0,0,0.3)', padding: '16px 24px', borderRadius: '16px' }}>
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>📞 Teléfono</div>
+                    <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#fff' }}>{winner.telefono}</div>
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>🛍️ Pedidos</div>
+                    <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#fff' }}>{winner.totalPedidos}</div>
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>💰 Inversión</div>
+                    <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#fff' }}>{formatUSD(winner.totalGastadoUSD)}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Lista de Usuarios */}
           <div className="card glass-morphism" style={{ padding: '0', overflow: 'hidden' }}>
