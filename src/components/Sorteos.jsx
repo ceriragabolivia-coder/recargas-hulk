@@ -32,6 +32,9 @@ export default function Sorteos() {
   const [hasSearched, setHasSearched] = useState(false)
   const [debugText, setDebugText] = useState('')
   const [ventasPorCliente, setVentasPorCliente] = useState({})
+  
+  // Opción de censura
+  const [isCensored, setIsCensored] = useState(false)
 
   // Estados de la Ruleta
   const [spinning, setSpinning] = useState(false)
@@ -374,7 +377,7 @@ export default function Sorteos() {
             />
           </div>
           
-          <div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <button 
               className="btn"
               onClick={handleFiltrar}
@@ -411,6 +414,15 @@ export default function Sorteos() {
                 </>
               )}
             </button>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#fbcfe8', fontSize: '13px', fontWeight: 'bold' }}>
+              <input 
+                type="checkbox" 
+                checked={isCensored}
+                onChange={e => setIsCensored(e.target.checked)}
+                style={{ cursor: 'pointer', accentColor: '#ec4899', width: '16px', height: '16px' }}
+              />
+              Censurar Datos Privados
+            </label>
           </div>
         </div>
         
@@ -607,10 +619,12 @@ export default function Sorteos() {
                     }}>
                       <td style={{ padding: '16px 24px' }}>
                         <div style={{ fontWeight: 'bold', color: '#fff' }}>{user.nombres}</div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{user.email}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                          {isCensored ? '***@***.***' : user.email}
+                        </div>
                       </td>
                       <td style={{ padding: '16px 24px', color: '#cbd5e1' }}>
-                        {user.telefono}
+                        {isCensored ? user.telefono.substring(0, 7) + '****' : user.telefono}
                       </td>
                       <td style={{ padding: '16px 24px' }}>
                         <span style={{
@@ -622,13 +636,13 @@ export default function Sorteos() {
                         </span>
                       </td>
                       <td style={{ padding: '16px 24px', fontWeight: 'bold', color: '#fff' }}>
-                        {user.totalPedidos}
+                        {isCensored ? '***' : user.totalPedidos}
                       </td>
                       <td style={{ padding: '16px 24px', fontWeight: 'bold', color: '#10b981' }}>
-                        {formatUSD(user.totalGastadoUSD)}
+                        {isCensored ? '***' : formatUSD(user.totalGastadoUSD)}
                       </td>
                       <td style={{ padding: '16px 24px', fontWeight: 'bold', color: '#f59e0b' }}>
-                        {formatUSD(user.gananciaNetaUSD)}
+                        {isCensored ? '***' : formatUSD(user.gananciaNetaUSD)}
                       </td>
                     </tr>
                   ))}
