@@ -542,7 +542,7 @@ export default function Sorteos() {
                 borderRadius: '50%',
                 boxShadow: '0 0 0 8px #0d1b4b, 0 0 0 14px #1a3a8f, 0 0 0 20px #FFD700, 0 25px 60px rgba(0,0,0,.7)'
               }}>
-                <svg viewBox="0 0 500 500" width="380" height="380" style={{ display: 'block' }}>
+                <svg viewBox="0 0 500 500" width="480" height="480" style={{ display: 'block', maxWidth: '100%' }}>
                   <defs>
                     <radialGradient id="hubG" cx="40%" cy="35%"><stop offset="0%" stopColor="#60a5fa" /><stop offset="100%" stopColor="#1e3a8a" /></radialGradient>
                   </defs>
@@ -553,7 +553,7 @@ export default function Sorteos() {
                     <circle cx={250} cy={250} r={210} fill="#1e2a4a" />
                   ) : segments.map((seg, idx) => {
                     // Letras mucho más grandes. Alternamos posición para que no colisionen.
-                    const fontSize = segments.length > 50 ? 8 : segments.length > 25 ? 10 : segments.length > 12 ? 14 : 18
+                    const fontSize = segments.length > 50 ? 11 : segments.length > 25 ? 14 : segments.length > 12 ? 18 : 24
                     
                     const parts = seg.nombres.split(' ')
                     // Para optimizar más el espacio si hay muchos usuarios, usar Nombre + Inicial del apellido
@@ -563,14 +563,14 @@ export default function Sorteos() {
                       : parts.slice(0, 2).join(' ')
                     
                     // Alternar la posición X para que los textos no se amontonen en el centro
-                    const textX = isVeryCrowded ? (idx % 2 === 0 ? 310 : 360) : 300
+                    const textX = isVeryCrowded ? (idx % 2 === 0 ? 300 : 360) : 290
 
                     return (
                       <g key={seg.id}>
                         <path d={arc(250, 250, 210, seg.startAngle, seg.endAngle)} fill={seg.colorFallback} stroke="rgba(255,255,255,.2)" strokeWidth="1.5" />
                         <g transform={`rotate(${seg.midAngle - 90}, 250, 250)`}>
                           <text x={textX} y={250} textAnchor="start" dominantBaseline="middle"
-                            fontSize={fontSize} fontWeight="800" fill="white"
+                            fontSize={fontSize} fontWeight="900" fill="white"
                             style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,.8))' }}>
                             {shortName}
                           </text>
