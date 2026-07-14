@@ -79,6 +79,9 @@ export default function Configuracion() {
   const [isEditingMotivo, setIsEditingMotivo] = useState(false)
   const [currentMotivo, setCurrentMotivo] = useState({ id: '', titulo: '', mensaje: '' })
 
+  // Estado para Sorteos Manuales
+  const [sorteosGanadoresManuales, setSorteosGanadoresManuales] = useState('')
+
   // Ref para evitar que las actualizaciones de Realtime sobrescriban lo que el admin está escribiendo
   const initialized = useRef(false)
 
@@ -127,6 +130,9 @@ export default function Configuracion() {
       } catch (e) {
         setFooterProductosIds([])
       }
+
+      // Sorteos manuales
+      setSorteosGanadoresManuales(config.sorteos_ganadores_manuales || '')
 
       // Motivos de rechazo
       try {
@@ -533,6 +539,15 @@ export default function Configuracion() {
               onClick={() => setActiveTab('mobile')}
             >
               📲 App Móvil
+            </button>
+          )}
+          {!isNegocio && (
+            <button 
+              className={`btn ${activeTab === 'sorteos' ? 'btn-primary' : 'btn-ghost'}`}
+              style={{ justifyContent: 'flex-start', textAlign: 'left' }}
+              onClick={() => setActiveTab('sorteos')}
+            >
+              🎁 Sorteos
             </button>
           )}
         </div>
@@ -1464,6 +1479,45 @@ export default function Configuracion() {
                     )}
                   </div>
                 )}
+              </div>
+            </>
+          )}
+
+          {activeTab === 'sorteos' && (
+            <>
+              <div className="card-header">
+                <h2 className="card-title">Módulo de Sorteos (Configuración Manual)</h2>
+              </div>
+              <div style={{ padding: '24px' }}>
+                <p style={{ color: 'var(--text-muted)', marginBottom: '24px', fontSize: '14px' }}>
+                  Aquí puedes configurar manualmente a los usuarios que serán los ganadores de la ruleta de sorteos u otros premios.
+                </p>
+                <div style={{ backgroundColor: 'var(--bg-panel)', padding: '24px', borderRadius: '12px', border: '1px solid var(--border-color)', maxWidth: '600px' }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Teléfonos o Nombres de los Ganadores</label>
+                    <textarea 
+                      className="form-input" 
+                      style={{ minHeight: '120px', fontSize: '14px' }}
+                      placeholder="Ejemplo:
+Ganador 1: +584120000000
+Ganador 2: María Pérez"
+                      value={sorteosGanadoresManuales}
+                      onChange={(e) => setSorteosGanadoresManuales(e.target.value)}
+                    />
+                    <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px', marginBottom: '16px' }}>
+                      Escribe la lista de ganadores tal como deseas que el sistema los recuerde.
+                    </p>
+                    <button 
+                      className="btn btn-primary" 
+                      onClick={async () => {
+                        await updateConfig('sorteos_ganadores_manuales', sorteosGanadoresManuales, true)
+                        setAlertModal({ type: 'success', message: 'Lista de ganadores guardada correctamente' })
+                      }}
+                    >
+                      ✓ Guardar Ganadores Manuales
+                    </button>
+                  </div>
+                </div>
               </div>
             </>
           )}

@@ -168,7 +168,13 @@ export default function GestionCupones({ onNavigate }) {
     await supabase.from('notificaciones_usuarios').insert({
       user_id: assignData.selectedUser.auth_user_id,
       titulo: '¡Te han regalado un cupón! 🎁',
-      mensaje: `Has recibido un cupón de ${cuponObj.porcentaje_descuento}% de descuento. Usa el código: ${cuponObj.codigo} en tu próxima compra. Válido hasta: ${fechaExp}`
+      mensaje: `Has recibido un cupón de ${cuponObj.porcentaje_descuento}% de descuento. Usa el código: ${cuponObj.codigo} en tu próxima compra. Válido hasta: ${fechaExp}`,
+      tipo: 'cupon',
+      metadata: { 
+        cupon_id: cuponObj.id, 
+        codigo: cuponObj.codigo,
+        fecha_fin: cuponObj.fecha_fin
+      }
     });
 
     setAlertModal({ type: 'success', message: "Cupón asignado y notificado exitosamente al usuario" })
@@ -221,7 +227,13 @@ export default function GestionCupones({ onNavigate }) {
         const notifs = chunk.map(u => ({
           user_id: u.auth_user_id,
           titulo: '¡Te han regalado un cupón! 🎁',
-          mensaje: 'Has recibido un cupón de ' + cuponObj.porcentaje_descuento + '% de descuento. Usa el código: ' + cuponObj.codigo + ' en tu próxima compra.'
+          mensaje: 'Has recibido un cupón de ' + cuponObj.porcentaje_descuento + '% de descuento. Usa el código: ' + cuponObj.codigo + ' en tu próxima compra.',
+          tipo: 'cupon',
+          metadata: {
+            cupon_id: cuponObj.id,
+            codigo: cuponObj.codigo,
+            fecha_fin: cuponObj.fecha_fin
+          }
         }));
         await supabase.from('notificaciones_usuarios').insert(notifs);
       }

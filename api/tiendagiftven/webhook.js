@@ -127,8 +127,8 @@ export default async function handler(req, res) {
                     p_player_id: item.player_id,
                     p_account_email: item.account_email,
                     p_account_password: item.account_password,
-                    p_pedido_id: order.id,
-                    p_owner_id: order.owner_id
+                    p_pedido_id: null,
+                    p_owner_id: null
                   });
 
                   if (rpcErr) {

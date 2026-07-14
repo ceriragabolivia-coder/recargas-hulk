@@ -44,6 +44,7 @@ const ProveedorCatalogo = lazy(() => import('./components/ProveedorCatalogo'))
 const GestionSocios = lazy(() => import('./components/GestionSocios'))
 const MiParticipacion = lazy(() => import('./components/MiParticipacion'))
 const GestionInterfaces = lazy(() => import('./components/GestionInterfaces'))
+const Sorteos = lazy(() => import('./components/Sorteos'))
 // const PagosBdv = lazy(() => import('./components/PagosBdv'))
 
 const Placeholder = ({ title }) => (
@@ -490,6 +491,7 @@ const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
         <Route path="/Proveedor-TiendaGiftVen" element={isAdmin ? <ProveedorCatalogo /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Gestion-Socios" element={isAdmin ? <GestionSocios /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Interfaces-Admin" element={isAdmin ? <GestionInterfaces /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Sorteos" element={isAdmin ? <Sorteos /> : <Navigate to="/Lista-De-Precios" replace />} />
 
         {/* Ruta del socio (solo lectura de su propia participación) */}
         <Route path="/Mi-Participacion" element={isSocio ? <MiParticipacion /> : <Navigate to="/Lista-De-Precios" replace />} />
@@ -552,6 +554,7 @@ export default function App() {
       'gestion_cupones': '/Gestion-Cupones',
       'gestion_creadores': '/Gestion-Creadores',
       'interfaces_admin': '/Interfaces-Admin',
+      'sorteos': '/Sorteos',
       'pagina_estatica': '/p/',
       'checkout': '/Checkout'
     }

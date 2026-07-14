@@ -346,11 +346,49 @@ export default function Landing({ onNavigate }) {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(20);
       
       if (!error && data) {
-        setNotificaciones(data);
-        const unreads = data.filter(n => !n.leido);
+        const couponCodes = data
+          .map(n => {
+            const isCoupon = n.titulo === '¡Te han regalado un cupón! 🎁' || n.tipo === 'cupon';
+            if (isCoupon) {
+              const match = n.mensaje.match(/código:\s*([A-Za-z0-9_-]+)/i);
+              return match ? match[1] : (n.metadata?.codigo || null);
+            }
+            return null;
+          })
+          .filter(Boolean);
+
+        let validNotis = data;
+        
+        if (couponCodes.length > 0) {
+          const { data: activeCoupons } = await supabase
+            .from('cupones')
+            .select('codigo')
+            .in('codigo', couponCodes)
+            .eq('activo', true)
+            .or(`fecha_fin.is.null,fecha_fin.gt.${new Date().toISOString()}`);
+
+          const activeCouponCodes = new Set(activeCoupons?.map(c => c.codigo) || []);
+
+          validNotis = data.filter(n => {
+            const isCoupon = n.titulo === '¡Te han regalado un cupón! 🎁' || n.tipo === 'cupon';
+            if (isCoupon) {
+              const match = n.mensaje.match(/código:\s*([A-Za-z0-9_-]+)/i);
+              const code = match ? match[1] : (n.metadata?.codigo);
+              if (code && !activeCouponCodes.has(code)) {
+                return false;
+              }
+            }
+            return true;
+          });
+        }
+        
+        validNotis = validNotis.slice(0, 10);
+        
+        setNotificaciones(validNotis);
+        const unreads = validNotis.filter(n => !n.leido);
         setUnreadCount(unreads.length);
         
         if (unreads.length > 0) {
