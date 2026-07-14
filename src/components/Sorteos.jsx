@@ -410,26 +410,36 @@ export default function Sorteos() {
                 borderRadius: '50%',
                 boxShadow: '0 0 0 8px #0d1b4b, 0 0 0 14px #1a3a8f, 0 0 0 20px #FFD700, 0 25px 60px rgba(0,0,0,.7)'
               }}>
-                <svg viewBox="0 0 300 300" width="380" height="380" style={{ display: 'block' }}>
+                <svg viewBox="0 0 500 500" width="380" height="380" style={{ display: 'block' }}>
                   <defs>
                     <radialGradient id="hubG" cx="40%" cy="35%"><stop offset="0%" stopColor="#60a5fa" /><stop offset="100%" stopColor="#1e3a8a" /></radialGradient>
                   </defs>
-                  <circle cx={150} cy={150} r={138} fill="#0d1b4b" />
-                  <circle cx={150} cy={150} r={134} fill="none" stroke="#FFD700" strokeWidth="2" strokeDasharray="5 3" />
+                  <circle cx={250} cy={250} r={230} fill="#0d1b4b" />
+                  <circle cx={250} cy={250} r={220} fill="none" stroke="#FFD700" strokeWidth="3" strokeDasharray="8 5" />
                   
                   {segments.length === 0 ? (
-                    <circle cx={150} cy={150} r={128} fill="#1e2a4a" />
+                    <circle cx={250} cy={250} r={210} fill="#1e2a4a" />
                   ) : segments.map((seg, idx) => {
-                    const fontSize = segments.length > 50 ? 3 : segments.length > 25 ? 4.5 : segments.length > 12 ? 6.5 : 9
-                    // Mostrar solo el nombre y el primer apellido (truncado) para mantener la privacidad y diseño
-                    const shortName = seg.nombres.split(' ').slice(0, 2).join(' ')
+                    // Letras mucho más grandes. Alternamos posición para que no colisionen.
+                    const fontSize = segments.length > 50 ? 8 : segments.length > 25 ? 10 : segments.length > 12 ? 14 : 18
+                    
+                    const parts = seg.nombres.split(' ')
+                    // Para optimizar más el espacio si hay muchos usuarios, usar Nombre + Inicial del apellido
+                    const isVeryCrowded = segments.length > 30
+                    const shortName = isVeryCrowded 
+                      ? parts[0] + (parts[1] ? ` ${parts[1][0]}.` : '')
+                      : parts.slice(0, 2).join(' ')
+                    
+                    // Alternar la posición X para que los textos no se amontonen en el centro
+                    const textX = isVeryCrowded ? (idx % 2 === 0 ? 310 : 360) : 300
+
                     return (
                       <g key={seg.id}>
-                        <path d={arc(150, 150, 128, seg.startAngle, seg.endAngle)} fill={seg.colorFallback} stroke="rgba(255,255,255,.2)" strokeWidth="1.5" />
-                        <g transform={`rotate(${seg.midAngle - 90}, 150, 150)`}>
-                          <text x={192} y={150} textAnchor="start" dominantBaseline="middle"
+                        <path d={arc(250, 250, 210, seg.startAngle, seg.endAngle)} fill={seg.colorFallback} stroke="rgba(255,255,255,.2)" strokeWidth="1.5" />
+                        <g transform={`rotate(${seg.midAngle - 90}, 250, 250)`}>
+                          <text x={textX} y={250} textAnchor="start" dominantBaseline="middle"
                             fontSize={fontSize} fontWeight="800" fill="white"
-                            style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.8))' }}>
+                            style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,.8))' }}>
                             {shortName}
                           </text>
                         </g>
@@ -437,10 +447,10 @@ export default function Sorteos() {
                     )
                   })}
                   
-                  <circle cx={150} cy={150} r={42} fill="#0d1b4b" />
-                  <circle cx={150} cy={150} r={38} fill="url(#hubG)" />
-                  <circle cx={150} cy={150} r={32} fill="#1e3a8a" stroke="#FFD700" strokeWidth="2" />
-                  <text x={150} y={150} textAnchor="middle" dominantBaseline="middle" fontSize="22">⭐</text>
+                  <circle cx={250} cy={250} r={65} fill="#0d1b4b" />
+                  <circle cx={250} cy={250} r={58} fill="url(#hubG)" />
+                  <circle cx={250} cy={250} r={48} fill="#1e3a8a" stroke="#FFD700" strokeWidth="3" />
+                  <text x={250} y={250} textAnchor="middle" dominantBaseline="middle" fontSize="32">⭐</text>
                 </svg>
               </div>
 
