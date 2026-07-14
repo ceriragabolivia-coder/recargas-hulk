@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatUSD, formatBs } from '../utils/helpers'
 import { useConfiguracion } from '../hooks/useData'
@@ -38,6 +38,34 @@ export default function Sorteos() {
   const [rotation, setRotation] = useState(0)
   const [animateWheel, setAnimateWheel] = useState(false)
   const [winner, setWinner] = useState(null)
+  
+  const audioSpin = useRef(null)
+  const audioWin = useRef(null)
+
+  // Cargar sonidos
+  useEffect(() => {
+    audioSpin.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2007/2007-preview.mp3')
+    audioSpin.current.loop = true
+    audioSpin.current.volume = 0.4
+    audioWin.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3')
+
+    return () => {
+      if (audioSpin.current) { audioSpin.current.pause(); audioSpin.current = null; }
+    }
+  }, [])
+
+  // Efecto de giro constante y lento antes de sortear
+  useEffect(() => {
+    let interval;
+    // Gira lentamente si no se está sorteando activamente y no hay ganador todavía
+    // y solo si hay usuarios para mostrar la ruleta
+    if (!spinning && !winner) {
+      interval = setInterval(() => {
+        setRotation(prev => prev + 0.5)
+      }, 30) // Animación suave a ~30fps
+    }
+    return () => clearInterval(interval)
+  }, [spinning, winner])
   
   const handleFiltrar = async () => {
     if (!startDate || !endDate) {
@@ -239,9 +267,18 @@ export default function Sorteos() {
 
     setAnimateWheel(true)
     setRotation(newRotation)
+    
+    if (audioSpin.current) audioSpin.current.play().catch(() => {})
 
     setTimeout(() => {
       setAnimateWheel(false)
+      
+      if (audioSpin.current) {
+        audioSpin.current.pause()
+        audioSpin.current.currentTime = 0
+      }
+      if (audioWin.current) audioWin.current.play().catch(() => {})
+      
       setWinner(winnerSegment)
       setSpinning(false)
     }, 6000)
