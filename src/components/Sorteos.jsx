@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatUSD, formatBs } from '../utils/helpers'
+import { useConfiguracion } from '../hooks/useData'
 
 // ── SVG Wheel helpers ──────────────────────────────────────────
 const polar = (cx, cy, r, deg) => {
@@ -21,6 +22,8 @@ const COLORS = [
 ]
 
 export default function Sorteos() {
+  const { config } = useConfiguracion()
+  
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [loading, setLoading] = useState(false)
@@ -191,8 +194,40 @@ export default function Sorteos() {
     setSpinning(true)
     setWinner(null)
 
-    const randomIndex = Math.floor(Math.random() * usuariosAgrupados.length)
-    const winnerSegment = segments[randomIndex]
+    let winnerSegment = null;
+
+    // Filtramos cuáles de los ganadores manuales están realmente en la ruleta actualmente
+    const ganadoresValidos = []
+    
+    if (config?.sorteos_ganadores_manuales) {
+      const lineas = config.sorteos_ganadores_manuales.split('\n').map(l => l.trim().toLowerCase()).filter(l => l.length > 0)
+      
+      segments.forEach(seg => {
+        const name = seg.nombres.toLowerCase()
+        const phone = seg.telefono.toLowerCase()
+        
+        // Verifica si este segmento coincide con alguna de las líneas manuales
+        const coincide = lineas.some(linea => {
+           const cleanLinea = linea.split('(')[0].trim()
+           if (cleanLinea.length < 3) return false
+           return name.includes(cleanLinea) || cleanLinea.includes(name) || phone.includes(cleanLinea)
+        })
+        
+        if (coincide) {
+          ganadoresValidos.push(seg)
+        }
+      })
+    }
+
+    if (ganadoresValidos.length > 0) {
+      // Escoge al azar entre los ganadores manuales que SÍ participaron
+      winnerSegment = ganadoresValidos[Math.floor(Math.random() * ganadoresValidos.length)]
+    } else {
+      // Si no hay ganadores manuales válidos, elige al azar de forma normal
+      const randomIndex = Math.floor(Math.random() * usuariosAgrupados.length)
+      winnerSegment = segments[randomIndex]
+    }
+
     const targetAngle = winnerSegment.midAngle
 
     // Spin: 6-8 full turns + land on segment
