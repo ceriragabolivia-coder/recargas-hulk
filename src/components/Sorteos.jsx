@@ -206,10 +206,50 @@ export default function Sorteos() {
   }, [pedidos, ventasPorCliente])
 
   // Lógica de la Ruleta
-  const segDeg = usuariosAgrupados.length > 0 ? 360 / usuariosAgrupados.length : 0
+  let wheelUsers = [...usuariosAgrupados]
+  // Inyectar ganadores manuales que falten para asegurar que aparezcan visualmente en la ruleta
+  if (config?.sorteos_ganadores_manuales) {
+      const manualLines = config.sorteos_ganadores_manuales.split('\n').map(l => l.trim()).filter(l => l.length > 0)
+      
+      manualLines.forEach((linea, idx) => {
+         const normalizeStr = str => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : '';
+         const manualDigits = linea.replace(/\D/g, '')
+         const cleanLinea = linea.split('(')[0].trim()
+         const normLinea = normalizeStr(cleanLinea)
+         
+         if (normLinea.length < 3) return
+         
+         const exists = wheelUsers.some(u => {
+            const name = normalizeStr(u.nombres)
+            const phone = normalizeStr(u.telefono).replace(/\D/g, '')
+            if (manualDigits.length >= 7 && phone.includes(manualDigits)) return true
+            return name.includes(normLinea) || normLinea.includes(name)
+         })
+         
+         if (!exists) {
+            // Inyectarlo solo a la ruleta (no a la tabla) para que el sorteo lo pueda seleccionar
+            wheelUsers.push({
+               id: 'manual_' + idx,
+               nombres: cleanLinea,
+               telefono: linea.includes('(') ? linea.split('(')[1].replace(')','') : (manualDigits || 'Desconocido'),
+               totalPedidos: 'N/A',
+               totalGastadoUSD: 0,
+               gananciaNetaUSD: 0,
+               es_manual: true
+            })
+         }
+      })
+  }
+
+  // Mezclar la ruleta para que los inyectados no queden todos juntos al final
+  // Una mezcla simple determinista basada en el index o usando random
+  const shuffleSeed = useMemo(() => Math.random(), [wheelUsers.length])
+  wheelUsers = [...wheelUsers].sort((a, b) => 0.5 - Math.random())
+
+  const segDeg = wheelUsers.length > 0 ? 360 / wheelUsers.length : 0
   const segments = []
   let accA = 0
-  usuariosAgrupados.forEach((user, i) => {
+  wheelUsers.forEach((user, i) => {
     segments.push({ 
       ...user, 
       startAngle: accA, 
@@ -221,7 +261,7 @@ export default function Sorteos() {
   })
 
   const handleSpin = () => {
-    if (spinning || usuariosAgrupados.length === 0) return
+    if (spinning || wheelUsers.length === 0) return
     setSpinning(true)
     setWinner(null)
 
@@ -231,17 +271,25 @@ export default function Sorteos() {
     const ganadoresValidos = []
     
     if (config?.sorteos_ganadores_manuales) {
-      const lineas = config.sorteos_ganadores_manuales.split('\n').map(l => l.trim().toLowerCase()).filter(l => l.length > 0)
+      const lineas = config.sorteos_ganadores_manuales.split('\n').map(l => l.trim()).filter(l => l.length > 0)
       
       segments.forEach(seg => {
-        const name = seg.nombres.toLowerCase()
-        const phone = seg.telefono.toLowerCase()
+        if (seg.es_manual) {
+           ganadoresValidos.push(seg)
+           return
+        }
+
+        const normalizeStr = str => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : '';
+        const name = normalizeStr(seg.nombres)
+        const phone = normalizeStr(seg.telefono).replace(/\D/g, '')
         
-        // Verifica si este segmento coincide con alguna de las líneas manuales
         const coincide = lineas.some(linea => {
-           const cleanLinea = linea.split('(')[0].trim()
+           const cleanLinea = normalizeStr(linea.split('(')[0].trim())
+           const manualDigits = linea.replace(/\D/g, '')
+           
+           if (manualDigits.length >= 7 && phone.includes(manualDigits)) return true
            if (cleanLinea.length < 3) return false
-           return name.includes(cleanLinea) || cleanLinea.includes(name) || phone.includes(cleanLinea)
+           return name.includes(cleanLinea) || cleanLinea.includes(name)
         })
         
         if (coincide) {
@@ -251,11 +299,11 @@ export default function Sorteos() {
     }
 
     if (ganadoresValidos.length > 0) {
-      // Escoge al azar entre los ganadores manuales que SÍ participaron
+      // Escoge al azar entre los ganadores manuales
       winnerSegment = ganadoresValidos[Math.floor(Math.random() * ganadoresValidos.length)]
     } else {
       // Si no hay ganadores manuales válidos, elige al azar de forma normal
-      const randomIndex = Math.floor(Math.random() * usuariosAgrupados.length)
+      const randomIndex = Math.floor(Math.random() * segments.length)
       winnerSegment = segments[randomIndex]
     }
 
@@ -547,13 +595,13 @@ export default function Sorteos() {
                 <div style={{ width: 220, height: 14, background: '#07123d', borderRadius: '0 0 10px 10px' }} />
               </div>
 
-              <button onClick={handleSpin} disabled={spinning || usuariosAgrupados.length === 0}
+              <button onClick={handleSpin} disabled={spinning || wheelUsers.length === 0}
                 style={{
                   marginTop: 40, padding: '16px 40px', fontSize: 18, fontWeight: 900,
-                  borderRadius: 50, border: 'none', cursor: spinning || usuariosAgrupados.length === 0 ? 'not-allowed' : 'pointer',
-                  background: spinning || usuariosAgrupados.length === 0 ? 'rgba(255,255,255,.07)' : 'linear-gradient(135deg,#FFD700,#FF8C00)',
-                  color: spinning || usuariosAgrupados.length === 0 ? 'var(--text-muted)' : '#1a1a2e',
-                  transition: 'all .3s', boxShadow: spinning || usuariosAgrupados.length === 0 ? 'none' : '0 12px 35px rgba(255,215,0,.5)',
+                  borderRadius: 50, border: 'none', cursor: spinning || wheelUsers.length === 0 ? 'not-allowed' : 'pointer',
+                  background: spinning || wheelUsers.length === 0 ? 'rgba(255,255,255,.07)' : 'linear-gradient(135deg,#FFD700,#FF8C00)',
+                  color: spinning || wheelUsers.length === 0 ? 'var(--text-muted)' : '#1a1a2e',
+                  transition: 'all .3s', boxShadow: spinning || wheelUsers.length === 0 ? 'none' : '0 12px 35px rgba(255,215,0,.5)',
                   textTransform: 'uppercase', letterSpacing: 2
                 }}>
                 {spinning ? 'Girando...' : '🎲 GIRAR RULETA'}
