@@ -987,8 +987,10 @@ export default function Catalogo() {
                         return (
                     <div 
                       key={p.id}
-                      className="product-card-premium"
+                      className={`product-card-premium ${p.en_mantenimiento ? 'en-mantenimiento' : ''}`}
+                      style={p.en_mantenimiento ? { filter: 'grayscale(100%) opacity(60%)', cursor: 'not-allowed', position: 'relative' } : { position: 'relative' }}
                       onClick={() => {
+                        if (p.en_mantenimiento) return;
                         const prodEffectiveMetodo = (p.tipo_producto === 'gift_card') ? 'entrega_codigo' : effectiveMetodoRecarga;
 
                         if (prodEffectiveMetodo === 'sin_datos') {
@@ -1089,6 +1091,12 @@ export default function Catalogo() {
                           title="Información importante"
                         >
                           i
+                        </div>
+                      )}
+                      
+                      {p.en_mantenimiento && (
+                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', backgroundColor: 'rgba(239, 68, 68, 0.9)', color: 'white', padding: '6px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', whiteSpace: 'nowrap', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
+                          En Mantenimiento
                         </div>
                       )}
                     </div>

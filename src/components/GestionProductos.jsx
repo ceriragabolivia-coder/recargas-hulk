@@ -301,7 +301,8 @@ export default function GestionProductos() {
     entrega_automatica: false,
     tipo_producto: 'recarga',
     proveedor_api_id: '',
-    opciones_recarga: []
+    opciones_recarga: [],
+    en_mantenimiento: false
   })
   const [newIconFile, setNewIconFile] = useState(null)
   const [iconPreview, setIconPreview] = useState(null)
@@ -393,7 +394,7 @@ export default function GestionProductos() {
   }
 
   const handleOpenModal = () => {
-    setFormData({ id: null, nombre: '', costo_base: '', margen_ganancia: '30', icono_url: null, descuento_revendedor: '', info_adicional_texto: '', info_adicional_imagen_url: null, entrega_automatica: false, tipo_producto: 'recarga', proveedor_api_id: '', opciones_recarga: [] })
+    setFormData({ id: null, nombre: '', costo_base: '', margen_ganancia: '30', icono_url: null, descuento_revendedor: '', info_adicional_texto: '', info_adicional_imagen_url: null, entrega_automatica: false, tipo_producto: 'recarga', proveedor_api_id: '', opciones_recarga: [], en_mantenimiento: false })
     lastProveedorIdSincronizado.current = null
     setNewIconFile(null)
     setIconPreview(null)
@@ -415,7 +416,8 @@ export default function GestionProductos() {
       entrega_automatica: prod.entrega_automatica || false,
       tipo_producto: prod.tipo_producto || 'recarga',
       proveedor_api_id: prod.proveedor_api_id || '',
-      opciones_recarga: prod.opciones_recarga || []
+      opciones_recarga: prod.opciones_recarga || [],
+      en_mantenimiento: prod.en_mantenimiento || false
     })
     lastProveedorIdSincronizado.current = prod.proveedor_api_id || null
     setNewIconFile(null)
@@ -437,7 +439,8 @@ export default function GestionProductos() {
       entrega_automatica: prod.entrega_automatica || false,
       tipo_producto: prod.tipo_producto || 'recarga',
       proveedor_api_id: prod.proveedor_api_id || '',
-      opciones_recarga: prod.opciones_recarga || []
+      opciones_recarga: prod.opciones_recarga || [],
+      en_mantenimiento: false
     })
     lastProveedorIdSincronizado.current = null
     setNewIconFile(null)
@@ -992,6 +995,9 @@ export default function GestionProductos() {
                           onChange={(e) => handleUploadProductIcon(e, prod.id)}
                         />
                         <span className="font-bold" style={{ color: isDisabled ? 'var(--text-muted)' : 'var(--text-primary)', fontSize: '12px' }}>{prod.nombre}</span>
+                        {prod.en_mantenimiento && (
+                          <span style={{ marginLeft: '8px', fontSize: '10px', backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold', textTransform: 'uppercase' }}>En Mantenimiento</span>
+                        )}
                       </div>
                     </td>
                     <td style={{ padding: '4px' }}>{formatUSD(prod.costo_base)}</td>
@@ -1318,6 +1324,21 @@ export default function GestionProductos() {
               <div>
                 <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>📦 Activar Entrega Automática (Baúl)</span>
                 <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Si se activa, el sistema entregará un código del baúl automáticamente al completar el pedido.</p>
+              </div>
+            </label>
+          </div>
+
+          <div className="form-group" style={{ marginBottom: '24px', padding: '16px', backgroundColor: 'rgba(239, 68, 68, 0.05)', borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.1)' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+              <input 
+                type="checkbox" 
+                checked={formData.en_mantenimiento}
+                onChange={e => setFormData({ ...formData, en_mantenimiento: e.target.checked })}
+                style={{ width: '20px', height: '20px', accentColor: '#ef4444' }}
+              />
+              <div>
+                <span style={{ fontSize: '14px', fontWeight: 700, color: '#ef4444' }}>🛠️ Poner en Mantenimiento</span>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Si se activa, el producto aparecerá deshabilitado para los clientes en la tienda.</p>
               </div>
             </label>
           </div>
