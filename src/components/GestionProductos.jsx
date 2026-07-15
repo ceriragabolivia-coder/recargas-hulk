@@ -503,7 +503,8 @@ export default function GestionProductos() {
         entrega_automatica: formData.entrega_automatica,
         tipo_producto: formData.tipo_producto,
         proveedor_api_id: formData.proveedor_api_id ? parseInt(formData.proveedor_api_id, 10) : null,
-        opciones_recarga: formData.opciones_recarga || []
+        opciones_recarga: formData.opciones_recarga || [],
+        en_mantenimiento: formData.en_mantenimiento
       }
 
       if (formData.id) {
