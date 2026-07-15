@@ -64,6 +64,7 @@ export default function Landing({ onNavigate }) {
   }, [isAdmin, perfil]);
   const [showOrders, setShowOrders] = useState(false)
   const [showWallet, setShowWallet] = useState(false)
+  const [showRegionModalForGame, setShowRegionModalForGame] = useState(null)
   const [showProfile, setShowProfile] = useState(false)
   const [showRuleta, setShowRuleta] = useState(false)
   const [ordersParams, setOrdersParams] = useState(null)
@@ -598,6 +599,15 @@ export default function Landing({ onNavigate }) {
     };
   }, [searchParams.get('juego'), selectedJuego?.id, showCheckout, showOrders, showRuleta, showWallet, showProfile]);
 
+  const handleGameSelect = (juego) => {
+    const children = juegos.filter(j => j.parent_id === juego.id);
+    if (children.length > 0) {
+      setShowRegionModalForGame(juego);
+    } else {
+      handleSelectJuego(juego);
+    }
+  }
+
   const handleSelectJuego = (juego) => {
 
     setActiveProductType('recarga')
@@ -635,9 +645,10 @@ export default function Landing({ onNavigate }) {
 
   const filteredJuegos = useMemo(() => {
     return juegos.filter(j => {
+      const isParent = !j.parent_id;
       const matchesCategory = activeCategory === 'Todos' || j.categorias?.nombre === activeCategory
       const matchesSearch = j.nombre.toLowerCase().includes(search.toLowerCase())
-      return matchesCategory && matchesSearch
+      return isParent && matchesCategory && matchesSearch
     })
   }, [juegos, activeCategory, search])
 
@@ -647,7 +658,7 @@ export default function Landing({ onNavigate }) {
       const filtered = juegos.filter(j => ids.includes(String(j.id)))
       if (filtered.length > 0) return filtered
     }
-    return juegos // Mostrar todos los juegos en lugar de limitar a 20
+    return juegos.filter(j => !j.parent_id) // Mostrar todos los juegos padre en lugar de limitar a 20
   }, [juegos, config])
 
   // TRACKING DE VISITAS
@@ -1805,7 +1816,7 @@ export default function Landing({ onNavigate }) {
                     ))
                   ) : bestsellers.length > 0 ? (
                     bestsellers.map(juego => (
-                      <GameCard key={juego.id} juego={juego} onSelect={() => handleSelectJuego(juego)} />
+                      <GameCard key={juego.id} juego={juego} hasRegions={juegos.some(c => c.parent_id === juego.id)} onSelect={() => handleGameSelect(juego)} />
                     ))
                   ) : (
                     <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No se encontraron servicios destacados.</div>
@@ -1819,7 +1830,7 @@ export default function Landing({ onNavigate }) {
               /* VISTA DE SLIDERS HORIZONTALES (ESTILO CONECTA2VE) */
               <div className="landing-sliders-catalog" id="all-games">
                 {categorias.map(cat => {
-                  const catGames = juegos.filter(j => j.categoria_id === cat.id || j.categorias?.nombre === cat.nombre);
+                  const catGames = juegos.filter(j => (j.categoria_id === cat.id || j.categorias?.nombre === cat.nombre) && !j.parent_id);
                   if (catGames.length === 0) return null;
                   
                   return (
@@ -1830,7 +1841,7 @@ export default function Landing({ onNavigate }) {
                       <div className="slider-row">
                         {catGames.map(juego => (
                           <div key={juego.id} style={{ minWidth: '180px', maxWidth: '180px' }}>
-                            <GameCard juego={juego} onSelect={() => handleSelectJuego(juego)} />
+                            <GameCard juego={juego} hasRegions={juegos.some(c => c.parent_id === juego.id)} onSelect={() => handleGameSelect(juego)} />
                           </div>
                         ))}
                       </div>
@@ -1880,7 +1891,7 @@ export default function Landing({ onNavigate }) {
                     ))
                   ) : filteredJuegos.length > 0 ? (
                     filteredJuegos.map(juego => (
-                      <GameCard key={juego.id} juego={juego} onSelect={() => handleSelectJuego(juego)} />
+                      <GameCard key={juego.id} juego={juego} hasRegions={juegos.some(c => c.parent_id === juego.id)} onSelect={() => handleGameSelect(juego)} />
                     ))
                   ) : (
                     <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No se encontraron servicios en esta categoría.</div>
@@ -2032,12 +2043,12 @@ export default function Landing({ onNavigate }) {
                     try { ids = JSON.parse(config?.footer_productos_ids || '[]') } catch(e) {}
                     const footerJuegos = ids.length > 0
                       ? ids.map(id => juegos.find(j => j.id === id)).filter(Boolean)
-                      : juegos.slice(0, 8)
+                      : juegos.filter(j => !j.parent_id).slice(0, 8)
                     return footerJuegos
                   })().map(j => (
                   <button
                     key={j.id}
-                    onClick={() => handleSelectJuego(j)}
+                    onClick={() => handleGameSelect(j)}
                     title={j.nombre}
                     style={{ 
                       background: 'none', border: 'none', cursor: 'pointer', padding: 0, 
@@ -2204,6 +2215,21 @@ export default function Landing({ onNavigate }) {
             ✕
           </button>
         </div>
+          </button>
+        </div>
+      )}
+
+      {/* MODAL DE SELECCIÓN DE REGIÓN */}
+      {showRegionModalForGame && (
+        <RegionSelectionModal 
+          game={showRegionModalForGame}
+          juegos={juegos}
+          onClose={() => setShowRegionModalForGame(null)}
+          onSelect={(selected) => {
+            setShowRegionModalForGame(null)
+            handleSelectJuego(selected)
+          }}
+        />
       )}
 
       <style dangerouslySetInnerHTML={{ __html: `
@@ -2254,11 +2280,11 @@ export default function Landing({ onNavigate }) {
   )
 }
 
-function GameCard({ juego, onSelect }) {
+function GameCard({ juego, onSelect, hasRegions }) {
   return (
     <div className="game-card" onClick={onSelect}>
       {juego.etiqueta_descuento && <div className="badge-discount">{juego.etiqueta_descuento}</div>}
-      <div className="game-image-container">
+      <div className="game-image-container" style={{ position: 'relative' }}>
         <img 
           src={juego.icono_url ? (juego.icono_url.includes('?') ? `${juego.icono_url}&v=3` : `${juego.icono_url}?v=3`) : 'https://via.placeholder.com/200x250?text=' + juego.nombre} 
           alt={juego.nombre} 
@@ -2266,10 +2292,95 @@ function GameCard({ juego, onSelect }) {
           fetchpriority="high"
           loading="eager"
         />
+        {hasRegions && (
+          <div style={{
+            position: 'absolute',
+            bottom: '8px',
+            right: '8px',
+            background: 'rgba(0,0,0,0.7)',
+            borderRadius: '6px',
+            padding: '4px 6px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backdropFilter: 'blur(4px)',
+            border: '1px solid rgba(255,255,255,0.2)'
+          }} title="Tiene múltiples regiones">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 12 12 17 22 12"></polyline>
+              <polyline points="2 17 12 22 22 17"></polyline>
+            </svg>
+          </div>
+        )}
       </div>
       <div className="game-info">
         <div className="game-name">{juego.nombre}</div>
       </div>
     </div>
   )
+}
+
+function RegionSelectionModal({ game, juegos, onClose, onSelect }) {
+  const regions = [game, ...juegos.filter(j => j.parent_id === game.id)];
+  
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 10005,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      animation: 'fadeIn 0.2s', padding: '16px', backdropFilter: 'blur(5px)'
+    }} onClick={onClose}>
+      <div style={{
+        backgroundColor: 'var(--bg-panel)', width: '100%', maxWidth: '480px',
+        borderRadius: '24px', position: 'relative',
+        boxShadow: '0 24px 48px rgba(0,0,0,0.8)', overflow: 'hidden',
+        border: '1px solid rgba(255,255,255,0.1)', animation: 'scaleUp 0.3s'
+      }} onClick={e => e.stopPropagation()}>
+        <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.1)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '24px' }}>🌐</span>
+            <div>
+              <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent)', display: 'block' }}>{game.nombre}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Selecciona una región</span>
+            </div>
+          </div>
+          <button 
+            onClick={onClose}
+            style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', fontSize: '16px', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >✕</button>
+        </div>
+        
+        <div style={{ padding: '20px', maxHeight: '60vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {regions.map(r => (
+            <div 
+              key={r.id}
+              onClick={() => onSelect(r)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '16px',
+                padding: '16px', background: 'var(--bg-card)',
+                borderRadius: '16px', cursor: 'pointer',
+                border: '1px solid rgba(255,255,255,0.05)',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.borderColor = 'var(--accent)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-card)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'; }}
+            >
+              <img 
+                src={r.icono_url ? (r.icono_url.includes('?') ? \`\${r.icono_url}&v=3\` : \`\${r.icono_url}?v=3\`) : 'https://via.placeholder.com/60'} 
+                alt={r.nombre} 
+                style={{ width: '48px', height: '48px', borderRadius: '12px', objectFit: 'cover' }}
+              />
+              <div>
+                <div style={{ fontWeight: 800, fontSize: '15px' }}>{r.nombre}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  {r.id === game.id ? 'Región Principal / Global' : (r.caracteristicas_region || 'Variante regional')}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }

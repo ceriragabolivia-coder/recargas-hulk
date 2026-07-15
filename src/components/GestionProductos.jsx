@@ -96,6 +96,7 @@ export default function GestionProductos() {
   const [formGame, setFormGame] = useState({
     id: null,
     nombre: '',
+    parent_id: '',
     categoria_id: '',
     tipo_calculo: 'estandar',
     metodo_recarga: 'id_jugador',
@@ -126,6 +127,7 @@ export default function GestionProductos() {
     setFormGame({
       id: null,
       nombre: '',
+      parent_id: '',
       categoria_id: allCategorias[0]?.id || '',
       tipo_calculo: 'estandar',
       metodo_recarga: 'id_jugador',
@@ -151,6 +153,7 @@ export default function GestionProductos() {
     setFormGame({
       id: selectedJuego.id,
       nombre: selectedJuego.nombre,
+      parent_id: selectedJuego.parent_id || '',
       categoria_id: selectedJuego.categoria_id,
       tipo_calculo: selectedJuego.tipo_calculo,
       metodo_recarga: selectedJuego.metodo_recarga || 'id_jugador',
@@ -186,6 +189,7 @@ export default function GestionProductos() {
     if (formGame.id) {
       res = await updateJuego(formGame.id, {
         nombre: formGame.nombre,
+        parent_id: formGame.parent_id || null,
         categoria_id: formGame.categoria_id,
         tipo_calculo: formGame.tipo_calculo,
         metodo_recarga: formGame.metodo_recarga,
@@ -208,6 +212,7 @@ export default function GestionProductos() {
       }
     } else {
       const { id: _ignored, ...gamePayload } = formGame
+      gamePayload.parent_id = gamePayload.parent_id || null
       res = await createJuego(gamePayload)
     }
 
@@ -1536,6 +1541,23 @@ export default function GestionProductos() {
               onChange={e => setFormGame({ ...formGame, nombre: e.target.value })}
               required
             />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Juego Padre / Región de (Opcional)</label>
+            <select
+              className="form-input"
+              value={formGame.parent_id || ''}
+              onChange={e => setFormGame({ ...formGame, parent_id: e.target.value })}
+            >
+              <option value="">-- Ninguno (Es un juego principal) --</option>
+              {juegos.filter(j => !j.parent_id && j.id !== formGame.id).map(p => (
+                <option key={p.id} value={p.id}>{p.nombre}</option>
+              ))}
+            </select>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+              Si seleccionas un juego padre, este juego se tratará como una variante regional (ej. Free Fire LATAM pertenece a Free Fire).
+            </p>
           </div>
 
           <div className="form-group">
