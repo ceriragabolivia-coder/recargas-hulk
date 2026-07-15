@@ -7,7 +7,7 @@ import { compressImage } from '../utils/imageCompression'
 
 export default function Billetera({ onNavigate }) {
   const { wallet, adminSalesBalance, recargas, transacciones, loading, solicitarRecarga, refetch } = useWallet()
-  const { perfil, isCliente } = useAuth()
+  const { perfil, isCliente, user } = useAuth()
   const { metodos } = useMetodosPago()
   const { config } = useConfiguracion()
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
@@ -264,10 +264,14 @@ export default function Billetera({ onNavigate }) {
         if (error) throw error
         if (!data) throw new Error('No se pudo aprobar la recarga.')
       } else {
-        await supabase
+        const { error, data } = await supabase
           .from('billetera_recargas')
-          .update({ estado: 'rechazado', atendido_por_id: perfil.id, updated_at: new Date().toISOString() })
+          .update({ estado: 'rechazado', atendido_por_id: user.id, updated_at: new Date().toISOString() })
           .eq('id', recargaId)
+          .select()
+          .single()
+        if (error) throw error
+        if (!data) throw new Error('No se pudo actualizar la recarga.')
       }
 
       setAlertModal({ type: 'success', message: `Recarga ${status} correctamente.` })

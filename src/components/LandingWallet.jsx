@@ -187,10 +187,14 @@ export default function LandingWallet({ onClose }) {
         })
         if (error) throw error
       } else {
-        await supabase
+        const { error, data } = await supabase
           .from('billetera_recargas')
-          .update({ estado: 'rechazado', atendido_por_id: perfil.id, updated_at: new Date().toISOString() })
+          .update({ estado: 'rechazado', atendido_por_id: user.id, updated_at: new Date().toISOString() })
           .eq('id', recargaId)
+          .select()
+          .single()
+        if (error) throw error
+        if (!data) throw new Error('No se pudo actualizar la recarga.')
       }
 
       setAlert({ type: 'success', message: `Recarga ${status} correctamente.` })
