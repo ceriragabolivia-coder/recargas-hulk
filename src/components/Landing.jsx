@@ -2215,8 +2215,6 @@ export default function Landing({ onNavigate }) {
             ✕
           </button>
         </div>
-          </button>
-        </div>
       )}
 
       {/* MODAL DE SELECCIÓN DE REGIÓN */}
@@ -2367,7 +2365,7 @@ function RegionSelectionModal({ game, juegos, onClose, onSelect }) {
               onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-card)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'; }}
             >
               <img 
-                src={r.icono_url ? (r.icono_url.includes('?') ? \`\${r.icono_url}&v=3\` : \`\${r.icono_url}?v=3\`) : 'https://via.placeholder.com/60'} 
+                src={r.icono_url ? (r.icono_url.includes('?') ? `${r.icono_url}&v=3` : `${r.icono_url}?v=3`) : 'https://via.placeholder.com/60'} 
                 alt={r.nombre} 
                 style={{ width: '48px', height: '48px', borderRadius: '12px', objectFit: 'cover' }}
               />
