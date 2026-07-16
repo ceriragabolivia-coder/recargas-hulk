@@ -2372,7 +2372,7 @@ function RegionSelectionModal({ game, juegos, onClose, onSelect }) {
               <div>
                 <div style={{ fontWeight: 800, fontSize: '15px' }}>{r.nombre}</div>
                 <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  {r.id === game.id ? 'Región Principal / Global' : (r.caracteristicas_region || 'Variante regional')}
+                  {r.caracteristicas_region || (r.id === game.id ? 'Región Principal / Global' : 'Variante regional')}
                 </div>
               </div>
             </div>
