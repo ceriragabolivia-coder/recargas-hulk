@@ -78,8 +78,7 @@ export default function FloatingBackground() {
             opacity: el.opacity
           }}
         >
-          <img 
-            src={el.image} 
+          <img loading="lazy" decoding="async" src={el.image} 
             alt="" 
             style={{ 
               width: '100%', 

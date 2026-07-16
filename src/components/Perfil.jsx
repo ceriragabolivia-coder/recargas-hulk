@@ -409,7 +409,7 @@ export default function Perfil() {
             alignItems: 'center', justifyContent: 'center', fontSize: '32px'
           }}>
             {perfil?.avatar_url ? (
-              <img src={perfil.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img loading="lazy" decoding="async" src={perfil.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
               <span>{user?.email?.[0].toUpperCase()}</span>
             )}

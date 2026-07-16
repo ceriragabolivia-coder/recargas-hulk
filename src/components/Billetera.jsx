@@ -826,7 +826,7 @@ export default function Billetera({ onNavigate }) {
                         display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
                       }}>
                         {m.icono_url ? (
-                          <img src={getOptimizedImageUrl(m.icono_url, 150)} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                          <img loading="lazy" decoding="async" src={getOptimizedImageUrl(m.icono_url, 150)} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                         ) : (
                           <span style={{ fontSize: '18px' }}>
                             {m.nombre.toLowerCase().includes('zelle') ? '🟣' :
@@ -862,7 +862,7 @@ export default function Billetera({ onNavigate }) {
                         display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0
                       }}>
                         {selected.icono_url ? (
-                          <img src={getOptimizedImageUrl(selected.icono_url, 150)} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                          <img loading="lazy" decoding="async" src={getOptimizedImageUrl(selected.icono_url, 150)} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                         ) : (
                           <span style={{ fontSize: '16px' }}>💳</span>
                         )}
@@ -968,7 +968,7 @@ export default function Billetera({ onNavigate }) {
                   position: 'relative'
                 }}>
                   {comprobanteUrl ? (
-                    <img src={getOptimizedImageUrl(comprobanteUrl, 400)} alt="Comprobante" style={{ maxHeight: '100px', margin: '0 auto' }} />
+                    <img loading="lazy" decoding="async" src={getOptimizedImageUrl(comprobanteUrl, 400)} alt="Comprobante" style={{ maxHeight: '100px', margin: '0 auto' }} />
                   ) : (
                     <>
                       <div style={{ fontSize: '24px', marginBottom: '8px' }}>📤</div>
@@ -1037,8 +1037,7 @@ export default function Billetera({ onNavigate }) {
             >
               ×
             </button>
-            <img 
-              src={selectedComprobante} 
+            <img loading="lazy" decoding="async" src={selectedComprobante} 
               alt="Comprobante de pago" 
               style={{ 
                 maxWidth: '100%', maxHeight: '85vh', borderRadius: '12px', 

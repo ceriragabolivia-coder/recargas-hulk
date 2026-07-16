@@ -105,8 +105,7 @@ export default function AvatarEditor({ imageSrc, onSave, onCancel }) {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleMouseUp}
         >
-          <img 
-            ref={imageRef}
+          <img loading="lazy" decoding="async" ref={imageRef}
             src={imageSrc} 
             alt="To crop" 
             style={{

@@ -798,7 +798,7 @@ export default function GestionProductos() {
             onClick={() => document.getElementById('game-logo-upload').click()}
           >
             {selectedJuego.icono_url ? (
-              <img src={getOptimizedImageUrl(selectedJuego.icono_url, 200)} alt={selectedJuego.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img loading="lazy" decoding="async" src={getOptimizedImageUrl(selectedJuego.icono_url, 200)} alt={selectedJuego.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
               <span style={{ fontSize: 24, color: 'var(--text-muted)' }}>🎮</span>
             )}
@@ -988,7 +988,7 @@ export default function GestionProductos() {
                           onClick={() => document.getElementById(`prod-icon-${prod.id}`).click()}
                         >
                           {prod.icono_url ? (
-                            <img src={getOptimizedImageUrl(prod.icono_url, 150)} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                            <img loading="lazy" decoding="async" src={getOptimizedImageUrl(prod.icono_url, 150)} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                           ) : (
                             <span style={{ fontSize: 8, color: 'var(--text-muted)' }}>📦</span>
                           )}
@@ -1109,7 +1109,7 @@ export default function GestionProductos() {
               onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
             >
               {iconPreview ? (
-                <img src={iconPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                <img loading="lazy" decoding="async" src={iconPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               ) : (
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 24 }}>📥</div>
@@ -1243,9 +1243,9 @@ export default function GestionProductos() {
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                 <div style={{ width: 60, height: 60, borderRadius: 8, backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                   {newInfoFile ? (
-                    <img src={URL.createObjectURL(newInfoFile)} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img loading="lazy" decoding="async" src={URL.createObjectURL(newInfoFile)} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : formData.info_adicional_imagen_url ? (
-                    <img src={getOptimizedImageUrl(formData.info_adicional_imagen_url, 600)} alt="info" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img loading="lazy" decoding="async" src={getOptimizedImageUrl(formData.info_adicional_imagen_url, 600)} alt="info" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     <span style={{ fontSize: 24, opacity: 0.3 }}>🖼️</span>
                   )}
@@ -1489,7 +1489,7 @@ export default function GestionProductos() {
               }}
             >
               {formGame.icono_url ? (
-                <img src={getOptimizedImageUrl(formGame.icono_url, 200)} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img loading="lazy" decoding="async" src={getOptimizedImageUrl(formGame.icono_url, 200)} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 <div style={{ textAlign: 'center' }}>
                   <span style={{ fontSize: 32, display: 'block' }}>🎮</span>
@@ -1640,7 +1640,7 @@ export default function GestionProductos() {
                 alignItems: 'center', justifyContent: 'center'
               }}>
                 {formGame.guia_id_url ? (
-                  <img src={getOptimizedImageUrl(formGame.guia_id_url, 600)} alt="Guia" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img loading="lazy" decoding="async" src={getOptimizedImageUrl(formGame.guia_id_url, 600)} alt="Guia" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <span style={{ fontSize: 24, opacity: 0.3 }}>🖼️</span>
                 )}
@@ -1877,7 +1877,7 @@ export default function GestionProductos() {
                 alignItems: 'center', justifyContent: 'center'
               }}>
                 {formGame.tutorial_banner_img ? (
-                  <img src={getOptimizedImageUrl(formGame.tutorial_banner_img, 600)} alt="Banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img loading="lazy" decoding="async" src={getOptimizedImageUrl(formGame.tutorial_banner_img, 600)} alt="Banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <span style={{ fontSize: 18, opacity: 0.3 }}>🖼️</span>
                 )}

@@ -410,7 +410,7 @@ export default function LandingPerfil({ onClose }) {
           <div className="avatar-section-card">
             <div className="avatar-wrapper">
               {localAvatar ? (
-                <img src={getOptimizedImageUrl(localAvatar, 150)} alt="Avatar" className="avatar-img" />
+                <img loading="lazy" decoding="async" src={getOptimizedImageUrl(localAvatar, 150)} alt="Avatar" className="avatar-img" />
               ) : (
                 <div className="avatar-placeholder">{user?.email?.[0].toUpperCase()}</div>
               )}

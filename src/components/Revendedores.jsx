@@ -247,7 +247,7 @@ export default function Revendedores({ onNavigate }) {
                         <tr key={juego.id} style={{ backgroundColor: isEditing ? 'rgba(52, 152, 219, 0.05)' : 'transparent' }}>
                           <td>
                             <div style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: 'var(--bg-panel)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                              {juego.icono_url ? <img src={juego.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🎮'}
+                              {juego.icono_url ? <img loading="lazy" decoding="async" src={juego.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🎮'}
                             </div>
                           </td>
                           <td>

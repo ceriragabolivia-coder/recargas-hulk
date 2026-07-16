@@ -672,7 +672,7 @@ export default function Checkout({ onFinish, embedded = false }) {
             {!showTracking ? (
               <div className="fade-in">
                 <div style={{ marginBottom: '24px' }}>
-                  <img src="/assets/Verificando.PNG.png" alt="Verificación" style={{ width: '120px' }} />
+                  <img loading="lazy" decoding="async" src="/assets/Verificando.PNG.png" alt="Verificación" style={{ width: '120px' }} />
                 </div>
                 <h2 style={{ color: 'var(--accent-success)', fontWeight: 800 }}>¡Pedido Creado!</h2>
                 <p style={{ color: 'var(--text-muted)', marginBottom: '32px', whiteSpace: 'pre-line', fontSize: '15px' }}>
@@ -719,7 +719,7 @@ export default function Checkout({ onFinish, embedded = false }) {
             <div className="flex items-center landing-header-left">
               <div className="landing-logo-container" onClick={onFinish} style={{ cursor: 'pointer' }}>
                 {config?.landing_logo ? (
-                  <img src={config.landing_logo} alt="Logo" className="landing-logo-img" />
+                  <img loading="lazy" decoding="async" src={config.landing_logo} alt="Logo" className="landing-logo-img" />
                 ) : (
                   <>
                     <div className="landing-logo-icon">⚡</div>
@@ -750,7 +750,7 @@ export default function Checkout({ onFinish, embedded = false }) {
             <div className="flex items-center landing-header-left">
               <div className="landing-logo-container" onClick={onFinish} style={{ cursor: 'pointer' }}>
                 {config?.landing_logo ? (
-                  <img src={config.landing_logo} alt="Logo" className="landing-logo-img" />
+                  <img loading="lazy" decoding="async" src={config.landing_logo} alt="Logo" className="landing-logo-img" />
                 ) : (
                   <>
                     <div className="landing-logo-icon">⚡</div>
@@ -925,7 +925,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                 {cart.map(item => (
                   <div key={item.id} className="checkout-item" style={{ display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative', transition: 'all 0.3s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'}>
                     <div style={{ width: 56, height: 56, borderRadius: '12px', overflow: 'hidden', backgroundColor: '#1a1d2d', flexShrink: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
-                      {item.icono_url ? <img src={item.icono_url} alt="" style={{ width: '80%', height: '80%', objectFit: 'contain' }} /> : '📦'}
+                      {item.icono_url ? <img loading="lazy" decoding="async" src={item.icono_url} alt="" style={{ width: '80%', height: '80%', objectFit: 'contain' }} /> : '📦'}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 800, fontSize: '16px', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.nombre}</div>
@@ -1122,7 +1122,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', backgroundColor: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                               <div style={{ width: 56, height: 56, borderRadius: '14px', backgroundColor: '#fff', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 16px rgba(0,0,0,0.2)' }}>
-                                <img src={selectedMetodo?.icono_url || ''} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                <img loading="lazy" decoding="async" src={selectedMetodo?.icono_url || ''} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column' }}>
                                 <span style={{ fontSize: '18px', fontWeight: 900, color: '#fff' }}>{selectedMetodo?.nombre}</span>
@@ -1249,7 +1249,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                                 borderRadius: '24px', boxShadow: '0 8px 32px rgba(0,0,0,0.3)', marginBottom: '12px',
                                 border: '4px solid var(--bg-panel)'
                               }}>
-                                <img src={selectedMetodo.qr_url} alt="QR" style={{ width: '160px', height: '160px', objectFit: 'contain' }} />
+                                <img loading="lazy" decoding="async" src={selectedMetodo.qr_url} alt="QR" style={{ width: '160px', height: '160px', objectFit: 'contain' }} />
                               </div>
                               <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>Escanea para pagar</p>
                             </div>
@@ -1341,7 +1341,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                           {metodosDisponibles.map(m => (
                             <button key={m.id} onClick={() => handleSelectMetodo(m.id)} className={`payment-method-btn ${selectedMetodoId === m.id ? 'active' : ''}`} style={{ borderRadius: '16px', padding: '8px 4px' }}>
                               <div style={{ width: 48, height: 48, borderRadius: '12px', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 6px', padding: '6px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                                <img src={m.icono_url || ''} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                <img loading="lazy" decoding="async" src={m.icono_url || ''} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                               </div>
                               <span style={{ fontSize: '12px', fontWeight: 700, display: 'block' }}>{m.nombre}</span>
                             </button>

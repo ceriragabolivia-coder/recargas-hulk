@@ -71,7 +71,7 @@ export default function GestionProductosLootAdmin({ states, actions }) {
                 >
                   <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'rgba(255,255,255,0.05)', overflow: 'hidden', flexShrink: 0 }}>
                     {juego.icono_url ? (
-                      <img src={juego.icono_url} alt="Icono" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img loading="lazy" decoding="async" src={juego.icono_url} alt="Icono" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>🎮</div>
                     )}
@@ -129,7 +129,7 @@ export default function GestionProductosLootAdmin({ states, actions }) {
                           <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                               {prod.icono_url ? (
-                                <img src={prod.icono_url} className="loot-product-icon" alt="Prod" />
+                                <img loading="lazy" decoding="async" src={prod.icono_url} className="loot-product-icon" alt="Prod" />
                               ) : (
                                 <div className="loot-product-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📦</div>
                               )}

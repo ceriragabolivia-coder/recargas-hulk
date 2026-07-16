@@ -47,7 +47,7 @@ export default function LayoutLootAdmin({ children, currentPage, onNavigate }) {
       <aside className="loot-sidebar">
         <div className="loot-logo-container">
           {config?.sidebar_logo_url ? (
-            <img src={config.sidebar_logo_url} alt="Logo" className="loot-logo-img" />
+            <img loading="lazy" decoding="async" src={config.sidebar_logo_url} alt="Logo" className="loot-logo-img" />
           ) : (
             <div className="loot-logo-img" style={{ background: 'var(--loot-primary)' }}></div>
           )}

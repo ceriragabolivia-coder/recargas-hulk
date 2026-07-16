@@ -117,10 +117,10 @@ export default function SystemPopup() {
           <div style={{ width: '100%' }}>
             {activePopup.link_url ? (
               <a href={activePopup.link_url} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
-                <img src={activePopup.imagen_url} alt="" style={{ width: '100%', height: 'auto', display: 'block' }} />
+                <img loading="lazy" decoding="async" src={activePopup.imagen_url} alt="" style={{ width: '100%', height: 'auto', display: 'block' }} />
               </a>
             ) : (
-              <img src={activePopup.imagen_url} alt="" style={{ width: '100%', height: 'auto', display: 'block' }} />
+              <img loading="lazy" decoding="async" src={activePopup.imagen_url} alt="" style={{ width: '100%', height: 'auto', display: 'block' }} />
             )}
           </div>
         )}

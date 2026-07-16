@@ -432,7 +432,7 @@ export default function GestionLanding() {
           <div className="form-group full-width">
             <label className="form-label">Logo de la Landing Page</label>
             <div className="flex gap-8" style={{ alignItems: 'center' }}>
-              {form.landing_logo && <img src={form.landing_logo} alt="Logo" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'contain', background: '#000' }} />}
+              {form.landing_logo && <img loading="lazy" decoding="async" src={form.landing_logo} alt="Logo" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'contain', background: '#000' }} />}
               <input 
                 type="text" 
                 className="form-input"
@@ -521,7 +521,7 @@ export default function GestionLanding() {
                       </div>
                       {banner.image && (
                         <div style={{ marginTop: '12px', borderRadius: '8px', overflow: 'hidden', height: '140px', width: '100%', border: '1px solid var(--border)', backgroundColor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <img src={banner.image} alt={`Vista previa banner ${index + 1}`} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                          <img loading="lazy" decoding="async" src={banner.image} alt={`Vista previa banner ${index + 1}`} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                         </div>
                       )}
                     </div>
@@ -571,14 +571,14 @@ export default function GestionLanding() {
                         <tr key={j.id}>
                           <td>
                             <div className="flex items-center gap-8">
-                              <img src={j.icono_url} alt="" style={{ width: '32px', height: '32px', borderRadius: '6px' }} />
+                              <img loading="lazy" decoding="async" src={j.icono_url} alt="" style={{ width: '32px', height: '32px', borderRadius: '6px' }} />
                               {j.nombre}
                             </div>
                           </td>
                           <td>
                             {j.banner_url ? (
                               <div style={{ width: '120px', height: '40px', borderRadius: '4px', overflow: 'hidden', background: '#000' }}>
-                                <img src={j.banner_url} alt="Banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <img loading="lazy" decoding="async" src={j.banner_url} alt="Banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                               </div>
                             ) : (
                               <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Sin banner asignado</span>
@@ -632,7 +632,7 @@ export default function GestionLanding() {
                 <label className="form-label">Ícono o Logo (Emoji o Imagen URL)</label>
                 <div className="flex gap-8" style={{ alignItems: 'center' }}>
                   {form.landing_auth_icon && form.landing_auth_icon.startsWith('http') ? (
-                    <img src={form.landing_auth_icon} alt="Auth Icon" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'contain' }} />
+                    <img loading="lazy" decoding="async" src={form.landing_auth_icon} alt="Auth Icon" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'contain' }} />
                   ) : (
                     <span style={{ fontSize: '24px' }}>{form.landing_auth_icon || '⚡'}</span>
                   )}
@@ -1086,7 +1086,7 @@ export default function GestionLanding() {
                   <div style={{ color: 'var(--text-muted)', cursor: 'grab', fontSize: '20px' }}>
                     ☰
                   </div>
-                  <img src={j.icono_url} alt="" style={{ width: '40px', height: '40px', borderRadius: '10px' }} />
+                  <img loading="lazy" decoding="async" src={j.icono_url} alt="" style={{ width: '40px', height: '40px', borderRadius: '10px' }} />
                   <div style={{ flex: 1 }}>
                     <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '600' }}>{j.nombre}</h4>
                     {!isVisible && <span style={{ fontSize: '12px', color: '#ff4d4f' }}>Oculto en Landing</span>}
@@ -1162,7 +1162,7 @@ export default function GestionLanding() {
                   <tr key={j.id}>
                     <td>
                       <div className="flex items-center gap-8">
-                        <img src={j.icono_url} alt="" style={{ width: '32px', height: '32px', borderRadius: '8px' }} />
+                        <img loading="lazy" decoding="async" src={j.icono_url} alt="" style={{ width: '32px', height: '32px', borderRadius: '8px' }} />
                         {j.nombre}
                       </div>
                     </td>

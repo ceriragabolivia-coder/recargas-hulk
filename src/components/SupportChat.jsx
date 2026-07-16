@@ -918,7 +918,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                               {m.archivo_url && (
                                 <div className="message-media" style={{ marginBottom: '8px' }}>
                                   {m.tipo_archivo === 'imagen' && (
-                                    <img src={getOptimizedImageUrl(m.archivo_url, 400)} alt="Adjunto" style={{ width: '100%', borderRadius: '8px', display: 'block', cursor: 'pointer' }} onClick={() => window.open(m.archivo_url, '_blank')} />
+                                    <img loading="lazy" decoding="async" src={getOptimizedImageUrl(m.archivo_url, 400)} alt="Adjunto" style={{ width: '100%', borderRadius: '8px', display: 'block', cursor: 'pointer' }} onClick={() => window.open(m.archivo_url, '_blank')} />
                                   )}
                                   {m.tipo_archivo === 'video' && (
                                     <video src={m.archivo_url} controls style={{ width: '100%', borderRadius: '8px', display: 'block' }} />
@@ -1092,7 +1092,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                   <div style={{ padding: '8px 12px', background: 'var(--bg-card)', borderTop: '1px solid var(--border-color)', display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <div style={{ position: 'relative' }}>
                       {pendingFile?.type.startsWith('image/') ? (
-                        <img src={filePreview} style={{ height: '40px', borderRadius: '4px' }} alt="Preview" />
+                        <img loading="lazy" decoding="async" src={filePreview} style={{ height: '40px', borderRadius: '4px' }} alt="Preview" />
                       ) : (
                         <div style={{ height: '40px', width: '40px', background: 'var(--bg-panel)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🎥</div>
                       )}

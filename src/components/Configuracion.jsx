@@ -674,7 +674,7 @@ export default function Configuracion() {
                              justifyContent: 'center', overflow: 'hidden', flexShrink: 0
                            }}>
                               {currentMetodo.icono_url ? (
-                                <img src={currentMetodo.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                <img loading="lazy" decoding="async" src={currentMetodo.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                               ) : (
                                 <span style={{ fontSize: '20px' }}>🖼️</span>
                               )}
@@ -696,7 +696,7 @@ export default function Configuracion() {
                              justifyContent: 'center', overflow: 'hidden', flexShrink: 0
                            }}>
                               {currentMetodo.qr_url ? (
-                                <img src={currentMetodo.qr_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                <img loading="lazy" decoding="async" src={currentMetodo.qr_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                               ) : (
                                 <span style={{ fontSize: '20px' }}>🔳</span>
                               )}
@@ -765,7 +765,7 @@ export default function Configuracion() {
                               display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
                             }}>
                               {m.icono_url ? (
-                                <img src={m.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                <img loading="lazy" decoding="async" src={m.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                               ) : (
                                 <span style={{ fontSize: '20px' }}>
                                   {m.nombre.toLowerCase().includes('zelle') ? '🟣' : 
@@ -898,7 +898,7 @@ export default function Configuracion() {
                          alignItems: 'center', justifyContent: 'center' 
                        }}>
                          {config?.favicon_url ? (
-                           <img src={config.favicon_url} alt="Favicon" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                           <img loading="lazy" decoding="async" src={config.favicon_url} alt="Favicon" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                          ) : (
                            <span style={{ fontSize: '32px', opacity: 0.3 }}>⚙️</span>
                          )}
@@ -944,7 +944,7 @@ export default function Configuracion() {
                              alignItems: 'center', justifyContent: 'center' 
                            }}>
                              {config?.sidebar_logo_url ? (
-                               <img src={config.sidebar_logo_url} alt="Logo Sidebar" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                               <img loading="lazy" decoding="async" src={config.sidebar_logo_url} alt="Logo Sidebar" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                              ) : (
                                <span style={{ fontSize: '28px' }}>⚡</span>
                              )}
@@ -1010,7 +1010,7 @@ export default function Configuracion() {
                          alignItems: 'center', justifyContent: 'center' 
                        }}>
                          {bgGlobalUrl ? (
-                           <img src={bgGlobalUrl} alt="Fondo Global" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                           <img loading="lazy" decoding="async" src={bgGlobalUrl} alt="Fondo Global" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                          ) : (
                            <span style={{ fontSize: '28px' }}>🖼️</span>
                          )}
@@ -1217,7 +1217,7 @@ export default function Configuracion() {
                             cursor: uploadingImage ? 'not-allowed' : 'pointer', overflow: 'hidden', position: 'relative'
                           }} title="Haz clic para cambiar el icono">
                             {iconUrl ? (
-                              <img src={iconUrl} alt="Icon" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                              <img loading="lazy" decoding="async" src={iconUrl} alt="Icon" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                             ) : (
                               item.icon
                             )}
@@ -1317,7 +1317,7 @@ export default function Configuracion() {
                           justifyContent: 'center', overflow: 'hidden'
                         }}>
                           {currentMensaje.imagen_url ? (
-                            <img src={currentMensaje.imagen_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <img loading="lazy" decoding="async" src={currentMensaje.imagen_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           ) : (
                             <span style={{ fontSize: '24px' }}>🖼️</span>
                           )}
@@ -1443,7 +1443,7 @@ export default function Configuracion() {
                         }}>
                           <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                             <div style={{ width: 48, height: 32, borderRadius: 4, backgroundColor: '#000', overflow: 'hidden' }}>
-                              {m.imagen_url && <img src={m.imagen_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                              {m.imagen_url && <img loading="lazy" decoding="async" src={m.imagen_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                             </div>
                             <div>
                               <div style={{ fontWeight: 'bold' }}>{m.titulo}</div>
@@ -1739,7 +1739,7 @@ Ganador 2: María Pérez"
                         justifyContent: 'center', overflow: 'hidden', marginBottom: '16px'
                       }}>
                         {formNoti.imagen_url ? (
-                          <img src={formNoti.imagen_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img loading="lazy" decoding="async" src={formNoti.imagen_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
                           <span style={{ fontSize: '32px' }}>🖼️</span>
                         )}
@@ -1922,7 +1922,7 @@ Ganador 2: María Pérez"
                       justifyContent: 'center', overflow: 'hidden', position: 'relative'
                     }}>
                       {horarioFlyerUrl ? (
-                        <img src={horarioFlyerUrl} alt="Flyer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img loading="lazy" decoding="async" src={horarioFlyerUrl} alt="Flyer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
                         <div style={{ textAlign: 'center', padding: '20px' }}>
                           <span style={{ fontSize: '40px', display: 'block', marginBottom: '8px' }}>🖼️</span>
@@ -2072,7 +2072,7 @@ Ganador 2: María Pérez"
                             backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px'
                           }}>
-                            <img src={img} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                            <img loading="lazy" decoding="async" src={img} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                             <button 
                               onClick={() => handleRemoveFloatingImage(img)}
                               style={{ 
@@ -2345,7 +2345,7 @@ Ganador 2: María Pérez"
                                   {selected && '✓'}
                                 </div>
                                 {j.icono_url ? (
-                                  <img src={j.icono_url} alt="" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover', flexShrink: 0 }} />
+                                  <img loading="lazy" decoding="async" src={j.icono_url} alt="" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover', flexShrink: 0 }} />
                                 ) : (
                                   <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'linear-gradient(135deg,#7b2ff7,#00d2ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>🎮</div>
                                 )}

@@ -990,7 +990,7 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
                         {m.archivo_url && (
                           <div className="message-media">
                             {m.tipo_archivo === 'imagen' && (
-                              <img src={getOptimizedImageUrl(m.archivo_url, 400)} alt="Adjunto" className="message-image" onClick={() => window.open(m.archivo_url, '_blank')} />
+                              <img loading="lazy" decoding="async" src={getOptimizedImageUrl(m.archivo_url, 400)} alt="Adjunto" className="message-image" onClick={() => window.open(m.archivo_url, '_blank')} />
                             )}
                             {m.tipo_archivo === 'video' && (
                               <video src={m.archivo_url} controls className="message-video" />
@@ -1035,7 +1035,7 @@ export default function SalaDeChat({ perfil, params, onNavigate }) {
                 <div className="media-preview-container">
                   <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {pendingFile?.type.startsWith('image/') ? (
-                      <img src={filePreview} alt="Preview" style={{ height: '40px', borderRadius: '4px' }} />
+                      <img loading="lazy" decoding="async" src={filePreview} alt="Preview" style={{ height: '40px', borderRadius: '4px' }} />
                     ) : (
                       <span className="text-xl">🎥</span>
                     )}

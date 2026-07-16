@@ -433,7 +433,7 @@ export default function LandingWallet({ onClose }) {
                       className={`method-item ${metodoId === m.id ? 'active' : ''}`}
                       onClick={() => setMetodoId(m.id)}
                     >
-                      <img src={getOptimizedImageUrl(m.icono_url, 150) || 'https://via.placeholder.com/40'} alt="" />
+                      <img loading="lazy" decoding="async" src={getOptimizedImageUrl(m.icono_url, 150) || 'https://via.placeholder.com/40'} alt="" />
                       <span>{m.nombre}</span>
                     </div>
                   ))}
@@ -478,7 +478,7 @@ export default function LandingWallet({ onClose }) {
                 <label>Comprobante (Opcional)</label>
                 <div className="upload-box">
                   {comprobanteUrl ? (
-                    <img src={getOptimizedImageUrl(comprobanteUrl, 400)} alt="Comprobante" className="preview-img" />
+                    <img loading="lazy" decoding="async" src={getOptimizedImageUrl(comprobanteUrl, 400)} alt="Comprobante" className="preview-img" />
                   ) : (
                     <div className="upload-placeholder">
                       <span>📤</span>

@@ -2060,8 +2060,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                   <div style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-color)', cursor: 'pointer' }}
                     onClick={() => window.open(selectedPedido.comprobante_url, '_blank')}
                   >
-                    <img
-                      src={getOptimizedImageUrl(selectedPedido.comprobante_url, 600)}
+                    <img loading="lazy" decoding="async" src={getOptimizedImageUrl(selectedPedido.comprobante_url, 600)}
                       alt="Comprobante"
                       style={{ width: '100%', maxHeight: '200px', objectFit: 'contain', backgroundColor: 'var(--bg-panel)', display: 'block' }}
                     />
@@ -2176,8 +2175,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                           style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-color)', cursor: 'pointer', backgroundColor: 'rgba(0,0,0,0.2)' }}
                           onClick={() => window.open(url, '_blank')}
                         >
-                          <img 
-                            src={getOptimizedImageUrl(url, 400)} 
+                          <img loading="lazy" decoding="async" src={getOptimizedImageUrl(url, 400)} 
                             alt={`Entrega ${idx + 1}`} 
                             style={{ width: '100%', height: '90px', objectFit: 'cover', display: 'block', transition: 'transform 0.3s' }} 
                             onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
@@ -2282,8 +2280,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                         if (!iconUrl) return null;
 
                         return (
-                          <img 
-                            src={getOptimizedImageUrl(iconUrl, 150)} 
+                          <img loading="lazy" decoding="async" src={getOptimizedImageUrl(iconUrl, 150)} 
                             alt="Icono" 
                             style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--border-color)' }}
                             onError={(e) => { e.currentTarget.style.display = 'none'; }}
@@ -2552,7 +2549,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                       }}
                     >
                       {item.productos.juegos.tutorial_banner_img ? (
-                        <img src={item.productos.juegos.tutorial_banner_img} alt="Tutorial" style={{ width: '100%', display: 'block' }} />
+                        <img loading="lazy" decoding="async" src={item.productos.juegos.tutorial_banner_img} alt="Tutorial" style={{ width: '100%', display: 'block' }} />
                       ) : (
                         <div style={{ padding: '16px', display: 'flex', gap: '16px', alignItems: 'center', background: 'var(--accent-light)' }}>
                           <div style={{ 

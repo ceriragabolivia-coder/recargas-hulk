@@ -67,7 +67,7 @@ export default function Cart({ onGoToCheckout }) {
                   backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)' 
                 }}>
                   <div style={{ width: 40, height: 40, borderRadius: 8, overflow: 'hidden', backgroundColor: 'var(--bg-card)', flexShrink: 0 }}>
-                    {item.icono_url ? <img src={item.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : '📦'}
+                    {item.icono_url ? <img loading="lazy" decoding="async" src={item.icono_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : '📦'}
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 'bold', fontSize: '14px' }}>{item.nombre}</div>

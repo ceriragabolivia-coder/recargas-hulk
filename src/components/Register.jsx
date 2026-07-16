@@ -172,8 +172,7 @@ export default function Register({ onBackToLogin }) {
                 style={{ display: 'flex', alignItems: 'center', padding: '0 0 0 12px' }}
               >
                 <span style={{ display: 'flex', alignItems: 'center', marginRight: '8px' }}>
-                  <img 
-                    src="/assets/venezuela_flag.png" 
+                  <img loading="lazy" decoding="async" src="/assets/venezuela_flag.png" 
                     alt="Venezuela Flag" 
                     style={{ width: '22px', height: 'auto', display: 'block', pointerEvents: 'none' }} 
                   />

@@ -191,7 +191,7 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
         <div className="landing-auth-container">
           <div className="landing-auth-header">
             {authIcon.startsWith('http') ? (
-              <img src={authIcon} alt="Logo" style={{ height: logoSize, objectFit: 'contain', marginBottom: '16px', display: 'inline-block' }} />
+              <img loading="lazy" decoding="async" src={authIcon} alt="Logo" style={{ height: logoSize, objectFit: 'contain', marginBottom: '16px', display: 'inline-block' }} />
             ) : (
               <div className="landing-auth-logo" style={{ fontSize: logoSize }}>{authIcon}</div>
             )}
@@ -324,8 +324,7 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
                 <label>Teléfono (WhatsApp)</label>
                 <div className="phone-input-container">
                   <span className="phone-prefix" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 12px' }}>
-                    <img 
-                      src="/assets/venezuela_flag.png" 
+                    <img loading="lazy" decoding="async" src="/assets/venezuela_flag.png" 
                       alt="Venezuela Flag" 
                       style={{ width: '22px', height: 'auto', display: 'block', pointerEvents: 'none' }} 
                     />

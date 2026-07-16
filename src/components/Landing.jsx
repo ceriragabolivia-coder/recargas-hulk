@@ -789,7 +789,7 @@ export default function Landing({ onNavigate }) {
           <div className="flex items-center landing-header-left">
             <div className="landing-logo-container" onClick={() => { handleSelectJuego(null); navigate('/'); }}>
               {config?.landing_logo ? (
-                <img src={config.landing_logo} alt="Logo" className="landing-logo-img" />
+                <img loading="lazy" decoding="async" src={config.landing_logo} alt="Logo" className="landing-logo-img" />
               ) : (
                 <>
                   <div className="landing-logo-icon">⚡</div>
@@ -920,7 +920,7 @@ export default function Landing({ onNavigate }) {
                             setSearch('');
                           }}
                         >
-                          <img src={juego.icono_url ? (juego.icono_url.includes('?') ? `${juego.icono_url}&v=3` : `${juego.icono_url}?v=3`) : 'https://via.placeholder.com/40'} alt={juego.nombre} />
+                          <img loading="lazy" decoding="async" src={juego.icono_url ? (juego.icono_url.includes('?') ? `${juego.icono_url}&v=3` : `${juego.icono_url}?v=3`) : 'https://via.placeholder.com/40'} alt={juego.nombre} />
                           <div className="result-info">
                             <div className="result-name">{juego.nombre}</div>
                             <div className="result-cat">{juego.categoria}</div>
@@ -1160,8 +1160,7 @@ export default function Landing({ onNavigate }) {
                 <div className="assax-header-card">
                   {/* FILA SUPERIOR: Imagen + Info del juego + Wizard de pasos en la misma línea */}
                   <div className="assax-header-left">
-                    <img 
-                      src={selectedJuego.icono_url ? (selectedJuego.icono_url.includes('?') ? `${selectedJuego.icono_url}&v=3` : `${selectedJuego.icono_url}?v=3`) : 'https://via.placeholder.com/120'} 
+                    <img loading="lazy" decoding="async" src={selectedJuego.icono_url ? (selectedJuego.icono_url.includes('?') ? `${selectedJuego.icono_url}&v=3` : `${selectedJuego.icono_url}?v=3`) : 'https://via.placeholder.com/120'} 
                       alt={selectedJuego.nombre} 
                       className="assax-header-icon" 
                     />
@@ -1598,7 +1597,7 @@ export default function Landing({ onNavigate }) {
                                   {/* Icon container */}
                                   <div className="assax-product-icon-box">
                                     {prod.icono_url ? (
-                                      <img src={prod.icono_url.includes('?') ? `${prod.icono_url}&v=3` : `${prod.icono_url}?v=3`} alt="" />
+                                      <img loading="lazy" decoding="async" src={prod.icono_url.includes('?') ? `${prod.icono_url}&v=3` : `${prod.icono_url}?v=3`} alt="" />
                                     ) : (
                                       <span>💎</span>
                                     )}
@@ -1682,8 +1681,7 @@ export default function Landing({ onNavigate }) {
                   <div className="assax-summary-inner">
                     {/* Game selection thumbnail */}
                     <div className="assax-summary-game">
-                      <img 
-                        src={selectedJuego.icono_url ? (selectedJuego.icono_url.includes('?') ? `${selectedJuego.icono_url}&v=3` : `${selectedJuego.icono_url}?v=3`) : 'https://via.placeholder.com/60'} 
+                      <img loading="lazy" decoding="async" src={selectedJuego.icono_url ? (selectedJuego.icono_url.includes('?') ? `${selectedJuego.icono_url}&v=3` : `${selectedJuego.icono_url}?v=3`) : 'https://via.placeholder.com/60'} 
                         alt={selectedJuego.nombre} 
                       />
                       <div className="game-details">
@@ -1776,7 +1774,7 @@ export default function Landing({ onNavigate }) {
                     }}
                   >
                     {selectedJuego.tutorial_banner_img ? (
-                      <img src={selectedJuego.tutorial_banner_img} alt="Tutorial" style={{ width: '100%', display: 'block' }} />
+                      <img loading="lazy" decoding="async" src={selectedJuego.tutorial_banner_img} alt="Tutorial" style={{ width: '100%', display: 'block' }} />
                     ) : (
                       <div style={{ padding: '16px', display: 'flex', gap: '16px', alignItems: 'center', background: 'var(--accent-light)' }}>
                         <div style={{ 
@@ -2059,7 +2057,7 @@ export default function Landing({ onNavigate }) {
                     onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                   >
                     {j.icono_url ? (
-                      <img src={j.icono_url ? (j.icono_url.includes('?') ? `${j.icono_url}&v=3` : `${j.icono_url}?v=3`) : ''} alt={j.nombre} style={{ width: '48px', height: '48px', borderRadius: '12px', objectFit: 'cover' }} />
+                      <img loading="lazy" decoding="async" src={j.icono_url ? (j.icono_url.includes('?') ? `${j.icono_url}&v=3` : `${j.icono_url}?v=3`) : ''} alt={j.nombre} style={{ width: '48px', height: '48px', borderRadius: '12px', objectFit: 'cover' }} />
                     ) : (
                       <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'linear-gradient(135deg, var(--accent), #00d2ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>🎮</div>
                     )}
@@ -2192,8 +2190,7 @@ export default function Landing({ onNavigate }) {
           }}
           onClick={() => setExpandedImage(null)}
         >
-          <img 
-            src={expandedImage} 
+          <img loading="lazy" decoding="async" src={expandedImage} 
             alt="Expanded Preview" 
             style={{
               maxWidth: '100%', maxHeight: '95vh',
@@ -2368,8 +2365,7 @@ function RegionSelectionModal({ game, juegos, onClose, onSelect }) {
               onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.borderColor = 'var(--accent)'; }}
               onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-card)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'; }}
             >
-              <img 
-                src={r.icono_url ? (r.icono_url.includes('?') ? `${r.icono_url}&v=3` : `${r.icono_url}?v=3`) : 'https://via.placeholder.com/60'} 
+              <img loading="lazy" decoding="async" src={r.icono_url ? (r.icono_url.includes('?') ? `${r.icono_url}&v=3` : `${r.icono_url}?v=3`) : 'https://via.placeholder.com/60'} 
                 alt={r.nombre} 
                 style={{ width: '48px', height: '48px', borderRadius: '12px', objectFit: 'cover' }}
               />
