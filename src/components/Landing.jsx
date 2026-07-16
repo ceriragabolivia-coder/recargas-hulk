@@ -599,10 +599,11 @@ export default function Landing({ onNavigate }) {
     };
   }, [searchParams.get('juego'), selectedJuego?.id, showCheckout, showOrders, showRuleta, showWallet, showProfile]);
 
-  const handleGameSelect = (juego) => {
+  const handleGameSelect = async (juego) => {
     const children = juegos.filter(j => j.parent_id === juego.id);
     if (children.length > 0) {
-      setShowRegionModalForGame(juego);
+      const { count } = await supabase.from('paquetes').select('*', { count: 'exact', head: true }).eq('juego_id', juego.id);
+      setShowRegionModalForGame({ ...juego, _hasPaquetes: count > 0 });
     } else {
       handleSelectJuego(juego);
     }
@@ -2320,7 +2321,10 @@ function GameCard({ juego, onSelect, hasRegions }) {
 }
 
 function RegionSelectionModal({ game, juegos, onClose, onSelect }) {
-  const regions = [game, ...juegos.filter(j => j.parent_id === game.id)];
+  const regions = [
+    ...(game._hasPaquetes ? [game] : []),
+    ...juegos.filter(j => j.parent_id === game.id)
+  ];
   
   return (
     <div style={{
