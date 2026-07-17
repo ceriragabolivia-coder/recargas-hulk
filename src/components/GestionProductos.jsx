@@ -837,6 +837,48 @@ export default function GestionProductos() {
             />
             Auto-PNG (Quitar Fondo)
           </label>
+          {/* Toggle: Cashback Activo */}
+          <label
+            title="Cuando está activado, los productos de este juego/servicio ofrecerán cashback a los clientes si la función global está activada."
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer',
+              padding: '5px 10px', borderRadius: '20px',
+              border: (selectedJuego.cashback_activo !== false)
+                ? '1px solid rgba(255,215,0,0.5)'
+                : '1px solid rgba(255,255,255,0.1)',
+              backgroundColor: (selectedJuego.cashback_activo !== false)
+                ? 'rgba(255,215,0,0.1)'
+                : 'rgba(255,255,255,0.03)',
+              transition: 'all 0.2s'
+            }}
+          >
+            <div
+              onClick={() => handleToggleCashback(selectedJuego.cashback_activo === false ? true : false)}
+              style={{
+                width: 36, height: 20, borderRadius: 10, position: 'relative',
+                backgroundColor: (selectedJuego.cashback_activo !== false) ? '#FFD700' : 'rgba(255,255,255,0.15)',
+                transition: 'background-color 0.2s', cursor: 'pointer', flexShrink: 0
+              }}
+            >
+              <div style={{
+                position: 'absolute', top: 2,
+                left: (selectedJuego.cashback_activo !== false) ? 18 : 2,
+                width: 16, height: 16, borderRadius: '50%',
+                backgroundColor: 'black',
+                transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+              }} />
+            </div>
+            <span style={{
+              fontSize: '11px',
+              color: (selectedJuego.cashback_activo !== false) ? '#FFD700' : 'var(--text-muted)',
+              fontWeight: (selectedJuego.cashback_activo !== false) ? 700 : 400,
+              transition: 'color 0.2s',
+              whiteSpace: 'nowrap'
+            }}>
+              💰 Cashback
+            </span>
+          </label>
+
           {/* Toggle: Procesamiento automático con API */}
           <label
             title="Cuando está activado, los pedidos de este juego/servicio se procesan automáticamente con la API del proveedor al verificarse el pago por el sistema APK, sin intervención del admin."

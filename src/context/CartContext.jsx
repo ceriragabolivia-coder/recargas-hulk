@@ -102,7 +102,7 @@ export function CartProvider({ children }) {
     }
   };
 
-  const checkout = async (registrarVenta, clienteId, metodoPagoId, referencia, whatsapp, ruletaDesc, existingPedidoId, comprobanteUrl, shouldUpdate, activeCupon) => {
+  const checkout = async (registrarVenta, clienteId, metodoPagoId, referencia, whatsapp, ruletaDesc, existingPedidoId, comprobanteUrl, shouldUpdate, activeCupon, expectedPagoMovilMonto = null) => {
     if (!user || cart.length === 0) return [{ id: 'pedido', error: 'Carrito vacío o sesión no iniciada' }]
 
     if (perfil && ['baneado', 'suspendido', 'rechazado'].includes(perfil.estado?.toLowerCase())) {
@@ -150,7 +150,8 @@ export function CartProvider({ children }) {
             .eq('status', 'disponible')
             .single();
 
-          if (apkPago && Math.abs(parseFloat(apkPago.monto) - parseFloat(finalBs)) <= 0.05) {
+          const amountToCheck = expectedPagoMovilMonto !== null ? expectedPagoMovilMonto : finalBs;
+          if (apkPago && Math.abs(parseFloat(apkPago.monto) - parseFloat(amountToCheck)) <= 0.05) {
             pagoVerificadoApk = true;
             apkPagoId = apkPago.id;
           }

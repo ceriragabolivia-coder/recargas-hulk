@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useWallet } from '../context/WalletContext'
 import { processTiendaGiftVenOrder } from '../utils/apiProcessor'
+import { applyClientCashback } from '../utils/cashbackUtils'
 
 // Re-exportar todo para mantener compatibilidad con el resto de la app
 export { useAuth, AuthProvider } from '../context/AuthContext'
@@ -313,7 +314,9 @@ export function useVentas() {
               });
               const baulSuccess = (rpcData?.success && rpcData?.completado) || false;
               
-              if (!baulSuccess) {
+              if (baulSuccess) {
+                 await applyClientCashback(pedidoId, perfil?.id || cliente_id);
+              } else {
                 // Si no se procesó por el baúl, intentamos con la API
                 await processTiendaGiftVenOrder(pedidoId, null, false).catch(() => false);
               }
@@ -369,7 +372,9 @@ export function useVentas() {
             });
             const baulSuccess = (rpcData?.success && rpcData?.completado) || false;
             
-            if (!baulSuccess) {
+            if (baulSuccess) {
+               await applyClientCashback(data.pedido_id, perfil?.id);
+            } else {
               // Si no se procesó por el baúl, intentamos con la API
               await processTiendaGiftVenOrder(data.pedido_id, null, false).catch(() => false);
             }

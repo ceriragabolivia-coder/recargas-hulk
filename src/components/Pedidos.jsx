@@ -505,7 +505,20 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
       }
 
       // 3. Sistema de Cash Back
-      if (config?.cashback_activo === 'true' && Number(config?.cashback_porcentaje) > 0 && !pedidoActual.cashback_aplicado) {
+      let gameAllowsCashback = true;
+      if (pedidoActual.pedido_items && pedidoActual.pedido_items.length > 0) {
+        try {
+          const prodId = pedidoActual.pedido_items[0].producto_id;
+          if (prodId) {
+            const { data: prodData } = await supabase.from('productos').select('juego_id, juegos(cashback_activo)').eq('id', prodId).maybeSingle();
+            if (prodData?.juegos?.cashback_activo === false) {
+              gameAllowsCashback = false;
+            }
+          }
+        } catch(err){}
+      }
+
+      if (config?.cashback_activo === 'true' && Number(config?.cashback_porcentaje) > 0 && !pedidoActual.cashback_aplicado && gameAllowsCashback) {
         try {
           const p = Number(config.cashback_porcentaje)
           if (p > 0) {

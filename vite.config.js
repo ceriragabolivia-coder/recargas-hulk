@@ -16,6 +16,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/proxy\/bloodstrike/, ''),
+      },
+      '/proxy/binance-p2p': {
+        target: 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/proxy\/binance-p2p/, ''),
       }
     }
   }

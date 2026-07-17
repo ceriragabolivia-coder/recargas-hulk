@@ -288,6 +288,85 @@ function CartWidget() {
   )
 }
 
+function BinanceRateWidget() {
+  const [avgRate, setAvgRate] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  const fetchRate = async () => {
+    try {
+      setLoading(true)
+      const res = await fetch('/proxy/binance-p2p', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          page: 1,
+          rows: 10,
+          payTypes: ['PagoMovil'],
+          asset: 'USDT',
+          tradeType: 'BUY',
+          fiat: 'VES',
+          publisherType: 'merchant'
+        })
+      })
+      if (!res.ok) throw new Error('Error al consultar Binance')
+      const data = await res.json()
+      if (data && data.data && data.data.length > 0) {
+        // Ignoramos el primero (index 0), tomamos los siguientes 5 (index 1 al 5) para un total de 6 anuncios iniciales
+        const validAds = data.data.slice(1, 6)
+        if (validAds.length > 0) {
+          const prices = validAds.map(ad => parseFloat(ad.adv.price))
+          const avg = prices.reduce((a, b) => a + b, 0) / prices.length
+          setAvgRate(avg.toFixed(2))
+          setError(null)
+        } else {
+          throw new Error('Sin anuncios')
+        }
+      } else {
+        throw new Error('Sin datos')
+      }
+    } catch (err) {
+      console.error("Error fetching Binance P2P rate:", err)
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchRate()
+    // Actualizar cada 25 minutos
+    const interval = setInterval(fetchRate, 25 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div 
+      className="desktop-only"
+      style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center',
+        padding: '4px 12px', borderRadius: '12px',
+        backgroundColor: 'rgba(243, 186, 47, 0.08)',
+        border: '1px solid rgba(243, 186, 47, 0.2)',
+        color: '#F3BA2F',
+        minWidth: '95px'
+      }}
+      title="Promedio USDT/VES en Binance P2P (Pago Móvil, excluyendo el 1er anuncio)"
+    >
+      <span style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>USDT PROMEDIO</span>
+      {loading && !avgRate ? (
+        <span style={{ fontSize: '14px', fontWeight: 700 }}>...</span>
+      ) : error && !avgRate ? (
+        <span style={{ fontSize: '13px', fontWeight: 700, color: '#ef4444' }}>Error</span>
+      ) : (
+        <span style={{ fontSize: '15px', fontWeight: 800 }}>Bs {avgRate}</span>
+      )}
+    </div>
+  )
+}
+
 function LiveClock() {
   const [time, setTime] = useState(new Date())
 
@@ -1169,6 +1248,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
             )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+            {isAdmin && <BinanceRateWidget />}
             <div className="desktop-only"><LiveClock /></div>
             {isAdmin && <NotificationBar key="notif-bar" counts={counts} onNavigate={handleMobileNavigate} config={config} onlineUsers={onlineUsers} isEmpleado={isEmpleado} />}
             {isEmpleado && <NotificationBar key="notif-bar-emp" counts={counts} onNavigate={handleMobileNavigate} config={config} onlineUsers={onlineUsers} isEmpleado={isEmpleado} />}

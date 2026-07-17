@@ -25,6 +25,10 @@
       "destination": "https://pay.neteasegames.com/gameclub/bloodstrike/-1/login-role"
     },
     {
+      "source": "/proxy/binance-p2p",
+      "destination": "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },

@@ -475,12 +475,14 @@ export default function Checkout({ onFinish, embedded = false }) {
     const currentIsWalletBsOnly = isWalletBsOnly;
     const currentRemainingUSD = remainingUSD;
 
+    const finalRemainingBs = (useWalletBs && !hasEnoughBalanceBs) ? remainingBsFromWallet : remainingBs;
+
     setIsProcessing(true)
     try {
       // 1. Validar referencia duplicada (Si no es pago con billetera o gratis o binance)
       if (!currentIsWalletOnly && !currentIsWalletBsOnly && !isGratis && !isBinancePay) {
         try {
-          await verificarYRegistrarReferencia(referencia, remainingBs || remainingBsFromWallet, 'pedido')
+          await verificarYRegistrarReferencia(referencia, finalRemainingBs, 'pedido')
         } catch (err) {
           if (err.message === 'Referencia Duplicada') {
             setAlertModal({ 
@@ -576,7 +578,7 @@ export default function Checkout({ onFinish, embedded = false }) {
         finalReferencia = 'PENDIENTE_BINANCE_PAY';
       }
 
-      const results = await checkout(registrarVenta, user?.id || perfil?.id, finalMetodoId, finalReferencia, null, activeRuletaDesc, createdPedidoId, comprobanteUrl, true, activeCupon)
+      const results = await checkout(registrarVenta, user?.id || perfil?.id, finalMetodoId, finalReferencia, null, activeRuletaDesc, createdPedidoId, comprobanteUrl, true, activeCupon, finalRemainingBs)
       
       const pedidoResult = results.find(r => r.id === 'pedido')
       

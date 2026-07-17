@@ -795,15 +795,19 @@
 }
 .product-cashback-badge {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  background: rgba(163, 230, 53, 0.15);
-  color: var(--accent);
-  font-size: 10px;
-  font-weight: bold;
-  padding: 3px 8px;
-  border-radius: 12px;
-  border: 1px solid var(--accent);
+  top: -6px;
+  right: -6px;
+  background: linear-gradient(135deg, #FFD700 0%, #FF8C00 100%);
+  color: #000;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.4);
+  box-shadow: 0 4px 15px rgba(255, 140, 0, 0.5);
+  z-index: 10;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 .product-icon {
   width: 52px;
@@ -2082,15 +2086,19 @@
 
 .product-cashback-badge {
   position: absolute;
-  top: 0;
-  right: 0;
-  background: var(--accent);
+  top: -6px;
+  right: -6px;
+  background: linear-gradient(135deg, #FFD700 0%, #FF8C00 100%);
   color: #000;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 900;
-  padding: 2px 8px;
-  border-bottom-left-radius: 8px;
+  padding: 4px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.4);
+  box-shadow: 0 4px 15px rgba(255, 140, 0, 0.5);
+  z-index: 10;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* Botón Siguiente Wizard */

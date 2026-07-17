@@ -128,6 +128,7 @@ export default function Landing({ onNavigate }) {
   const [infoProductModal, setInfoProductModal] = useState(null)
   const [expandedImage, setExpandedImage] = useState(null)
   const [openFaqIndex, setOpenFaqIndex] = useState(null)
+  const [showCashbackInfo, setShowCashbackInfo] = useState(false)
 
   const banners = useMemo(() => {
     // Si está cargando y no hay caché, no devolvemos nada para evitar el banner genérico
@@ -1628,9 +1629,14 @@ export default function Landing({ onNavigate }) {
                                   </div>
 
                                   {/* CASHBACK BADGE */}
-                                  {(config?.cashback_activo === 'true' || config?.cashback_activo === '1') && (
-                                    <div className="product-cashback-badge">
-                                      ⚡ +{config?.cashback_porcentaje || '0'}%
+                                  {(config?.cashback_activo === 'true' || config?.cashback_activo === '1') && (selectedJuego?.cashback_activo !== false) && (
+                                    <div 
+                                      className="product-cashback-badge"
+                                      onClick={(e) => { e.stopPropagation(); setShowCashbackInfo(true); }}
+                                      style={{ cursor: 'pointer' }}
+                                      title="Haz clic para saber más sobre el Cashback"
+                                    >
+                                      💰 CASHBACK +{config?.cashback_porcentaje || '0'}%
                                     </div>
                                   )}
 
@@ -2215,6 +2221,57 @@ export default function Landing({ onNavigate }) {
         </div>
       )}
 
+      {/* MODAL DE INFORMACIÓN CASHBACK */}
+      {showCashbackInfo && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 20000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '20px', animation: 'fadeIn 0.2s', backdropFilter: 'blur(5px)'
+        }} onClick={() => setShowCashbackInfo(false)}>
+          <div style={{
+            backgroundColor: 'var(--bg-panel)', width: '100%', maxWidth: '420px',
+            borderRadius: '24px', position: 'relative',
+            boxShadow: '0 24px 48px rgba(0,0,0,0.8)', overflow: 'hidden',
+            border: '1px solid rgba(255, 215, 0, 0.4)', animation: 'scaleUp 0.3s'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: '24px', textAlign: 'center', background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 140, 0, 0.1) 100%)', borderBottom: '1px solid rgba(255, 215, 0, 0.1)' }}>
+              <div style={{ fontSize: '48px', marginBottom: '12px' }}>💰</div>
+              <h3 style={{ fontSize: '22px', fontWeight: 800, color: '#FFD700', margin: 0, letterSpacing: '0.5px' }}>¡Cashback Activado!</h3>
+              <p style={{ color: 'var(--text-main)', margin: '8px 0 0 0', fontSize: '15px', fontWeight: 'bold' }}>
+                Retorno del {config?.cashback_porcentaje || '0'}% en tu compra
+              </p>
+            </div>
+            
+            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1.6, textAlign: 'center' }}>
+                Al completar la compra de este paquete, se te abonará automáticamente el <strong>{config?.cashback_porcentaje || '0'}%</strong> del monto total directamente a tu <strong>Billetera</strong>.
+              </p>
+              
+              <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', padding: '16px', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '20px' }}>💼</span>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-main)' }}>Usa tu saldo como prefieras</span>
+                </div>
+                <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5, paddingLeft: '32px' }}>
+                  El saldo acumulado en tu billetera podrás utilizarlo para pagar o descontar en tus próximas compras dentro de la plataforma.
+                </p>
+              </div>
+            </div>
+            
+            <div style={{ padding: '20px', backgroundColor: 'var(--bg-card)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <button 
+                onClick={() => setShowCashbackInfo(false)} 
+                className="btn"
+                style={{ width: '100%', padding: '14px', fontSize: '16px', fontWeight: 800, background: 'linear-gradient(135deg, #FFD700 0%, #FF8C00 100%)', color: '#000', border: 'none', borderRadius: '12px' }}
+              >
+                ¡Entendido, genial!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL DE SELECCIÓN DE REGIÓN */}
       {showRegionModalForGame && (
         <RegionSelectionModal 
@@ -2249,7 +2306,7 @@ export default function Landing({ onNavigate }) {
         .btn-sticky-cart { padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-main); font-weight: 600; cursor: pointer; }
         .btn-sticky-buy { padding: 10px 20px; border-radius: 8px; border: none; background: var(--accent); color: #000; font-weight: 800; cursor: pointer; }
         
-        .product-cashback-badge { position: absolute; top: 10px; left: 10px; background: #000; color: var(--accent); font-size: 9px; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--accent); font-weight: 800; z-index: 2; }
+        .product-cashback-badge { position: absolute; top: -6px; right: -6px; background: linear-gradient(135deg, #FFD700 0%, #FF8C00 100%); color: #000; font-size: 11px; font-weight: 900; padding: 4px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 4px 15px rgba(255, 140, 0, 0.5); z-index: 10; text-transform: uppercase; letter-spacing: 0.5px; }
         .product-info-trigger { position: absolute; top: 10px; right: 10px; background: var(--border); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; cursor: pointer; }
         
         .landing-sliders-catalog { display: flex; flex-direction: column; gap: 30px; }
