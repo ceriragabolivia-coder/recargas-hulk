@@ -141,7 +141,7 @@ async function applyCashback(pedido, supabaseClient, adminId) {
          p_user_id: pedido.cliente_id,
          p_admin_id: adminId || pedido.cliente_id,
          p_nuevo_saldo: baseBs + returnBs,
-         p_nota: \`💸 Cash Back (\${porcentaje}%) por Pedido #\${pedido.numero_pedido}\`
+         p_nota: `💸 Cash Back (${porcentaje}%) por Pedido #${pedido.numero_pedido}`
        });
        updateData.cashback_monto = returnBs;
        updateData.cashback_moneda = 'bs';
@@ -153,7 +153,7 @@ async function applyCashback(pedido, supabaseClient, adminId) {
          p_user_id: pedido.cliente_id,
          p_admin_id: adminId || pedido.cliente_id,
          p_nuevo_saldo: baseUsd + returnUsd,
-         p_nota: \`💸 Cash Back (\${porcentaje}%) por Pedido #\${pedido.numero_pedido}\`
+         p_nota: `💸 Cash Back (${porcentaje}%) por Pedido #${pedido.numero_pedido}`
        });
        updateData.cashback_monto = returnUsd;
        updateData.cashback_moneda = 'usd';
