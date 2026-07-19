@@ -12,6 +12,11 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
   const titleSize = config?.landing_auth_title_size || '24px'
   const textSize = config?.landing_auth_text_size || '14px'
   const bgImage = config?.landing_auth_bg_image || null
+  
+  const bgOpacityStr = config?.landing_auth_bg_opacity || '85'
+  const bgOpacity = parseInt(bgOpacityStr, 10) / 100
+  const overlayColorTop = `rgba(17, 24, 39, ${bgOpacity})`
+  const overlayColorBottom = `rgba(17, 24, 39, ${Math.min(bgOpacity + 0.1, 1)})`
 
   useEffect(() => {
       if (isOpen) {
@@ -190,7 +195,7 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
         className="landing-modal-content" 
         onClick={e => e.stopPropagation()}
         style={{
-          backgroundImage: bgImage ? `linear-gradient(rgba(17, 24, 39, 0.85), rgba(17, 24, 39, 0.95)), url(${bgImage})` : undefined,
+          backgroundImage: bgImage ? `linear-gradient(${overlayColorTop}, ${overlayColorBottom}), url(${bgImage})` : undefined,
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         }}

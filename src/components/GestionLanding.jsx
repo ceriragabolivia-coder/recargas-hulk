@@ -30,6 +30,7 @@ export default function GestionLanding() {
     landing_auth_title_size: config?.landing_auth_title_size || '24px',
     landing_auth_text_size: config?.landing_auth_text_size || '14px',
     landing_auth_bg_image: config?.landing_auth_bg_image || '',
+    landing_auth_bg_opacity: config?.landing_auth_bg_opacity || '85',
     // Colores de diseño
     landing_bg_color: config?.landing_bg_color || '#0f0f10',
     landing_card_bg: config?.landing_card_bg || '#1a1d21',
@@ -62,6 +63,7 @@ export default function GestionLanding() {
         landing_auth_title_size: config.landing_auth_title_size || '24px',
         landing_auth_text_size: config.landing_auth_text_size || '14px',
         landing_auth_bg_image: config.landing_auth_bg_image || '',
+        landing_auth_bg_opacity: config.landing_auth_bg_opacity || '85',
         // Colores de diseño
         landing_bg_color: config.landing_bg_color || '#0f0f10',
         landing_card_bg: config.landing_card_bg || '#1a1d21',
@@ -324,6 +326,7 @@ export default function GestionLanding() {
         updateConfig('landing_auth_title_size', form.landing_auth_title_size, true),
         updateConfig('landing_auth_text_size', form.landing_auth_text_size, true),
         updateConfig('landing_auth_bg_image', form.landing_auth_bg_image, true),
+        updateConfig('landing_auth_bg_opacity', form.landing_auth_bg_opacity, true),
         // Colores de diseño
         updateConfig('landing_bg_color', form.landing_bg_color || '#0f0f10', true),
         updateConfig('landing_card_bg', form.landing_card_bg || '#1a1d21', true),
@@ -669,6 +672,21 @@ export default function GestionLanding() {
                   <input type="file" id="upload_auth_bg" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleUploadBanner(e, 'auth_bg')} />
                   <button type="button" className="btn btn-secondary" onClick={() => document.getElementById('upload_auth_bg').click()} disabled={saving} style={{ whiteSpace: 'nowrap' }}>📷 Subir Imagen</button>
                 </div>
+              </div>
+              <div className="form-group full-width" style={{ marginTop: '12px' }}>
+                <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  Oscurecimiento del Fondo (%)
+                  <span>{form.landing_auth_bg_opacity}%</span>
+                </label>
+                <input 
+                  type="range" 
+                  min="0" max="100" 
+                  className="form-range" 
+                  style={{ width: '100%' }}
+                  value={form.landing_auth_bg_opacity} 
+                  onChange={(e) => setForm({...form, landing_auth_bg_opacity: e.target.value})} 
+                />
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Ajusta qué tan oscura se verá la imagen de fondo (100% = totalmente negro, 0% = imagen original).</p>
               </div>
             </div>
           </div>
