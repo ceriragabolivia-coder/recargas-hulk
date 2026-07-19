@@ -210,15 +210,11 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
                 {view === 'pending_approval' ? 'Solicitud de Aprobación' : 'Crea tu cuenta'}
               </h2>
             )}
-            <p style={{ 
-              fontSize: view === 'login' ? `calc(${textSize} + 1px)` : textSize, 
-              fontWeight: view === 'login' ? 'bold' : 'normal',
-              color: view === 'login' ? '#ffffff' : undefined,
-              marginTop: view === 'login' ? '45px' : '0',
-              whiteSpace: view === 'login' ? 'nowrap' : 'normal'
-            }}>
-              {view === 'login' ? 'Ingresa tus credenciales para continuar' : view === 'pending_approval' ? 'Por favor solicita la activación de tu cuenta' : 'Únete a la mejor plataforma de recargas'}
-            </p>
+            {view !== 'login' && (
+              <p style={{ fontSize: textSize }}>
+                {view === 'pending_approval' ? 'Por favor solicita la activación de tu cuenta' : 'Únete a la mejor plataforma de recargas'}
+              </p>
+            )}
           </div>
 
           {error && (
@@ -275,7 +271,7 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
                 {loadingState ? '⏳ Procesando...' : '🔐 Iniciar Sesión'}
               </button>
               
-              <div className="landing-auth-switch" style={{ marginTop: '80px', marginBottom: '10px' }}>
+              <div className="landing-auth-switch" style={{ marginTop: '30px', marginBottom: '10px' }}>
                 <span style={{ fontSize: '14px', color: '#e2e8f0' }}>¿No tienes cuenta?</span>
                 <button 
                   type="button" 
