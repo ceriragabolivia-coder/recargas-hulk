@@ -11,6 +11,7 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
   const logoSize = config?.landing_auth_logo_size || '100px'
   const titleSize = config?.landing_auth_title_size || '24px'
   const textSize = config?.landing_auth_text_size || '14px'
+  const bgImage = config?.landing_auth_bg_image || null
 
   useEffect(() => {
       if (isOpen) {
@@ -185,7 +186,15 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
 
   return (
     <div className="landing-modal-overlay" onClick={onClose}>
-      <div className="landing-modal-content" onClick={e => e.stopPropagation()}>
+      <div 
+        className="landing-modal-content" 
+        onClick={e => e.stopPropagation()}
+        style={{
+          backgroundImage: bgImage ? `linear-gradient(rgba(17, 24, 39, 0.85), rgba(17, 24, 39, 0.95)), url(${bgImage})` : undefined,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      >
         <button className="landing-modal-close" onClick={onClose}>&times;</button>
 
         <div className="landing-auth-container">

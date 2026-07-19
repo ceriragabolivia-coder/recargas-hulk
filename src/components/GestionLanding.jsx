@@ -29,6 +29,7 @@ export default function GestionLanding() {
     landing_auth_logo_size: config?.landing_auth_logo_size || '100px',
     landing_auth_title_size: config?.landing_auth_title_size || '24px',
     landing_auth_text_size: config?.landing_auth_text_size || '14px',
+    landing_auth_bg_image: config?.landing_auth_bg_image || '',
     // Colores de diseño
     landing_bg_color: config?.landing_bg_color || '#0f0f10',
     landing_card_bg: config?.landing_card_bg || '#1a1d21',
@@ -60,6 +61,7 @@ export default function GestionLanding() {
         landing_auth_logo_size: config.landing_auth_logo_size || '100px',
         landing_auth_title_size: config.landing_auth_title_size || '24px',
         landing_auth_text_size: config.landing_auth_text_size || '14px',
+        landing_auth_bg_image: config.landing_auth_bg_image || '',
         // Colores de diseño
         landing_bg_color: config.landing_bg_color || '#0f0f10',
         landing_card_bg: config.landing_card_bg || '#1a1d21',
@@ -287,6 +289,9 @@ export default function GestionLanding() {
         } else if (bannerNumber === 'auth_logo') {
           setForm(prev => ({ ...prev, landing_auth_icon: data.publicUrl }))
           toast.success(`Icono de login subido correctamente`)
+        } else if (bannerNumber === 'auth_bg') {
+          setForm(prev => ({ ...prev, landing_auth_bg_image: data.publicUrl }))
+          toast.success(`Imagen de fondo subida correctamente`)
         } else if (String(bannerNumber).startsWith('game_banner_')) {
           const juegoId = bannerNumber.replace('game_banner_', '')
           handleUpdateGameBanner(juegoId, data.publicUrl)
@@ -318,6 +323,7 @@ export default function GestionLanding() {
         updateConfig('landing_auth_logo_size', form.landing_auth_logo_size, true),
         updateConfig('landing_auth_title_size', form.landing_auth_title_size, true),
         updateConfig('landing_auth_text_size', form.landing_auth_text_size, true),
+        updateConfig('landing_auth_bg_image', form.landing_auth_bg_image, true),
         // Colores de diseño
         updateConfig('landing_bg_color', form.landing_bg_color || '#0f0f10', true),
         updateConfig('landing_card_bg', form.landing_card_bg || '#1a1d21', true),
@@ -652,6 +658,17 @@ export default function GestionLanding() {
               <div className="form-group">
                 <label className="form-label">Tamaño Letra Subtítulo (Ej: 14px)</label>
                 <input type="text" className="form-input" value={form.landing_auth_text_size} onChange={(e) => setForm({...form, landing_auth_text_size: e.target.value})} placeholder="14px" />
+              </div>
+              <div className="form-group full-width">
+                <label className="form-label">Imagen de Fondo (Opcional)</label>
+                <div className="flex gap-8" style={{ alignItems: 'center' }}>
+                  {form.landing_auth_bg_image && form.landing_auth_bg_image.startsWith('http') ? (
+                    <img src={form.landing_auth_bg_image} alt="Auth BG" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} />
+                  ) : null}
+                  <input type="text" className="form-input" value={form.landing_auth_bg_image} onChange={(e) => setForm({...form, landing_auth_bg_image: e.target.value})} placeholder="URL de la imagen de fondo..." style={{ flex: 1 }} />
+                  <input type="file" id="upload_auth_bg" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleUploadBanner(e, 'auth_bg')} />
+                  <button type="button" className="btn btn-secondary" onClick={() => document.getElementById('upload_auth_bg').click()} disabled={saving} style={{ whiteSpace: 'nowrap' }}>📷 Subir Imagen</button>
+                </div>
               </div>
             </div>
           </div>
