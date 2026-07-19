@@ -1776,6 +1776,17 @@ export default function GestionProductos() {
                 {formGame.imagen_pedido_completado_url && (
                   <button type="button" className="btn btn-ghost btn-sm text-danger" style={{ marginLeft: '8px' }} onClick={() => setFormGame(prev => ({ ...prev, imagen_pedido_completado_url: null }))}>🗑️ Quitar Imagen</button>
                 )}
+                
+                <div style={{ marginTop: '12px' }}>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="O pega el link directo de la imagen aquí..."
+                    value={formGame.imagen_pedido_completado_url || ''}
+                    onChange={(e) => setFormGame(prev => ({ ...prev, imagen_pedido_completado_url: e.target.value }))}
+                    style={{ width: '100%', fontSize: '12px' }}
+                  />
+                </div>
               </div>
             </div>
           </div>
