@@ -1142,6 +1142,26 @@ export default function Checkout({ onFinish, embedded = false }) {
                             </button>
                           </div>
 
+                          {/* BANNER UBIIPAGOS (Recreado con CSS) */}
+                          <div style={{ marginBottom: '24px', width: '100%', backgroundColor: '#0a0a0a', borderRadius: '12px', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '24px', border: '1px solid rgba(255,255,255,0.08)', flexWrap: 'wrap', boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)' }}>
+                            <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ color: '#fff', fontWeight: 900, fontSize: '18px', fontStyle: 'italic', letterSpacing: '0.5px', lineHeight: 1.2 }}>NO SE RECIBEN PAGOS</span>
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
+                                <span style={{ color: '#fff', fontWeight: 900, fontSize: '18px', fontStyle: 'italic' }}>DESDE</span>
+                                <span style={{ color: '#FFB800', fontWeight: 900, fontSize: '18px', fontStyle: 'italic' }}>UBIIPAGOS</span>
+                              </div>
+                            </div>
+                            <div style={{ width: '2px', height: '40px', backgroundColor: '#FFB800', borderRadius: '2px' }}></div>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                               <div style={{ position: 'relative', width: '28px', height: '24px', border: '4px solid #fff', borderTop: 'none', borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px', marginRight: '8px', marginTop: '6px' }}>
+                                 <div style={{ position: 'absolute', top: '-10px', left: '2px', width: '6px', height: '6px', backgroundColor: '#fff', borderRadius: '1px' }}></div>
+                                 <div style={{ position: 'absolute', top: '-10px', right: '2px', width: '6px', height: '6px', backgroundColor: '#fff', borderRadius: '1px' }}></div>
+                               </div>
+                               <span style={{ color: '#fff', fontWeight: 700, fontSize: '26px', letterSpacing: '-0.5px' }}>Ubii</span>
+                               <span style={{ color: '#fff', fontWeight: 400, fontSize: '26px' }}>pagos</span>
+                            </div>
+                          </div>
+
                           {/* ── RESUMEN DE TOTALES ── */}
                           <div style={{
                             backgroundColor: 'rgba(168, 85, 247, 0.05)',
@@ -1451,7 +1471,7 @@ function OrderTracking({ pedidoInitial, onBack }) {
       // Actualizar Items
       const { data: itemsData } = await supabase
         .from('pedido_items')
-        .select('*')
+        .select('*, productos(juegos(imagen_pedido_completado_url))')
         .eq('pedido_id', pedido.id)
       
       if (itemsData) setItems(itemsData)
@@ -1512,6 +1532,16 @@ function OrderTracking({ pedidoInitial, onBack }) {
         <h3 style={{ color: 'var(--text-primary)', marginBottom: '4px', fontSize: '20px', fontWeight: 800 }}>Resumen del Pedido</h3>
         <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>#{String(pedido.numero_pedido).padStart(6, '0')}</p>
       </div>
+
+      {pedido.estado === 'completado' && items?.length > 0 && items[0].productos?.juegos?.imagen_pedido_completado_url && (
+        <div style={{ marginBottom: '24px', textAlign: 'center' }}>
+          <img 
+            src={items[0].productos.juegos.imagen_pedido_completado_url} 
+            alt="Pedido Completado" 
+            style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '16px', objectFit: 'contain' }}
+          />
+        </div>
+      )}
 
       <div style={{ 
         padding: '24px', borderRadius: '24px', 

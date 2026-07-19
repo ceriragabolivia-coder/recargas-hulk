@@ -109,7 +109,8 @@ export default function GestionProductos() {
     tutorial_video_url: '',
     tutorial_banner_texto: '',
     tutorial_banner_img: '',
-    icono_url: null
+    icono_url: null,
+    imagen_pedido_completado_url: null
   })
 
   const juegosFiltrados = useMemo(() => {
@@ -141,6 +142,7 @@ export default function GestionProductos() {
       tutorial_banner_texto: '',
       tutorial_banner_img: '',
       icono_url: null,
+      imagen_pedido_completado_url: null,
       verificacion_api_activa: false,
       verificacion_api_url: '',
       mostrar_precio_dual: false
@@ -167,6 +169,7 @@ export default function GestionProductos() {
       tutorial_banner_texto: selectedJuego.tutorial_banner_texto || '',
       tutorial_banner_img: selectedJuego.tutorial_banner_img || '',
       icono_url: selectedJuego.icono_url || null,
+      imagen_pedido_completado_url: selectedJuego.imagen_pedido_completado_url || null,
       verificacion_api_activa: selectedJuego.verificacion_api_activa === undefined 
         ? (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('blood strike'))
         : !!selectedJuego.verificacion_api_activa,
@@ -203,6 +206,7 @@ export default function GestionProductos() {
         tutorial_banner_texto: formGame.tutorial_banner_texto,
         tutorial_banner_img: formGame.tutorial_banner_img,
         icono_url: formGame.icono_url,
+        imagen_pedido_completado_url: formGame.imagen_pedido_completado_url,
         verificacion_api_activa: formGame.verificacion_api_activa,
         verificacion_api_url: formGame.verificacion_api_url,
         mostrar_precio_dual: formGame.mostrar_precio_dual
@@ -1716,6 +1720,62 @@ export default function GestionProductos() {
                 <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
                   Esta imagen se mostrará al cliente cuando presione el ícono de ayuda.
                 </p>
+                {formGame.guia_id_url && (
+                  <button type="button" className="btn btn-ghost btn-sm text-danger" style={{ marginLeft: '8px' }} onClick={() => setFormGame(prev => ({ ...prev, guia_id_url: null }))}>🗑️ Quitar Guía</button>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          <div className="form-group" style={{ marginTop: '24px' }}>
+            <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+              Imagen "Pedido Completado"
+              <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>(Opcional)</span>
+            </label>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: 8 }}>
+              <div style={{
+                width: 70, height: 70, borderRadius: 8, backgroundColor: 'var(--bg-panel)',
+                border: '1px solid var(--border-color)', overflow: 'hidden', display: 'flex',
+                alignItems: 'center', justifyContent: 'center'
+              }}>
+                {formGame.imagen_pedido_completado_url ? (
+                  <img loading="lazy" decoding="async" src={getOptimizedImageUrl(formGame.imagen_pedido_completado_url, 600)} alt="Completado" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={{ fontSize: 24, opacity: 0.3 }}>✅</span>
+                )}
+              </div>
+              <div style={{ flex: 1 }}>
+                <input
+                  type="file"
+                  id="img-completado-upload"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={async (e) => {
+                    const file = e.target.files[0]
+                    if (!file) return
+                    setSaving(true)
+                    try {
+                      const fileName = `completado-${Date.now()}.png`
+                      const { error: uploadError } = await supabase.storage.from('logos').upload(fileName, await compressImage(file), { cacheControl: '31536000', upsert: true })
+                      if (uploadError) throw uploadError
+                      const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(fileName)
+                      setFormGame(prev => ({ ...prev, imagen_pedido_completado_url: publicUrl }))
+                    } catch (err) {
+                      setAlertModal({ type: 'error', message: 'Error subiendo imagen: ' + err.message })
+                    } finally {
+                      setSaving(false)
+                    }
+                  }}
+                />
+                <label htmlFor="img-completado-upload" className="btn btn-ghost btn-sm">
+                  {saving ? 'Procesando...' : '📤 Subir Imagen Completado'}
+                </label>
+                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                  Se mostrará en el resumen del pedido al completarse (Ej. tarjeta con código PIN).
+                </p>
+                {formGame.imagen_pedido_completado_url && (
+                  <button type="button" className="btn btn-ghost btn-sm text-danger" style={{ marginLeft: '8px' }} onClick={() => setFormGame(prev => ({ ...prev, imagen_pedido_completado_url: null }))}>🗑️ Quitar Imagen</button>
+                )}
               </div>
             </div>
           </div>

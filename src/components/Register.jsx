@@ -128,7 +128,9 @@ export default function Register({ onBackToLogin }) {
     <div className="login-container">
       <div className="login-card" style={{ maxWidth: '500px' }}>
         <div className="login-header">
-          <div className="login-logo" style={{ cursor: 'pointer' }} onClick={onBackToLogin}>⚡</div>
+          <div className="login-logo" style={{ cursor: 'pointer', background: 'transparent' }} onClick={onBackToLogin}>
+            <img src="/logo_verde.png" alt="Logo Hulk" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
           <h1 className="login-title">Registro de Cliente</h1>
           <p className="login-subtitle">Crea tu cuenta para acceder al catálogo</p>
         </div>

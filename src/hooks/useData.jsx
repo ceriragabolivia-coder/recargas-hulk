@@ -605,7 +605,7 @@ export function useClientes() {
         .order('fecha_registro', { ascending: false }),
       supabase
         .from('perfiles')
-        .select('id, rol, estado, porcentaje_descuento, config_modulos, motivo_estado'),
+        .select('id, rol, estado, porcentaje_descuento, config_modulos, motivo_estado, juegos_deshabilitados'),
       supabase
         .from('billeteras')
         .select('auth_user_id, saldo, saldo_bs'),
@@ -633,6 +633,7 @@ export function useClientes() {
           porcentaje_descuento: p?.porcentaje_descuento || 0,
           config_modulos: p?.config_modulos || [],
           motivo_estado: p?.motivo_estado || null,
+          juegos_deshabilitados: p?.juegos_deshabilitados || [],
           roles_adicionales: rolesAdicionalesMap.get(c.auth_user_id) || [],
           billetera_saldo: billeterasMap.get(c.auth_user_id)?.saldo || 0,
           billetera_saldo_bs: billeterasMap.get(c.auth_user_id)?.saldo_bs || 0
@@ -665,7 +666,8 @@ export function useClientes() {
       p_estado: updates.estado || null,
       p_porcentaje_descuento: updates.porcentaje_descuento || 0,
       p_config_modulos: updates.config_modulos || [],
-      p_motivo: updates.motivo_estado || null
+      p_motivo: updates.motivo_estado || null,
+      p_juegos_deshabilitados: updates.juegos_deshabilitados || []
     })
     
     if (error) return { error }

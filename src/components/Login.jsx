@@ -37,7 +37,9 @@ export default function Login({ onGoToRegister }) {
     <div className="login-container">
       <div className="login-card" style={{ maxWidth: '400px' }}>
         <div className="login-header">
-          <div className="login-logo">{isSubmitLoading ? '⌛' : '⚡'}</div>
+          <div className="login-logo" style={{ background: 'transparent' }}>
+            {isSubmitLoading ? '⌛' : <img src="/logo_verde.png" alt="Logo Hulk" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />}
+          </div>
           <h1 className="login-title">{config?.landing_titulo || 'Recargas Hulk'}</h1>
           <p className="login-subtitle">
             {isSubmitLoading ? 'Verificando cuenta, por favor espera...' : 'Sistema de Gestión de Recargas'}

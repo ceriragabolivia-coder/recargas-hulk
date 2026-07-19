@@ -48,6 +48,12 @@ export default function Catalogo() {
     selectedJuegoId ? juegosData.find(j => String(j.id) === String(selectedJuegoId)) : null
   , [juegosData, selectedJuegoId])
 
+  const filteredJuegosData = useMemo(() => {
+    return juegosData.filter(j => !(perfil?.juegos_deshabilitados || []).includes(j.id));
+  }, [juegosData, perfil?.juegos_deshabilitados])
+
+  const isJuegoDeshabilitado = selectedJuego && (perfil?.juegos_deshabilitados || []).includes(selectedJuego.id);
+
   const handleSetSelectedJuego = (juego) => {
     const id = juego?.id || null
     setSelectedJuegoId(id)
@@ -248,6 +254,17 @@ export default function Catalogo() {
   }
 
   if (selectedJuego) {
+    if (isJuegoDeshabilitado) {
+      return (
+        <div className="catalogo-container" style={{ textAlign: 'center', padding: '100px 20px', minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ fontSize: '64px', marginBottom: '24px' }}>🚫</div>
+          <h2 style={{ fontSize: '24px', color: 'var(--text-primary)', marginBottom: '16px' }}>Usted tiene deshabilitado este Servicio en su cuenta</h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '32px', maxWidth: '400px', lineHeight: '1.5' }}>Si cree que se trata de un error, por favor contacte al soporte para obtener más información.</p>
+          <button className="btn btn-primary" onClick={() => handleSetSelectedJuego(null)} style={{ padding: '12px 24px', fontSize: '16px' }}>← Volver al catálogo</button>
+        </div>
+      )
+    }
+
     return (
     <div className="catalogo-container">
       <style>{`
@@ -1231,7 +1248,7 @@ export default function Catalogo() {
       </div>
 
       <div className="catalogo-grid">
-        {juegosData.map(juego => {
+        {filteredJuegosData.map(juego => {
           const catIcon = (juego.categorias && juego.categorias.icono) ? juego.categorias.icono : '🎮'
           return (
             <div 

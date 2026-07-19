@@ -33,7 +33,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   
   // Utilidad para refrescar un pedido en la UI localmente
   const refreshPedidoData = async (pedidoId) => {
-    const { data: updData } = await supabase.from('pedidos').select('*, pedido_items(*, productos(*))').eq('id', pedidoId).single();
+    const { data: updData } = await supabase.from('pedidos').select('*, pedido_items(*, productos(*, juegos(*)))').eq('id', pedidoId).single();
     if (updData) {
       setSelectedPedido(prev => {
         if (prev?.id === pedidoId) {
@@ -430,7 +430,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     // 1. Obtener el pedido actual con manejo de errores
     const { data: pedidoActual, error: fetchError } = await supabase
       .from('pedidos')
-      .select('*, pedido_items(*, productos(*))')
+      .select('*, pedido_items(*, productos(*, juegos(*)))')
       .eq('id', pedidoId)
       .maybeSingle()
 
@@ -599,7 +599,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     if (selectedPedido?.id === pedidoId) {
       const { data: updatedPedido } = await supabase
         .from('pedidos')
-        .select('*, pedido_items(*, productos(*))')
+        .select('*, pedido_items(*, productos(*, juegos(*)))')
         .eq('id', pedidoId)
         .single()
       if (updatedPedido) {
@@ -805,7 +805,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
         // Consultar el pedido completo para saber si tiene API y AutoProcess activo
         const { data: pedidoFull } = await supabase
           .from('pedidos')
-          .select('*, pedido_items(*, productos(*, juegos(procesamiento_automatico_api)))')
+          .select('*, pedido_items(*, productos(*, juegos(procesamiento_automatico_api, imagen_pedido_completado_url)))')
           .eq('id', pedido.id)
           .single();
 
@@ -825,7 +825,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
           .from('pedidos')
           .update(updatePayload)
           .eq('id', pedido.id)
-          .select('*, pedido_items(*, productos(*))')
+          .select('*, pedido_items(*, productos(*, juegos(*)))')
           .single();
 
         if (error) {
@@ -926,7 +926,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
         updated_at: new Date().toISOString()
       })
       .eq('id', pedido.id)
-      .select('*, pedido_items(*, productos(*))')
+      .select('*, pedido_items(*, productos(*, juegos(*)))')
       .single();
 
     if (error) {
@@ -1035,7 +1035,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   const updateEstadoConAdmin = async (pedidoId, nuevoEstado, adminTarget) => {
     const { data: pedidoActual, error: fetchError } = await supabase
       .from('pedidos')
-      .select('*, pedido_items(*, productos(*))')
+      .select('*, pedido_items(*, productos(*, juegos(*)))')
       .eq('id', pedidoId)
       .maybeSingle()
 
@@ -2390,43 +2390,55 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                   )}
 
                   {/* Datos de recarga */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {item.metodo_recarga === 'solo_correo' ? (
-                      <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
-                        <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>📧 {item.account_email}</div>
-                      </div>
-                    ) : item.metodo_recarga === 'solo_usuario' ? (
-                      <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
-                        <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>👤 {item.account_user || item.account_email}</div>
-                      </div>
-                    ) : item.metodo_recarga === 'cuenta_completa' ? (
-                      <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
-                        <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>📧 {item.account_email}</div>
-                        <div style={{ color: 'var(--accent-primary)', marginTop: '4px', fontFamily: 'monospace' }}>🔑 {item.account_password}</div>
-                      </div>
-                    ) : item.metodo_recarga === 'usuario_clave' ? (
-                      <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
-                        <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>👤 {item.account_user || item.account_email}</div>
-                        <div style={{ color: 'var(--accent-primary)', marginTop: '4px', fontFamily: 'monospace' }}>🔑 {item.account_password}</div>
-                      </div>
-                    ) : item.metodo_recarga === 'cuenta_nueva' ? (
-                      <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
-                        <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>✨ Cuenta Nueva</div>
-                        <div style={{ color: 'var(--text-muted)', marginTop: '4px', fontSize: '12px' }}>Nosotros proporcionaremos la cuenta</div>
-                      </div>
-                    ) : item.metodo_recarga === 'id_zone' ? (
-                      <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)', color: 'var(--accent-primary)', fontWeight: 'bold' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span>🆔 ID: {item.player_id} | 🌐 ZONE ID: {item.zone_id}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                      {item.metodo_recarga === 'solo_correo' ? (
+                        <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
+                          <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>📧 {item.account_email}</div>
                         </div>
-                        {item.nickname && <div style={{ fontSize: '14px', color: '#fff', marginTop: '4px', fontWeight: 600 }}>👤 Nickname: {item.nickname}</div>}
+                      ) : item.metodo_recarga === 'solo_usuario' ? (
+                        <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
+                          <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>👤 {item.account_user || item.account_email}</div>
+                        </div>
+                      ) : item.metodo_recarga === 'cuenta_completa' ? (
+                        <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
+                          <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>📧 {item.account_email}</div>
+                          <div style={{ color: 'var(--accent-primary)', marginTop: '4px', fontFamily: 'monospace' }}>🔑 {item.account_password}</div>
+                        </div>
+                      ) : item.metodo_recarga === 'usuario_clave' ? (
+                        <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
+                          <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>👤 {item.account_user || item.account_email}</div>
+                          <div style={{ color: 'var(--accent-primary)', marginTop: '4px', fontFamily: 'monospace' }}>🔑 {item.account_password}</div>
+                        </div>
+                      ) : item.metodo_recarga === 'cuenta_nueva' ? (
+                        <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
+                          <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>✨ Cuenta Nueva</div>
+                          <div style={{ color: 'var(--text-muted)', marginTop: '4px', fontSize: '12px' }}>Nosotros proporcionaremos la cuenta</div>
+                        </div>
+                      ) : item.metodo_recarga === 'id_zone' ? (
+                        <div style={{ fontSize: '16px', padding: '10px 14px', backgroundColor: 'rgba(0, 210, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.15)', color: 'var(--accent-primary)', fontWeight: 'bold' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>🆔 ID: {item.player_id} | 🌐 ZONE ID: {item.zone_id}</span>
+                          </div>
+                          {item.nickname && <div style={{ fontSize: '14px', color: '#fff', marginTop: '4px', fontWeight: 600 }}>👤 Nickname: {item.nickname}</div>}
+                        </div>
+                      ) : item.player_id ? (
+                        <div style={{ fontSize: '20px', color: 'var(--accent-primary)', fontWeight: 800 }}>
+                          🆔 {item.player_id}
+                          {item.nickname && <div style={{ fontSize: '15px', color: '#fff', marginTop: '4px', fontWeight: 700 }}>👤 {item.nickname}</div>}
+                        </div>
+                      ) : null}
+                    </div>
+                    {/* IMAGEN DE PEDIDO COMPLETADO */}
+                    {item.estado === 'completado' && item.productos?.juegos?.imagen_pedido_completado_url && (
+                      <div style={{ width: '80px', height: '80px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img 
+                          src={item.productos.juegos.imagen_pedido_completado_url} 
+                          alt="Pedido Completado" 
+                          style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }}
+                        />
                       </div>
-                    ) : item.player_id ? (
-                      <div style={{ fontSize: '20px', color: 'var(--accent-primary)', fontWeight: 800 }}>
-                        🆔 {item.player_id}
-                        {item.nickname && <div style={{ fontSize: '15px', color: '#fff', marginTop: '4px', fontWeight: 700 }}>👤 {item.nickname}</div>}
-                      </div>
-                    ) : null}
+                    )}
                   </div>
 
                   {/* CÓDIGO ENTREGADO (BAÚL) */}

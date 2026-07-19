@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useClientes, useAuth, useConfiguracion } from '../hooks/useData'
+import { useClientes, useAuth, useConfiguracion, useJuegos } from '../hooks/useData'
 import { supabase } from '../lib/supabase'
 import { formatUSD, formatBs } from '../utils/helpers'
 import AlertModal from './AlertModal'
@@ -7,6 +7,7 @@ import Pedidos from './Pedidos'
 
 export default function Usuarios({ onNavigate, params }) {
   const { clientes, loading, updateProfileRoleAndDiscount, updateRolesAdicionales, updateProfile, updateProfileStatus, ajustarSaldoWallet, ajustarSaldoWalletBs, resetUserPassword, deleteClienteDefinitivo, refetch } = useClientes()
+  const { juegos } = useJuegos()
   const { perfil } = useAuth()
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
   const isEmpleado = perfil?.rol?.toLowerCase() === 'empleado' || perfil?.rol?.toLowerCase() === 'trabajador'
@@ -107,7 +108,8 @@ export default function Usuarios({ onNavigate, params }) {
       estado: cliente.estado || 'pendiente',
       motivo_estado: cliente.motivo_estado || '',
       config_modulos: cliente.config_modulos || [],
-      roles_adicionales: cliente.roles_adicionales || []
+      roles_adicionales: cliente.roles_adicionales || [],
+      juegos_deshabilitados: cliente.juegos_deshabilitados || []
     })
   }
 
@@ -145,7 +147,8 @@ export default function Usuarios({ onNavigate, params }) {
           porcentaje_descuento: editingData.rol === 'revendedor' ? parseFloat(editingData.porcentaje_descuento || 0) : 0,
           estado: editingData.estado,
           motivo_estado: editingData.motivo_estado || null,
-          config_modulos: editingData.config_modulos || []
+          config_modulos: editingData.config_modulos || [],
+          juegos_deshabilitados: editingData.juegos_deshabilitados || []
         })
         if (errorProfile) throw errorProfile
 
@@ -688,6 +691,7 @@ export default function Usuarios({ onNavigate, params }) {
                             )}
 
                             {['cliente', 'revendedor'].includes(editingData.rol) && (
+                              <>
                               <div style={{ marginTop: '8px', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                                 <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Billeteras Habilitadas</div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -727,6 +731,27 @@ export default function Usuarios({ onNavigate, params }) {
                                   </label>
                                 </div>
                               </div>
+                              <div style={{ marginTop: '8px', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                                <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>Juegos/Servicios Deshabilitados</div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '150px', overflowY: 'auto' }}>
+                                  {juegos?.filter(j => !j.parent_id).map(juego => (
+                                    <label key={juego.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                                      <input 
+                                        type="checkbox"
+                                        checked={(editingData.juegos_deshabilitados || []).includes(juego.id)}
+                                        onChange={(e) => {
+                                          let mods = [...(editingData.juegos_deshabilitados || [])];
+                                          if (e.target.checked) { if(!mods.includes(juego.id)) mods.push(juego.id); }
+                                          else { mods = mods.filter(m => m !== juego.id); }
+                                          setEditingData({...editingData, juegos_deshabilitados: mods});
+                                        }}
+                                      />
+                                      <span>🚫 {juego.nombre}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+                              </>
                             )}
 
                             {editingData.rol === 'revendedor' && (

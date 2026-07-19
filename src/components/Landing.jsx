@@ -647,21 +647,25 @@ export default function Landing({ onNavigate }) {
 
   const filteredJuegos = useMemo(() => {
     return juegos.filter(j => {
+      if ((perfil?.juegos_deshabilitados || []).includes(j.id)) return false;
       const isParent = !j.parent_id;
       const matchesCategory = activeCategory === 'Todos' || j.categorias?.nombre === activeCategory
       const matchesSearch = j.nombre.toLowerCase().includes(search.toLowerCase())
       return isParent && matchesCategory && matchesSearch
     })
-  }, [juegos, activeCategory, search])
+  }, [juegos, activeCategory, search, perfil?.juegos_deshabilitados])
 
   const bestsellers = useMemo(() => {
+    let result = [];
     if (config?.landing_featured_games && config.landing_featured_games !== '0' && config.landing_featured_games.trim() !== '') {
       const ids = config.landing_featured_games.split(',').map(id => id.trim())
       const filtered = juegos.filter(j => ids.includes(String(j.id)))
-      if (filtered.length > 0) return filtered
+      if (filtered.length > 0) result = filtered
+    } else {
+      result = juegos.filter(j => !j.parent_id) // Mostrar todos los juegos padre en lugar de limitar a 20
     }
-    return juegos.filter(j => !j.parent_id) // Mostrar todos los juegos padre en lugar de limitar a 20
-  }, [juegos, config])
+    return result.filter(j => !(perfil?.juegos_deshabilitados || []).includes(j.id))
+  }, [juegos, config, perfil?.juegos_deshabilitados])
 
   // TRACKING DE VISITAS
   const trackingDebounceRef = React.useRef(null)
@@ -1062,15 +1066,10 @@ export default function Landing({ onNavigate }) {
               </div>
             ) : (
               <div className="flex items-center" style={{ gap: '10px' }}>
-                <button className="btn-assax-primary hidden-mobile" onClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}>
-                  <span>⚡ INGRESAR</span>
-                </button>
-                <button 
-                  className="btn-assax-primary visible-mobile" 
-                  onClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}
-                  style={{ padding: '8px 16px', fontSize: '12px' }}
-                >
-                  <span>Entrar</span>
+                <button className="btn-assax-primary" onClick={() => { setAuthModalView('login'); setIsAuthModalOpen(true); }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <img src="/logo_verde.png" alt="Logo" style={{ width: '22px', height: '22px', objectFit: 'contain' }} /> <span>INGRESAR</span>
+                  </span>
                 </button>
               </div>
             )}
