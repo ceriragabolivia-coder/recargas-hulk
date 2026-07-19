@@ -211,10 +211,11 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
               </h2>
             )}
             <p style={{ 
-              fontSize: view === 'login' ? `calc(${textSize} + 2px)` : textSize, 
+              fontSize: view === 'login' ? `calc(${textSize} + 1px)` : textSize, 
               fontWeight: view === 'login' ? 'bold' : 'normal',
               color: view === 'login' ? '#ffffff' : undefined,
-              marginTop: view === 'login' ? '8px' : '0'
+              marginTop: view === 'login' ? '4px' : '0',
+              whiteSpace: view === 'login' ? 'nowrap' : 'normal'
             }}>
               {view === 'login' ? 'Ingresa tus credenciales para continuar' : view === 'pending_approval' ? 'Por favor solicita la activación de tu cuenta' : 'Únete a la mejor plataforma de recargas'}
             </p>
@@ -272,7 +273,7 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
                 {loadingState ? '⏳ Procesando...' : '🔐 Iniciar Sesión'}
               </button>
               
-              <div className="landing-auth-switch" style={{ marginTop: '20px' }}>
+              <div className="landing-auth-switch" style={{ marginTop: '50px', marginBottom: '10px' }}>
                 <span style={{ fontSize: '14px', color: '#e2e8f0' }}>¿No tienes cuenta?</span>
                 <button 
                   type="button" 
