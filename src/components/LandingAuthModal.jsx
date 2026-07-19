@@ -230,7 +230,7 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
           )}
 
           {view === 'login' ? (
-            <form onSubmit={handleLoginSubmit} className="landing-auth-form" style={{ opacity: loadingState ? 0.6 : 1, pointerEvents: loadingState ? 'none' : 'auto' }}>
+            <form onSubmit={handleLoginSubmit} className="landing-auth-form" style={{ opacity: loadingState ? 0.6 : 1, pointerEvents: loadingState ? 'none' : 'auto', marginTop: '80px' }}>
               <div className="form-group">
                 <label>Correo electrónico</label>
                 <input
