@@ -197,7 +197,7 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
         style={{
           backgroundImage: bgImage ? `linear-gradient(${overlayColorTop}, ${overlayColorBottom}), url(${bgImage})` : undefined,
           backgroundSize: 'cover',
-          backgroundPosition: 'center'
+          backgroundPosition: 'top center'
         }}
       >
         <button className="landing-modal-close" onClick={onClose}>&times;</button>
@@ -209,10 +209,17 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
             ) : (
               <div className="landing-auth-logo" style={{ fontSize: logoSize }}>{authIcon}</div>
             )}
-            <h2 style={{ fontSize: titleSize }}>
-              {view === 'login' ? 'Bienvenido de nuevo' : view === 'pending_approval' ? 'Solicitud de Aprobación' : 'Crea tu cuenta'}
-            </h2>
-            <p style={{ fontSize: textSize }}>
+            {view !== 'login' && (
+              <h2 style={{ fontSize: titleSize }}>
+                {view === 'pending_approval' ? 'Solicitud de Aprobación' : 'Crea tu cuenta'}
+              </h2>
+            )}
+            <p style={{ 
+              fontSize: view === 'login' ? `calc(${textSize} + 2px)` : textSize, 
+              fontWeight: view === 'login' ? 'bold' : 'normal',
+              color: view === 'login' ? '#ffffff' : undefined,
+              marginTop: view === 'login' ? '8px' : '0'
+            }}>
               {view === 'login' ? 'Ingresa tus credenciales para continuar' : view === 'pending_approval' ? 'Por favor solicita la activación de tu cuenta' : 'Únete a la mejor plataforma de recargas'}
             </p>
           </div>
@@ -269,9 +276,21 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
                 {loadingState ? '⏳ Procesando...' : '🔐 Iniciar Sesión'}
               </button>
               
-              <div className="landing-auth-switch">
-                <span>¿No tienes cuenta?</span>
-                <button type="button" onClick={() => { setView('register'); setError(null); }}>Regístrate aquí</button>
+              <div className="landing-auth-switch" style={{ marginTop: '20px' }}>
+                <span style={{ fontSize: '14px', color: '#e2e8f0' }}>¿No tienes cuenta?</span>
+                <button 
+                  type="button" 
+                  onClick={() => { setView('register'); setError(null); }}
+                  style={{ 
+                    fontWeight: 'bold', 
+                    color: 'var(--accent-primary, #a3e635)', 
+                    textDecoration: 'underline', 
+                    fontSize: '15px',
+                    marginLeft: '8px'
+                  }}
+                >
+                  Regístrate aquí
+                </button>
               </div>
             </form>
           ) : view === 'pending_approval' ? (
