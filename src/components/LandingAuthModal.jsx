@@ -196,19 +196,15 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
         onClick={e => e.stopPropagation()}
         style={{
           backgroundImage: bgImage ? `linear-gradient(${overlayColorTop}, ${overlayColorBottom}), url(${bgImage})` : undefined,
-          backgroundSize: 'cover',
-          backgroundPosition: 'top center'
+          backgroundSize: '100% auto',
+          backgroundPosition: 'top center',
+          backgroundRepeat: 'no-repeat'
         }}
       >
         <button className="landing-modal-close" onClick={onClose}>&times;</button>
 
         <div className="landing-auth-container">
           <div className="landing-auth-header">
-            {authIcon.startsWith('http') || authIcon.startsWith('/') ? (
-              <img loading="lazy" decoding="async" src={authIcon} alt="Logo" style={{ height: logoSize, objectFit: 'contain', marginBottom: '16px', display: 'inline-block' }} />
-            ) : (
-              <div className="landing-auth-logo" style={{ fontSize: logoSize }}>{authIcon}</div>
-            )}
             {view !== 'login' && (
               <h2 style={{ fontSize: titleSize }}>
                 {view === 'pending_approval' ? 'Solicitud de Aprobación' : 'Crea tu cuenta'}
