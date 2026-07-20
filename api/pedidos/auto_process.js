@@ -11,7 +11,7 @@ async function procesarPedidoConApi(pedidoId, apiKey) {
 
   const { data: pedidoActual } = await supabase
     .from('pedidos')
-    .select('*, pedido_items(*, productos(*))')
+    .select('*, pedido_items(*, productos(*, juegos(procesamiento_automatico_api)))')
     .eq('id', pedidoId)
     .single();
 
@@ -19,8 +19,9 @@ async function procesarPedidoConApi(pedidoId, apiKey) {
 
   for (const item of pedidoActual.pedido_items) {
     const prod = Array.isArray(item.productos) ? item.productos[0] : item.productos;
+    const j = Array.isArray(prod?.juegos) ? prod.juegos[0] : prod?.juegos;
     const isPendingOrFailed = !item.estado_proveedor || item.estado_proveedor === 'error' || item.estado_proveedor === 'fallido';
-    if (prod?.proveedor_api_id && !item.proveedor_pedido_id && isPendingOrFailed) {
+    if (prod?.proveedor_api_id && j?.procesamiento_automatico_api && !item.proveedor_pedido_id && isPendingOrFailed) {
       anySent = true;
       try {
         console.log(`🚀 [AutoProcess] Enviando item ${item.id} a TiendaGiftVen...`);
@@ -201,14 +202,15 @@ export default async function handler(req, res) {
     // --- Obtener items del pedido para checar auto-procesamiento ---
     const { data: pedidoConItems } = await supabase
       .from('pedidos')
-      .select('*, pedido_items(*, productos(proveedor_api_id, juego_id))')
+      .select('*, pedido_items(*, productos(proveedor_api_id, juego_id, juegos(procesamiento_automatico_api)))')
       .eq('id', pedido.id)
       .single();
 
     const tieneApiItems = pedidoConItems?.pedido_items?.some(
       i => {
         const p = Array.isArray(i.productos) ? i.productos[0] : i.productos;
-        return p?.proveedor_api_id;
+        const j = Array.isArray(p?.juegos) ? p.juegos[0] : p?.juegos;
+        return p?.proveedor_api_id && j?.procesamiento_automatico_api;
       }
     );
     
