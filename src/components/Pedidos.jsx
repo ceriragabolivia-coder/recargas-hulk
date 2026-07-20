@@ -100,7 +100,13 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   const [rechazandoItem, setRechazandoItem] = useState(null) // ID del item si se está rechazando
   const [motivoRechazo, setMotivoRechazo] = useState('')
   const [cancelacionMensaje, setCancelacionMensaje] = useState("")
-  const [busqueda, setBusqueda] = useState("")
+  const [busqueda, setBusqueda] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const sp = new URLSearchParams(window.location.search);
+      return sp.get('search') || "";
+    }
+    return "";
+  })
   const [showFilterDropdown, setShowFilterDropdown] = useState(false)
   // Super Admin: asignación y atribución de pedidos
   const [showAsignarAdminModal, setShowAsignarAdminModal] = useState(false)

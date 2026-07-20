@@ -39,6 +39,7 @@ export default function Configuracion() {
   const [tiempoLimitePago, setTiempoLimitePago] = useState('15')
   const [montosBilleteraBs, setMontosBilleteraBs] = useState('')
   const [montosBilleteraUsd, setMontosBilleteraUsd] = useState('')
+  const [permitirPagoDirecto, setPermitirPagoDirecto] = useState(true)
   
   // Estados para Banners dinámicos
   const [promoBannerTexto, setPromoBannerTexto] = useState('')
@@ -96,6 +97,7 @@ export default function Configuracion() {
       setTiempoLimitePago(config.tiempo_limite_pago || '15')
       setMontosBilleteraBs(config.montos_billetera_bs || '')
       setMontosBilleteraUsd(config.montos_billetera_usd || '')
+      setPermitirPagoDirecto(config.permitir_pago_directo !== 'false')
       
       // Banners
       setPromoBannerTexto(config.promo_banner_texto || '')
@@ -595,6 +597,33 @@ export default function Configuracion() {
                         >
                           Guardar
                         </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'rgba(0, 210, 255, 0.05)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: '300px' }}>
+                        <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '4px' }}>💳 Permitir Pago Directo</h3>
+                        <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                          Si está desactivado, los usuarios solo podrán realizar compras utilizando el saldo de su billetera y no verán los métodos de pago.
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <label className="toggle-switch">
+                          <input 
+                            type="checkbox" 
+                            checked={permitirPagoDirecto}
+                            onChange={(e) => {
+                              const newVal = e.target.checked
+                              setPermitirPagoDirecto(newVal)
+                              updateConfig('permitir_pago_directo', newVal.toString(), true).then(() => 
+                                setAlertModal({ type: 'success', message: 'Configuración actualizada' })
+                              )
+                            }}
+                          />
+                          <span className="toggle-slider"></span>
+                        </label>
                       </div>
                     </div>
                   </div>

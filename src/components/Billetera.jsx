@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { useWallet, useAuth, useMetodosPago, useVentas, useConfiguracion } from '../hooks/useData'
+import { useNavigate } from 'react-router-dom'
+import { useWallet, useAuth, useMetodosPago, useVentas, useConfiguracion, useCart } from '../hooks/useData'
 import { formatUSD, formatBs, getOptimizedImageUrl } from '../utils/helpers'
 import { supabase } from '../lib/supabase'
 import AlertModal from './AlertModal'
 import { compressImage } from '../utils/imageCompression'
 
 export default function Billetera({ onNavigate }) {
+  const navigate = useNavigate()
+  const { cart } = useCart()
   const { wallet, adminSalesBalance, recargas, transacciones, loading, solicitarRecarga, refetch } = useWallet()
   const { perfil, isCliente, user } = useAuth()
   const { metodos } = useMetodosPago()
@@ -317,82 +320,123 @@ export default function Billetera({ onNavigate }) {
         </div>
       </div>
 
-      <div className="responsive-grid-2col" style={{ display: 'grid', gridTemplateColumns: isAdmin ? '1fr' : '1.2fr 0.8fr', gap: '24px' }}>
+      {cart && cart.length > 0 && (
+        <div className="fade-in" style={{
+          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+          border: '1px solid var(--accent-success)',
+          borderRadius: '16px',
+          padding: '20px',
+          marginBottom: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '16px',
+          boxShadow: '0 4px 20px rgba(34, 197, 94, 0.15)'
+        }}>
+          <div>
+            <h3 style={{ color: 'var(--accent-success)', margin: '0 0 8px 0', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>🛒</span> Tienes un pedido en curso
+            </h3>
+            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px' }}>
+              Tu proceso de compra está guardado. Si ya recargaste tu billetera y tienes saldo, puedes completarlo ahora.
+            </p>
+          </div>
+          <button 
+            className="btn btn-primary"
+            onClick={() => navigate('/checkout')}
+            style={{ fontWeight: 'bold', padding: '12px 24px', whiteSpace: 'nowrap' }}
+          >
+            Completar Pedido ➔
+          </button>
+        </div>
+      )}
+
+      {/* Tarjetas de Saldo Dual */}
+      <div className="kpi-grid" style={{ marginBottom: '24px' }}>
+        {/* Saldo USD */}
+        {hasWalletUSD && (
+          <div className="card kpi-card" style={{ 
+            background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(0, 210, 255, 0.05) 100%)',
+            textAlign: 'center', border: '1px solid var(--accent-primary)',
+            position: 'relative', overflow: 'hidden'
+          }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(to right, #00d2ff, #3a7bd5)' }}></div>
+            <div className="kpi-label" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+              💵 Saldo USD
+            </div>
+            <div translate="no" className="kpi-value notranslate" style={{ fontWeight: 900, color: 'var(--accent-success)', textShadow: '0 0 20px rgba(34, 197, 94, 0.2)' }}>
+              {formatUSD(wallet?.saldo || 0)}
+            </div>
+          </div>
+        )}
+
+        {/* Saldo Bs */}
+        {hasWalletBs && (
+        <div className="card kpi-card" style={{ 
+          background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(139, 92, 246, 0.05) 100%)',
+          textAlign: 'center', border: '1px solid rgba(139, 92, 246, 0.4)',
+          position: 'relative', overflow: 'hidden'
+        }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(to right, #8b5cf6, #a855f7)' }}></div>
+          <div className="kpi-label" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+            🏦 Saldo Bolívares
+          </div>
+          <div translate="no" className="kpi-value notranslate" style={{ fontWeight: 900, color: '#a855f7', textShadow: '0 0 20px rgba(139, 92, 246, 0.2)' }}>
+            {formatBs(wallet?.saldo_bs || 0)}
+          </div>
+        </div>
+        )}
+      </div>
+
+      {/* Saldo de Ventas (Solo para Administradores) */}
+      {isAdmin && (
+        <div className="card" style={{ 
+          background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(0, 210, 255, 0.05) 100%)',
+          border: '1px solid rgba(0, 210, 255, 0.2)',
+          padding: '20px', marginBottom: '24px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>💰 Mi Saldo de Ventas (Acumulado)</h3>
+              <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-muted)' }}>Monto bruto total de pedidos procesados por ti.</p>
+            </div>
+            <button className="btn btn-ghost btn-sm" onClick={refetch}>🔄</button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div translate="no" className="notranslate" style={{ padding: '12px', background: 'var(--bg-panel)', borderRadius: '12px', textAlign: 'center' }}>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Pendiente USD</div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent-success)' }}>{formatUSD(adminSalesBalance.saldo_usd || 0)}</div>
+            </div>
+            <div translate="no" className="notranslate" style={{ padding: '12px', background: 'var(--bg-panel)', borderRadius: '12px', textAlign: 'center' }}>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Pendiente Bs</div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: '#a855f7' }}>{formatBs(adminSalesBalance.saldo_bs || 0)}</div>
+            </div>
+          </div>
+          <button 
+            className="btn btn-primary btn-sm" 
+            style={{ width: '100%', marginTop: '16px', height: '36px', fontSize: '12px' }}
+            onClick={() => onNavigate('pagos_admins')}
+          >
+            Ver Detalle en Pagos Admins
+          </button>
+        </div>
+      )}
+
+      <style>{`
+        @media (max-width: 768px) {
+          .billetera-grid-mobile-reverse {
+            display: flex !important;
+            flex-direction: column-reverse !important;
+          }
+        }
+      `}</style>
+
+      <div className="responsive-grid-2col billetera-grid-mobile-reverse" style={{ display: 'grid', gridTemplateColumns: isAdmin ? '1fr' : '1.2fr 0.8fr', gap: '24px' }}>
         
         {/* COLUMNA IZQUIERDA: RESUMEN Y SOLICITUDES ADMIN */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
-          {/* Tarjetas de Saldo Dual */}
-          <div className="kpi-grid" style={{ marginBottom: '8px' }}>
-            {/* Saldo USD */}
-            {hasWalletUSD && (
-              <div className="card kpi-card" style={{ 
-                background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(0, 210, 255, 0.05) 100%)',
-                textAlign: 'center', border: '1px solid var(--accent-primary)',
-                position: 'relative', overflow: 'hidden'
-              }}>
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(to right, #00d2ff, #3a7bd5)' }}></div>
-                <div className="kpi-label" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                  💵 Saldo USD
-                </div>
-                <div translate="no" className="kpi-value notranslate" style={{ fontWeight: 900, color: 'var(--accent-success)', textShadow: '0 0 20px rgba(34, 197, 94, 0.2)' }}>
-                  {formatUSD(wallet?.saldo || 0)}
-                </div>
-              </div>
-            )}
-
-            {/* Saldo Bs */}
-            {hasWalletBs && (
-            <div className="card kpi-card" style={{ 
-              background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(139, 92, 246, 0.05) 100%)',
-              textAlign: 'center', border: '1px solid rgba(139, 92, 246, 0.4)',
-              position: 'relative', overflow: 'hidden'
-            }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(to right, #8b5cf6, #a855f7)' }}></div>
-              <div className="kpi-label" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                🏦 Saldo Bolívares
-              </div>
-              <div translate="no" className="kpi-value notranslate" style={{ fontWeight: 900, color: '#a855f7', textShadow: '0 0 20px rgba(139, 92, 246, 0.2)' }}>
-                {formatBs(wallet?.saldo_bs || 0)}
-              </div>
-            </div>
-            )}
-          </div>
-
-          {/* Saldo de Ventas (Solo para Administradores) */}
-          {isAdmin && (
-            <div className="card" style={{ 
-              background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(0, 210, 255, 0.05) 100%)',
-              border: '1px solid rgba(0, 210, 255, 0.2)',
-              padding: '20px', marginBottom: '8px'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>💰 Mi Saldo de Ventas (Acumulado)</h3>
-                  <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-muted)' }}>Monto bruto total de pedidos procesados por ti.</p>
-                </div>
-                <button className="btn btn-ghost btn-sm" onClick={refetch}>🔄</button>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div translate="no" className="notranslate" style={{ padding: '12px', background: 'var(--bg-panel)', borderRadius: '12px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Pendiente USD</div>
-                  <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent-success)' }}>{formatUSD(adminSalesBalance.saldo_usd || 0)}</div>
-                </div>
-                <div translate="no" className="notranslate" style={{ padding: '12px', background: 'var(--bg-panel)', borderRadius: '12px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Pendiente Bs</div>
-                  <div style={{ fontSize: '18px', fontWeight: 800, color: '#a855f7' }}>{formatBs(adminSalesBalance.saldo_bs || 0)}</div>
-                </div>
-              </div>
-              <button 
-                className="btn btn-primary btn-sm" 
-                style={{ width: '100%', marginTop: '16px', height: '36px', fontSize: '12px' }}
-                onClick={() => onNavigate('pagos_admins')}
-              >
-                Ver Detalle en Pagos Admins
-              </button>
-            </div>
-          )}
-
           {/* Gestión Admin de Recargas */}
           {isAdmin && (
             <div className="card">

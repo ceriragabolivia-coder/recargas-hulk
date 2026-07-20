@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useCart, useVentas, useMetodosPago, useAuth, useWallet } from '../hooks/useData'
 import { formatUSD, formatBs, playCashRegisterSound } from '../utils/helpers'
 import { supabase } from '../lib/supabase'
@@ -56,6 +57,7 @@ function CountdownTimer({ expiryDate, onExpire }) {
 }
 
 export default function Checkout({ onFinish, embedded = false }) {
+  const navigate = useNavigate()
   const { cart, removeFromCart, clearCart, checkout, totalUSD, totalBs, validateCartPrices } = useCart()
   const { registrarVenta, verificarYRegistrarReferencia } = useVentas()
   const { metodos, cancelarPedidosExpirados, loading: loadingMetodos } = useMetodosPago()
@@ -66,6 +68,7 @@ export default function Checkout({ onFinish, embedded = false }) {
   const { perfil, user, isCliente, refreshPerfil } = useAuth()
   const { wallet } = useWallet()
   const { config } = useConfiguracion()
+  const permitirPagoDirecto = config?.permitir_pago_directo !== 'false'
 
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador';
 
@@ -366,17 +369,24 @@ export default function Checkout({ onFinish, embedded = false }) {
   }
 
   const handleSelectMetodo = (id) => {
-    if (id !== 'wallet') {
+    if (id === 'wallet') {
+      if (hasEnoughBalance) {
+        setSelectedMetodoId('wallet')
+        setUseWalletPartial(true)
+        setUseWalletBs(false)
+      }
+    } else if (id === 'wallet_bs') {
+      if (hasEnoughBalanceBs) {
+        setSelectedMetodoId('wallet_bs')
+        setUseWalletBs(true)
+        setUseWalletPartial(false)
+      }
+    } else {
       setSelectedMetodoId(id)
       setTimeout(() => {
         const mainElement = document.querySelector('.main-content');
         if (mainElement) mainElement.scrollTo({ top: 300, behavior: 'smooth' });
       }, 100);
-    } else {
-      if (hasEnoughBalance) {
-        setSelectedMetodoId('wallet')
-        setUseWalletPartial(true)
-      }
     }
   }
 
@@ -511,54 +521,13 @@ export default function Checkout({ onFinish, embedded = false }) {
       // SI ES PAGO TOTAL CON BILLETERA, GENERAR REFERENCIA AUTOMÁTICA
       if (currentIsWalletOnly) {
         finalReferencia = 'PAGO_BILLETERA_USD_TOTAL'
+        finalMetodoId = null
       } else if (currentIsWalletBsOnly) {
         finalReferencia = 'PAGO_BILLETERA_BS_TOTAL'
+        finalMetodoId = null
       }
 
-      // 1. Procesar débitos de billetera ANTES de crear el pedido para garantizar el pago
-      if ((useWalletPartial || currentIsWalletOnly) && amountUSDToDeduct > 0) {
-        if (currentIsWalletOnly) finalMetodoId = null; // EVITAR ERROR UUID
-        try {
-          const { data: walletRes, error: walletError } = await supabase.rpc('pagar_con_billetera_rpc', {
-            p_user_id: targetUserId,
-            p_amount: amountUSDToDeduct,
-            p_pedido_id: null, 
-            p_description: `Reserva para pedido en proceso - USD`
-          })
 
-          if (walletError || walletRes === false || walletRes?.success === false) {
-            alert(`ERROR COBRO USD: ${walletError?.message || walletRes?.message || 'Fondos insuficientes'}`);
-            setIsProcessing(false);
-            return;
-          }
-        } catch (e) {
-          alert("CRASH COBRO USD: " + e.message);
-          setIsProcessing(false);
-          return;
-        }
-      }
-
-      if ((useWalletBs || currentIsWalletBsOnly) && amountBsToDeduct > 0) {
-        if (currentIsWalletBsOnly) finalMetodoId = null; // EVITAR ERROR UUID
-        try {
-          const { data: walletBsRes, error: walletErrorBs } = await supabase.rpc('pagar_con_billetera_bs_rpc', {
-            p_user_id: targetUserId,
-            p_amount: amountBsToDeduct,
-            p_pedido_id: null,
-            p_description: `Pago Billetera Bs - Monto: ${amountBsToDeduct}`
-          })
-
-          if (walletErrorBs || walletBsRes === false || walletBsRes?.success === false) {
-            alert(`ERROR COBRO BS: ${walletErrorBs?.message || walletBsRes?.message || 'Fondos insuficientes'}`);
-            setIsProcessing(false);
-            return;
-          }
-        } catch (e) {
-          alert("CRASH COBRO BS: " + e.message);
-          setIsProcessing(false);
-          return;
-        }
-      }
 
       // Añadir info de pago fraccionado a la referencia
       if (!currentIsWalletOnly && !currentIsWalletBsOnly) {
@@ -589,8 +558,56 @@ export default function Checkout({ onFinish, embedded = false }) {
       }
 
       const pedidoId = pedidoResult.data.id;
+      const numeroPedido = pedidoResult.data.numero_pedido;
       
       if (!targetUserId) throw new Error('No se pudo identificar al usuario para la transacción.');
+
+      // 1. Procesar débitos de billetera DESPUÉS de crear el pedido para vincularlo correctamente
+      if ((useWalletPartial || currentIsWalletOnly) && amountUSDToDeduct > 0) {
+        try {
+          const { data: walletRes, error: walletError } = await supabase.rpc('pagar_con_billetera_rpc', {
+            p_user_id: targetUserId,
+            p_amount: amountUSDToDeduct,
+            p_pedido_id: pedidoId, 
+            p_description: `Pago Billetera - Pedido #${numeroPedido}`
+          })
+
+          if (walletError || walletRes === false || walletRes?.success === false) {
+            await supabase.from('pedido_items').delete().eq('pedido_id', pedidoId);
+            await supabase.from('pedidos').delete().eq('id', pedidoId);
+            throw new Error(`ERROR COBRO USD: ${walletError?.message || walletRes?.message || 'Fondos insuficientes'}`);
+          }
+        } catch (e) {
+          await supabase.from('pedido_items').delete().eq('pedido_id', pedidoId);
+          await supabase.from('pedidos').delete().eq('id', pedidoId);
+          alert("CRASH COBRO USD: " + e.message);
+          setIsProcessing(false);
+          return;
+        }
+      }
+
+      if ((useWalletBs || currentIsWalletBsOnly) && amountBsToDeduct > 0) {
+        try {
+          const { data: walletBsRes, error: walletErrorBs } = await supabase.rpc('pagar_con_billetera_bs_rpc', {
+            p_user_id: targetUserId,
+            p_amount: amountBsToDeduct,
+            p_pedido_id: pedidoId,
+            p_description: `Pago Billetera Bs - Pedido #${numeroPedido}`
+          })
+
+          if (walletErrorBs || walletBsRes === false || walletBsRes?.success === false) {
+            await supabase.from('pedido_items').delete().eq('pedido_id', pedidoId);
+            await supabase.from('pedidos').delete().eq('id', pedidoId);
+            throw new Error(`ERROR COBRO BS: ${walletErrorBs?.message || walletBsRes?.message || 'Fondos insuficientes'}`);
+          }
+        } catch (e) {
+          await supabase.from('pedido_items').delete().eq('pedido_id', pedidoId);
+          await supabase.from('pedidos').delete().eq('id', pedidoId);
+          alert("CRASH COBRO BS: " + e.message);
+          setIsProcessing(false);
+          return;
+        }
+      }
 
       if (isBinancePay) {
         // Llamar a la Serverless Function de Binance Pay
@@ -674,7 +691,11 @@ export default function Checkout({ onFinish, embedded = false }) {
             {!showTracking ? (
               <div className="fade-in">
                 <div style={{ marginBottom: '24px' }}>
-                  <img loading="lazy" decoding="async" src="/assets/Verificando.PNG.png" alt="Verificación" style={{ width: '120px' }} />
+                  {isAutomaticResult ? (
+                    <div style={{ fontSize: '80px', lineHeight: 1 }}>⏳</div>
+                  ) : (
+                    <img loading="lazy" decoding="async" src="/assets/Verificando.PNG.png" alt="Verificación" style={{ width: '120px' }} />
+                  )}
                 </div>
                 <h2 style={{ color: 'var(--accent-success)', fontWeight: 800 }}>¡Pedido Creado!</h2>
                 <p style={{ color: 'var(--text-muted)', marginBottom: '32px', whiteSpace: 'pre-line', fontSize: '15px' }}>
@@ -1008,7 +1029,7 @@ export default function Checkout({ onFinish, embedded = false }) {
               <>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
                   {hasAnySaldo && !isGratis && hasWalletUSD && (
-                    <div onClick={handleToggleWalletPartial} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '16px', backgroundColor: useWalletPartial ? 'rgba(56, 239, 125, 0.1)' : 'rgba(255,255,255,0.02)', border: `2px solid ${useWalletPartial ? '#38ef7d' : 'rgba(255,255,255,0.05)'}`, cursor: 'pointer', transition: 'all 0.2s', opacity: useWalletBs ? 0.5 : 1 }}>
+                    <div onClick={handleToggleWalletPartial} className={!useWalletPartial ? 'neon-pulse-usd-btn' : ''} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '16px', backgroundColor: useWalletPartial ? 'rgba(56, 239, 125, 0.1)' : 'rgba(255,255,255,0.02)', border: `2px solid ${useWalletPartial ? '#38ef7d' : 'rgba(255,255,255,0.05)'}`, cursor: 'pointer', transition: 'all 0.2s', opacity: useWalletBs ? 0.5 : 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <span style={{ fontSize: '24px' }}>💵</span>
                         <span style={{ fontWeight: 700, fontSize: '15px' }}>Usar Saldo USD</span>
@@ -1017,7 +1038,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                     </div>
                   )}
                   {hasAnySaldoBs && !isGratis && hasWalletBs && (
-                    <div onClick={handleToggleWalletBs} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '16px', backgroundColor: useWalletBs ? 'rgba(168, 85, 247, 0.1)' : 'rgba(255,255,255,0.02)', border: `2px solid ${useWalletBs ? '#a855f7' : 'rgba(255,255,255,0.05)'}`, cursor: 'pointer', transition: 'all 0.2s', opacity: useWalletPartial ? 0.5 : 1 }}>
+                    <div onClick={handleToggleWalletBs} className={!useWalletBs ? 'neon-pulse-bs-btn' : ''} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '16px', backgroundColor: useWalletBs ? 'rgba(168, 85, 247, 0.1)' : 'rgba(255,255,255,0.02)', border: `2px solid ${useWalletBs ? '#a855f7' : 'rgba(255,255,255,0.05)'}`, cursor: 'pointer', transition: 'all 0.2s', opacity: useWalletPartial ? 0.5 : 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <span style={{ fontSize: '24px' }}>🏦</span>
                         <span style={{ fontWeight: 700, fontSize: '15px' }}>Usar Saldo Bs</span>
@@ -1119,7 +1140,20 @@ export default function Checkout({ onFinish, embedded = false }) {
                     </>
                   ) : ((!useWalletPartial && !useWalletBs) || (!hasEnoughBalance && useWalletPartial) || (!hasEnoughBalanceBs && useWalletBs)) ? (
                     <>
-                      {selectedMetodoId && !isWalletOnly && !isWalletBsOnly ? (
+                      {!permitirPagoDirecto ? (
+                        <div style={{ textAlign: 'center', padding: '24px', backgroundColor: 'rgba(239, 68, 68, 0.05)', borderRadius: '16px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                          <span style={{ display: 'block', fontSize: '32px', marginBottom: '12px' }}>⚠️</span>
+                          <h4 style={{ color: '#ef4444', fontWeight: 800, marginBottom: '8px', fontSize: '18px' }}>Pagos Directos Desactivados</h4>
+                          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '14px', marginBottom: '20px' }}>Actualmente solo se permiten compras utilizando el saldo de tu billetera. Por favor, asegúrate de tener saldo suficiente y selecciona tu billetera como método de pago. Si no tienes saldo, recarga tu billetera.</p>
+                          <button 
+                            className="btn btn-outline-primary"
+                            onClick={() => navigate('/billetera')}
+                            style={{ width: '100%', fontWeight: 800, padding: '12px', borderRadius: '12px', border: '2px solid var(--accent-primary)', color: 'var(--accent-primary)', backgroundColor: 'transparent' }}
+                          >
+                            Recargar Billetera
+                          </button>
+                        </div>
+                      ) : selectedMetodoId && !isWalletOnly && !isWalletBsOnly ? (
                         <div className="selected-method-details fade-in">
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', backgroundColor: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>

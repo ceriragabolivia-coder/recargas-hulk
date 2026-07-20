@@ -392,25 +392,6 @@ export default function Landing({ onNavigate }) {
         setNotificaciones(validNotis);
         const unreads = validNotis.filter(n => !n.leido);
         setUnreadCount(unreads.length);
-        
-        if (unreads.length > 0) {
-          const latestUnread = unreads[0];
-          setActiveToast(latestUnread);
-          setTimeout(() => setActiveToast(null), 8000);
-          playNotificationSound();
-          
-          if (typeof Notification !== 'undefined') {
-            if (Notification.permission === 'granted') {
-              new Notification(latestUnread.titulo || 'Notificación', { body: latestUnread.mensaje || '' });
-            } else if (Notification.permission !== 'denied') {
-              Notification.requestPermission().then(perm => {
-                if (perm === 'granted') {
-                  new Notification(latestUnread.titulo || 'Notificación', { body: latestUnread.mensaje || '' });
-                }
-              });
-            }
-          }
-        }
       }
     };
 
@@ -948,10 +929,7 @@ export default function Landing({ onNavigate }) {
               <div
                 className="btn-header-wallet"
                 onClick={() => {
-                  setShowWallet(true);
-                  setShowCheckout(false);
-                  setShowRuleta(false);
-                  setSelectedJuego(null);
+                  navigate('/billetera');
                   window.scrollTo(0, 0);
                 }}
                 title="Billetera"
@@ -1141,7 +1119,10 @@ export default function Landing({ onNavigate }) {
           </div>
         ) : showWallet ? (
           <div className="fade-in wallet-page-wrapper">
-             <LandingWallet onClose={() => setShowWallet(false)} />
+             <LandingWallet onClose={() => {
+                setShowWallet(false);
+                if (location.pathname.toLowerCase() === '/billetera') navigate('/');
+              }} />
           </div>
         ) : showProfile ? (
           <div className="fade-in" style={{ width: '100%', maxWidth: '1000px', margin: '0 auto', padding: '20px' }}>

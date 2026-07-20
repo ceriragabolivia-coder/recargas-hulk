@@ -13,7 +13,37 @@ export function CartProvider({ children }) {
 
   useEffect(() => {
     const savedCart = localStorage.getItem('cart')
-    if (savedCart) setCart(JSON.parse(savedCart))
+    if (savedCart) {
+      try {
+        const parsed = JSON.parse(savedCart)
+        const now = Date.now()
+        // 25 minutes = 25 * 60 * 1000 = 1500000 ms
+        const validItems = parsed.filter(item => {
+          if (!item.added_at) return true // Legacy items
+          return (now - item.added_at) < 1500000
+        })
+        setCart(validItems)
+      } catch (e) {
+        console.error('Error parsing cart:', e)
+      }
+    }
+  }, [])
+
+  // Periodically check for expired items every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCart(prev => {
+        if (prev.length === 0) return prev
+        const now = Date.now()
+        const validItems = prev.filter(item => {
+          if (!item.added_at) return true
+          return (now - item.added_at) < 1500000
+        })
+        if (validItems.length !== prev.length) return validItems
+        return prev
+      })
+    }, 60000)
+    return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {
@@ -32,7 +62,8 @@ export function CartProvider({ children }) {
       venta_usd: finalPrice.venta_usd,
       ...rechargeData,
       nickname: rechargeData.nickname || null,
-      quantity: 1
+      quantity: 1,
+      added_at: Date.now()
     }
 
     setCart(prev => {
