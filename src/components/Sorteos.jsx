@@ -206,8 +206,8 @@ export default function Sorteos() {
   }, [pedidos, ventasPorCliente])
 
   // Lógica de la Ruleta
-  let wheelUsers = usuariosAgrupados.map(u => ({ ...u }))
-  
+  let wheelUsers = [...usuariosAgrupados]
+  // Inyectar ganadores manuales que falten para asegurar que aparezcan visualmente en la ruleta
   if (config?.sorteos_ganadores_manuales) {
       const manualLines = config.sorteos_ganadores_manuales.split('\n').map(l => l.trim()).filter(l => l.length > 0)
       
@@ -219,17 +219,14 @@ export default function Sorteos() {
          
          if (normLinea.length < 3) return
          
-         let found = false;
-         wheelUsers.forEach(u => {
+         const exists = wheelUsers.some(u => {
             const name = normalizeStr(u.nombres)
             const phone = normalizeStr(u.telefono).replace(/\D/g, '')
-            if ((manualDigits.length >= 7 && phone.includes(manualDigits)) || name.includes(normLinea) || normLinea.includes(name)) {
-               u.es_manual = true
-               found = true
-            }
+            if (manualDigits.length >= 7 && phone.includes(manualDigits)) return true
+            return name.includes(normLinea) || normLinea.includes(name)
          })
          
-         if (!found) {
+         if (!exists) {
             // Inyectarlo solo a la ruleta (no a la tabla) para que el sorteo lo pueda seleccionar
             wheelUsers.push({
                id: 'manual_' + idx,
@@ -244,14 +241,10 @@ export default function Sorteos() {
       })
   }
 
-  // Mezclar la ruleta de forma pseudo-aleatoria pero estable para no reordenar en cada render (causaba temblor)
-  wheelUsers = [...wheelUsers].sort((a, b) => {
-     const strA = String(a.id || a.nombres);
-     const strB = String(b.id || b.nombres);
-     let hashA = 0; for(let i=0; i<strA.length; i++) hashA = Math.imul(31, hashA) + strA.charCodeAt(i) | 0;
-     let hashB = 0; for(let i=0; i<strB.length; i++) hashB = Math.imul(31, hashB) + strB.charCodeAt(i) | 0;
-     return hashA - hashB;
-  })
+  // Mezclar la ruleta para que los inyectados no queden todos juntos al final
+  // Una mezcla simple determinista basada en el index o usando random
+  const shuffleSeed = useMemo(() => Math.random(), [wheelUsers.length])
+  wheelUsers = [...wheelUsers].sort((a, b) => 0.5 - Math.random())
 
   const segDeg = wheelUsers.length > 0 ? 360 / wheelUsers.length : 0
   const segments = []
@@ -275,7 +268,35 @@ export default function Sorteos() {
     let winnerSegment = null;
 
     // Filtramos cuáles de los ganadores manuales están realmente en la ruleta actualmente
-    const ganadoresValidos = segments.filter(seg => seg.es_manual)
+    const ganadoresValidos = []
+    
+    if (config?.sorteos_ganadores_manuales) {
+      const lineas = config.sorteos_ganadores_manuales.split('\n').map(l => l.trim()).filter(l => l.length > 0)
+      
+      segments.forEach(seg => {
+        if (seg.es_manual) {
+           ganadoresValidos.push(seg)
+           return
+        }
+
+        const normalizeStr = str => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : '';
+        const name = normalizeStr(seg.nombres)
+        const phone = normalizeStr(seg.telefono).replace(/\D/g, '')
+        
+        const coincide = lineas.some(linea => {
+           const cleanLinea = normalizeStr(linea.split('(')[0].trim())
+           const manualDigits = linea.replace(/\D/g, '')
+           
+           if (manualDigits.length >= 7 && phone.includes(manualDigits)) return true
+           if (cleanLinea.length < 3) return false
+           return name.includes(cleanLinea) || cleanLinea.includes(name)
+        })
+        
+        if (coincide) {
+          ganadoresValidos.push(seg)
+        }
+      })
+    }
 
     if (ganadoresValidos.length > 0) {
       // Escoge al azar entre los ganadores manuales
@@ -531,9 +552,8 @@ export default function Sorteos() {
                   {segments.length === 0 ? (
                     <circle cx={250} cy={250} r={210} fill="#1e2a4a" />
                   ) : segments.map((seg, idx) => {
-                    // Letras un poco más grandes y sin ser tan gruesas para que no se vuelvan borrosas en ruletas llenas
-                    const fontSize = segments.length > 50 ? 13 : segments.length > 25 ? 15 : segments.length > 12 ? 18 : 24
-                    const fWeight = segments.length > 50 ? "600" : "bold"
+                    // Letras mucho más grandes. Alternamos posición para que no colisionen.
+                    const fontSize = segments.length > 50 ? 11 : segments.length > 25 ? 14 : segments.length > 12 ? 18 : 24
                     
                     const parts = seg.nombres.split(' ')
                     // Para optimizar más el espacio si hay muchos usuarios, usar Nombre + Inicial del apellido
@@ -541,18 +561,17 @@ export default function Sorteos() {
                     const shortName = isVeryCrowded 
                       ? parts[0] + (parts[1] ? ` ${parts[1][0]}.` : '')
                       : parts.slice(0, 2).join(' ')
-
-                    // Si hay muchos, quitamos la sombra porque hace que se vea borroso al ser letras pequeñas
-                    const textFilter = isVeryCrowded ? 'none' : 'drop-shadow(0 2px 4px rgba(0,0,0,.8))'
+                    
+                    // Alternar la posición X para que los textos no se amontonen en el centro
+                    const textX = isVeryCrowded ? (idx % 2 === 0 ? 300 : 360) : 290
 
                     return (
                       <g key={seg.id}>
                         <path d={arc(250, 250, 210, seg.startAngle, seg.endAngle)} fill={seg.colorFallback} stroke="rgba(255,255,255,.2)" strokeWidth="1.5" />
                         <g transform={`rotate(${seg.midAngle - 90}, 250, 250)`}>
-                          {/* Alineamos los textos pegados al borde exterior (x=455) anclados al final */}
-                          <text x={455} y={250} textAnchor="end" dominantBaseline="middle"
-                            fontSize={fontSize} fontWeight={fWeight} fill="white"
-                            style={{ filter: textFilter }}>
+                          <text x={textX} y={250} textAnchor="start" dominantBaseline="middle"
+                            fontSize={fontSize} fontWeight="900" fill="white"
+                            style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,.8))' }}>
                             {shortName}
                           </text>
                         </g>

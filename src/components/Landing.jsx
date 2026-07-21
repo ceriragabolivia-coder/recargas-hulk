@@ -242,58 +242,16 @@ export default function Landing({ onNavigate }) {
     
     try {
       let url = ''
-      let options = {}
-      let isCustomAPI = false
-
-      if (selectedJuego.verificacion_api_url) {
-        isCustomAPI = true
-        url = selectedJuego.verificacion_api_url
-          .replace(/\{\{ID\}\}/g, localRechargeData.player_id)
-          .replace(/\{\{ZONE\}\}/g, localRechargeData.zone_id || '')
-        
-        if (selectedJuego.verificacion_api_key) {
-          options.headers = {
-            'x-rapidapi-key': selectedJuego.verificacion_api_key
-          }
-          try {
-            const urlObj = new URL(url)
-            if (urlObj.hostname.includes('rapidapi.com')) {
-              options.headers['x-rapidapi-host'] = urlObj.hostname
-            }
-          } catch(e) { console.error('Error parseando URL de API', e) }
-        }
-      } else if (juegoNombreNormalizado.includes('freefire')) {
+      if (juegoNombreNormalizado.includes('freefire')) {
         url = `https://tiendagiftven.net/conexion_api/api.php?action=ValidarParametros&id=${localRechargeData.player_id}`
       } else if (juegoNombreNormalizado.includes('bloodstrike')) {
         url = `/proxy/bloodstrike?roleid=${localRechargeData.player_id}&client_type=gameclub`
-      } else {
-        alert('Este juego no tiene configurada una API de verificación.')
-        setIsVerificando(false)
-        return
       }
 
-      const response = await fetch(url, options)
+      const response = await fetch(url)
       const data = await response.json()
       
-      if (isCustomAPI) {
-        const nickname = data.username || data.nickname || data.name || data.playerName || data.rolename ||
-                         (data.data && (data.data.username || data.data.nickname || data.data.rolename || data.data.name)) || 
-                         (data.result && data.result.username)
-        
-        if (nickname) {
-          setVerificacionResultado({
-            success: true,
-            nickname: nickname,
-            verified_id: localRechargeData.player_id,
-            mensaje: 'Jugador verificado'
-          })
-        } else {
-          setVerificacionResultado({
-            success: false,
-            mensaje: data.message || data.msg || data.error || data.reason || 'ID no válido o no encontrado'
-          })
-        }
-      } else if (juegoNombreNormalizado.includes('freefire')) {
+      if (juegoNombreNormalizado.includes('freefire')) {
         if (data.alerta === 'green') {
           setVerificacionResultado({
             success: true,

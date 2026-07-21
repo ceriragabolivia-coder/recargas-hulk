@@ -145,8 +145,6 @@ export default function GestionProductos() {
       imagen_pedido_completado_url: null,
       verificacion_api_activa: false,
       verificacion_api_url: '',
-      verificacion_api_key: '',
-      verificacion_api_url: '',
       mostrar_precio_dual: false
     })
     setIsGameModalOpen(true)
@@ -176,7 +174,6 @@ export default function GestionProductos() {
         ? (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('blood strike'))
         : !!selectedJuego.verificacion_api_activa,
       verificacion_api_url: selectedJuego.verificacion_api_url || '',
-      verificacion_api_key: selectedJuego.verificacion_api_key || '',
       mostrar_precio_dual: !!selectedJuego.mostrar_precio_dual
     })
     setIsGameModalOpen(true)
@@ -212,7 +209,6 @@ export default function GestionProductos() {
         imagen_pedido_completado_url: formGame.imagen_pedido_completado_url,
         verificacion_api_activa: formGame.verificacion_api_activa,
         verificacion_api_url: formGame.verificacion_api_url,
-        verificacion_api_key: formGame.verificacion_api_key,
         mostrar_precio_dual: formGame.mostrar_precio_dual
       })
       if (!res.error) {
@@ -1873,35 +1869,19 @@ export default function GestionProductos() {
           </div>
 
           {formGame.verificacion_api_activa && (
-            <>
-              <div className="form-group" style={{ marginBottom: 16 }}>
-                <label className="form-label">URL de la API (Ej: RapidAPI)</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Ej: https://id-game-checker.p.rapidapi.com/free-fire/{{ID}}"
-                  value={formGame.verificacion_api_url}
-                  onChange={e => setFormGame({ ...formGame, verificacion_api_url: e.target.value })}
-                />
-                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-                  Usa <strong>{'{'}{'{'}ID{'}'}{'}'}</strong> para que sea reemplazado por el ID del jugador, y <strong>{'{'}{'{'}ZONE{'}'}{'}'}</strong> por el Server/Zone ID (si aplica).
-                  Si se deja en blanco, intentará usar las APIs internas para Free Fire o Blood Strike.
-                </p>
-              </div>
-              <div className="form-group">
-                <label className="form-label">API Key / Token (Opcional)</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Ej: 75db9b65ccmsh4d5cd9e7a0aa9afp1b818ejsn9..."
-                  value={formGame.verificacion_api_key}
-                  onChange={e => setFormGame({ ...formGame, verificacion_api_key: e.target.value })}
-                />
-                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-                  Clave de autorización requerida por el proveedor (ej. x-rapidapi-key).
-                </p>
-              </div>
-            </>
+            <div className="form-group">
+              <label className="form-label">URL de la API (Opcional - Uso futuro)</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Ej: https://api.game.com/verify?id={{ID}}"
+                value={formGame.verificacion_api_url}
+                onChange={e => setFormGame({ ...formGame, verificacion_api_url: e.target.value })}
+              />
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                Actualmente se usan las APIs integradas para Free Fire y Blood Strike.
+              </p>
+            </div>
           )}
 
           <hr style={{ margin: '24px 0', borderColor: 'var(--border-color)' }} />
