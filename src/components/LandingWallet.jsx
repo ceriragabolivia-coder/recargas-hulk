@@ -239,26 +239,27 @@ export default function LandingWallet({ onClose }) {
         <button className="btn-close-wallet" onClick={onClose}>✕</button>
       </div>
 
-      <div className="wallet-content-grid">
-        {/* COLUMNA IZQUIERDA: SALDOS Y ACTIVIDAD */}
-        <div className="wallet-main-col">
-          {/* Tarjetas de Saldo */}
-          <div className="balance-cards">
-            {hasWalletUSD && (
-              <div className="balance-card usd">
-                <div className="balance-label">SALDO DÓLARES</div>
-                <div className="balance-value">{formatUSD(wallet?.saldo || 0)}</div>
-                <div className="balance-icon">💵</div>
-              </div>
-            )}
-            {hasWalletBs && (
-            <div className="balance-card bs">
-              <div className="balance-label">SALDO BOLÍVARES</div>
-              <div className="balance-value">{formatBs(wallet?.saldo_bs || 0)}</div>
-              <div className="balance-icon">🏦</div>
-            </div>
-            )}
+      {/* Tarjetas de Saldo (Movidas fuera de la grilla para que queden siempre arriba) */}
+      <div className="balance-cards">
+        {hasWalletUSD && (
+          <div className="balance-card usd">
+            <div className="balance-label">SALDO DÓLARES</div>
+            <div className="balance-value">{formatUSD(wallet?.saldo || 0)}</div>
+            <div className="balance-icon">💵</div>
           </div>
+        )}
+        {hasWalletBs && (
+        <div className="balance-card bs">
+          <div className="balance-label">SALDO BOLÍVARES</div>
+          <div className="balance-value">{formatBs(wallet?.saldo_bs || 0)}</div>
+          <div className="balance-icon">🏦</div>
+        </div>
+        )}
+      </div>
+
+      <div className="wallet-content-grid">
+        {/* COLUMNA IZQUIERDA: ACTIVIDAD */}
+        <div className="wallet-main-col">
 
           {/* Gestión Admin (Si aplica) */}
           {isAdmin && pendingRecargas.length > 0 && (
@@ -927,9 +928,9 @@ export default function LandingWallet({ onClose }) {
           .landing-wallet-container { padding: 16px; border-radius: 16px; }
           .wallet-header { margin-bottom: 20px; padding-bottom: 12px; }
           .wallet-title-area h2 { font-size: 22px; }
-          .wallet-content-grid { grid-template-columns: 1fr; gap: 20px; }
-          .wallet-sidebar { order: 2; }
-          .wallet-main-col { order: 1; }
+          .wallet-content-grid { grid-template-columns: 1fr; gap: 20px; display: flex; flex-direction: column; }
+          .wallet-sidebar { order: 1; }
+          .wallet-main-col { order: 2; }
           .recharge-form-card { position: static; padding: 15px; margin-top: 0; }
           .landing-wallet-container { padding: 15px; border-radius: 16px; }
           .balance-cards { grid-template-columns: 1fr; gap: 12px; }
