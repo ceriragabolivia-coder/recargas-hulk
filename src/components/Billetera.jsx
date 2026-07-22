@@ -641,14 +641,14 @@ export default function Billetera({ onNavigate }) {
                 // Combinar transacciones aprobadas + recargas no aprobadas
                 const combined = [
                   ...filteredTransacciones
-                    .filter(t => !isCliente || t.moneda !== 'usd')
+                    .filter(t => (t.moneda === 'bs' ? hasWalletBs : hasWalletUSD))
                     .map(t => ({
                       id: t.id, fecha: t.created_at, desc: t.descripcion,
                       monto: t.monto, tipo: t.tipo, estado: 'completado', moneda: t.moneda || 'usd',
                       referencia_id: t.referencia_id
                     })),
                   ...recargas
-                    .filter(r => r.estado !== 'aprobado' && (!isCliente || r.moneda !== 'usd'))
+                    .filter(r => r.estado !== 'aprobado' && (r.moneda === 'bs' ? hasWalletBs : hasWalletUSD))
                     .map(r => ({
                       id: r.id, fecha: r.created_at,
                       desc: `Solicitud de Recarga ${r.moneda === 'bs' ? '(Bs)' : '(USD)'} (${r.metodos_pago?.nombre || 'Pago'}) - Ref: ${r.referencia_pago}`,

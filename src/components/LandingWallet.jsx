@@ -210,13 +210,13 @@ export default function LandingWallet({ onClose }) {
   const combinedHistory = useMemo(() => {
     const history = [
       ...transacciones
-        .filter(t => !isCliente || t.moneda !== 'usd')
+        .filter(t => (t.moneda === 'bs' ? hasWalletBs : hasWalletUSD))
         .map(t => ({
           id: t.id, fecha: t.created_at, desc: t.descripcion,
           monto: t.monto, tipo: t.tipo, estado: 'completado', moneda: t.moneda || 'usd'
         })),
       ...recargas
-        .filter(r => r.estado !== 'aprobado' && (!isCliente || r.moneda !== 'usd'))
+        .filter(r => r.estado !== 'aprobado' && (r.moneda === 'bs' ? hasWalletBs : hasWalletUSD))
         .map(r => ({
           id: r.id, fecha: r.created_at,
           desc: `Recarga (${r.metodos_pago?.nombre || 'Pago'})`,

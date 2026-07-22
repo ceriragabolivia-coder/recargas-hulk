@@ -460,9 +460,12 @@ export default function Landing({ onNavigate }) {
       }, payload => {
         const updated = payload.new;
         if (updated.estado === 'aprobado') {
+          const montoStr = updated.moneda === 'bs' 
+            ? `${formatBs(updated.monto)} Bs`
+            : `$${Number(updated.monto).toFixed(2)}`;
           setActiveToast({
             titulo: '✅ ¡Saldo Acreditado!',
-            mensaje: `Tu recarga por ${formatBs(updated.moneda === 'bs' ? updated.monto : Math.round(updated.monto * (Number(config?.tasa_dolar) || 1)))} ha sido aprobada.`,
+            mensaje: `Tu recarga por ${montoStr} ha sido aprobada.`,
             type: 'success'
           });
           setTimeout(() => setActiveToast(null), 10000);
