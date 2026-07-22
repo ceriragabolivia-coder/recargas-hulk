@@ -16,8 +16,33 @@ export default function Configuracion() {
   
   // Estado para el formulario de edición/creación
   const [isEditing, setIsEditing] = useState(false)
-  const [currentMetodo, setCurrentMetodo] = useState({ nombre: '', datos: '', activo: true, icono_url: null, qr_url: null })
+  const [currentMetodo, setCurrentMetodo] = useState({ nombre: '', datos: '', activo: true, icono_url: null, qr_url: null, beneficios_extra: {} })
   const [showForm, setShowForm] = useState(false)
+
+  // Estados para Beneficios Extra en métodos de pago
+  const [beneficioMonto, setBeneficioMonto] = useState('')
+  const [beneficioPorcentaje, setBeneficioPorcentaje] = useState('')
+
+  const handleAddBeneficio = () => {
+    if (!beneficioMonto || !beneficioPorcentaje) return
+    setCurrentMetodo(prev => ({
+      ...prev,
+      beneficios_extra: {
+        ...(prev.beneficios_extra || {}),
+        [beneficioMonto]: parseFloat(beneficioPorcentaje)
+      }
+    }))
+    setBeneficioMonto('')
+    setBeneficioPorcentaje('')
+  }
+
+  const handleRemoveBeneficio = (monto) => {
+    setCurrentMetodo(prev => {
+      const newB = { ...(prev.beneficios_extra || {}) }
+      delete newB[monto]
+      return { ...prev, beneficios_extra: newB }
+    })
+  }
 
   // Estado para Mensajes Pop-up
   const [showMensajeForm, setShowMensajeForm] = useState(false)
@@ -192,7 +217,7 @@ export default function Configuracion() {
   }
 
   const handleAddNew = () => {
-    setCurrentMetodo({ nombre: '', datos: '', activo: true, icono_url: null, qr_url: null })
+    setCurrentMetodo({ nombre: '', datos: '', activo: true, icono_url: null, qr_url: null, beneficios_extra: {} })
     setIsEditing(false)
     setShowForm(true)
   }
@@ -271,10 +296,11 @@ export default function Configuracion() {
         datos: currentMetodo.datos,
         activo: currentMetodo.activo,
         icono_url: currentMetodo.icono_url,
-        qr_url: currentMetodo.qr_url
+        qr_url: currentMetodo.qr_url,
+        beneficios_extra: currentMetodo.beneficios_extra || {}
       })
     } else {
-      await createMetodo(currentMetodo.nombre, currentMetodo.datos, currentMetodo.icono_url, currentMetodo.qr_url)
+      await createMetodo(currentMetodo.nombre, currentMetodo.datos, currentMetodo.icono_url, currentMetodo.qr_url, currentMetodo.beneficios_extra || {})
     }
     setShowForm(false)
   }
@@ -761,6 +787,59 @@ export default function Configuracion() {
                           required
                         />
                       </div>
+                      
+                      {/* Beneficios Extra por Monto */}
+                      <div className="form-group" style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '12px' }}>
+                        <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '18px' }}>🎁</span> Beneficios Extra por Monto
+                        </label>
+                        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                          Opcional. Asigna un porcentaje extra al cliente cuando recargue un monto específico con este método.
+                        </p>
+                        
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', marginBottom: '16px' }}>
+                          <div style={{ flex: 1 }}>
+                            <label style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>Monto ($/Bs)</label>
+                            <input 
+                              type="number" 
+                              className="form-input" 
+                              placeholder="Ej: 25"
+                              value={beneficioMonto}
+                              onChange={(e) => setBeneficioMonto(e.target.value)}
+                            />
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <label style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>% Extra</label>
+                            <input 
+                              type="number" 
+                              step="0.1"
+                              className="form-input" 
+                              placeholder="Ej: 1.5"
+                              value={beneficioPorcentaje}
+                              onChange={(e) => setBeneficioPorcentaje(e.target.value)}
+                            />
+                          </div>
+                          <button type="button" className="btn btn-primary" onClick={handleAddBeneficio}>
+                            Añadir
+                          </button>
+                        </div>
+
+                        {currentMetodo.beneficios_extra && Object.keys(currentMetodo.beneficios_extra).length > 0 && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {Object.entries(currentMetodo.beneficios_extra).map(([monto, porcentaje]) => (
+                              <div key={monto} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-panel)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                                <div style={{ fontSize: '14px' }}>
+                                  Al recargar <strong>{monto}</strong> recibe <strong>+{porcentaje}%</strong>
+                                </div>
+                                <button type="button" className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => handleRemoveBeneficio(monto)}>
+                                  Eliminar
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      
                       <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
                         <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={uploadingImage}>
                           {isEditing ? 'Guardar Cambios' : 'Crear Método'}

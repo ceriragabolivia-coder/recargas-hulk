@@ -809,10 +809,10 @@ export function useMetodosPago() {
     setLoading(false)
   }
 
-  async function createMetodo(nombre, datos, iconoUrl = null, qrUrl = null) {
+  async function createMetodo(nombre, datos, iconoUrl = null, qrUrl = null, beneficiosExtra = {}) {
     const { data, error } = await supabase
       .from('metodos_pago')
-      .insert([{ nombre, datos, icono_url: iconoUrl, qr_url: qrUrl }])
+      .insert([{ nombre, datos, icono_url: iconoUrl, qr_url: qrUrl, beneficios_extra: beneficiosExtra }])
       .select()
     if (!error && data) {
       setMetodos(prev => [...prev, data[0]])

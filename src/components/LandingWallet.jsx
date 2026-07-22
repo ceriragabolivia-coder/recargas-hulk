@@ -461,6 +461,31 @@ export default function LandingWallet({ onClose }) {
                 </div>
               </div>
 
+              {metodoId && monto && (() => {
+                const selected = metodos.find(m => m.id === metodoId)
+                if (!selected || !selected.beneficios_extra) return null;
+                const strMonto = monto.toString().replace('.00', '');
+                const porcentaje = selected.beneficios_extra[strMonto];
+                if (!porcentaje) return null;
+                const bono = parseFloat(monto) * (parseFloat(porcentaje) / 100);
+                return (
+                  <div className="fade-in" style={{
+                    padding: '12px 16px', backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    border: '1px dashed var(--accent-success)', borderRadius: '12px',
+                    color: 'var(--accent-success)', fontWeight: 600, fontSize: '14px',
+                    display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px'
+                  }}>
+                    <span style={{ fontSize: '24px' }}>🎁</span>
+                    <div>
+                      <div style={{ fontWeight: 800 }}>¡BONO DEL {porcentaje}% APLICADO!</div>
+                      <div style={{ fontSize: '12px', opacity: 0.9 }}>
+                        Recibirás {monedaRecarga === 'bs' ? formatBs(parseFloat(monto) + bono) + ' Bs' : formatUSD(parseFloat(monto) + bono)} en total en tu billetera.
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+
               {metodoId && (
                 <>
                   {/* BANNER UBIIPAGOS (Recreado con CSS) */}
