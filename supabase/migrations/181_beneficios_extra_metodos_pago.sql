@@ -40,14 +40,15 @@ BEGIN
     FROM public.metodos_pago
     WHERE id = v_metodo_id;
 
-    -- Calcular bono si el monto exacto está configurado (e.g. "25", "25.00")
-    -- Probaremos con la versión sin decimales si es entero, o con el numero normal convertido a texto.
+    -- Calcular bono asegurándonos de que coincida con la moneda de la recarga
     v_str_amount := REPLACE(v_amount::TEXT, '.00', ''); 
     
-    IF v_beneficios_extra IS NOT NULL AND v_beneficios_extra ? v_str_amount THEN
-        v_porcentaje_extra := (v_beneficios_extra->>v_str_amount)::NUMERIC;
-        IF v_porcentaje_extra > 0 THEN
-            v_monto_extra := v_amount * (v_porcentaje_extra / 100);
+    IF v_beneficios_extra IS NOT NULL AND v_beneficios_extra ? v_moneda THEN
+        IF (v_beneficios_extra->v_moneda) ? v_str_amount THEN
+            v_porcentaje_extra := ((v_beneficios_extra->v_moneda)->>v_str_amount)::NUMERIC;
+            IF v_porcentaje_extra > 0 THEN
+                v_monto_extra := v_amount * (v_porcentaje_extra / 100);
+            END IF;
         END IF;
     END IF;
 
@@ -142,10 +143,12 @@ BEGIN
 
     v_str_amount := REPLACE(v_recarga.monto::TEXT, '.00', ''); 
     
-    IF v_beneficios_extra IS NOT NULL AND v_beneficios_extra ? v_str_amount THEN
-        v_porcentaje_extra := (v_beneficios_extra->>v_str_amount)::NUMERIC;
-        IF v_porcentaje_extra > 0 THEN
-            v_monto_extra := v_recarga.monto * (v_porcentaje_extra / 100);
+    IF v_beneficios_extra IS NOT NULL AND v_beneficios_extra ? COALESCE(v_recarga.moneda, 'usd') THEN
+        IF (v_beneficios_extra->COALESCE(v_recarga.moneda, 'usd')) ? v_str_amount THEN
+            v_porcentaje_extra := ((v_beneficios_extra->COALESCE(v_recarga.moneda, 'usd'))->>v_str_amount)::NUMERIC;
+            IF v_porcentaje_extra > 0 THEN
+                v_monto_extra := v_recarga.monto * (v_porcentaje_extra / 100);
+            END IF;
         END IF;
     END IF;
 

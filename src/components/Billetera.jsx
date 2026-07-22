@@ -892,7 +892,7 @@ export default function Billetera({ onNavigate }) {
                 const selected = metodos.find(m => m.id === metodoId)
                 if (!selected || !selected.beneficios_extra) return null;
                 const strMonto = monto.toString().replace('.00', '');
-                const porcentaje = selected.beneficios_extra[strMonto];
+                const porcentaje = selected.beneficios_extra[monedaRecarga]?.[strMonto];
                 if (!porcentaje) return null;
                 const bono = parseFloat(monto) * (parseFloat(porcentaje) / 100);
                 return (

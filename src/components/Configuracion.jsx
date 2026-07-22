@@ -22,24 +22,40 @@ export default function Configuracion() {
   // Estados para Beneficios Extra en métodos de pago
   const [beneficioMonto, setBeneficioMonto] = useState('')
   const [beneficioPorcentaje, setBeneficioPorcentaje] = useState('')
+  const [beneficioMoneda, setBeneficioMoneda] = useState('usd')
 
   const handleAddBeneficio = () => {
     if (!beneficioMonto || !beneficioPorcentaje) return
-    setCurrentMetodo(prev => ({
-      ...prev,
-      beneficios_extra: {
-        ...(prev.beneficios_extra || {}),
-        [beneficioMonto]: parseFloat(beneficioPorcentaje)
+    setCurrentMetodo(prev => {
+      const currentB = prev.beneficios_extra || {}
+      const curMonedaB = currentB[beneficioMoneda] || {}
+      return {
+        ...prev,
+        beneficios_extra: {
+          ...currentB,
+          [beneficioMoneda]: {
+            ...curMonedaB,
+            [beneficioMonto]: parseFloat(beneficioPorcentaje)
+          }
+        }
       }
-    }))
+    })
     setBeneficioMonto('')
     setBeneficioPorcentaje('')
   }
 
-  const handleRemoveBeneficio = (monto) => {
+  const handleRemoveBeneficio = (moneda, monto) => {
     setCurrentMetodo(prev => {
       const newB = { ...(prev.beneficios_extra || {}) }
-      delete newB[monto]
+      if (newB[moneda]) {
+        const newMonedaB = { ...newB[moneda] }
+        delete newMonedaB[monto]
+        if (Object.keys(newMonedaB).length === 0) {
+          delete newB[moneda]
+        } else {
+          newB[moneda] = newMonedaB
+        }
+      }
       return { ...prev, beneficios_extra: newB }
     })
   }
@@ -794,12 +810,24 @@ export default function Configuracion() {
                           <span style={{ fontSize: '18px' }}>🎁</span> Beneficios Extra por Monto
                         </label>
                         <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>
-                          Opcional. Asigna un porcentaje extra al cliente cuando recargue un monto específico con este método.
+                          Opcional. Asigna un porcentaje extra al cliente cuando recargue un monto específico con este método en una moneda particular.
                         </p>
                         
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', marginBottom: '16px' }}>
-                          <div style={{ flex: 1 }}>
-                            <label style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>Monto ($/Bs)</label>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', marginBottom: '16px', flexWrap: 'wrap' }}>
+                          <div style={{ flex: 1, minWidth: '100px' }}>
+                            <label style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>Moneda</label>
+                            <select 
+                              className="form-input" 
+                              value={beneficioMoneda}
+                              onChange={(e) => setBeneficioMoneda(e.target.value)}
+                              style={{ padding: '8px 12px' }}
+                            >
+                              <option value="usd">Dólares (USD)</option>
+                              <option value="bs">Bolívares (Bs)</option>
+                            </select>
+                          </div>
+                          <div style={{ flex: 1, minWidth: '100px' }}>
+                            <label style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>Monto</label>
                             <input 
                               type="number" 
                               className="form-input" 
@@ -808,7 +836,7 @@ export default function Configuracion() {
                               onChange={(e) => setBeneficioMonto(e.target.value)}
                             />
                           </div>
-                          <div style={{ flex: 1 }}>
+                          <div style={{ flex: 1, minWidth: '100px' }}>
                             <label style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>% Extra</label>
                             <input 
                               type="number" 
@@ -826,16 +854,22 @@ export default function Configuracion() {
 
                         {currentMetodo.beneficios_extra && Object.keys(currentMetodo.beneficios_extra).length > 0 && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {Object.entries(currentMetodo.beneficios_extra).map(([monto, porcentaje]) => (
-                              <div key={monto} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-panel)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                                <div style={{ fontSize: '14px' }}>
-                                  Al recargar <strong>{monto}</strong> recibe <strong>+{porcentaje}%</strong>
+                            {['usd', 'bs'].map(moneda => {
+                              if (!currentMetodo.beneficios_extra[moneda]) return null;
+                              return Object.entries(currentMetodo.beneficios_extra[moneda]).map(([monto, porcentaje]) => (
+                                <div key={`${moneda}-${monto}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-panel)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                                  <div style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: moneda === 'bs' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(0, 210, 255, 0.2)', color: moneda === 'bs' ? '#a855f7' : 'var(--accent-primary)', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                                      {moneda}
+                                    </span>
+                                    <span>Al recargar <strong>{monto}</strong> recibe <strong>+{porcentaje}%</strong></span>
+                                  </div>
+                                  <button type="button" className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => handleRemoveBeneficio(moneda, monto)}>
+                                    Eliminar
+                                  </button>
                                 </div>
-                                <button type="button" className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }} onClick={() => handleRemoveBeneficio(monto)}>
-                                  Eliminar
-                                </button>
-                              </div>
-                            ))}
+                              ))
+                            })}
                           </div>
                         )}
                       </div>
