@@ -489,6 +489,7 @@ export default function LandingWallet({ onClose }) {
               {metodoId && (
                 <>
                   {/* BANNER UBIIPAGOS (Recreado con CSS) */}
+                  {monedaRecarga === 'bs' && (
                   <div style={{ marginBottom: '24px', width: '100%', backgroundColor: '#0a0a0a', borderRadius: '12px', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '24px', border: '1px solid rgba(255,255,255,0.08)', flexWrap: 'wrap', boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)' }}>
                     <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' }}>
                       <span style={{ color: '#fff', fontWeight: 900, fontSize: '18px', fontStyle: 'italic', letterSpacing: '0.5px', lineHeight: 1.2 }}>NO SE RECIBEN PAGOS</span>
@@ -507,6 +508,7 @@ export default function LandingWallet({ onClose }) {
                        <span style={{ color: '#fff', fontWeight: 400, fontSize: '26px' }}>pagos</span>
                     </div>
                   </div>
+                  )}
 
                   <div className="payment-details fade-in">
                     <div className="details-header">Datos para el pago:</div>
