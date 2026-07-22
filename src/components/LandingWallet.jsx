@@ -952,12 +952,13 @@ export default function LandingWallet({ onClose }) {
           .landing-wallet-container { padding: 16px; border-radius: 16px; }
           .wallet-header { margin-bottom: 20px; padding-bottom: 12px; }
           .wallet-title-area h2 { font-size: 22px; }
-          .wallet-content-grid { grid-template-columns: 1fr; gap: 20px; }
-          .wallet-sidebar { order: 2; }
-          .wallet-main-col { order: 1; }
+          .wallet-content-grid { grid-template-columns: 1fr; gap: 20px; display: flex; flex-direction: column; }
+          .wallet-main-col { display: contents; }
+          .balance-cards { order: 1; grid-template-columns: 1fr; gap: 12px; }
+          .admin-section { order: 2; }
+          .wallet-sidebar { order: 3; }
+          .wallet-section { order: 4; }
           .recharge-form-card { position: static; padding: 15px; margin-top: 0; }
-          .landing-wallet-container { padding: 15px; border-radius: 16px; }
-          .balance-cards { grid-template-columns: 1fr; gap: 12px; }
           .balance-card { padding: 12px; }
           .balance-value { font-size: 22px; }
           .balance-icon { font-size: 26px; }
