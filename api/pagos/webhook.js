@@ -112,6 +112,27 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Faltan campos requeridos (referencia o monto)' });
     }
 
+    // =========================================================
+    // 0. VERIFICAR SI EL MÓDULO APK ESTÁ HABILITADO
+    // =========================================================
+    const { data: apkConfig } = await supabase
+      .from('configuracion')
+      .select('valor_texto, valor')
+      .eq('clave', 'pagos_apk_enabled')
+      .is('owner_id', null)
+      .single();
+    
+    const isApkEnabled = apkConfig ? (apkConfig.valor_texto === 'true' || apkConfig.valor === true) : true;
+
+    if (!isApkEnabled) {
+      console.log('🚫 Recepción de Pagos APK deshabilitada. Referencia ignorada:', referencia);
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Módulo APK deshabilitado temporalmente', 
+        ignorado: true 
+      });
+    }
+
     let pedido_id = null;
     let usuario_id = null;
     let auto_despachado = false;

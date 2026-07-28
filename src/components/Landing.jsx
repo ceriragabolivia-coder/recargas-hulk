@@ -242,16 +242,37 @@ export default function Landing({ onNavigate }) {
     
     try {
       let url = ''
-      if (juegoNombreNormalizado.includes('freefire')) {
+      let isCustomApi = false
+      if (selectedJuego.verificacion_api_url && selectedJuego.verificacion_api_url.trim() !== '') {
+        url = selectedJuego.verificacion_api_url.replace(/\{\{?ID\}\}?/gi, localRechargeData.player_id).replace(/\{\{?ZONE\}\}?/gi, localRechargeData.zone_id || '')
+        isCustomApi = true
+      } else if (juegoNombreNormalizado.includes('freefire')) {
         url = `https://tiendagiftven.net/conexion_api/api.php?action=ValidarParametros&id=${localRechargeData.player_id}`
       } else if (juegoNombreNormalizado.includes('bloodstrike')) {
         url = `/proxy/bloodstrike?roleid=${localRechargeData.player_id}&client_type=gameclub`
+      } else {
+        throw new Error("No hay URL de verificación configurada")
       }
 
       const response = await fetch(url)
-      const data = await response.json()
+      const data = await response.json().catch(() => ({}))
       
-      if (juegoNombreNormalizado.includes('freefire')) {
+      if (isCustomApi) {
+        if (data.status === true || data.success === true || data.code === 200 || data.code === "0000" || data.status === "success" || data.alerta === 'green') {
+          const playerName = data.name || data.nickname || data.username || data.player_name || data.data?.name || data.data?.nickname || data.data?.username || data.data?.rolename || 'Jugador Encontrado'
+          setVerificacionResultado({
+            success: true,
+            nickname: playerName,
+            verified_id: localRechargeData.player_id,
+            mensaje: data.message || data.mensaje || 'ID Verificado exitosamente'
+          })
+        } else {
+          setVerificacionResultado({
+            success: false,
+            mensaje: data.message || data.mensaje || data.msg || data.error || 'Jugador no encontrado o error en la API'
+          })
+        }
+      } else if (juegoNombreNormalizado.includes('freefire')) {
         if (data.alerta === 'green') {
           setVerificacionResultado({
             success: true,
@@ -1359,7 +1380,13 @@ export default function Landing({ onNavigate }) {
                                 placeholder="Introduce el ID"
                                 value={localRechargeData.player_id}
                                 onChange={e => {
-                                  const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 30);
+                                  let val = e.target.value;
+                                  if (effectiveMetodoRecarga === 'id_alfanumerico') {
+                                    val = val.replace(/[^a-zA-Z0-9_-]/g, '');
+                                  } else {
+                                    val = val.replace(/[^0-9]/g, '');
+                                  }
+                                  val = val.slice(0, 30);
                                   setLocalRechargeData({...localRechargeData, player_id: val});
                                   if (verificacionResultado) setVerificacionResultado(null);
                                 }}

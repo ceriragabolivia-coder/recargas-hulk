@@ -39,6 +39,7 @@ export default function Billetera({ onNavigate }) {
   const [loadingOrder, setLoadingOrder] = useState(false)
   const [pinCode, setPinCode] = useState('')
   const [isRedeemingPin, setIsRedeemingPin] = useState(false)
+  const [pinAlert, setPinAlert] = useState(null)
 
   // Estado para solicitudes pendientes (Solo Admin)
   const [pendingRecargas, setPendingRecargas] = useState([])
@@ -198,27 +199,28 @@ export default function Billetera({ onNavigate }) {
 
   const handleRedeemPin = async (e) => {
     e.preventDefault()
-    if (!pinCode) return
+    if (!pinCode.trim()) return
+
     setIsRedeemingPin(true)
+    setPinAlert(null)
     try {
-      const { data, error } = await supabase.rpc('canjear_pin', { p_codigo: pinCode, p_user_id: user?.id })
-      
-      if (error) {
-        throw error;
-      }
-      
-      if (!data?.success) {
-        setAlertModal({ type: 'error', message: data?.message || 'Error al canjear el pin.' })
-      } else {
-        setAlertModal({ 
-          type: 'success', 
-          message: `¡Pin canjeado exitosamente! Se han añadido ${data.moneda === 'bs' ? formatBs(data.monto) + ' Bs' : formatUSD(data.monto)} a tu billetera.` 
-        })
+      const { data, error } = await supabase.rpc('canjear_pin', {
+        p_codigo: pinCode.trim().toUpperCase(),
+        p_user_id: user.id
+      })
+
+      if (error) throw error
+
+      if (data && data.success) {
+        setPinAlert({ type: 'success', message: `¡Pin canjeado exitosamente! Has recibido ${data.moneda === 'bs' ? formatBs(data.monto) + ' Bs' : formatUSD(data.monto)}` })
         setPinCode('')
-        refetch() // Recargar billetera
+        refetch() // Actualizar saldos e historial
+      } else {
+        setPinAlert({ type: 'error', message: data?.message || 'Error al canjear el pin.' })
       }
     } catch (err) {
-      setAlertModal({ type: 'error', message: 'Error de conexión o el pin no es válido: ' + err.message })
+      console.error(err)
+      setPinAlert({ type: 'error', message: 'Error de conexión al canjear pin: ' + err.message })
     } finally {
       setIsRedeemingPin(false)
     }
@@ -1113,6 +1115,11 @@ export default function Billetera({ onNavigate }) {
                 required
               />
             </div>
+            {pinAlert && (
+                <div className={`alert-inline ${pinAlert.type}`} style={{ padding: '12px', borderRadius: '10px', fontSize: '13px', marginBottom: '15px', textAlign: 'center', background: pinAlert.type === 'error' ? 'rgba(255, 82, 82, 0.1)' : 'rgba(0, 200, 83, 0.1)', color: pinAlert.type === 'error' ? '#ff5252' : '#00c853', border: `1px solid ${pinAlert.type === 'error' ? '#ff5252' : '#00c853'}` }}>
+                  {pinAlert.message}
+                </div>
+            )}
             <button 
               type="submit" 
               className="btn btn-primary" 

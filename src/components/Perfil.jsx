@@ -611,19 +611,24 @@ export default function Perfil() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       {objetivos.filter(obj => obj.codigo_id === null || obj.codigo_id === c.id).map(obj => {
                         const canjeado = recompensasCanjeadas.find(rc => rc.objetivo_id === obj.id && rc.codigo_id === c.id)
+                        
+                        const totalRegistrados = c.usuarios_registrados
+                        const progresoRegistros = Math.min((totalRegistrados / obj.meta_registros) * 100, 100)
+
                         const referidosValidos = obj.referidos_validos !== undefined ? obj.referidos_validos : c.usuarios_registrados
-                        const progreso = Math.min((referidosValidos / obj.meta_registros) * 100, 100)
+                        const progresoCompras = Math.min((referidosValidos / obj.meta_registros) * 100, 100)
+
                         const alcanzado = referidosValidos >= obj.meta_registros
                         
                         return (
                           <div key={obj.id} style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '12px', padding: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                               <div style={{ display: 'flex', flexDirection: 'column' }}>
                                 <span style={{ fontSize: '13px', fontWeight: 600 }}>Meta: {obj.meta_registros} referidos</span>
                                 {obj.compras_minimas_usuario > 0 && <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Mín. compras: {obj.compras_minimas_usuario}</span>}
                               </div>
                               {canjeado ? (
-                                <span style={{ fontSize: '11px', background: 'rgba(56, 239, 125, 0.1)', color: '#38ef7d', padding: '2px 8px', borderRadius: '8px', fontWeight: 'bold' }}>✓ RECLAMADO</span>
+                                <span style={{ fontSize: '11px', background: 'rgba(56, 239, 125, 0.1)', color: '#38ef7d', padding: '4px 8px', borderRadius: '8px', fontWeight: 'bold' }}>✓ RECLAMADO</span>
                               ) : alcanzado ? (
                                 <button 
                                   className="btn btn-sm" 
@@ -633,15 +638,33 @@ export default function Perfil() {
                                 >
                                   {redeemingObjetivoId === obj.id ? '...' : '🎁 CANJEAR'}
                                 </button>
-                              ) : (
-                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{referidosValidos} / {obj.meta_registros}</span>
-                              )}
+                              ) : null}
                             </div>
                             
-                            {/* Barra de progreso */}
+                            {/* Barras de progreso */}
                             {!canjeado && (
-                              <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden', marginBottom: '8px' }}>
-                                <div style={{ height: '100%', width: `${progreso}%`, background: alcanzado ? '#38ef7d' : '#FFD700', transition: 'width 0.5s ease' }}></div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '12px' }}>
+                                {/* Barra 1: Usuarios Registrados */}
+                                <div>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                                    <span>Usuarios Registrados</span>
+                                    <span>{totalRegistrados} / {obj.meta_registros}</span>
+                                  </div>
+                                  <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+                                    <div style={{ height: '100%', width: `${progresoRegistros}%`, background: '#3498db', transition: 'width 0.5s ease' }}></div>
+                                  </div>
+                                </div>
+                                
+                                {/* Barra 2: Usuarios que cumplen compras */}
+                                <div>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                                    <span>{obj.compras_minimas_usuario > 0 ? `Usuarios con Mín. ${obj.compras_minimas_usuario} Compras` : 'Compras Válidas'}</span>
+                                    <span style={{ fontWeight: alcanzado ? 'bold' : 'normal', color: alcanzado ? '#38ef7d' : 'inherit' }}>{referidosValidos} / {obj.meta_registros}</span>
+                                  </div>
+                                  <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+                                    <div style={{ height: '100%', width: `${progresoCompras}%`, background: alcanzado ? '#38ef7d' : '#FFD700', transition: 'width 0.5s ease' }}></div>
+                                  </div>
+                                </div>
                               </div>
                             )}
 

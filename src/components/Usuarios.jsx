@@ -411,6 +411,17 @@ export default function Usuarios({ onNavigate, params }) {
 
   // Lógica de filtrado y paginación
   const filterKey = params?.filterKey || ''
+  const [sortBilletera, setSortBilletera] = useState({ currency: 'usd', order: 'none' }) // order: 'none', 'desc', 'asc'
+
+  const handleSortBilletera = (currency) => {
+    if (sortBilletera.currency === currency) {
+      if (sortBilletera.order === 'none') setSortBilletera({ currency, order: 'desc' })
+      else if (sortBilletera.order === 'desc') setSortBilletera({ currency, order: 'asc' })
+      else setSortBilletera({ currency, order: 'none' })
+    } else {
+      setSortBilletera({ currency, order: 'desc' })
+    }
+  }
 
   useEffect(() => {
     if (params?.openWalletUserId && clientes.length > 0) {
@@ -432,10 +443,21 @@ export default function Usuarios({ onNavigate, params }) {
     )
   })
 
-  const totalPages = Math.ceil(filteredClientes.length / itemsPerPage)
+  const sortedClientes = [...filteredClientes].sort((a, b) => {
+    if (sortBilletera.order === 'none') return 0
+    
+    const field = sortBilletera.currency === 'bs' ? 'billetera_saldo_bs' : 'billetera_saldo'
+    const saldoA = a[field] || 0
+    const saldoB = b[field] || 0
+    
+    if (sortBilletera.order === 'desc') return saldoB - saldoA
+    return saldoA - saldoB
+  })
+
+  const totalPages = Math.ceil(sortedClientes.length / itemsPerPage)
   const indexOfLastItem = currentPage * itemsPerPage
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const currentClientes = filteredClientes.slice(indexOfFirstItem, indexOfLastItem)
+  const currentClientes = sortedClientes.slice(indexOfFirstItem, indexOfLastItem)
 
   return (
     <div className="page-content" style={{ maxWidth: '100%', padding: '0 24px', margin: '0 auto' }}>
@@ -481,7 +503,17 @@ export default function Usuarios({ onNavigate, params }) {
                   <th>Usuario</th>
                   <th>Contacto</th>
                   <th>País</th>
-                  <th>Billetera</th>
+                  <th>
+                    Billetera
+                    <div style={{ display: 'flex', gap: '8px', fontSize: '10px', marginTop: '4px', userSelect: 'none' }}>
+                      <span onClick={() => handleSortBilletera('usd')} style={{ cursor: 'pointer', opacity: sortBilletera.currency === 'usd' && sortBilletera.order !== 'none' ? 1 : 0.6 }} title="Ordenar por saldo USD">
+                        USD {sortBilletera.currency === 'usd' && sortBilletera.order === 'desc' ? '⬇️' : sortBilletera.currency === 'usd' && sortBilletera.order === 'asc' ? '⬆️' : '↕️'}
+                      </span>
+                      <span onClick={() => handleSortBilletera('bs')} style={{ cursor: 'pointer', opacity: sortBilletera.currency === 'bs' && sortBilletera.order !== 'none' ? 1 : 0.6 }} title="Ordenar por saldo Bs">
+                        Bs {sortBilletera.currency === 'bs' && sortBilletera.order === 'desc' ? '⬇️' : sortBilletera.currency === 'bs' && sortBilletera.order === 'asc' ? '⬆️' : '↕️'}
+                      </span>
+                    </div>
+                  </th>
                   <th>Registro & Actividad</th>
                   <th>Estatus</th>
                   <th>Rol y Permisos</th>

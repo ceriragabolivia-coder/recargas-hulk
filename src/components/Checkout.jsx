@@ -959,10 +959,10 @@ export default function Checkout({ onFinish, embedded = false }) {
                           : item.metodo_recarga === 'cuenta_completa' ? `📧 ${item.account_email}` 
                           : item.metodo_recarga === 'usuario_clave' ? `👤 ${item.account_user}` 
                           : item.metodo_recarga === 'cuenta_nueva' ? `✨ Cuenta Nueva`
-                          : item.metodo_recarga === 'id_zone' ? `🆔 ${item.player_id} (${item.zone_id})` 
+                          : item.metodo_recarga === 'id_zone' ? `🆔 ${item.player_id} (${item.zone_id})${item.nickname ? ` - ${item.nickname}` : ''}` 
                           : item.metodo_recarga === 'entrega_codigo' ? `🎁 Entrega de Código`
                           : item.metodo_recarga === 'sin_datos' ? `📥 Entrega Automática`
-                          : `🆔 ${item.player_id}`}
+                          : `🆔 ${item.player_id}${item.nickname ? ` - ${item.nickname}` : ''}`}
                       </div>
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -1030,18 +1030,20 @@ export default function Checkout({ onFinish, embedded = false }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
                   {hasAnySaldo && !isGratis && hasWalletUSD && (
                     <div onClick={handleToggleWalletPartial} className={!useWalletPartial ? 'neon-pulse-usd-btn' : ''} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '16px', backgroundColor: useWalletPartial ? 'rgba(56, 239, 125, 0.1)' : 'rgba(255,255,255,0.02)', border: `2px solid ${useWalletPartial ? '#38ef7d' : 'rgba(255,255,255,0.05)'}`, cursor: 'pointer', transition: 'all 0.2s', opacity: useWalletBs ? 0.5 : 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '24px' }}>💵</span>
                         <span style={{ fontWeight: 700, fontSize: '15px' }}>Usar Saldo USD</span>
+                        <button onClick={(e) => { e.stopPropagation(); navigate('/billetera'); }} style={{ marginLeft: '4px', padding: '4px 12px', borderRadius: '8px', border: '1px solid #38ef7d', background: 'rgba(56, 239, 125, 0.1)', color: '#38ef7d', fontSize: '12px', fontWeight: 800, cursor: 'pointer', boxShadow: '0 0 12px rgba(56, 239, 125, 0.4)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Recargar Billetera</button>
                       </div>
-                      <span style={{ fontWeight: 800, color: '#38ef7d' }}>{formatBs(Math.round(walletSaldo * (Number(config?.tasa_dolar) || 1)))}</span>
+                      <span style={{ fontWeight: 800, color: '#38ef7d' }}>{formatUSD(walletSaldo)} <span style={{ fontSize: '13px', opacity: 0.8, fontWeight: 600 }}>({formatBs(Math.round(walletSaldo * (Number(config?.tasa_dolar) || 1)))})</span></span>
                     </div>
                   )}
                   {hasAnySaldoBs && !isGratis && hasWalletBs && (
                     <div onClick={handleToggleWalletBs} className={!useWalletBs ? 'neon-pulse-bs-btn' : ''} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '16px', backgroundColor: useWalletBs ? 'rgba(168, 85, 247, 0.1)' : 'rgba(255,255,255,0.02)', border: `2px solid ${useWalletBs ? '#a855f7' : 'rgba(255,255,255,0.05)'}`, cursor: 'pointer', transition: 'all 0.2s', opacity: useWalletPartial ? 0.5 : 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '24px' }}>🏦</span>
                         <span style={{ fontWeight: 700, fontSize: '15px' }}>Usar Saldo Bs</span>
+                        <button onClick={(e) => { e.stopPropagation(); navigate('/billetera'); }} style={{ marginLeft: '4px', padding: '4px 12px', borderRadius: '8px', border: '1px solid #a855f7', background: 'rgba(168, 85, 247, 0.1)', color: '#a855f7', fontSize: '12px', fontWeight: 800, cursor: 'pointer', boxShadow: '0 0 12px rgba(168, 85, 247, 0.4)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Recargar Billetera</button>
                       </div>
                       <span style={{ fontWeight: 800, color: '#a855f7' }}>{formatBs(walletSaldoBs)}</span>
                     </div>
@@ -1143,8 +1145,8 @@ export default function Checkout({ onFinish, embedded = false }) {
                       {!permitirPagoDirecto ? (
                         <div style={{ textAlign: 'center', padding: '24px', backgroundColor: 'rgba(239, 68, 68, 0.05)', borderRadius: '16px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
                           <span style={{ display: 'block', fontSize: '32px', marginBottom: '12px' }}>⚠️</span>
-                          <h4 style={{ color: '#ef4444', fontWeight: 800, marginBottom: '8px', fontSize: '18px' }}>Pagos Directos Desactivados</h4>
-                          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '14px', marginBottom: '20px' }}>Actualmente solo se permiten compras utilizando el saldo de tu billetera. Por favor, asegúrate de tener saldo suficiente y selecciona tu billetera como método de pago. Si no tienes saldo, recarga tu billetera.</p>
+                          <h4 style={{ color: '#ef4444', fontWeight: 800, marginBottom: '8px', fontSize: '18px' }}>Saldo insuficiente en tu billetera</h4>
+                          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '14px', marginBottom: '20px' }}>El saldo de tu billetera no es suficiente para completar este pedido. Por favor, recarga tu billetera para completar o pagar este pedido.</p>
                           <button 
                             className="btn btn-outline-primary"
                             onClick={() => navigate('/billetera')}

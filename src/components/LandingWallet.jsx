@@ -32,6 +32,7 @@ export default function LandingWallet({ onClose }) {
   const [uploading, setUploading] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [alert, setAlert] = useState(null) // { type, message }
+  const [pinAlert, setPinAlert] = useState(null)
   
   const [pinCode, setPinCode] = useState('')
   const [isRedeemingPin, setIsRedeemingPin] = useState(false)
@@ -188,6 +189,7 @@ export default function LandingWallet({ onClose }) {
     if (!pinCode.trim()) return
 
     setIsRedeemingPin(true)
+    setPinAlert(null)
     try {
       const { data, error } = await supabase.rpc('canjear_pin', {
         p_codigo: pinCode.trim().toUpperCase(),
@@ -197,15 +199,15 @@ export default function LandingWallet({ onClose }) {
       if (error) throw error
 
       if (data && data.success) {
-        setAlert({ type: 'success', message: `¡Pin canjeado exitosamente! Has recibido ${data.moneda === 'bs' ? formatBs(data.monto) + ' Bs' : formatUSD(data.monto)}` })
+        setPinAlert({ type: 'success', message: `¡Pin canjeado exitosamente! Has recibido ${data.moneda === 'bs' ? formatBs(data.monto) + ' Bs' : formatUSD(data.monto)}` })
         setPinCode('')
         refetch() // Actualizar saldos e historial
       } else {
-        setAlert({ type: 'error', message: data?.message || 'Error al canjear el pin.' })
+        setPinAlert({ type: 'error', message: data?.message || 'Error al canjear el pin.' })
       }
     } catch (err) {
       console.error(err)
-      setAlert({ type: 'error', message: 'Error de conexión al canjear pin: ' + err.message })
+      setPinAlert({ type: 'error', message: 'Error de conexión al canjear pin: ' + err.message })
     } finally {
       setIsRedeemingPin(false)
     }
@@ -621,6 +623,11 @@ export default function LandingWallet({ onClose }) {
                   required
                 />
               </div>
+              {pinAlert && (
+                <div className={`alert-inline ${pinAlert.type}`}>
+                  {pinAlert.message}
+                </div>
+              )}
               <button 
                 type="submit" 
                 className="btn-submit-recharge"

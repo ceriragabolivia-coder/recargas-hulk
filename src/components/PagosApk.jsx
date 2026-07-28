@@ -1,15 +1,52 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatUSD, formatBs } from '../utils/helpers'
+import { useConfiguracion } from '../hooks/useData'
 
 export default function PagosApk({ onNavigate }) {
+  const { updateConfig } = useConfiguracion()
   const [pagos, setPagos] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [apkEnabled, setApkEnabled] = useState(true)
+  const [savingConfig, setSavingConfig] = useState(false)
 
   useEffect(() => {
     fetchPagos()
+    fetchConfig()
   }, [])
+
+  const fetchConfig = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('configuracion')
+        .select('valor_texto, valor')
+        .eq('clave', 'pagos_apk_enabled')
+        .is('owner_id', null)
+        .single()
+      
+      if (!error && data) {
+        setApkEnabled(data.valor_texto === 'true' || data.valor === true)
+      }
+    } catch (err) {
+      console.error('Error cargando config APK:', err)
+    }
+  }
+
+  const toggleApkEnabled = async (checked) => {
+    setSavingConfig(true)
+    try {
+      const res = await updateConfig('pagos_apk_enabled', checked ? 'true' : 'false', true)
+      if (res?.error) throw res.error
+      
+      setApkEnabled(checked)
+    } catch (err) {
+      console.error('Error actualizando config APK:', err)
+      alert('Error al guardar la configuración')
+    } finally {
+      setSavingConfig(false)
+    }
+  }
 
   const fetchPagos = async () => {
     setLoading(true)
@@ -66,8 +103,33 @@ export default function PagosApk({ onNavigate }) {
   return (
     <div className="page-content">
       <div className="admin-header">
-        <h2 style={{ color: 'var(--accent-primary)' }}>Registro de Pagos (APK)</h2>
-        <p style={{ color: 'var(--text-muted)' }}>Base de datos de referencias enviadas desde el teléfono</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%', flexWrap: 'wrap', gap: '10px' }}>
+          <div>
+            <h2 style={{ color: 'var(--accent-primary)', margin: 0 }}>Registro de Pagos (APK)</h2>
+            <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0' }}>Base de datos de referencias enviadas desde el teléfono</p>
+          </div>
+          <div style={{ 
+            display: 'flex', alignItems: 'center', gap: '12px',
+            background: 'rgba(255,255,255,0.05)', padding: '10px 16px',
+            borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <div>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-light)', display: 'block' }}>Recepción de Pagos</span>
+              <span style={{ fontSize: '11px', color: apkEnabled ? '#10b981' : '#ef4444' }}>
+                {apkEnabled ? 'Habilitado' : 'Deshabilitado'}
+              </span>
+            </div>
+            <label className="switch" style={{ margin: 0 }}>
+              <input 
+                type="checkbox" 
+                checked={apkEnabled}
+                disabled={savingConfig}
+                onChange={(e) => toggleApkEnabled(e.target.checked)}
+              />
+              <span className="slider round"></span>
+            </label>
+          </div>
+        </div>
       </div>
 
       <div className="card" style={{ marginBottom: '20px' }}>

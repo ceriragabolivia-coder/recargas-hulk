@@ -102,13 +102,14 @@ export function WalletProvider({ children }) {
         });
         
         if (result && result.success) {
-          console.log(`⚡ Recarga ${recargaId} auto-aprobada desde el cliente (APK previo).`);
+          console.log(`✅ Recarga ${recargaId} auto-aprobada desde el cliente (APK previo).`);
         } else {
           console.log('No se pudo auto-aprobar:', result?.message);
         }
       } catch (e) {
         console.error('Error verificando pagos_apk desde billetera:', e);
       }
+
     }
     // =======================================================
 

@@ -148,6 +148,9 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
       }
     }
 
+    // Limitar la cantidad de pedidos para evitar sobrecarga (admins: últimos 2500, clientes: 300)
+    query = query.limit(canManage ? 2500 : 300)
+
     const { data: rawPedidos, error } = await query
 
     if (error) {
@@ -158,10 +161,30 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     }
 
     if (rawPedidos && rawPedidos.length > 0) {
-      // 1. Obtener los perfiles de los usuarios que han creado órdenes (sin lista UUID para evitar Error 414 URI Too Long) 
-      const { data: usersData, error: usersError } = await supabase
-        .from('clientes')
-        .select('id, auth_user_id, nombres, apellidos, nickname, whatsapp, usuario, fecha_registro')
+      // 1. Obtener los perfiles de los usuarios que han creado órdenes (en chunks para evitar Error 414 URI Too Long) 
+      const uniqueUserIds = [...new Set(
+        rawPedidos.map(p => p.cliente_id)
+          .concat(rawPedidos.map(p => p.atendido_por_id))
+          .filter(id => id) // remove nulls
+      )];
+
+      let usersData = [];
+      let usersError = null;
+      
+      // Separamos en chunks de 100 para no saturar la URL en el GET request
+      const chunks = [];
+      for (let i = 0; i < uniqueUserIds.length; i += 100) {
+        chunks.push(uniqueUserIds.slice(i, i + 100));
+      }
+      
+      for (const chunk of chunks) {
+        const { data, error } = await supabase
+          .from('clientes')
+          .select('id, auth_user_id, nombres, apellidos, nickname, whatsapp, usuario, fecha_registro')
+          .in('auth_user_id', chunk);
+        if (error) usersError = error;
+        if (data) usersData = usersData.concat(data);
+      }
 
       if (usersError) console.error("Error fetching names:", usersError)
 

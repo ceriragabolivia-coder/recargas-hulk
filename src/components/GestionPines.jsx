@@ -197,7 +197,14 @@ export default function GestionPines() {
                             <div style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>
                               {p.canjeado_por_user?.nombres} {p.canjeado_por_user?.apellidos}
                             </div>
-                            <div style={{ color: 'var(--text-muted)' }}>{new Date(p.canjeado_en).toLocaleDateString()}</div>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '11px', marginTop: '2px' }}>
+                              {new Date(p.canjeado_en).toLocaleDateString()} {new Date(p.canjeado_en).toLocaleTimeString()}
+                            </div>
+                            {p.transaccion_id && (
+                              <div style={{ color: 'var(--accent-primary)', fontSize: '11px', fontWeight: 'bold', marginTop: '2px' }}>
+                                Tx: #{p.transaccion_id.substring(0, 8)}
+                              </div>
+                            )}
                           </div>
                         ) : '-'}
                       </td>

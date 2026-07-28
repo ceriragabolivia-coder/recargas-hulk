@@ -17,6 +17,37 @@ export default function GestionProductos() {
   const [searchJuego, setSearchJuego] = useState('')
   const { productos, categorias: allCategorias, loading: loadingProductos, error: errorProductos, createProducto, updateProducto, deleteProducto, toggleProducto, reorderProductos, createCategoria, updateCategoria, deleteCategoria } = useProductos(selectedJuego?.id)
 
+  const [baulCounts, setBaulCounts] = useState({})
+
+  React.useEffect(() => {
+    async function fetchCounts() {
+      if (!productos || productos.length === 0) {
+        setBaulCounts({})
+        return
+      }
+      const pIds = productos.filter(p => p.entrega_automatica).map(p => p.id)
+      if (pIds.length === 0) {
+        setBaulCounts({})
+        return
+      }
+      const { data, error } = await supabase
+        .from('producto_codigos')
+        .select('producto_id')
+        .eq('usado', false)
+        .in('producto_id', pIds)
+        
+      if (!error && data) {
+        const counts = {}
+        pIds.forEach(id => counts[id] = 0)
+        data.forEach(row => {
+          counts[row.producto_id] = (counts[row.producto_id] || 0) + 1
+        })
+        setBaulCounts(counts)
+      }
+    }
+    fetchCounts()
+  }, [productos])
+
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isGameModalOpen, setIsGameModalOpen] = useState(false)
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
@@ -968,6 +999,9 @@ export default function GestionProductos() {
                 <th style={{ padding: '8px 4px' }}>Precio Bs</th>
                 <th style={{ padding: '8px 4px' }}>Ganancia</th>
                 <th style={{ padding: '8px 4px' }}>D. Rev</th>
+                {productos.some(p => p.entrega_automatica) && (
+                  <th style={{ width: 60, padding: '8px 4px', textAlign: 'center' }}>Baúl</th>
+                )}
                 <th style={{ width: 60, padding: '8px 4px', textAlign: 'center' }}>Est.</th>
                 <th style={{ width: 60, padding: '8px 4px', textAlign: 'center' }}>Acc.</th>
               </tr>
@@ -1064,6 +1098,17 @@ export default function GestionProductos() {
                         <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>Global</span>
                       )}
                     </td>
+                    {productos.some(p => p.entrega_automatica) && (
+                      <td style={{ padding: '4px', textAlign: 'center' }}>
+                        {prod.entrega_automatica ? (
+                          <span className="badge badge-primary" style={{ padding: '1px 4px', fontSize: '10px' }}>
+                            {baulCounts[prod.id] !== undefined ? baulCounts[prod.id] : '...'}
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)' }}>-</span>
+                        )}
+                      </td>
+                    )}
                     {/* Botón Toggle Habilitar/Deshabilitar */}
                     <td style={{ padding: '4px', textAlign: 'center' }}>
                       <button
@@ -1644,6 +1689,7 @@ export default function GestionProductos() {
               onChange={e => setFormGame({ ...formGame, metodo_recarga: e.target.value })}
             >
               <option value="id_jugador">🆔 ID del Jugador</option>
+              <option value="id_alfanumerico">🆔 ID Alfanumérico (Letras y Números)</option>
               <option value="id_zone">🆔 ID + Zone ID</option>
               <option value="cuenta_completa">🔐 Correo y Clave</option>
               <option value="usuario_clave">👤 Usuario y Clave</option>
@@ -1655,22 +1701,24 @@ export default function GestionProductos() {
             </select>
             <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
               {formGame.metodo_recarga === 'id_jugador'
-                ? 'Se le pedirá al cliente solo su ID identificador en el juego.'
-                : formGame.metodo_recarga === 'id_zone'
-                  ? 'Se le pedirá al cliente su ID del jugador y su ID de zona (ej. Mobile Legends).'
-                  : formGame.metodo_recarga === 'cuenta_completa'
-                    ? 'Se le pedirá al cliente su correo electrónico y contraseña del juego.'
-                    : formGame.metodo_recarga === 'usuario_clave'
-                        ? 'Se le pedirá al cliente su nombre de usuario y contraseña del juego.'
-                        : formGame.metodo_recarga === 'solo_correo'
-                          ? 'Se le pedirá al cliente únicamente su correo electrónico.'
-                          : formGame.metodo_recarga === 'solo_usuario'
-                            ? 'Se le pedirá al cliente únicamente su @Usuario (ej. Telegram).'
-                            : formGame.metodo_recarga === 'opcional_cuenta'
-                              ? 'El cliente elegirá si provee sus datos para activar en su cuenta, o si quiere una cuenta nueva.'
-                              : formGame.metodo_recarga === 'entrega_codigo'
-                                ? 'No se piden datos al cliente. El administrador proveerá el código manualmente.'
-                                : 'No se le pedirá ningún dato al cliente. Ideal para Gift Cards automáticas en Baúl.'}
+                ? 'Se le pedirá al cliente solo su ID numérico identificador en el juego.'
+                : formGame.metodo_recarga === 'id_alfanumerico'
+                  ? 'Se le pedirá al cliente su ID permitiendo tanto letras como números.'
+                  : formGame.metodo_recarga === 'id_zone'
+                    ? 'Se le pedirá al cliente su ID del jugador y su ID de zona (ej. Mobile Legends).'
+                    : formGame.metodo_recarga === 'cuenta_completa'
+                      ? 'Se le pedirá al cliente su correo electrónico y contraseña del juego.'
+                      : formGame.metodo_recarga === 'usuario_clave'
+                          ? 'Se le pedirá al cliente su nombre de usuario y contraseña del juego.'
+                          : formGame.metodo_recarga === 'solo_correo'
+                            ? 'Se le pedirá al cliente únicamente su correo electrónico.'
+                            : formGame.metodo_recarga === 'solo_usuario'
+                              ? 'Se le pedirá al cliente únicamente su @Usuario (ej. Telegram).'
+                              : formGame.metodo_recarga === 'opcional_cuenta'
+                                ? 'El cliente elegirá si provee sus datos para activar en su cuenta, o si quiere una cuenta nueva.'
+                                : formGame.metodo_recarga === 'entrega_codigo'
+                                  ? 'No se piden datos al cliente. El administrador proveerá el código manualmente.'
+                                  : 'No se le pedirá ningún dato al cliente. Ideal para Gift Cards automáticas en Baúl.'}
             </p>
           </div>
 
