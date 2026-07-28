@@ -60,7 +60,7 @@ BEGIN
         'nuevo_saldo', v_nuevo_saldo
     );
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Habilitar RLS en la tabla
 ALTER TABLE pines ENABLE ROW LEVEL SECURITY;

@@ -204,7 +204,8 @@ export default function LandingWallet({ onClose }) {
         setAlert({ type: 'error', message: data?.message || 'Error al canjear el pin.' })
       }
     } catch (err) {
-      setAlert({ type: 'error', message: 'Error de conexión al canjear pin.' })
+      console.error(err)
+      setAlert({ type: 'error', message: 'Error de conexión al canjear pin: ' + err.message })
     } finally {
       setIsRedeemingPin(false)
     }
