@@ -184,6 +184,14 @@ export default function GestionPines() {
 
   const paginatedPines = filteredPines.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
+  const copyCurrentPageCodes = () => {
+    if (paginatedPines.length === 0) return
+    const codes = paginatedPines.map(p => p.codigo).join('\n')
+    navigator.clipboard.writeText(codes).then(() => {
+      setAlertModal({ type: 'success', message: 'Códigos de esta página copiados al portapapeles.' })
+    })
+  }
+
   if (!isAdmin) {
     return <div style={{ padding: '20px', color: 'red' }}>Acceso denegado</div>
   }
@@ -232,7 +240,18 @@ export default function GestionPines() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Código</th>
+                  <th style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    Código 
+                    <button 
+                      onClick={copyCurrentPageCodes} 
+                      title="Copiar todos los códigos de esta página"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                    >
+                      📋
+                    </button>
+                  </th>
                   <th>Monto</th>
                   <th>Moneda</th>
                   <th>Estado</th>
