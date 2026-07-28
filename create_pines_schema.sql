@@ -61,3 +61,13 @@ BEGIN
     );
 END;
 $$ LANGUAGE plpgsql;
+
+-- Habilitar RLS en la tabla
+ALTER TABLE pines ENABLE ROW LEVEL SECURITY;
+
+-- Crear política para permitir acceso a usuarios autenticados
+CREATE POLICY "Acceso total para usuarios autenticados" 
+ON pines FOR ALL 
+TO authenticated 
+USING (true) 
+WITH CHECK (true);
