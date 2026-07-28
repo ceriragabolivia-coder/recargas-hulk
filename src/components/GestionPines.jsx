@@ -14,6 +14,8 @@ export default function GestionPines() {
   const [alertModal, setAlertModal] = useState(null)
   const [selectedUser, setSelectedUser] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
   
   const [formData, setFormData] = useState({
     cantidad: '1',
@@ -156,6 +158,17 @@ export default function GestionPines() {
     return false;
   })
 
+  const totalPages = Math.ceil(filteredPines.length / itemsPerPage)
+  
+  // Si la búsqueda reduce los resultados y la página actual es mayor que el total de páginas, volver a la página 1
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1)
+    }
+  }, [filteredPines.length, currentPage, totalPages])
+
+  const paginatedPines = filteredPines.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
   if (!isAdmin) {
     return <div style={{ padding: '20px', color: 'red' }}>Acceso denegado</div>
   }
@@ -202,12 +215,12 @@ export default function GestionPines() {
                 </tr>
               </thead>
               <tbody>
-                {filteredPines.length === 0 ? (
+                {paginatedPines.length === 0 ? (
                   <tr>
                     <td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No se encontraron pines.</td>
                   </tr>
                 ) : (
-                  filteredPines.map(p => (
+                  paginatedPines.map(p => (
                     <tr key={p.id}>
                       <td>
                         <span 
@@ -269,6 +282,31 @@ export default function GestionPines() {
                 )}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Controles de Paginación */}
+        {!loading && totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '24px' }}>
+            <button 
+              className="btn"
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '8px 16px', borderRadius: '12px' }}
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Anterior
+            </button>
+            <div style={{ color: 'var(--text-muted)', fontSize: '14px', fontWeight: 'bold' }}>
+              Página <span style={{ color: 'var(--text-primary)' }}>{currentPage}</span> de <span style={{ color: 'var(--text-primary)' }}>{totalPages}</span>
+            </div>
+            <button 
+              className="btn"
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '8px 16px', borderRadius: '12px' }}
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              Siguiente
+            </button>
           </div>
         )}
 
