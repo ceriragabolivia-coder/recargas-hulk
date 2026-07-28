@@ -33,6 +33,9 @@ export default function LandingWallet({ onClose }) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [alert, setAlert] = useState(null) // { type, message }
   
+  const [pinCode, setPinCode] = useState('')
+  const [isRedeemingPin, setIsRedeemingPin] = useState(false)
+
   // Admin specific states
   const [pendingRecargas, setPendingRecargas] = useState([])
   const [loadingAdmin, setLoadingAdmin] = useState(false)
@@ -177,6 +180,33 @@ export default function LandingWallet({ onClose }) {
       setAlert({ type: 'error', message: 'Error al enviar solicitud: ' + err.message })
     } finally {
       setIsProcessing(false)
+    }
+  }
+
+  const handleRedeemPin = async (e) => {
+    e.preventDefault()
+    if (!pinCode.trim()) return
+
+    setIsRedeemingPin(true)
+    try {
+      const { data, error } = await supabase.rpc('canjear_pin', {
+        p_codigo: pinCode.trim().toUpperCase(),
+        p_user_id: user.id
+      })
+
+      if (error) throw error
+
+      if (data && data.success) {
+        setAlert({ type: 'success', message: `¡Pin canjeado exitosamente! Has recibido ${data.moneda === 'bs' ? formatBs(data.monto) + ' Bs' : formatUSD(data.monto)}` })
+        setPinCode('')
+        refetch() // Actualizar saldos e historial
+      } else {
+        setAlert({ type: 'error', message: data?.message || 'Error al canjear el pin.' })
+      }
+    } catch (err) {
+      setAlert({ type: 'error', message: 'Error de conexión al canjear pin.' })
+    } finally {
+      setIsRedeemingPin(false)
     }
   }
 
@@ -571,6 +601,32 @@ export default function LandingWallet({ onClose }) {
                 disabled={isProcessing || (referencia.trim().length !== 6)}
               >
                 {isProcessing ? 'Procesando...' : 'Enviar Reporte'}
+              </button>
+            </form>
+          </div>
+
+          {/* CAJA DE CANJEAR PIN */}
+          <div className="recharge-form-card" style={{ marginTop: '20px' }}>
+            <h3>Canjear Pin</h3>
+            <p>Ingresa tu código para recargar saldo al instante.</p>
+            <form onSubmit={handleRedeemPin}>
+              <div className="form-group" style={{ marginBottom: '10px' }}>
+                <input 
+                  type="text" 
+                  placeholder="Ej: HULK-1234..."
+                  value={pinCode}
+                  onChange={e => setPinCode(e.target.value)}
+                  style={{ letterSpacing: '1px', textTransform: 'uppercase', width: '100%', padding: '12px 16px', borderRadius: '12px', background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-main)', fontSize: '16px', fontWeight: '700', outline: 'none' }}
+                  required
+                />
+              </div>
+              <button 
+                type="submit" 
+                className="btn-submit-recharge"
+                style={{ background: 'var(--accent-primary)', marginTop: '0', padding: '12px' }}
+                disabled={isRedeemingPin || !pinCode.trim()}
+              >
+                {isRedeemingPin ? 'Canjeando...' : 'Canjear Pin'}
               </button>
             </form>
           </div>
