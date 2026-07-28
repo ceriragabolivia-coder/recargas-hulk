@@ -20,7 +20,18 @@ DECLARE
     v_nuevo_saldo NUMERIC;
     v_tx_id UUID;
     v_nombre_usuario VARCHAR;
+    v_ultima_recarga TIMESTAMP WITH TIME ZONE;
 BEGIN
+    -- Validar el tiempo desde el último canje (5 minutos)
+    SELECT MAX(canjeado_en) INTO v_ultima_recarga FROM pines WHERE canjeado_por = p_user_id;
+    
+    IF v_ultima_recarga IS NOT NULL AND v_ultima_recarga > NOW() - INTERVAL '5 minutes' THEN
+        RETURN json_build_object(
+            'success', false, 
+            'message', 'Por seguridad, debes esperar 5 minutos entre cada canje de pin. Intenta de nuevo más tarde.'
+        );
+    END IF;
+
     -- Bloquear el pin para lectura concurrente
     SELECT * INTO v_pin FROM pines WHERE codigo = p_codigo FOR UPDATE;
 
@@ -63,7 +74,7 @@ BEGIN
 
     -- Crear el registro en billetera_transacciones
     INSERT INTO billetera_transacciones (auth_user_id, monto, tipo, descripcion, moneda, created_at)
-    VALUES (p_user_id, v_pin.monto, 'recarga_pin', 'Canje de Pin de Recarga: ' || p_codigo, v_pin.moneda, NOW())
+    VALUES (p_user_id, v_pin.monto, 'recarga', 'Canje de Pin de Recarga: ' || p_codigo, v_pin.moneda, NOW())
     RETURNING id INTO v_tx_id;
 
     -- Marcar pin como canjeado guardando el id de transacción
