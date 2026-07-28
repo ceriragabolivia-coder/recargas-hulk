@@ -38,6 +38,7 @@ const Estadisticas = lazy(() => import('./components/Estadisticas.jsx'))
 const GestionLanding = lazy(() => import('./components/GestionLanding'))
 const GestionPaginas = lazy(() => import('./components/GestionPaginas'))
 const GestionCupones = lazy(() => import('./components/GestionCupones'))
+const GestionPines = lazy(() => import('./components/GestionPines'))
 const GestionCreadores = lazy(() => import('./components/GestionCreadores'))
 const PaginaEstatica = lazy(() => import('./components/PaginaEstatica'))
 const ProveedorCatalogo = lazy(() => import('./components/ProveedorCatalogo'))
@@ -45,7 +46,6 @@ const GestionSocios = lazy(() => import('./components/GestionSocios'))
 const MiParticipacion = lazy(() => import('./components/MiParticipacion'))
 const GestionInterfaces = lazy(() => import('./components/GestionInterfaces'))
 const Sorteos = lazy(() => import('./components/Sorteos'))
-// const PagosBdv = lazy(() => import('./components/PagosBdv'))
 
 const Placeholder = ({ title }) => (
   <div className="page-content">
@@ -487,6 +487,7 @@ const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
         <Route path="/Gestion-Landing" element={isAdmin ? <GestionLanding /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Gestion-Paginas" element={isAdmin ? <GestionPaginas /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Gestion-Cupones" element={isAdmin ? <GestionCupones onNavigate={handleNavigate} /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Gestion-Pines" element={isAdmin ? <GestionPines /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Gestion-Creadores" element={isAdmin ? <GestionCreadores /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Proveedor-TiendaGiftVen" element={isAdmin ? <ProveedorCatalogo /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Gestion-Socios" element={isAdmin ? <GestionSocios /> : <Navigate to="/Lista-De-Precios" replace />} />
@@ -543,7 +544,7 @@ export default function App() {
       'revendedores': '/Revendedores',
       'pagos_admins': '/Pagos-Admins',
       'pagos_apk': '/Pagos-Apk',
-      // 'pagos_bdv': '/Pagos-BDV',
+      'pagos_bdv': '/Pagos-BDV',
       'ruleta': '/Ruleta',
       'gestion_ruleta': '/Gestion-Ruleta',
       'perfil': '/Mi-Perfil',
@@ -552,6 +553,7 @@ export default function App() {
       'gestion_landing': '/Gestion-Landing',
       'gestion_paginas': '/Gestion-Paginas',
       'gestion_cupones': '/Gestion-Cupones',
+      'gestion_pines': '/Gestion-Pines',
       'gestion_creadores': '/Gestion-Creadores',
       'interfaces_admin': '/Interfaces-Admin',
       'sorteos': '/Sorteos',

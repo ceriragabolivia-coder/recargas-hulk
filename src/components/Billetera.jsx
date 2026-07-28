@@ -37,6 +37,8 @@ export default function Billetera({ onNavigate }) {
   const [selectedComprobante, setSelectedComprobante] = useState(null) // Modal para ver el comprobante de pago
   const [selectedOrder, setSelectedOrder] = useState(null) // Modal para ver detalle de pedido
   const [loadingOrder, setLoadingOrder] = useState(false)
+  const [pinCode, setPinCode] = useState('')
+  const [isRedeemingPin, setIsRedeemingPin] = useState(false)
 
   // Estado para solicitudes pendientes (Solo Admin)
   const [pendingRecargas, setPendingRecargas] = useState([])
@@ -191,6 +193,34 @@ export default function Billetera({ onNavigate }) {
       setAlertModal({ type: 'error', message: 'Error al subir comprobante: ' + err.message })
     } finally {
       setUploading(false)
+    }
+  }
+
+  const handleRedeemPin = async (e) => {
+    e.preventDefault()
+    if (!pinCode) return
+    setIsRedeemingPin(true)
+    try {
+      const { data, error } = await supabase.rpc('canjear_pin', { p_codigo: pinCode, p_user_id: user?.id })
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (!data?.success) {
+        setAlertModal({ type: 'error', message: data?.message || 'Error al canjear el pin.' })
+      } else {
+        setAlertModal({ 
+          type: 'success', 
+          message: `¡Pin canjeado exitosamente! Se han añadido ${data.moneda === 'bs' ? formatBs(data.monto) + ' Bs' : formatUSD(data.monto)} a tu billetera.` 
+        })
+        setPinCode('')
+        refetch() // Recargar billetera
+      }
+    } catch (err) {
+      setAlertModal({ type: 'error', message: 'Error de conexión o el pin no es válido: ' + err.message })
+    } finally {
+      setIsRedeemingPin(false)
     }
   }
 
@@ -1065,6 +1095,34 @@ export default function Billetera({ onNavigate }) {
             </form>
           </div>
         ) : null}
+
+        <div className="card" style={{ alignSelf: 'start', marginTop: '24px' }}>
+          <div className="card-header">
+            <h3 className="card-title">Canjear Pin de Recarga</h3>
+          </div>
+          <form onSubmit={handleRedeemPin} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div className="form-group">
+              <label className="form-label">Código del Pin</label>
+              <input 
+                type="text" 
+                className="form-input" 
+                placeholder="Ej: REGALO12345"
+                value={pinCode}
+                onChange={(e) => setPinCode(e.target.value.replace(/\s+/g, '').toUpperCase())}
+                style={{ letterSpacing: '2px', fontSize: '18px', fontWeight: 700, textAlign: 'center', textTransform: 'uppercase' }}
+                required
+              />
+            </div>
+            <button 
+              type="submit" 
+              className="btn btn-primary" 
+              disabled={isRedeemingPin || !pinCode}
+              style={{ height: '48px', background: 'linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%)', border: 'none', color: '#fff', fontSize: '16px', fontWeight: 800, borderRadius: '12px', cursor: 'pointer' }}
+            >
+              {isRedeemingPin ? 'Canjeando...' : '🎁 Canjear Pin'}
+            </button>
+          </form>
+        </div>
 
       </div>
 
