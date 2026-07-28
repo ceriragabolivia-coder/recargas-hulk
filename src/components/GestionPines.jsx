@@ -89,8 +89,13 @@ export default function GestionPines() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
     let result = prefix ? prefix.toUpperCase() : ''
     const remainingLength = length - result.length
+    
+    // Cryptographically secure random generation
+    const randomArray = new Uint32Array(remainingLength)
+    window.crypto.getRandomValues(randomArray)
+    
     for (let i = 0; i < remainingLength; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length))
+      result += chars[randomArray[i] % chars.length]
     }
     return result
   }

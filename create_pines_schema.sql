@@ -10,6 +10,13 @@ CREATE TABLE IF NOT EXISTS pines (
     transaccion_id UUID -- Reference to billetera_transacciones
 );
 
+-- Tabla de seguridad para intentos fallidos
+CREATE TABLE IF NOT EXISTS seguridad_intentos_pines (
+    auth_user_id UUID PRIMARY KEY REFERENCES auth.users(id),
+    intentos_fallidos INTEGER DEFAULT 0,
+    bloqueado_hasta TIMESTAMP WITH TIME ZONE
+);
+
 CREATE OR REPLACE FUNCTION canjear_pin(
     p_codigo VARCHAR,
     p_user_id UUID
@@ -22,7 +29,18 @@ DECLARE
     v_nombre_usuario VARCHAR;
     v_ultima_recarga TIMESTAMP WITH TIME ZONE;
     v_cooldown_minutos INTEGER;
+    v_seguridad RECORD;
 BEGIN
+    -- Verificar si el usuario está bloqueado por intentos fallidos
+    SELECT * INTO v_seguridad FROM seguridad_intentos_pines WHERE auth_user_id = p_user_id FOR UPDATE;
+    
+    IF FOUND AND v_seguridad.bloqueado_hasta IS NOT NULL AND v_seguridad.bloqueado_hasta > NOW() THEN
+        RETURN json_build_object(
+            'success', false, 
+            'message', 'Has superado el límite de intentos fallidos. Por tu seguridad, esta función está bloqueada hasta el ' || to_char(v_seguridad.bloqueado_hasta, 'DD/MM/YYYY HH24:MI:SS')
+        );
+    END IF;
+
     -- Obtener la configuración del tiempo de espera (5 minutos por defecto)
     SELECT COALESCE((SELECT valor::integer FROM configuracion WHERE clave = 'tiempo_espera_pines' LIMIT 1), 5) INTO v_cooldown_minutos;
 
@@ -30,7 +48,24 @@ BEGIN
     SELECT * INTO v_pin FROM pines WHERE codigo = p_codigo FOR UPDATE;
 
     IF NOT FOUND THEN
-        RETURN json_build_object('success', false, 'message', 'Pin no encontrado.');
+        -- Registrar intento fallido
+        IF v_seguridad.auth_user_id IS NULL THEN
+            -- No existe registro previo en seguridad
+            INSERT INTO seguridad_intentos_pines (auth_user_id, intentos_fallidos) VALUES (p_user_id, 1);
+        ELSE
+            -- Actualizar registro sumando 1
+            IF v_seguridad.intentos_fallidos + 1 >= 5 THEN
+                UPDATE seguridad_intentos_pines 
+                SET intentos_fallidos = v_seguridad.intentos_fallidos + 1, bloqueado_hasta = NOW() + INTERVAL '120 minutes'
+                WHERE auth_user_id = p_user_id;
+            ELSE
+                UPDATE seguridad_intentos_pines 
+                SET intentos_fallidos = v_seguridad.intentos_fallidos + 1 
+                WHERE auth_user_id = p_user_id;
+            END IF;
+        END IF;
+
+        RETURN json_build_object('success', false, 'message', 'Pin inválido. Intentos fallidos registrados por seguridad.');
     END IF;
 
     IF v_pin.estado = 'canjeado' THEN
@@ -76,6 +111,9 @@ BEGIN
     SET estado = 'canjeado', canjeado_en = NOW(), canjeado_por = p_user_id, transaccion_id = v_tx_id
     WHERE id = v_pin.id;
 
+    -- Resetear los intentos fallidos al canjear con éxito
+    UPDATE seguridad_intentos_pines SET intentos_fallidos = 0, bloqueado_hasta = NULL WHERE auth_user_id = p_user_id;
+
     RETURN json_build_object(
         'success', true, 
         'message', 'Pin canjeado exitosamente.', 
@@ -87,12 +125,37 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Habilitar RLS en la tabla
+-- Habilitar RLS en las tablas
 ALTER TABLE pines ENABLE ROW LEVEL SECURITY;
+ALTER TABLE seguridad_intentos_pines ENABLE ROW LEVEL SECURITY;
 
--- Crear política para permitir acceso a usuarios autenticados
-CREATE POLICY "Acceso total para usuarios autenticados" 
+-- Limpiar políticas anteriores (en caso de que existieran)
+DROP POLICY IF EXISTS "Acceso total para usuarios autenticados" ON pines;
+DROP POLICY IF EXISTS "Solo administradores pueden gestionar pines" ON pines;
+DROP POLICY IF EXISTS "Acceso a seguridad intentos" ON seguridad_intentos_pines;
+
+-- Crear política estricta para la tabla pines (solo lectura/escritura para admins)
+CREATE POLICY "Solo administradores pueden gestionar pines" 
 ON pines FOR ALL 
 TO authenticated 
-USING (true) 
-WITH CHECK (true);
+USING (
+    EXISTS (
+        SELECT 1 FROM clientes
+        WHERE clientes.auth_user_id = auth.uid()
+        AND (clientes.rol = 'admin' OR clientes.rol = 'administrador')
+    )
+) 
+WITH CHECK (
+    EXISTS (
+        SELECT 1 FROM clientes
+        WHERE clientes.auth_user_id = auth.uid()
+        AND (clientes.rol = 'admin' OR clientes.rol = 'administrador')
+    )
+);
+
+-- Crear política de seguridad para la tabla de intentos (bloqueo total)
+CREATE POLICY "Nadie puede ver la tabla de intentos excepto rpc" 
+ON seguridad_intentos_pines FOR ALL 
+TO authenticated 
+USING (false) 
+WITH CHECK (false);
