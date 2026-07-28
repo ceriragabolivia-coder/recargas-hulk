@@ -31,17 +31,34 @@ export default function GestionPines() {
     setLoading(true)
     const { data, error } = await supabase
       .from('pines')
-      .select(`
-        *,
-        canjeado_por_user:clientes!pines_canjeado_por_fkey (
-          nombres,
-          apellidos,
-          email
-        )
-      `)
+      .select('*')
       .order('creado_en', { ascending: false })
       
-    if (data) setPines(data)
+    if (data && data.length > 0) {
+      // Fetch user details separately if there are redeemed pins
+      const userIds = [...new Set(data.filter(p => p.canjeado_por).map(p => p.canjeado_por))]
+      
+      if (userIds.length > 0) {
+        const { data: usersData } = await supabase
+          .from('clientes')
+          .select('auth_user_id, nombres, apellidos, email')
+          .in('auth_user_id', userIds)
+          
+        if (usersData) {
+          const userMap = new Map(usersData.map(u => [u.auth_user_id, u]))
+          const pinesWithUsers = data.map(pin => ({
+            ...pin,
+            canjeado_por_user: pin.canjeado_por ? userMap.get(pin.canjeado_por) : null
+          }))
+          setPines(pinesWithUsers)
+          setLoading(false)
+          return
+        }
+      }
+      setPines(data)
+    } else {
+      setPines([])
+    }
     setLoading(false)
   }
 
