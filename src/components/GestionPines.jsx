@@ -13,6 +13,7 @@ export default function GestionPines() {
   const [showModal, setShowModal] = useState(false)
   const [alertModal, setAlertModal] = useState(null)
   const [selectedUser, setSelectedUser] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
   
   const [formData, setFormData] = useState({
     cantidad: '1',
@@ -143,6 +144,18 @@ export default function GestionPines() {
     })
   }
 
+  const filteredPines = pines.filter(p => {
+    const term = searchTerm.toLowerCase();
+    if (p.codigo.toLowerCase().includes(term)) return true;
+    if (p.canjeado_por_user) {
+      const u = p.canjeado_por_user;
+      if (u.nombres?.toLowerCase().includes(term)) return true;
+      if (u.apellidos?.toLowerCase().includes(term)) return true;
+      if (u.email?.toLowerCase().includes(term)) return true;
+    }
+    return false;
+  })
+
   if (!isAdmin) {
     return <div style={{ padding: '20px', color: 'red' }}>Acceso denegado</div>
   }
@@ -157,9 +170,19 @@ export default function GestionPines() {
             <h2 style={{ fontSize: '32px', fontWeight: 900, marginBottom: '8px' }}>Gestión de Pines 💳</h2>
             <p style={{ color: 'var(--text-muted)' }}>Crea y administra pines de recarga de saldo</p>
           </div>
-          <button className="btn btn-primary" onClick={openNewModal}>
-            + Generar Pines
-          </button>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <input 
+              type="text" 
+              placeholder="Buscar por código, nombre o email..." 
+              className="input-field"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              style={{ minWidth: '320px', height: '48px', borderRadius: '12px', background: 'var(--bg-card)' }}
+            />
+            <button className="btn btn-primary" onClick={openNewModal}>
+              + Generar Pines
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -179,12 +202,12 @@ export default function GestionPines() {
                 </tr>
               </thead>
               <tbody>
-                {pines.length === 0 ? (
+                {filteredPines.length === 0 ? (
                   <tr>
-                    <td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No hay pines generados</td>
+                    <td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No se encontraron pines.</td>
                   </tr>
                 ) : (
-                  pines.map(p => (
+                  filteredPines.map(p => (
                     <tr key={p.id}>
                       <td>
                         <span 
