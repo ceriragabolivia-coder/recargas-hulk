@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { useAuth } from '../hooks/useData'
+import { useAuth, useConfiguracion } from '../hooks/useData'
 import FloatingBackground from './FloatingBackground'
 import { hasRole } from '../utils/helpers'
 import AlertModal from './AlertModal'
 
 export default function GestionPines() {
   const { perfil, user } = useAuth()
+  const { config, updateConfig } = useConfiguracion()
   const isAdmin = hasRole(perfil, 'admin', 'administrador')
   const [pines, setPines] = useState([])
   const [loading, setLoading] = useState(true)
@@ -15,6 +16,7 @@ export default function GestionPines() {
   const [selectedUser, setSelectedUser] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const [savingConfig, setSavingConfig] = useState(false)
   const itemsPerPage = 10
   
   const [formData, setFormData] = useState({
@@ -146,6 +148,14 @@ export default function GestionPines() {
     })
   }
 
+  const handleUpdateCooldown = async (val) => {
+    const newVal = parseInt(val)
+    if (isNaN(newVal) || newVal < 0) return
+    setSavingConfig(true)
+    await updateConfig({ tiempo_espera_pines: newVal })
+    setSavingConfig(false)
+  }
+
   const filteredPines = pines.filter(p => {
     const term = searchTerm.toLowerCase();
     if (p.codigo.toLowerCase().includes(term)) return true;
@@ -184,6 +194,18 @@ export default function GestionPines() {
             <p style={{ color: 'var(--text-muted)' }}>Crea y administra pines de recarga de saldo</p>
           </div>
           <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--bg-card)', padding: '0 16px', borderRadius: '12px', height: '48px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)' }}>Tiempo de espera (min):</span>
+              <input 
+                type="number" 
+                min="0"
+                value={config?.tiempo_espera_pines ?? 5}
+                onChange={e => handleUpdateCooldown(e.target.value)}
+                disabled={savingConfig}
+                style={{ width: '60px', background: 'transparent', border: 'none', color: 'var(--accent-primary)', fontWeight: 'bold', fontSize: '16px', outline: 'none' }}
+              />
+              {savingConfig && <span style={{ fontSize: '12px', color: 'var(--accent-warning)' }}>...</span>}
+            </div>
             <input 
               type="text" 
               placeholder="Buscar por código, nombre o email..." 

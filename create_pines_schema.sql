@@ -10,6 +10,9 @@ CREATE TABLE IF NOT EXISTS pines (
     transaccion_id UUID -- Reference to billetera_transacciones
 );
 
+-- Añadir columna de configuración de tiempo de espera
+ALTER TABLE configuracion ADD COLUMN IF NOT EXISTS tiempo_espera_pines INTEGER DEFAULT 5;
+
 CREATE OR REPLACE FUNCTION canjear_pin(
     p_codigo VARCHAR,
     p_user_id UUID
@@ -21,15 +24,22 @@ DECLARE
     v_tx_id UUID;
     v_nombre_usuario VARCHAR;
     v_ultima_recarga TIMESTAMP WITH TIME ZONE;
+    v_cooldown_minutos INTEGER;
 BEGIN
-    -- Validar el tiempo desde el último canje (5 minutos)
-    SELECT MAX(canjeado_en) INTO v_ultima_recarga FROM pines WHERE canjeado_por = p_user_id;
-    
-    IF v_ultima_recarga IS NOT NULL AND v_ultima_recarga > NOW() - INTERVAL '5 minutes' THEN
-        RETURN json_build_object(
-            'success', false, 
-            'message', 'Por seguridad, debes esperar 5 minutos entre cada canje de pin. Intenta de nuevo más tarde.'
-        );
+    -- Obtener la configuración del tiempo de espera (5 minutos por defecto)
+    SELECT COALESCE(tiempo_espera_pines, 5) INTO v_cooldown_minutos FROM configuracion LIMIT 1;
+
+    -- Si el administrador puso 0, no hay tiempo de espera
+    IF v_cooldown_minutos > 0 THEN
+        -- Validar el tiempo desde el último canje
+        SELECT MAX(canjeado_en) INTO v_ultima_recarga FROM pines WHERE canjeado_por = p_user_id;
+        
+        IF v_ultima_recarga IS NOT NULL AND v_ultima_recarga > NOW() - (v_cooldown_minutos || ' minutes')::INTERVAL THEN
+            RETURN json_build_object(
+                'success', false, 
+                'message', 'Por seguridad, debes esperar ' || v_cooldown_minutos || ' minutos entre cada canje de pin. Intenta de nuevo más tarde.'
+            );
+        END IF;
     END IF;
 
     -- Bloquear el pin para lectura concurrente
