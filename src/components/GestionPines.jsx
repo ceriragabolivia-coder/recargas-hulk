@@ -195,7 +195,9 @@ export default function GestionPines() {
                         {p.estado === 'canjeado' ? (
                           <div>
                             <div style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>
-                              {p.canjeado_por_user?.nombres} {p.canjeado_por_user?.apellidos}
+                              {p.canjeado_por_user?.nombres || p.canjeado_por_user?.apellidos 
+                                ? `${p.canjeado_por_user.nombres || ''} ${p.canjeado_por_user.apellidos || ''}`.trim()
+                                : p.canjeado_por_user?.email || 'Usuario Anónimo'}
                             </div>
                             <div style={{ color: 'var(--text-muted)', fontSize: '11px', marginTop: '2px' }}>
                               {new Date(p.canjeado_en).toLocaleDateString()} {new Date(p.canjeado_en).toLocaleTimeString()}
