@@ -259,7 +259,6 @@ export default function GestionPines() {
                             title="Eliminar"
                             style={{ color: '#ef4444' }}
                             onClick={() => deletePin(p.id)}
-                            disabled={p.estado === 'canjeado'}
                           >
                             🗑️
                           </button>
