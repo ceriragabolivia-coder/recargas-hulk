@@ -12,6 +12,7 @@ export default function GestionPines() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [alertModal, setAlertModal] = useState(null)
+  const [selectedUser, setSelectedUser] = useState(null)
   
   const [formData, setFormData] = useState({
     cantidad: '1',
@@ -41,7 +42,7 @@ export default function GestionPines() {
       if (userIds.length > 0) {
         const { data: usersData } = await supabase
           .from('clientes')
-          .select('auth_user_id, nombres, apellidos, email')
+          .select('*')
           .in('auth_user_id', userIds)
           
         if (usersData) {
@@ -60,6 +61,11 @@ export default function GestionPines() {
       setPines([])
     }
     setLoading(false)
+  }
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text)
+    setAlertModal({ type: 'success', message: '¡Código copiado al portapapeles!' })
   }
 
   const openNewModal = () => {
@@ -180,7 +186,16 @@ export default function GestionPines() {
                 ) : (
                   pines.map(p => (
                     <tr key={p.id}>
-                      <td><span className="badge" style={{ fontSize: '14px', background: 'rgba(0, 210, 255, 0.1)', color: 'var(--accent-primary)', border: '1px solid rgba(0, 210, 255, 0.3)', letterSpacing: '1px' }}>{p.codigo}</span></td>
+                      <td>
+                        <span 
+                          className="badge" 
+                          style={{ fontSize: '14px', background: 'rgba(0, 210, 255, 0.1)', color: 'var(--accent-primary)', border: '1px solid rgba(0, 210, 255, 0.3)', letterSpacing: '1px', cursor: 'pointer' }}
+                          onClick={() => copyToClipboard(p.codigo)}
+                          title="Clic para copiar"
+                        >
+                          {p.codigo}
+                        </span>
+                      </td>
                       <td><span style={{ fontWeight: 800, color: p.moneda === 'usd' ? 'var(--accent-success)' : '#a855f7' }}>{p.monto}</span></td>
                       <td><span style={{ textTransform: 'uppercase', fontSize: '12px', fontWeight: 'bold' }}>{p.moneda}</span></td>
                       <td>
@@ -194,7 +209,11 @@ export default function GestionPines() {
                       <td style={{ fontSize: '12px' }}>
                         {p.estado === 'canjeado' ? (
                           <div>
-                            <div style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>
+                            <div 
+                              style={{ color: 'var(--accent-primary)', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline' }}
+                              onClick={() => p.canjeado_por_user && setSelectedUser(p.canjeado_por_user)}
+                              title="Ver información del usuario"
+                            >
                               {p.canjeado_por_user?.nombres || p.canjeado_por_user?.apellidos 
                                 ? `${p.canjeado_por_user.nombres || ''} ${p.canjeado_por_user.apellidos || ''}`.trim()
                                 : p.canjeado_por_user?.email || 'Usuario Anónimo'}
@@ -228,6 +247,61 @@ export default function GestionPines() {
                 )}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Modal Información de Usuario */}
+        {selectedUser && (
+          <div className="modal-overlay" style={{ backdropFilter: 'blur(8px)', zIndex: 1000 }} onClick={() => setSelectedUser(null)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()} style={{ 
+              maxWidth: '450px', 
+              width: '95%', 
+              padding: '30px', 
+              borderRadius: '24px', 
+              background: 'var(--bg-card)', 
+              border: '1px solid var(--border-color)', 
+              boxShadow: '0 24px 64px rgba(0,0,0,0.4)' 
+            }}>
+              <div className="modal-header" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ fontSize: '22px', fontWeight: 900, color: 'var(--text-primary)', margin: 0 }}>Perfil de Usuario</h3>
+                <button className="btn-close" style={{ fontSize: '24px', width: '32px', height: '32px' }} onClick={() => setSelectedUser(null)}>×</button>
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px' }}>
+                  <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 'bold', color: '#fff' }}>
+                    {(selectedUser.nombres?.[0] || selectedUser.email?.[0] || 'U').toUpperCase()}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 'bold', fontSize: '16px' }}>
+                      {selectedUser.nombres || selectedUser.apellidos ? `${selectedUser.nombres || ''} ${selectedUser.apellidos || ''}`.trim() : 'Sin nombre completo'}
+                    </div>
+                    <div style={{ fontSize: '13px', color: 'var(--accent-primary)', fontWeight: 'bold' }}>
+                      {selectedUser.rol || 'Cliente'}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div style={{ background: 'var(--bg-hover)', padding: '12px', borderRadius: '12px' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Email</div>
+                    <div style={{ fontSize: '13px', fontWeight: 'bold', wordBreak: 'break-all' }}>{selectedUser.email || '-'}</div>
+                  </div>
+                  <div style={{ background: 'var(--bg-hover)', padding: '12px', borderRadius: '12px' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Teléfono</div>
+                    <div style={{ fontSize: '13px', fontWeight: 'bold' }}>{selectedUser.telefono || '-'}</div>
+                  </div>
+                </div>
+
+                <div style={{ background: 'var(--bg-hover)', padding: '12px', borderRadius: '12px' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Ubicación</div>
+                  <div style={{ fontSize: '13px', fontWeight: 'bold' }}>
+                    {selectedUser.ciudad || selectedUser.pais ? `${selectedUser.ciudad || ''}${selectedUser.ciudad && selectedUser.pais ? ', ' : ''}${selectedUser.pais || ''}` : '-'}
+                  </div>
+                </div>
+              </div>
+              
+            </div>
           </div>
         )}
 
