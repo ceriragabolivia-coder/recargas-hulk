@@ -140,16 +140,16 @@ ON pines FOR ALL
 TO authenticated 
 USING (
     EXISTS (
-        SELECT 1 FROM clientes
-        WHERE clientes.auth_user_id = auth.uid()
-        AND (clientes.rol = 'admin' OR clientes.rol = 'administrador')
+        SELECT 1 FROM perfiles
+        WHERE perfiles.id = auth.uid()
+        AND (perfiles.rol = 'admin' OR perfiles.rol = 'administrador')
     )
 ) 
 WITH CHECK (
     EXISTS (
-        SELECT 1 FROM clientes
-        WHERE clientes.auth_user_id = auth.uid()
-        AND (clientes.rol = 'admin' OR clientes.rol = 'administrador')
+        SELECT 1 FROM perfiles
+        WHERE perfiles.id = auth.uid()
+        AND (perfiles.rol = 'admin' OR perfiles.rol = 'administrador')
     )
 );
 
