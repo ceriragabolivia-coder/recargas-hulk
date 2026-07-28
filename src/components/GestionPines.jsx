@@ -17,6 +17,7 @@ export default function GestionPines() {
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [savingConfig, setSavingConfig] = useState(false)
+  const [selectedPins, setSelectedPins] = useState([])
   const itemsPerPage = 10
   
   const [formData, setFormData] = useState({
@@ -184,11 +185,60 @@ export default function GestionPines() {
 
   const paginatedPines = filteredPines.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
+  useEffect(() => {
+    setSelectedPins([])
+  }, [currentPage, searchTerm])
+
   const copyCurrentPageCodes = () => {
     if (paginatedPines.length === 0) return
     const codes = paginatedPines.map(p => p.codigo).join('\n')
     navigator.clipboard.writeText(codes).then(() => {
       setAlertModal({ type: 'success', message: 'Códigos de esta página copiados al portapapeles.' })
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (paginatedPines.length === 0) return
+    if (selectedPins.length === paginatedPines.length) {
+      setSelectedPins([])
+    } else {
+      setSelectedPins(paginatedPines.map(p => p.id))
+    }
+  }
+
+  const toggleSelectPin = (id) => {
+    setSelectedPins(prev => 
+      prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]
+    )
+  }
+
+  const copySelectedCodes = () => {
+    if (selectedPins.length === 0) return
+    const codes = pines.filter(p => selectedPins.includes(p.id)).map(p => p.codigo).join('\n')
+    navigator.clipboard.writeText(codes).then(() => {
+      setAlertModal({ type: 'success', message: `${selectedPins.length} códigos copiados al portapapeles.` })
+      setSelectedPins([])
+    })
+  }
+
+  const deleteSelectedPins = () => {
+    if (selectedPins.length === 0) return
+    setAlertModal({
+      type: 'warning',
+      message: `¿Estás seguro de que deseas eliminar ${selectedPins.length} pin(es) seleccionado(s)?`,
+      confirm: true,
+      onConfirm: async () => {
+        setAlertModal(null)
+        setLoading(true)
+        const { error } = await supabase.from('pines').delete().in('id', selectedPins)
+        if (!error) {
+          setSelectedPins([])
+          fetchPines()
+        } else {
+          setAlertModal({ type: 'error', message: "Error al eliminar: " + error.message })
+          setLoading(false)
+        }
+      }
     })
   }
 
@@ -227,9 +277,20 @@ export default function GestionPines() {
               onChange={e => setSearchTerm(e.target.value)}
               style={{ minWidth: '320px', height: '48px', borderRadius: '12px', background: 'var(--bg-card)' }}
             />
-            <button className="btn btn-primary" onClick={openNewModal}>
-              + Generar Pines
-            </button>
+            {selectedPins.length > 0 ? (
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn" style={{ background: 'var(--accent-primary)', color: 'white' }} onClick={copySelectedCodes}>
+                  📋 Copiar ({selectedPins.length})
+                </button>
+                <button className="btn" style={{ background: '#ef4444', color: 'white' }} onClick={deleteSelectedPins}>
+                  🗑️ Eliminar ({selectedPins.length})
+                </button>
+              </div>
+            ) : (
+              <button className="btn btn-primary" onClick={openNewModal}>
+                + Generar Pines
+              </button>
+            )}
           </div>
         </div>
 
@@ -258,12 +319,20 @@ export default function GestionPines() {
                   <th>Creado el</th>
                   <th>Canjeado por</th>
                   <th>Acciones</th>
+                  <th style={{ width: '40px', textAlign: 'center' }}>
+                    <input 
+                      type="checkbox" 
+                      onChange={toggleSelectAll} 
+                      checked={paginatedPines.length > 0 && selectedPins.length === paginatedPines.length}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedPines.length === 0 ? (
                   <tr>
-                    <td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No se encontraron pines.</td>
+                    <td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No se encontraron pines.</td>
                   </tr>
                 ) : (
                   paginatedPines.map(p => (
@@ -322,6 +391,14 @@ export default function GestionPines() {
                             🗑️
                           </button>
                         </div>
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={selectedPins.includes(p.id)} 
+                          onChange={() => toggleSelectPin(p.id)}
+                          style={{ cursor: 'pointer' }}
+                        />
                       </td>
                     </tr>
                   ))
