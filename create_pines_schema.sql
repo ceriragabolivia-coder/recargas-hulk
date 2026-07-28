@@ -10,9 +10,6 @@ CREATE TABLE IF NOT EXISTS pines (
     transaccion_id UUID -- Reference to billetera_transacciones
 );
 
--- Añadir columna de configuración de tiempo de espera
-ALTER TABLE configuracion ADD COLUMN IF NOT EXISTS tiempo_espera_pines INTEGER DEFAULT 5;
-
 CREATE OR REPLACE FUNCTION canjear_pin(
     p_codigo VARCHAR,
     p_user_id UUID
@@ -26,6 +23,9 @@ DECLARE
     v_ultima_recarga TIMESTAMP WITH TIME ZONE;
     v_cooldown_minutos INTEGER;
 BEGIN
+    -- Obtener la configuración del tiempo de espera (5 minutos por defecto)
+    SELECT COALESCE((SELECT valor::integer FROM configuracion WHERE clave = 'tiempo_espera_pines' LIMIT 1), 5) INTO v_cooldown_minutos;
+
     -- Bloquear el pin para lectura concurrente
     SELECT * INTO v_pin FROM pines WHERE codigo = p_codigo FOR UPDATE;
 

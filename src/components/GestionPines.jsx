@@ -152,8 +152,13 @@ export default function GestionPines() {
     const newVal = parseInt(val)
     if (isNaN(newVal) || newVal < 0) return
     setSavingConfig(true)
-    await updateConfig({ tiempo_espera_pines: newVal })
-    setSavingConfig(false)
+    try {
+      await updateConfig('tiempo_espera_pines', newVal, false)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setSavingConfig(false)
+    }
   }
 
   const filteredPines = pines.filter(p => {
