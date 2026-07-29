@@ -779,16 +779,16 @@ export default function LandingPerfil({ onClose }) {
                       <div style={{ flex: 1 }}>
                         <label>Estado</label>
                         <select value={estadoUser} onChange={e => setEstadoUser(e.target.value)} style={{ width: '100%', padding: '10px', background: 'var(--bg-lighter)', color: 'white', border: '1px solid var(--border)', borderRadius: '8px' }}>
-                          <option value="">Selecciona tu estado...</option>
-                          {estadosVenezuela.map(est => <option key={est} value={est}>{est}</option>)}
+                          <option value="" style={{ background: "var(--bg-lighter)", color: "white" }}>Selecciona tu estado...</option>
+                          {estadosVenezuela.map(est => <option key={est} value={est} style={{ background: "var(--bg-lighter)", color: "white" }}>{est}</option>)}
                         </select>
                       </div>
                       <div style={{ flex: 1 }}>
                         <label>Género</label>
                         <select value={genero} onChange={e => setGenero(e.target.value)} style={{ width: '100%', padding: '10px', background: 'var(--bg-lighter)', color: 'white', border: '1px solid var(--border)', borderRadius: '8px' }}>
-                          <option value="">Selecciona tu género...</option>
-                          <option value="Hombre">Hombre</option>
-                          <option value="Mujer">Mujer</option>
+                          <option value="" style={{ background: "var(--bg-lighter)", color: "white" }}>Selecciona tu género...</option>
+                          <option value="Hombre" style={{ background: "var(--bg-lighter)", color: "white" }}>Hombre</option>
+                          <option value="Mujer" style={{ background: "var(--bg-lighter)", color: "white" }}>Mujer</option>
                         </select>
                       </div>
                     </div>
