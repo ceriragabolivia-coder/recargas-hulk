@@ -3554,3 +3554,10 @@ tr:last-child td { border-bottom: none; }
 }
 
 
+
+/* Estilos globales para dropdowns (select/options) */
+select option {
+  background-color: var(--bg-secondary);
+  color: white;
+}
+
