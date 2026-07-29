@@ -306,7 +306,7 @@ export default function LandingPerfil({ onClose }) {
       if (perfil.avatar_url) setLocalAvatar(perfil.avatar_url);
       if (perfil.nickname) setNickname(perfil.nickname);
       if (perfil.fecha_nacimiento) setFechaNacimiento(perfil.fecha_nacimiento);
-      if (perfil.estado) setEstadoUser(perfil.estado);
+      if (perfil.estado_residencia) setEstadoUser(perfil.estado_residencia);
       if (perfil.genero) setGenero(perfil.genero);
       if (perfil.instagram_link) setInstagramLink(perfil.instagram_link);
       if (perfil.facebook_link) setFacebookLink(perfil.facebook_link);
