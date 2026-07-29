@@ -301,11 +301,16 @@ export default function LandingPerfil({ onClose }) {
   }
 
   useEffect(() => {
-    if (perfil?.whatsapp) {
-      setWhatsapp(perfil.whatsapp)
-    }
-    if (perfil?.avatar_url) {
-      setLocalAvatar(perfil.avatar_url)
+    if (perfil) {
+      if (perfil.whatsapp) setWhatsapp(perfil.whatsapp);
+      if (perfil.avatar_url) setLocalAvatar(perfil.avatar_url);
+      if (perfil.nickname) setNickname(perfil.nickname);
+      if (perfil.fecha_nacimiento) setFechaNacimiento(perfil.fecha_nacimiento);
+      if (perfil.estado) setEstadoUser(perfil.estado);
+      if (perfil.genero) setGenero(perfil.genero);
+      if (perfil.instagram_link) setInstagramLink(perfil.instagram_link);
+      if (perfil.facebook_link) setFacebookLink(perfil.facebook_link);
+      if (perfil.juegos_favoritos) setJuegosFavoritos(perfil.juegos_favoritos);
     }
   }, [perfil])
 
