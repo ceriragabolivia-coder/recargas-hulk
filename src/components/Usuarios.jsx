@@ -62,6 +62,7 @@ export default function Usuarios({ onNavigate, params }) {
 
   // Estados para Configuración de Módulos (Negocio)
   const [configurandoModulos, setConfigurandoModulos] = useState(null)
+  const [viendoPerfilUsuario, setViendoPerfilUsuario] = useState(null)
   const [modulosSeleccionados, setModulosSeleccionados] = useState([])
 
   // Estados para Configuración de Timeout de Sesión
@@ -1468,6 +1469,61 @@ export default function Usuarios({ onNavigate, params }) {
       )}
 
       {/* Modal Configuración de Módulos para Negocio */}
+      
+      {/* Modal Ver Perfil Completo */}
+      {viendoPerfilUsuario && (
+        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setViendoPerfilUsuario(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: '16px', maxWidth: '500px', width: '90%', border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0 }}>👤 Perfil de {viendoPerfilUsuario.nombres} {viendoPerfilUsuario.apellidos}</h3>
+              <button className="btn btn-ghost" style={{ padding: '4px 8px' }} onClick={() => setViendoPerfilUsuario(null)}>❌</button>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Nickname:</span>
+                <strong>{viendoPerfilUsuario.nickname || 'No especificado'}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Fecha de Nac.:</span>
+                <strong>{viendoPerfilUsuario.fecha_nacimiento || 'No especificada'}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Género:</span>
+                <strong>{viendoPerfilUsuario.genero || 'No especificado'}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Estado:</span>
+                <strong>{viendoPerfilUsuario.estado || 'No especificado'}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Instagram:</span>
+                <strong>{viendoPerfilUsuario.instagram_link ? <a href={viendoPerfilUsuario.instagram_link} target="_blank" rel="noreferrer" style={{ color: 'var(--accent)' }}>Ver Perfil</a> : 'No especificado'}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Facebook:</span>
+                <strong>{viendoPerfilUsuario.facebook_link ? <a href={viendoPerfilUsuario.facebook_link} target="_blank" rel="noreferrer" style={{ color: 'var(--accent)' }}>Ver Perfil</a> : 'No especificado'}</strong>
+              </div>
+              
+              <div style={{ marginTop: '10px' }}>
+                <span style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }}>Juegos/Servicios Favoritos (IDs):</span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {(!viendoPerfilUsuario.juegos_favoritos || viendoPerfilUsuario.juegos_favoritos.length === 0) ? (
+                     <span style={{ fontSize: '13px' }}>No ha seleccionado favoritos.</span>
+                  ) : (
+                     viendoPerfilUsuario.juegos_favoritos.map((jId, idx) => (
+                       <div key={idx} style={{ padding: '4px 10px', background: 'var(--bg-hover)', borderRadius: '12px', fontSize: '12px', border: '1px solid var(--border)' }}>
+                         ID: {jId}
+                       </div>
+                     ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {configurandoModulos && (
         <div style={{
           position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',

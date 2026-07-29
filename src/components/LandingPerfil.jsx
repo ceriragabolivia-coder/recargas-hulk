@@ -18,6 +18,16 @@ export default function LandingPerfil({ onClose }) {
   const [alert, setAlert] = useState(null)
   const [localAvatar, setLocalAvatar] = useState(null)
   const [imageToCrop, setImageToCrop] = useState(null)
+  const [activeTab, setActiveTab] = useState('cuenta')
+  const [nickname, setNickname] = useState('')
+  const [fechaNacimiento, setFechaNacimiento] = useState('')
+  const [estadoUser, setEstadoUser] = useState('')
+  const [genero, setGenero] = useState('')
+  const [instagramLink, setInstagramLink] = useState('')
+  const [facebookLink, setFacebookLink] = useState('')
+  const [juegosFavoritos, setJuegosFavoritos] = useState([])
+  const [catalogoJuegos, setCatalogoJuegos] = useState([])
+  const [savingDatos, setSavingDatos] = useState(false)
   
   const [misCupones, setMisCupones] = useState([])
   const [loadingCupones, setLoadingCupones] = useState(true)
@@ -299,6 +309,55 @@ export default function LandingPerfil({ onClose }) {
     }
   }, [perfil])
 
+  
+  const calcularEdad = (fechaNac) => {
+    if (!fechaNac) return null
+    const hoy = new Date()
+    const nac = new Date(fechaNac)
+    let edad = hoy.getFullYear() - nac.getFullYear()
+    const mes = hoy.getMonth() - nac.getMonth()
+    if (mes < 0 || (mes === 0 && hoy.getDate() < nac.getDate())) {
+      edad--
+    }
+    return edad
+  }
+
+  const estadosVenezuela = [
+    'Amazonas', 'Anzoátegui', 'Apure', 'Aragua', 'Barinas', 'Bolívar', 'Carabobo', 'Cojedes', 'Delta Amacuro', 'Distrito Capital', 'Falcón', 'Guárico', 'Lara', 'Mérida', 'Miranda', 'Monagas', 'Nueva Esparta', 'Portuguesa', 'Sucre', 'Táchira', 'Trujillo', 'La Guaira', 'Yaracuy', 'Zulia'
+  ]
+
+  const handleSaveDatosPersonales = async (e) => {
+    e.preventDefault()
+    setSavingDatos(true)
+    setAlert(null)
+    try {
+      const { error } = await updateProfile(user.id, {
+        nickname,
+        fecha_nacimiento: fechaNacimiento || null,
+        estado: estadoUser,
+        genero,
+        instagram_link: instagramLink,
+        facebook_link: facebookLink,
+        juegos_favoritos: juegosFavoritos
+      })
+      if (error) throw error
+      setAlert({ type: 'success', message: 'Datos personales guardados correctamente' })
+      refetch()
+    } catch (err) {
+      setAlert({ type: 'error', message: err.message })
+    } finally {
+      setSavingDatos(false)
+    }
+  }
+
+  const toggleJuegoFavorito = (id) => {
+    if (juegosFavoritos.includes(id)) {
+      setJuegosFavoritos(juegosFavoritos.filter(j => j !== id))
+    } else {
+      setJuegosFavoritos([...juegosFavoritos, id])
+    }
+  }
+
   const handleUpdateWhatsApp = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -452,7 +511,26 @@ export default function LandingPerfil({ onClose }) {
             </div>
           )}
 
+          <div className="perfil-tabs" style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+            <button 
+              className={`perfil-tab-btn ${activeTab === 'cuenta' ? 'active' : ''}`} 
+              onClick={() => setActiveTab('cuenta')}
+              style={{ flex: 1, padding: '10px', background: activeTab === 'cuenta' ? 'var(--accent)' : 'var(--bg-secondary)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', transition: '0.3s' }}
+            >
+              Cuenta
+            </button>
+            <button 
+              className={`perfil-tab-btn ${activeTab === 'datos_personales' ? 'active' : ''}`} 
+              onClick={() => setActiveTab('datos_personales')}
+              style={{ flex: 1, padding: '10px', background: activeTab === 'datos_personales' ? 'var(--accent)' : 'var(--bg-secondary)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', transition: '0.3s' }}
+            >
+              Datos Personales
+            </button>
+          </div>
+
           <div className="forms-stack">
+            {activeTab === 'cuenta' && (
+              <>
             {/* WhatsApp Form */}
             <div className="perfil-form-card">
               <h3><span className="icon">📱</span> Datos de Contacto</h3>
@@ -673,7 +751,92 @@ export default function LandingPerfil({ onClose }) {
                   ))}
                 </div>
               )}
-            </div>
+                        </div>
+              </>
+            )}
+
+            {activeTab === 'datos_personales' && (
+              <div className="perfil-form-card fade-in">
+                 <h3><span className="icon">👤</span> Completar Perfil</h3>
+                 <form onSubmit={handleSaveDatosPersonales} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <div className="form-group">
+                      <label>Nickname</label>
+                      <div className="input-with-icon">
+                        <span className="input-icon">📝</span>
+                        <input type="text" placeholder="Tu nickname" value={nickname} onChange={e => setNickname(e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', gap: '15px' }}>
+                      <div style={{ flex: 1 }}>
+                        <label>Fecha de Nacimiento</label>
+                        <input type="date" value={fechaNacimiento} onChange={e => setFechaNacimiento(e.target.value)} style={{ width: '100%', padding: '10px', background: 'var(--bg-lighter)', color: 'white', border: '1px solid var(--border)', borderRadius: '8px', colorScheme: 'dark' }} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                         <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Edad: {calcularEdad(fechaNacimiento) !== null ? calcularEdad(fechaNacimiento) + ' años' : '-'}</span>
+                      </div>
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', gap: '15px' }}>
+                      <div style={{ flex: 1 }}>
+                        <label>Estado</label>
+                        <select value={estadoUser} onChange={e => setEstadoUser(e.target.value)} style={{ width: '100%', padding: '10px', background: 'var(--bg-lighter)', color: 'white', border: '1px solid var(--border)', borderRadius: '8px' }}>
+                          <option value="">Selecciona tu estado...</option>
+                          {estadosVenezuela.map(est => <option key={est} value={est}>{est}</option>)}
+                        </select>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label>Género</label>
+                        <select value={genero} onChange={e => setGenero(e.target.value)} style={{ width: '100%', padding: '10px', background: 'var(--bg-lighter)', color: 'white', border: '1px solid var(--border)', borderRadius: '8px' }}>
+                          <option value="">Selecciona tu género...</option>
+                          <option value="Hombre">Hombre</option>
+                          <option value="Mujer">Mujer</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', gap: '15px' }}>
+                      <div style={{ flex: 1 }}>
+                        <label>Instagram Link</label>
+                        <div className="input-with-icon">
+                          <span className="input-icon">📷</span>
+                          <input type="url" placeholder="https://instagram.com/..." value={instagramLink} onChange={e => setInstagramLink(e.target.value)} />
+                        </div>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label>Facebook Link</label>
+                        <div className="input-with-icon">
+                          <span className="input-icon">📘</span>
+                          <input type="url" placeholder="https://facebook.com/..." value={facebookLink} onChange={e => setFacebookLink(e.target.value)} />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label>Juegos / Servicios Favoritos</label>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '10px' }}>
+                        {catalogoJuegos.map(juego => (
+                          <div 
+                            key={juego.id} 
+                            onClick={() => toggleJuegoFavorito(juego.id)}
+                            style={{ 
+                              padding: '5px 10px', 
+                              borderRadius: '20px', 
+                              background: juegosFavoritos.includes(juego.id) ? 'var(--accent)' : 'var(--bg-lighter)',
+                              color: 'white',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              transition: '0.2s',
+                              border: juegosFavoritos.includes(juego.id) ? '1px solid var(--accent)' : '1px solid transparent'
+                            }}
+                          >
+                            {juego.nombre}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <button type="submit" className="btn-save-profile" disabled={savingDatos}>
+                      {savingDatos ? 'Guardando...' : 'Guardar Datos Personales'}
+                    </button>
+                 </form>
+              </div>
+            )}
           </div>
          </div>
       </div>

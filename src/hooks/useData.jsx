@@ -648,9 +648,15 @@ export function useClientes() {
     // Usar RPC para asegurar persistencia y evitar problemas de RLS
     const { data, error: rpcError } = await supabase.rpc('actualizar_perfil_usuario_rpc', {
       p_user_id: authUserId,
-      p_avatar_url: updates.avatar_url || null,
-      p_nickname: updates.nickname || null,
-      p_whatsapp: updates.whatsapp || null
+      p_avatar_url: updates.avatar_url !== undefined ? updates.avatar_url : null,
+      p_nickname: updates.nickname !== undefined ? updates.nickname : null,
+      p_whatsapp: updates.whatsapp !== undefined ? updates.whatsapp : null,
+      p_fecha_nacimiento: updates.fecha_nacimiento !== undefined ? updates.fecha_nacimiento : null,
+      p_estado: updates.estado !== undefined ? updates.estado : null,
+      p_genero: updates.genero !== undefined ? updates.genero : null,
+      p_instagram_link: updates.instagram_link !== undefined ? updates.instagram_link : null,
+      p_facebook_link: updates.facebook_link !== undefined ? updates.facebook_link : null,
+      p_juegos_favoritos: updates.juegos_favoritos !== undefined ? updates.juegos_favoritos : null
     })
 
     if (rpcError) return { error: rpcError }

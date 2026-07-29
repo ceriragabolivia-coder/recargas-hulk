@@ -110,6 +110,8 @@ export default function Checkout({ onFinish, embedded = false }) {
   const [notificaciones, setNotificaciones] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [showNotiDropdown, setShowNotiDropdown] = useState(false)
+  const [showInsufficientBalanceError, setShowInsufficientBalanceError] = useState(false)
+  const [autoSubmitPedido, setAutoSubmitPedido] = useState(false)
 
   // Banners (igual que Landing.jsx)
   const banners = useMemo(() => {
@@ -374,12 +376,14 @@ export default function Checkout({ onFinish, embedded = false }) {
         setSelectedMetodoId('wallet')
         setUseWalletPartial(true)
         setUseWalletBs(false)
+        setShowInsufficientBalanceError(false)
       }
     } else if (id === 'wallet_bs') {
       if (hasEnoughBalanceBs) {
         setSelectedMetodoId('wallet_bs')
         setUseWalletBs(true)
         setUseWalletPartial(false)
+        setShowInsufficientBalanceError(false)
       }
     } else {
       setSelectedMetodoId(id)
@@ -398,6 +402,13 @@ export default function Checkout({ onFinish, embedded = false }) {
       setSelectedRuletaDesc(ruletaDescuentos[0])
     }
   }
+
+  useEffect(() => {
+    if (autoSubmitPedido && (useWalletBs || useWalletPartial) && (selectedMetodoId === 'wallet' || selectedMetodoId === 'wallet_bs')) {
+      setAutoSubmitPedido(false)
+      handleFinalizar()
+    }
+  }, [autoSubmitPedido, useWalletBs, useWalletPartial, selectedMetodoId])
 
   const handleApplyCupon = async () => {
     if (!cuponInput.trim()) return
@@ -1143,18 +1154,60 @@ export default function Checkout({ onFinish, embedded = false }) {
                   ) : ((!useWalletPartial && !useWalletBs) || (!hasEnoughBalance && useWalletPartial) || (!hasEnoughBalanceBs && useWalletBs)) ? (
                     <>
                       {!permitirPagoDirecto ? (
-                        <div style={{ textAlign: 'center', padding: '24px', backgroundColor: 'rgba(239, 68, 68, 0.05)', borderRadius: '16px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-                          <span style={{ display: 'block', fontSize: '32px', marginBottom: '12px' }}>⚠️</span>
-                          <h4 style={{ color: '#ef4444', fontWeight: 800, marginBottom: '8px', fontSize: '18px' }}>Saldo insuficiente en tu billetera</h4>
-                          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '14px', marginBottom: '20px' }}>El saldo de tu billetera no es suficiente para completar este pedido. Por favor, recarga tu billetera para completar o pagar este pedido.</p>
-                          <button 
-                            className="btn btn-outline-primary"
-                            onClick={() => navigate('/billetera')}
-                            style={{ width: '100%', fontWeight: 800, padding: '12px', borderRadius: '12px', border: '2px solid var(--accent-primary)', color: 'var(--accent-primary)', backgroundColor: 'transparent' }}
-                          >
-                            Recargar Billetera
-                          </button>
-                        </div>
+                        showInsufficientBalanceError ? (
+                          <div style={{ textAlign: 'center', padding: '24px', backgroundColor: 'rgba(239, 68, 68, 0.05)', borderRadius: '16px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                            <span style={{ display: 'block', fontSize: '32px', marginBottom: '12px' }}>⚠️</span>
+                            <h4 style={{ color: '#ef4444', fontWeight: 800, marginBottom: '8px', fontSize: '18px' }}>Saldo insuficiente en tu billetera</h4>
+                            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '14px', marginBottom: '20px' }}>El saldo de tu billetera no es suficiente para completar este pedido. Por favor, recarga tu billetera para completar o pagar este pedido.</p>
+                            <button 
+                              className="btn btn-outline-primary"
+                              onClick={() => navigate('/billetera')}
+                              style={{ width: '100%', fontWeight: 800, padding: '12px', borderRadius: '12px', border: '2px solid var(--accent-primary)', color: 'var(--accent-primary)', backgroundColor: 'transparent', cursor: 'pointer' }}
+                            >
+                              Recargar Billetera
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ textAlign: 'center', padding: '24px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <span style={{ display: 'block', fontSize: '32px', marginBottom: '12px' }}>❓</span>
+                            <h4 style={{ color: '#fff', fontWeight: 800, marginBottom: '8px', fontSize: '18px' }}>¿Estás seguro de adquirir este producto?</h4>
+                            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '14px', marginBottom: '20px' }}>El monto será descontado automáticamente de tu billetera si cuentas con saldo suficiente.</p>
+                            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                              <button 
+                                onClick={() => {
+                                  onFinish();
+                                }}
+                                style={{ flex: 1, fontWeight: 800, padding: '14px 24px', borderRadius: '12px', border: '2px solid rgba(255,255,255,0.2)', color: '#fff', backgroundColor: 'transparent', cursor: 'pointer', transition: 'all 0.2s' }}
+                                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+                                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                              >
+                                NO
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  if (hasEnoughBalanceBs) {
+                                    setUseWalletBs(true);
+                                    setUseWalletPartial(false);
+                                    setSelectedMetodoId('wallet_bs');
+                                    setAutoSubmitPedido(true);
+                                  } else if (hasEnoughBalance) {
+                                    setUseWalletPartial(true);
+                                    setUseWalletBs(false);
+                                    setSelectedMetodoId('wallet');
+                                    setAutoSubmitPedido(true);
+                                  } else {
+                                    setShowInsufficientBalanceError(true);
+                                  }
+                                }}
+                                style={{ flex: 1, fontWeight: 800, padding: '14px 24px', borderRadius: '12px', border: 'none', color: '#000', backgroundColor: '#38ef7d', cursor: 'pointer', transition: 'all 0.2s' }}
+                                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
+                                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                              >
+                                SI
+                              </button>
+                            </div>
+                          </div>
+                        )
                       ) : selectedMetodoId && !isWalletOnly && !isWalletBsOnly ? (
                         <div className="selected-method-details fade-in">
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', backgroundColor: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
