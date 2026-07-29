@@ -724,18 +724,18 @@ export default function LandingPerfil({ onClose }) {
                                     )}
 
                                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                                      {obj.recompensa_1_tipo === 'producto' && obj.p1 && <div style={{ fontSize: '11px', background: 'var(--bg-hover)', padding: '2px 8px', borderRadius: '8px' }}>🎁 {obj.p1.nombre}</div>}
-                                      {obj.recompensa_1_tipo === 'saldo_usd' && <div style={{ fontSize: '11px', background: 'var(--bg-hover)', padding: '2px 8px', borderRadius: '8px' }}>🎁 ${obj.recompensa_1_valor}</div>}
-                                      {obj.recompensa_1_tipo === 'saldo_bs' && <div style={{ fontSize: '11px', background: 'var(--bg-hover)', padding: '2px 8px', borderRadius: '8px' }}>🎁 {obj.recompensa_1_valor} Bs</div>}
+                                      {obj.recompensa_1_tipo === 'producto' && obj.p1 && <div style={{ fontSize: '11px', background: 'var(--bg-hover)', padding: '2px 8px', borderRadius: '8px', colorScheme: 'dark' }}>🎁 {obj.p1.nombre}</div>}
+                                      {obj.recompensa_1_tipo === 'saldo_usd' && <div style={{ fontSize: '11px', background: 'var(--bg-hover)', padding: '2px 8px', borderRadius: '8px', colorScheme: 'dark' }}>🎁 ${obj.recompensa_1_valor}</div>}
+                                      {obj.recompensa_1_tipo === 'saldo_bs' && <div style={{ fontSize: '11px', background: 'var(--bg-hover)', padding: '2px 8px', borderRadius: '8px', colorScheme: 'dark' }}>🎁 {obj.recompensa_1_valor} Bs</div>}
                                       
                                       {((obj.recompensa_2_tipo === 'producto' && obj.p2) || (obj.recompensa_2_tipo !== 'producto' && obj.recompensa_2_valor > 0)) && (
-                                        <div style={{ fontSize: '11px', background: 'var(--bg-hover)', padding: '2px 8px', borderRadius: '8px' }}>
+                                        <div style={{ fontSize: '11px', background: 'var(--bg-hover)', padding: '2px 8px', borderRadius: '8px', colorScheme: 'dark' }}>
                                           {obj.recompensa_2_tipo === 'producto' ? `🎁 ${obj.p2?.nombre}` : obj.recompensa_2_tipo === 'saldo_usd' ? `🎁 ${obj.recompensa_2_valor}` : `🎁 ${obj.recompensa_2_valor} Bs`}
                                         </div>
                                       )}
                                       
                                       {((obj.recompensa_3_tipo === 'producto' && obj.p3) || (obj.recompensa_3_tipo !== 'producto' && obj.recompensa_3_valor > 0)) && (
-                                        <div style={{ fontSize: '11px', background: 'var(--bg-hover)', padding: '2px 8px', borderRadius: '8px' }}>
+                                        <div style={{ fontSize: '11px', background: 'var(--bg-hover)', padding: '2px 8px', borderRadius: '8px', colorScheme: 'dark' }}>
                                           {obj.recompensa_3_tipo === 'producto' ? `🎁 ${obj.p3?.nombre}` : obj.recompensa_3_tipo === 'saldo_usd' ? `🎁 ${obj.recompensa_3_valor}` : `🎁 ${obj.recompensa_3_valor} Bs`}
                                         </div>
                                       )}
@@ -778,17 +778,17 @@ export default function LandingPerfil({ onClose }) {
                     <div className="form-group" style={{ display: 'flex', gap: '15px' }}>
                       <div style={{ flex: 1 }}>
                         <label>Estado</label>
-                        <select value={estadoUser} onChange={e => setEstadoUser(e.target.value)} style={{ width: '100%', padding: '10px', background: 'var(--bg-lighter)', color: 'white', border: '1px solid var(--border)', borderRadius: '8px' }}>
-                          <option value="" style={{ background: "var(--bg-lighter)", color: "white" }}>Selecciona tu estado...</option>
-                          {estadosVenezuela.map(est => <option key={est} value={est} style={{ background: "var(--bg-lighter)", color: "white" }}>{est}</option>)}
+                        <select value={estadoUser} onChange={e => setEstadoUser(e.target.value)} style={{ width: '100%', padding: '10px', background: 'var(--bg-lighter)', color: 'white', border: '1px solid var(--border)', borderRadius: '8px', colorScheme: 'dark' }}>
+                          <option value="">Selecciona tu estado...</option>
+                          {estadosVenezuela.map(est => <option key={est} value={est}>{est}</option>)}
                         </select>
                       </div>
                       <div style={{ flex: 1 }}>
                         <label>Género</label>
-                        <select value={genero} onChange={e => setGenero(e.target.value)} style={{ width: '100%', padding: '10px', background: 'var(--bg-lighter)', color: 'white', border: '1px solid var(--border)', borderRadius: '8px' }}>
-                          <option value="" style={{ background: "var(--bg-lighter)", color: "white" }}>Selecciona tu género...</option>
-                          <option value="Hombre" style={{ background: "var(--bg-lighter)", color: "white" }}>Hombre</option>
-                          <option value="Mujer" style={{ background: "var(--bg-lighter)", color: "white" }}>Mujer</option>
+                        <select value={genero} onChange={e => setGenero(e.target.value)} style={{ width: '100%', padding: '10px', background: 'var(--bg-lighter)', color: 'white', border: '1px solid var(--border)', borderRadius: '8px', colorScheme: 'dark' }}>
+                          <option value="">Selecciona tu género...</option>
+                          <option value="Hombre">Hombre</option>
+                          <option value="Mujer">Mujer</option>
                         </select>
                       </div>
                     </div>
