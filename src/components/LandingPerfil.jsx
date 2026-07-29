@@ -72,7 +72,7 @@ export default function LandingPerfil({ onClose }) {
 
   const fetchCatalogoJuegos = async () => {
     try {
-      const { data, error } = await supabase.from('juegos').select('id, nombre, logo_url').eq('activo', true)
+      const { data, error } = await supabase.from('juegos').select('id, nombre, icono_url').eq('activo', true)
       if (!error && data) {
         setCatalogoJuegos(data)
       }
