@@ -832,18 +832,31 @@ export default function LandingPerfil({ onClose }) {
                           <div 
                             key={juego.id} 
                             onClick={() => toggleJuegoFavorito(juego.id)}
+                            title={juego.nombre}
                             style={{ 
-                              padding: '5px 10px', 
-                              borderRadius: '20px', 
-                              background: juegosFavoritos.includes(juego.id) ? 'var(--accent)' : 'var(--bg-lighter)',
-                              color: 'white',
+                              width: '48px',
+                              height: '48px',
+                              borderRadius: '12px',
+                              background: 'var(--bg-lighter)',
                               cursor: 'pointer',
-                              fontSize: '12px',
                               transition: '0.2s',
-                              border: juegosFavoritos.includes(juego.id) ? '1px solid var(--accent)' : '1px solid transparent'
+                              border: juegosFavoritos.includes(juego.id) ? '3px solid var(--accent)' : '3px solid transparent',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              overflow: 'hidden',
+                              filter: juegosFavoritos.includes(juego.id) ? 'none' : 'grayscale(100%) opacity(0.7)'
                             }}
                           >
-                            {juego.nombre}
+                            {juego.icono_url ? (
+                              <img 
+                                src={getOptimizedImageUrl(juego.icono_url, 100)} 
+                                alt={juego.nombre} 
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                              />
+                            ) : (
+                              <span style={{ fontSize: '10px', color: 'white', textAlign: 'center' }}>{juego.nombre.substring(0, 3)}</span>
+                            )}
                           </div>
                         ))}
                       </div>
