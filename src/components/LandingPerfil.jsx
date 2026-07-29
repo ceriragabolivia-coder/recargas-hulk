@@ -65,9 +65,21 @@ export default function LandingPerfil({ onClose }) {
       fetchMisCupones()
       fetchMisCodigosCreador()
       fetchMiCodigoUsado()
+      fetchCatalogoJuegos()
     }
   }, [user])
 
+
+  const fetchCatalogoJuegos = async () => {
+    try {
+      const { data, error } = await supabase.from('juegos').select('id, nombre').eq('activo', true)
+      if (!error && data) {
+        setCatalogoJuegos(data)
+      }
+    } catch (err) {
+      console.error("Error fetching games catalog", err)
+    }
+  }
 
   const fetchMiCodigoUsado = async () => {
     try {
