@@ -175,7 +175,9 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
         }
       })
 
-      if (authError) throw authError
+      if (authError && !authError.message?.toLowerCase().includes('confirmation email')) {
+        throw authError
+      }
 
       setSuccessMsg('✅ ¡Registro exitoso! Tu cuenta está pendiente de aprobación.')
       setView('pending_approval')
