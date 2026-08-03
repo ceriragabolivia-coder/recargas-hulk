@@ -30,20 +30,42 @@ export default function GestionProductos() {
         setBaulCounts({})
         return
       }
-      const { data, error } = await supabase
-        .from('producto_codigos')
-        .select('producto_id')
-        .eq('usado', false)
-        .in('producto_id', pIds)
+      let allData = []
+      let from = 0
+      let step = 1000
+      let hasMore = true
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('producto_codigos')
+          .select('producto_id')
+          .eq('usado', false)
+          .in('producto_id', pIds)
+          .range(from, from + step - 1)
+          
+        if (error) {
+          console.error('Error fetching baul counts:', error)
+          break
+        }
         
-      if (!error && data) {
-        const counts = {}
-        pIds.forEach(id => counts[id] = 0)
-        data.forEach(row => {
-          counts[row.producto_id] = (counts[row.producto_id] || 0) + 1
-        })
-        setBaulCounts(counts)
+        if (data) {
+          allData = allData.concat(data)
+          if (data.length < step) {
+            hasMore = false
+          } else {
+            from += step
+          }
+        } else {
+          hasMore = false
+        }
       }
+
+      const counts = {}
+      pIds.forEach(id => counts[id] = 0)
+      allData.forEach(row => {
+        counts[row.producto_id] = (counts[row.producto_id] || 0) + 1
+      })
+      setBaulCounts(counts)
     }
     fetchCounts()
   }, [productos])

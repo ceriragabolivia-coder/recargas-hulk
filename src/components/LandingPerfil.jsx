@@ -49,6 +49,8 @@ export default function LandingPerfil({ onClose }) {
   const [selectedCodigoForUsers, setSelectedCodigoForUsers] = useState(null)
   const [registeredUsers, setRegisteredUsers] = useState([])
   const [loadingRegisteredUsers, setLoadingRegisteredUsers] = useState(false)
+  
+  const [showRewardModal, setShowRewardModal] = useState(false)
 
 
   useEffect(() => {
@@ -72,9 +74,29 @@ export default function LandingPerfil({ onClose }) {
 
   const fetchCatalogoJuegos = async () => {
     try {
-      const { data, error } = await supabase.from('juegos').select('id, nombre, icono_url').eq('activo', true)
+      // Usamos !inner para traer solo juegos que tengan al menos un producto activo
+      const { data, error } = await supabase
+        .from('juegos')
+        .select('id, nombre, icono_url, productos!inner(id, activo)')
+        .eq('activo', true)
+        .eq('productos.activo', true)
+
       if (!error && data) {
-        setCatalogoJuegos(data)
+        const cleanedData = data.map(j => ({
+          id: j.id,
+          nombre: j.nombre,
+          icono_url: j.icono_url
+        }));
+        
+        // Evitar posibles duplicados por si acaso
+        const seen = new Set();
+        const deduplicatedGames = cleanedData.filter(j => {
+          if (seen.has(j.id)) return false;
+          seen.add(j.id);
+          return true;
+        });
+
+        setCatalogoJuegos(deduplicatedGames)
       }
     } catch (err) {
       console.error("Error fetching games catalog", err)
@@ -343,6 +365,18 @@ export default function LandingPerfil({ onClose }) {
     'Amazonas', 'Anzoátegui', 'Apure', 'Aragua', 'Barinas', 'Bolívar', 'Carabobo', 'Cojedes', 'Delta Amacuro', 'Distrito Capital', 'Falcón', 'Guárico', 'Lara', 'Mérida', 'Miranda', 'Monagas', 'Nueva Esparta', 'Portuguesa', 'Sucre', 'Táchira', 'Trujillo', 'La Guaira', 'Yaracuy', 'Zulia'
   ]
 
+  const requiredFields = [
+    { name: 'nickname', value: nickname },
+    { name: 'fecha_nacimiento', value: fechaNacimiento },
+    { name: 'estado', value: estadoUser },
+    { name: 'genero', value: genero },
+    { name: 'avatar', value: localAvatar },
+    { name: 'red_social', value: instagramLink || facebookLink },
+    { name: 'juegos_favoritos', value: juegosFavoritos && juegosFavoritos.length > 0 ? true : false }
+  ];
+  const completedFieldsCount = requiredFields.filter(f => f.value && String(f.value).trim() !== '' && f.value !== false).length;
+  const completionPercentage = Math.round((completedFieldsCount / requiredFields.length) * 100);
+
   const handleSaveDatosPersonales = async (e) => {
     e.preventDefault()
     setSavingDatos(true)
@@ -358,7 +392,26 @@ export default function LandingPerfil({ onClose }) {
         juegos_favoritos: juegosFavoritos
       })
       if (error) throw error
-      setAlert({ type: 'success', message: 'Datos personales guardados correctamente' })
+
+      let rewardMessage = ''
+      if (completionPercentage === 100 && perfil && !perfil.recompensa_perfil_otorgada) {
+        const { data: rpcData, error: rpcError } = await supabase.rpc('otorgar_recompensa_perfil_rpc', {
+          p_user_id: user.id
+        })
+        
+        if (rpcError) {
+          console.error("Error al otorgar recompensa RPC:", rpcError);
+          window.alert("Error del servidor al intentar darte el cupón: " + rpcError.message);
+        } else if (rpcData?.success) {
+          setShowRewardModal(true)
+          fetchMisCupones()
+        } else {
+          console.error("Error devuelto por el RPC:", rpcData);
+          window.alert("Aviso sobre el cupón: " + rpcData?.message);
+        }
+      }
+
+      setAlert({ type: 'success', message: 'Datos personales guardados correctamente.' })
       refetch()
     } catch (err) {
       setAlert({ type: 'error', message: err.message })
@@ -774,7 +827,39 @@ export default function LandingPerfil({ onClose }) {
 
             {activeTab === 'datos_personales' && (
               <div className="perfil-form-card fade-in">
-                 <h3><span className="icon">👤</span> Completar Perfil</h3>
+                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                   <h3><span className="icon">👤</span> Completar Perfil</h3>
+                   {perfil?.recompensa_perfil_otorgada && (
+                     <span style={{ background: 'rgba(0, 200, 83, 0.1)', color: '#00c853', padding: '4px 8px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}>
+                       ✓ Recompensa Obtenida
+                     </span>
+                   )}
+                 </div>
+
+                 {/* Progress Bar */}
+                 <div style={{ marginBottom: '15px', background: 'var(--bg-secondary)', padding: '15px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '8px' }}>
+                     <span style={{ color: 'var(--text-muted)' }}>Progreso del Perfil</span>
+                     <span style={{ fontWeight: 'bold', color: completionPercentage === 100 ? '#00c853' : 'var(--accent)' }}>{completionPercentage}%</span>
+                   </div>
+                   <div style={{ width: '100%', height: '8px', background: 'var(--bg-hover)', borderRadius: '4px', overflow: 'hidden' }}>
+                     <div style={{ 
+                       height: '100%', 
+                       width: `${completionPercentage}%`, 
+                       background: completionPercentage === 100 ? '#00c853' : 'var(--accent)',
+                       transition: 'width 0.5s ease' 
+                     }}></div>
+                   </div>
+                   {completionPercentage < 100 ? (
+                     <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px' }}>
+                       Completa el 100% (incluyendo tu foto de perfil) y guarda para recibir un cupón de 5% de descuento.
+                     </div>
+                   ) : !perfil?.recompensa_perfil_otorgada ? (
+                     <div style={{ fontSize: '11px', color: '#00c853', marginTop: '8px', fontWeight: 'bold' }}>
+                       ¡Haz clic en "Guardar Datos Personales" para recibir tu premio!
+                     </div>
+                   ) : null}
+                 </div>
                  <form onSubmit={handleSaveDatosPersonales} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     <div className="form-group">
                       <label>Nickname</label>

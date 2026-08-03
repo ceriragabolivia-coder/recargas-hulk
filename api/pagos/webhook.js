@@ -62,7 +62,7 @@ async function procesarPedidoConApi(pedidoId, apiKey) {
             p_item_id: item.id,
             p_estado_proveedor: data.estado || 'procesando',
             p_proveedor_pedido_id: data.pedido_id,
-            p_mensaje_proveedor: data.codigos ? data.codigos.join('\n') : (data.mensaje || ''),
+            p_mensaje_proveedor: Array.isArray(data.codigos) && data.codigos.length > 0 ? data.codigos.join('\n') : (data.codigos && typeof data.codigos === 'string' ? data.codigos : (data.mensaje || '')),
             p_estado: isCompleted ? 'completado' : 'procesando'
           });
         } else {

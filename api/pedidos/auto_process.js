@@ -57,13 +57,14 @@ async function procesarPedidoConApi(pedidoId, apiKey) {
         const data = await res.json();
 
         if (data.ok) {
-          const isCompleted = data.estado === 'completado';
+          const respEstado = data.estado ? data.estado.toLowerCase() : '';
+          const isCompleted = respEstado === 'completado' || respEstado === 'aprobado';
           if (!isCompleted) allCompleted = false;
           await supabase.rpc('webhook_update_pedido_item', {
             p_item_id: item.id,
             p_estado_proveedor: data.estado || 'procesando',
             p_proveedor_pedido_id: data.pedido_id,
-            p_mensaje_proveedor: data.codigos ? data.codigos.join('\n') : (data.mensaje || ''),
+            p_mensaje_proveedor: Array.isArray(data.codigos) && data.codigos.length > 0 ? data.codigos.join('\n') : (data.codigos && typeof data.codigos === 'string' ? data.codigos : (data.mensaje || '')),
             p_estado: isCompleted ? 'completado' : 'procesando'
           });
         } else {

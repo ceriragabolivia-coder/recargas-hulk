@@ -31,6 +31,7 @@ export default function Usuarios({ onNavigate, params }) {
 
   // Búsqueda y Paginación
   const [searchTerm, setSearchTerm] = useState('')
+  const [filtroJuegoId, setFiltroJuegoId] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 9
 
@@ -110,7 +111,8 @@ export default function Usuarios({ onNavigate, params }) {
       motivo_estado: cliente.motivo_estado || '',
       config_modulos: cliente.config_modulos || [],
       roles_adicionales: cliente.roles_adicionales || [],
-      juegos_deshabilitados: cliente.juegos_deshabilitados || []
+      juegos_deshabilitados: cliente.juegos_deshabilitados || [],
+      juegos_favoritos: cliente.juegos_favoritos || []
     })
   }
 
@@ -238,6 +240,7 @@ export default function Usuarios({ onNavigate, params }) {
         
         if (result.error) throw result.error
         if (!result.data) throw new Error("No se pudo ejecutar el ajuste.")
+        if (result.data && result.data.success === false) throw new Error(result.data.message || "Error al ejecutar el ajuste.")
         
         const label = ajusteMoneda === 'bs' ? formatBs(saldoNum) : formatUSD(saldoNum);
         setAlertModal({ type: 'success', message: `Saldo General ${ajusteMoneda === 'bs' ? 'Bs' : 'USD'} ajustado correctamente a ${label}` })
@@ -333,6 +336,36 @@ export default function Usuarios({ onNavigate, params }) {
     }
   }
 
+  const handleForceLogoutAll = async () => {
+    if (!window.confirm('🚨 ¿ESTÁS SEGURO? Esto cerrará la sesión de absolutamente todos los usuarios conectados (incluyéndote a ti) y los forzará a recargar la página. Úsalo solo para actualizaciones críticas.')) {
+      return
+    }
+    setSaving(true)
+    try {
+      const globalChannel = supabase.channel('global_events');
+      globalChannel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          globalChannel.send({ type: 'broadcast', event: 'force_reload', payload: {} });
+          setTimeout(() => supabase.removeChannel(globalChannel), 2000);
+        }
+      });
+      
+      setAlertModal({ 
+        type: 'success', 
+        message: `Orden global enviada con éxito. Todos los usuarios en línea serán desconectados en los próximos segundos.` 
+      })
+
+      // También cerrar la sesión del admin que presionó el botón
+      setTimeout(() => {
+        supabase.auth.signOut().then(() => window.location.reload(true));
+      }, 3000);
+    } catch (err) {
+      setAlertModal({ type: 'error', message: "Error al forzar cierre de sesión global: " + err.message })
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const handleOpenGlobalTimeout = () => {
     setTimeoutCliente(config?.session_timeout_cliente || '45')
     setTimeoutRevendedor(config?.session_timeout_revendedor || '300')
@@ -406,7 +439,27 @@ export default function Usuarios({ onNavigate, params }) {
       .eq('auth_user_id', cliente.auth_user_id)
       .order('created_at', { ascending: false })
       
-    if (data) setMovimientos(data)
+    if (data) {
+      let currentBalanceUSD = Number(cliente.billetera_saldo) || 0;
+      let currentBalanceBs = Number(cliente.billetera_saldo_bs) || 0;
+      
+      const dataWithBalance = data.map(m => {
+          const isBs = m.moneda === 'bs';
+          const balanceAtTime = isBs ? currentBalanceBs : currentBalanceUSD;
+          
+          if (isBs) {
+              currentBalanceBs -= Number(m.monto) || 0;
+          } else {
+              currentBalanceUSD -= Number(m.monto) || 0;
+          }
+          
+          return {
+              ...m,
+              balanceAtTime
+          }
+      });
+      setMovimientos(dataWithBalance)
+    }
     setLoadingMovimientos(false)
   }
 
@@ -434,6 +487,12 @@ export default function Usuarios({ onNavigate, params }) {
   }, [params?.openWalletUserId, clientes.length])
 
   const filteredClientes = clientes.filter(c => {
+    if (filtroJuegoId) {
+      if (!c.juegos_favoritos || !c.juegos_favoritos.includes(filtroJuegoId)) {
+        return false
+      }
+    }
+
     if (!searchTerm) return true
     const term = searchTerm.toLowerCase()
     return (
@@ -480,13 +539,23 @@ export default function Usuarios({ onNavigate, params }) {
             style={{ paddingLeft: '32px', borderRadius: '20px' }}
           />
           {isAdmin && (
-            <button 
-              className="btn btn-sm btn-ghost" 
-              onClick={handleOpenGlobalTimeout}
-              style={{ fontSize: '12px', border: '1px solid rgba(255,255,255,0.1)' }}
-            >
-              ⚙️ Configurar Tiempos de Sesión (Global)
-            </button>
+            <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
+              <button 
+                className="btn btn-sm btn-ghost" 
+                onClick={handleOpenGlobalTimeout}
+                style={{ fontSize: '12px', border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                ⚙️ Configurar Tiempos de Sesión (Global)
+              </button>
+              <button 
+                className="btn btn-sm btn-danger" 
+                onClick={handleForceLogoutAll}
+                disabled={saving}
+                style={{ fontSize: '12px' }}
+              >
+                🚨 Cerrar Sesión de Todos (Actualizar Web)
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -518,6 +587,21 @@ export default function Usuarios({ onNavigate, params }) {
                   <th>Registro & Actividad</th>
                   <th>Estatus</th>
                   <th>Rol y Permisos</th>
+                  <th style={{ width: '180px' }}>
+                    <select 
+                      style={{ width: '100%', fontSize: '11px', padding: '6px', backgroundColor: 'var(--bg-panel)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: '6px', cursor: 'pointer' }}
+                      value={filtroJuegoId}
+                      onChange={(e) => {
+                        setFiltroJuegoId(e.target.value)
+                        setCurrentPage(1)
+                      }}
+                    >
+                      <option value="">Todos los juegos/servicios</option>
+                      {juegos?.map(j => (
+                        <option key={j.id} value={j.id}>{j.nombre}</option>
+                      ))}
+                    </select>
+                  </th>
                   <th style={{ textAlign: 'right' }}>Acciones</th>
                 </tr>
               </thead>
@@ -873,6 +957,22 @@ export default function Usuarios({ onNavigate, params }) {
                           </div>
                         )}
                       </td>
+                      
+                      <td>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                          {cliente.juegos_favoritos && cliente.juegos_favoritos.length > 0 
+                            ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                  <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{cliente.juegos_favoritos.length} juegos</span>
+                                  {filtroJuegoId && cliente.juegos_favoritos.includes(filtroJuegoId) && (
+                                    <span style={{ color: 'var(--accent-success)', fontSize: '10px' }}>⭐ Coincide</span>
+                                  )}
+                                </div>
+                              )
+                            : 'Ninguno'
+                          }
+                        </div>
+                      </td>
 
                       <td style={{ textAlign: 'right' }}>
                         {isEditing ? (
@@ -1222,6 +1322,7 @@ export default function Usuarios({ onNavigate, params }) {
                       <th style={{ backgroundColor: 'var(--bg-card)' }}>Tipo</th>
                       <th style={{ backgroundColor: 'var(--bg-card)' }}>Descripción</th>
                       <th style={{ backgroundColor: 'var(--bg-card)', textAlign: 'right' }}>Monto</th>
+                      <th style={{ backgroundColor: 'var(--bg-card)', textAlign: 'right' }}>Saldo Posterior</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1241,6 +1342,10 @@ export default function Usuarios({ onNavigate, params }) {
                         <td>{m.descripcion}</td>
                         <td style={{ fontWeight: 800, textAlign: 'right', color: m.monto > 0 ? (m.moneda === 'bs' ? '#a855f7' : 'var(--accent-success)') : 'var(--accent-error)' }}>
                           {m.monto > 0 ? '+' : ''}{m.moneda === 'bs' ? formatBs(m.monto) : formatUSD(m.monto)}
+                          <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: 500 }}>{m.moneda === 'bs' ? 'Bs' : 'USD'}</div>
+                        </td>
+                        <td style={{ fontWeight: 800, textAlign: 'right', color: '#fff' }}>
+                          {m.moneda === 'bs' ? formatBs(m.balanceAtTime) : formatUSD(m.balanceAtTime)}
                           <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: 500 }}>{m.moneda === 'bs' ? 'Bs' : 'USD'}</div>
                         </td>
                       </tr>

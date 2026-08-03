@@ -34,14 +34,39 @@ export function AuthProvider({ children }) {
     if (isSuperAdmin) {
 
       const fetchFullDetails = async () => {
-        const [resP, resC, resB, resRA] = await Promise.all([
-          supabase.from('perfiles').select('*').eq('id', userId).maybeSingle(),
-          supabase.from('clientes').select('*').eq('auth_user_id', userId).maybeSingle(),
-          supabase.from('billeteras').select('*').eq('auth_user_id', userId).maybeSingle(),
-          supabase.from('usuario_roles_adicionales').select('rol').eq('usuario_id', userId)
-        ]);
+        const { data: rpcData } = await supabase.rpc('get_perfil_completo_rpc', { p_user_id: userId })
+        
+        let perfilData = null;
+        let clienteData = null;
+        let walletData = null;
+        let rolesAdicionales = [];
+        
+        if (rpcData) {
+            perfilData = {
+                id: userId,
+                rol: rpcData.rol,
+                estado: rpcData.estado,
+                porcentaje_descuento: rpcData.porcentaje_descuento,
+                config_modulos: rpcData.config_modulos,
+                motivo_estado: rpcData.motivo_estado,
+                juegos_deshabilitados: rpcData.juegos_deshabilitados
+            };
+            clienteData = {
+                id: rpcData.cliente_id,
+                nombres: rpcData.nombres,
+                apellidos: rpcData.apellidos,
+                usuario: rpcData.usuario,
+                nickname: rpcData.nickname,
+                whatsapp: rpcData.whatsapp,
+                estado: rpcData.estado
+            };
+            walletData = {
+                saldo: rpcData.saldo,
+                saldo_bs: rpcData.saldo_bs
+            };
+            rolesAdicionales = (rpcData.roles_adicionales || []).map(r => ({ rol: r }));
+        }
 
-        let perfilData = resP.data;
         if (!perfilData && u) {
           const { data: nuevoP } = await supabase.from('perfiles').insert({
             id: userId,
@@ -51,7 +76,6 @@ export function AuthProvider({ children }) {
           perfilData = nuevoP;
         }
 
-        let clienteData = resC.data;
         if (!clienteData && u) {
           const { data: nuevo } = await supabase.from('clientes').insert({
             auth_user_id: userId,
@@ -65,13 +89,13 @@ export function AuthProvider({ children }) {
         }
 
         const rolPrincipal = perfilData?.rol || 'admin';
-        const roles = buildRoles(rolPrincipal, resRA.data);
+        const roles = buildRoles(rolPrincipal, rolesAdicionales);
 
         setPerfil(prev => ({
           ...prev,
           ...clienteData,
           ...perfilData,
-          ...resB.data,
+          ...walletData,
           cliente_uuid: clienteData?.id || prev?.cliente_uuid,
           rol: rolPrincipal,
           roles,
@@ -97,17 +121,39 @@ export function AuthProvider({ children }) {
       const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 3000))
       
       const fetchPromise = (async () => {
-        const [resP, resC, resB, resRA] = await Promise.all([
-          supabase.from('perfiles').select('*').eq('id', userId).maybeSingle(),
-          supabase.from('clientes').select('*').eq('auth_user_id', userId).maybeSingle(),
-          supabase.from('billeteras').select('*').eq('auth_user_id', userId).maybeSingle(),
-          supabase.from('usuario_roles_adicionales').select('rol').eq('usuario_id', userId)
-        ])
+        const { data: rpcData } = await supabase.rpc('get_perfil_completo_rpc', { p_user_id: userId })
+        
+        let perfilData = null;
+        let clienteData = null;
+        let walletData = null;
+        let rolesAdicionales = [];
+        
+        if (rpcData) {
+            perfilData = {
+                id: userId,
+                rol: rpcData.rol,
+                estado: rpcData.estado,
+                porcentaje_descuento: rpcData.porcentaje_descuento,
+                config_modulos: rpcData.config_modulos,
+                motivo_estado: rpcData.motivo_estado,
+                juegos_deshabilitados: rpcData.juegos_deshabilitados
+            };
+            clienteData = {
+                id: rpcData.cliente_id,
+                nombres: rpcData.nombres,
+                apellidos: rpcData.apellidos,
+                usuario: rpcData.usuario,
+                nickname: rpcData.nickname,
+                whatsapp: rpcData.whatsapp,
+                estado: rpcData.estado
+            };
+            walletData = {
+                saldo: rpcData.saldo,
+                saldo_bs: rpcData.saldo_bs
+            };
+            rolesAdicionales = (rpcData.roles_adicionales || []).map(r => ({ rol: r }));
+        }
 
-        let perfilData = resP.data
-        let clienteData = resC.data
-        const walletData = resB.data
-        const rolesAdicionales = resRA.data
         
         // Intercepción para Forzar Cierre de Sesión (__FORCE_LOGOUT__)
         if (perfilData?.motivo_estado && perfilData.motivo_estado.includes('__FORCE_LOGOUT__')) {
@@ -241,6 +287,13 @@ export function AuthProvider({ children }) {
 
     initializeAuth()
 
+    const globalChannel = supabase.channel('global_events')
+      .on('broadcast', { event: 'force_reload' }, async () => {
+         await supabase.auth.signOut();
+         window.location.reload(true);
+      })
+      .subscribe();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'TOKEN_REFRESHED') return
       
@@ -282,6 +335,7 @@ export function AuthProvider({ children }) {
     return () => {
       subscription.unsubscribe()
       if (channel) supabase.removeChannel(channel)
+      supabase.removeChannel(globalChannel)
     }
   }, [])
 

@@ -80,7 +80,10 @@ export default function Configuracion() {
   const [tiempoLimitePago, setTiempoLimitePago] = useState('15')
   const [montosBilleteraBs, setMontosBilleteraBs] = useState('')
   const [montosBilleteraUsd, setMontosBilleteraUsd] = useState('')
+  const [billeteraVideoUrl, setBilleteraVideoUrl] = useState('')
   const [permitirPagoDirecto, setPermitirPagoDirecto] = useState(true)
+  const [permitirRecargasUsd, setPermitirRecargasUsd] = useState(true)
+  const [permitirRecargasBs, setPermitirRecargasBs] = useState(true)
   
   // Estados para Banners dinámicos
   const [promoBannerTexto, setPromoBannerTexto] = useState('')
@@ -138,7 +141,10 @@ export default function Configuracion() {
       setTiempoLimitePago(config.tiempo_limite_pago || '15')
       setMontosBilleteraBs(config.montos_billetera_bs || '')
       setMontosBilleteraUsd(config.montos_billetera_usd || '')
+      setBilleteraVideoUrl(config.billetera_video_url || '')
       setPermitirPagoDirecto(config.permitir_pago_directo !== 'false')
+      setPermitirRecargasUsd(config.permitir_recargas_usd !== 'false')
+      setPermitirRecargasBs(config.permitir_recargas_bs !== 'false')
       
       // Banners
       setPromoBannerTexto(config.promo_banner_texto || '')
@@ -669,6 +675,60 @@ export default function Configuracion() {
                       </div>
                     </div>
                   </div>
+
+                  <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'rgba(0, 255, 136, 0.05)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: '300px' }}>
+                        <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '4px' }}>💵 Permitir Recargas Billetera (USD)</h3>
+                        <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                          Si está desactivado, los usuarios no podrán recargar saldo a su billetera en Dólares.
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <label className="toggle-switch">
+                          <input 
+                            type="checkbox" 
+                            checked={permitirRecargasUsd}
+                            onChange={(e) => {
+                              const newVal = e.target.checked
+                              setPermitirRecargasUsd(newVal)
+                              updateConfig('permitir_recargas_usd', newVal.toString(), true).then(() => 
+                                setAlertModal({ type: 'success', message: 'Configuración de recargas USD actualizada' })
+                              )
+                            }}
+                          />
+                          <span className="toggle-slider"></span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'rgba(168, 85, 247, 0.05)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: '300px' }}>
+                        <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '4px' }}>🏦 Permitir Recargas Billetera (Bs)</h3>
+                        <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                          Si está desactivado, los usuarios no podrán recargar saldo a su billetera en Bolívares.
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <label className="toggle-switch">
+                          <input 
+                            type="checkbox" 
+                            checked={permitirRecargasBs}
+                            onChange={(e) => {
+                              const newVal = e.target.checked
+                              setPermitirRecargasBs(newVal)
+                              updateConfig('permitir_recargas_bs', newVal.toString(), true).then(() => 
+                                setAlertModal({ type: 'success', message: 'Configuración de recargas Bs actualizada' })
+                              )
+                            }}
+                          />
+                          <span className="toggle-slider"></span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
                   
                   <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'rgba(168, 85, 247, 0.05)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
@@ -726,6 +786,42 @@ export default function Configuracion() {
                         >
                           Guardar
                         </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="card glass-panel p-4 mt-4" style={{ background: 'rgba(30, 30, 45, 0.4)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                      <div style={{ 
+                        width: '40px', height: '40px', borderRadius: '10px', 
+                        background: 'rgba(128, 90, 213, 0.2)', display: 'flex', 
+                        alignItems: 'center', justifyContent: 'center', color: '#a78bfa'
+                      }}>
+                        <i className="fi fi-rr-play-alt" style={{ fontSize: '18px' }}></i>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ margin: '0 0 4px 0', fontSize: '15px', fontWeight: 'bold', color: '#fff' }}>Video Tutorial de Billetera</h4>
+                        <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
+                          URL del video de YouTube que se mostrará en la sección "Añadir Saldo"
+                        </p>
+                        
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input 
+                            type="text" 
+                            className="form-input" 
+                            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.2)' }}
+                            value={billeteraVideoUrl}
+                            onChange={(e) => setBilleteraVideoUrl(e.target.value)}
+                            onBlur={(e) => updateConfig('billetera_video_url', e.target.value, true)}
+                            placeholder="Dejar en blanco para ocultar botón (ej. https://youtube.com/...)"
+                          />
+                          <button 
+                            className="btn btn-primary btn-sm" 
+                            onClick={() => updateConfig('billetera_video_url', billeteraVideoUrl, true).then(() => setAlertModal({ type: 'success', message: 'Video tutorial guardado exitosamente' }))}
+                          >
+                            Guardar
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

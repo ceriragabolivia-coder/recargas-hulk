@@ -127,31 +127,68 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
+  const [totalItems, setTotalItems] = useState(0)
+
   async function fetchPedidos() {
     setLoading(true)
     let query = supabase
       .from('pedidos')
-      .select('*, pedido_items(*, productos(*, juegos(*))), cupones(*)')
+      .select('*, pedido_items(*, productos(*, juegos(*))), cupones(*)', { count: 'exact' })
       .order('created_at', { ascending: false })
 
     if (normalizedParams.userId) {
-      // Si se pasa un userId específico, filtramos solo por ese usuario
       query = query.eq('cliente_id', normalizedParams.userId)
     } else if (!isSuperAdmin) {
       const ownerId = perfil?.owner_id || (isNegocio ? user?.id : null)
       if (ownerId) {
-        // Si es un negocio o admin de negocio, ve lo de su negocio o lo que él mismo pidió
         query = query.or(`owner_id.eq.${ownerId},cliente_id.eq.${user.id}`)
       } else if (!canManage) {
-        // Si es cliente raso, solo ve lo suyo
         query = query.eq('cliente_id', user.id)
       }
     }
 
-    // Limitar la cantidad de pedidos para evitar sobrecarga (admins: últimos 2500, clientes: 300)
-    query = query.limit(canManage ? 2500 : 300)
+    // Filtros de estado (Server-side)
+    if (filtroEstado === 'completado') {
+      query = query.eq('estado', 'completado')
+    } else if (filtroEstado === 'pendiente') {
+      query = query.eq('estado', 'pendiente')
+    } else if (filtroEstado === 'procesando') {
+      query = query.eq('estado', 'procesando')
+    } else if (filtroEstado === 'rechazado') {
+      query = query.in('estado', ['rechazado', 'cancelado', 'reembolsado'])
+    } else if (filtroEstado === 'mios') {
+      query = query.eq('atendido_por_id', user.id)
+    } else if (filtroEstado === 'recientes') {
+      const h24 = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+      query = query.gte('created_at', h24)
+    }
 
-    const { data: rawPedidos, error } = await query
+    // Búsqueda (Server-side)
+    if (busqueda && busqueda.trim()) {
+      const cleanQ = busqueda.trim();
+      const isNum = /^\d+$/.test(cleanQ);
+      if (isNum) {
+        query = query.eq('numero_pedido', parseInt(cleanQ));
+      } else {
+        const { data: matchedClientes } = await supabase.from('clientes')
+          .select('auth_user_id')
+          .or(`nombres.ilike.%${cleanQ}%,nickname.ilike.%${cleanQ}%,usuario.ilike.%${cleanQ}%`)
+          .limit(50);
+        const ids = matchedClientes?.map(c => c.auth_user_id) || [];
+        if (ids.length > 0) {
+          query = query.in('cliente_id', ids);
+        } else {
+          query = query.eq('id', '00000000-0000-0000-0000-000000000000'); 
+        }
+      }
+    }
+
+    // Paginación (Server-side)
+    const from = (currentPage - 1) * itemsPerPage
+    const to = from + itemsPerPage - 1
+    query = query.range(from, to)
+
+    const { data: rawPedidos, error, count } = await query
 
     if (error) {
       console.error("Error fetching pedidos:", error);
@@ -160,18 +197,18 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
       return;
     }
 
+    if (count !== null) setTotalItems(count)
+
     if (rawPedidos && rawPedidos.length > 0) {
-      // 1. Obtener los perfiles de los usuarios que han creado órdenes (en chunks para evitar Error 414 URI Too Long) 
       const uniqueUserIds = [...new Set(
         rawPedidos.map(p => p.cliente_id)
           .concat(rawPedidos.map(p => p.atendido_por_id))
-          .filter(id => id) // remove nulls
+          .filter(id => id) 
       )];
 
       let usersData = [];
       let usersError = null;
       
-      // Separamos en chunks de 100 para no saturar la URL en el GET request
       const chunks = [];
       for (let i = 0; i < uniqueUserIds.length; i += 100) {
         chunks.push(uniqueUserIds.slice(i, i + 100));
@@ -186,9 +223,6 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
         if (data) usersData = usersData.concat(data);
       }
 
-      if (usersError) console.error("Error fetching names:", usersError)
-
-      // 3. Crear mapas para búsqueda rápida (indexamos por auth_user_id e id interno de clientes)
       const userMap = new Map();
       (usersData || []).forEach(u => {
         if (u.auth_user_id) userMap.set(u.auth_user_id, u);
@@ -203,14 +237,12 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
             nombres: user.user_metadata?.nombres || 'Tú (Admin Antiguo)',
             apellidos: user.user_metadata?.apellidos || '',
             usuario: user.email,
-            nickname: user.user_metadata?.nickname || 'Admin',
-            whatsapp: user.user_metadata?.whatsapp || 'No especificado'
+            nickname: user.user_metadata?.nickname || 'Admin'
           };
         }
         return c;
       };
 
-      // 4. Integrar datos en el array de pedidos
       const finalPedidos = rawPedidos.map(p => ({
         ...p,
         cliente: getClienteFallback(p.cliente_id),
@@ -225,11 +257,13 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   }
 
   useEffect(() => {
-    // Esperar a que la autenticación esté lista antes de consultar pedidos
     if (perfil) {
-      fetchPedidos()
+      const delayDebounceFn = setTimeout(() => {
+        fetchPedidos()
+      }, 300)
+      return () => clearTimeout(delayDebounceFn)
     }
-  }, [user, perfil])
+  }, [user, perfil, currentPage, filtroEstado, busqueda])
 
   useEffect(() => {
     if (incomingFilterKey) {
@@ -432,7 +466,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     return list.filter(p => p.estado === key)
   }
 
-  let pedidosFiltrados = filterPedidos(pedidos, filtroEstado)
+  let pedidosFiltrados = pedidos
 
   if (busqueda.trim() !== '') {
     const q = busqueda.toLowerCase()
@@ -451,9 +485,9 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   }
 
   // Cálculos de Paginación
-  const totalPages = Math.ceil(pedidosFiltrados.length / itemsPerPage)
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1
   const startIndex = (currentPage - 1) * itemsPerPage
-  const currentPedidos = pedidosFiltrados.slice(startIndex, startIndex + itemsPerPage)
+  const currentPedidos = pedidosFiltrados
 
   const updateEstado = async (pedidoId, nuevoEstado) => {
     // 1. Obtener el pedido actual con manejo de errores
@@ -2934,7 +2968,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
             )}
           </div>
 
-          {pedidosFiltrados.length === 0 ? (
+          {currentPedidos.length === 0 ? (
             <div className="card" style={{ textAlign: 'center', padding: '60px' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>📭</div>
               <h3 style={{ color: 'var(--text-primary)', marginBottom: '8px' }}>No hay pedidos en esta categoría</h3>
@@ -3080,7 +3114,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
               {totalPages > 1 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--bg-panel)' }}>
                   <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                    Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, pedidosFiltrados.length)} de {pedidosFiltrados.length} pedidos
+                    Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, totalItems)} de {totalItems} pedidos
                   </div>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button

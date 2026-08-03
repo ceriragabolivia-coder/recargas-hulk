@@ -4,6 +4,8 @@ import { useCart, useVentas, useMetodosPago, useAuth, useWallet } from '../hooks
 import { formatUSD, formatBs, playCashRegisterSound } from '../utils/helpers'
 import { supabase } from '../lib/supabase'
 import { useConfiguracion } from '../hooks/useData'
+import { processAutoDeliveryOrder } from '../utils/autoProcess'
+import { processTiendaGiftVenOrder } from '../utils/apiProcessor'
 import AlertModal from './AlertModal'
 import FloatingBackground from './FloatingBackground'
 import { compressImage } from '../utils/imageCompression'
@@ -490,8 +492,8 @@ export default function Checkout({ onFinish, embedded = false }) {
     }
 
     // Capturar montos exactos ANTES de que el checkout limpie el carrito
-    const amountUSDToDeduct = walletAmountToUse;
-    const amountBsToDeduct = walletBsAmountToUse;
+    const amountUSDToDeduct = isWalletOnly ? discountedTotalUSD : walletAmountToUse;
+    const amountBsToDeduct = isWalletBsOnly ? discountedTotalBs : walletBsAmountToUse;
     const currentIsWalletOnly = isWalletOnly;
     const currentIsWalletBsOnly = isWalletBsOnly;
     const currentRemainingUSD = remainingUSD;
@@ -531,11 +533,11 @@ export default function Checkout({ onFinish, embedded = false }) {
 
       // SI ES PAGO TOTAL CON BILLETERA, GENERAR REFERENCIA AUTOMÁTICA
       if (currentIsWalletOnly) {
-        finalReferencia = 'PAGO_BILLETERA_USD_TOTAL'
         finalMetodoId = null
+        finalReferencia = 'PAGO_BILLETERA_USD_TOTAL_V2'
       } else if (currentIsWalletBsOnly) {
-        finalReferencia = 'PAGO_BILLETERA_BS_TOTAL'
         finalMetodoId = null
+        finalReferencia = 'PAGO_BILLETERA_BS_TOTAL_V2'
       }
 
 
@@ -584,13 +586,11 @@ export default function Checkout({ onFinish, embedded = false }) {
           })
 
           if (walletError || walletRes === false || walletRes?.success === false) {
-            await supabase.from('pedido_items').delete().eq('pedido_id', pedidoId);
-            await supabase.from('pedidos').delete().eq('id', pedidoId);
+            await supabase.rpc('eliminar_pedido_fallido_rpc', { p_pedido_id: pedidoId });
             throw new Error(`ERROR COBRO USD: ${walletError?.message || walletRes?.message || 'Fondos insuficientes'}`);
           }
         } catch (e) {
-          await supabase.from('pedido_items').delete().eq('pedido_id', pedidoId);
-          await supabase.from('pedidos').delete().eq('id', pedidoId);
+          await supabase.rpc('eliminar_pedido_fallido_rpc', { p_pedido_id: pedidoId });
           alert("CRASH COBRO USD: " + e.message);
           setIsProcessing(false);
           return;
@@ -607,16 +607,30 @@ export default function Checkout({ onFinish, embedded = false }) {
           })
 
           if (walletErrorBs || walletBsRes === false || walletBsRes?.success === false) {
-            await supabase.from('pedido_items').delete().eq('pedido_id', pedidoId);
-            await supabase.from('pedidos').delete().eq('id', pedidoId);
+            await supabase.rpc('eliminar_pedido_fallido_rpc', { p_pedido_id: pedidoId });
             throw new Error(`ERROR COBRO BS: ${walletErrorBs?.message || walletBsRes?.message || 'Fondos insuficientes'}`);
           }
         } catch (e) {
-          await supabase.from('pedido_items').delete().eq('pedido_id', pedidoId);
-          await supabase.from('pedidos').delete().eq('id', pedidoId);
+          await supabase.rpc('eliminar_pedido_fallido_rpc', { p_pedido_id: pedidoId });
           alert("CRASH COBRO BS: " + e.message);
           setIsProcessing(false);
           return;
+        }
+      }
+
+      // AUTO-PROCESAMIENTO DESPUÉS DEL COBRO DE BILLETERA
+      if (pedidoResult?.shouldAutoProcess) {
+        try {
+          console.log('⏳ Ejecutando auto-procesamiento después de cobrar...');
+          const processed = await processAutoDeliveryOrder(pedidoId);
+          if (processed) {
+             console.log('✅ Pedido auto-procesado correctamente por baúl');
+          } else {
+             const apiProcessed = await processTiendaGiftVenOrder(pedidoId, null, false).catch(() => false);
+             if (apiProcessed) console.log('✅ Pedido auto-procesado correctamente por API');
+          }
+        } catch (err) {
+          console.error('Error en auto-procesamiento:', err);
         }
       }
 

@@ -52,12 +52,19 @@ export default function LandingWallet({ onClose }) {
     return !(perfil?.config_modulos || []).includes('disable_wallet_bs');
   }, [isAdmin, perfil]);
 
+  const permitirRecargasUSD = config?.permitir_recargas_usd !== 'false';
+  const permitirRecargasBs = config?.permitir_recargas_bs !== 'false';
+
   useEffect(() => {
     if (hasWalletBs && !hasWalletUSD) setMonedaRecarga('bs');
     else if (!hasWalletBs && hasWalletUSD) setMonedaRecarga('usd');
     else if (isCliente) setMonedaRecarga('bs');
     else setMonedaRecarga('usd');
-  }, [isCliente, hasWalletBs, hasWalletUSD]);
+    
+    // Override si alguna está deshabilitada globalmente
+    if (!permitirRecargasBs && permitirRecargasUSD && hasWalletUSD) setMonedaRecarga('usd');
+    if (!permitirRecargasUSD && permitirRecargasBs && hasWalletBs) setMonedaRecarga('bs');
+  }, [isCliente, hasWalletBs, hasWalletUSD, permitirRecargasBs, permitirRecargasUSD]);
 
   const fetchPendingRecargas = async () => {
     if (!isAdmin) return
@@ -390,18 +397,19 @@ export default function LandingWallet({ onClose }) {
             <h3>Cargar Saldo</h3>
             <p>Selecciona tu método y envía el reporte.</p>
 
+            {(hasWalletUSD && permitirRecargasUSD) || (hasWalletBs && permitirRecargasBs) ? (
             <form onSubmit={handleSubmitRecarga}>
               <div className="form-group">
                 <label>Moneda</label>
                 <div className="currency-selector">
-                  {hasWalletUSD && (
+                  {hasWalletUSD && permitirRecargasUSD && (
                     <button 
                       type="button" 
                       className={monedaRecarga === 'usd' ? 'active' : ''} 
                       onClick={() => setMonedaRecarga('usd')}
                     >USD</button>
                   )}
-                  {hasWalletBs && (
+                  {hasWalletBs && permitirRecargasBs && (
                   <button 
                     type="button" 
                     className={monedaRecarga === 'bs' ? 'active' : ''} 
@@ -606,6 +614,15 @@ export default function LandingWallet({ onClose }) {
                 {isProcessing ? 'Procesando...' : 'Enviar Reporte'}
               </button>
             </form>
+            ) : (
+              <div style={{ padding: '30px 20px', textAlign: 'center', backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <span style={{ fontSize: '40px', display: 'block', marginBottom: '16px' }}>🛠️</span>
+                <h4 style={{ fontSize: '18px', margin: '0 0 8px 0', color: '#fff' }}>Recargas Deshabilitadas</h4>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
+                  Por el momento, las recargas de saldo no están disponibles. Intenta nuevamente más tarde.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* CAJA DE CANJEAR PIN */}

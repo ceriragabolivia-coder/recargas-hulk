@@ -6,15 +6,16 @@ export default function TutorialVideoModal({ isOpen, onClose, videoUrl, title })
   // Function to convert YouTube URL to embed URL
   const getEmbedUrl = (url) => {
     if (!url) return ''
-    if (url.includes('youtube.com/embed/')) return url
+    const lowerUrl = url.toLowerCase()
+    if (lowerUrl.includes('youtube.com/embed/')) return url
     
     let videoId = ''
-    if (url.includes('youtube.com/watch?v=')) {
-      videoId = url.split('v=')[1]?.split('&')[0]
-    } else if (url.includes('youtu.be/')) {
-      videoId = url.split('youtu.be/')[1]?.split('?')[0]
-    } else if (url.includes('youtube.com/shorts/')) {
-      videoId = url.split('shorts/')[1]?.split('?')[0]
+    if (lowerUrl.includes('youtube.com/watch?v=')) {
+      videoId = url.split(/v=/i)[1]?.split('&')[0]
+    } else if (lowerUrl.includes('youtu.be/')) {
+      videoId = url.split(/youtu\.be\//i)[1]?.split('?')[0]
+    } else if (lowerUrl.includes('youtube.com/shorts/')) {
+      videoId = url.split(/shorts\//i)[1]?.split('?')[0]
     }
     
     if (videoId) {
@@ -26,10 +27,11 @@ export default function TutorialVideoModal({ isOpen, onClose, videoUrl, title })
 
   const [isVertical, setIsVertical] = React.useState(false)
   const embedUrl = getEmbedUrl(videoUrl)
-  const isYouTube = videoUrl && (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be'))
+  const lowerVideoUrl = videoUrl ? videoUrl.toLowerCase() : ''
+  const isYouTube = lowerVideoUrl.includes('youtube.com') || lowerVideoUrl.includes('youtu.be')
 
   React.useEffect(() => {
-    if (videoUrl && videoUrl.includes('youtube.com/shorts/')) {
+    if (lowerVideoUrl.includes('youtube.com/shorts/')) {
       setIsVertical(true)
     } else {
       // Para videos locales, se detectará en handleLoadedMetadata

@@ -26,25 +26,30 @@ export function useJuegos() {
   const isNegocio = perfil?.rol === 'negocio'
 
   async function fetchJuegos() {
-    let jSelect = supabase.from('juegos').select('*').eq('activo', true)
-    let cSelect = supabase.from('categorias').select('*').eq('activa', true)
+    try {
+      let jSelect = supabase.from('juegos').select('*').eq('activo', true)
+      let cSelect = supabase.from('categorias').select('*').eq('activa', true)
 
-    if (isNegocio) {
-      jSelect = jSelect.eq('owner_id', user.id)
-      cSelect = cSelect.eq('owner_id', user.id)
-    } else {
-      jSelect = jSelect.is('owner_id', null)
-      cSelect = cSelect.is('owner_id', null)
+      if (isNegocio) {
+        jSelect = jSelect.eq('owner_id', user?.id)
+        cSelect = cSelect.eq('owner_id', user?.id)
+      } else {
+        jSelect = jSelect.is('owner_id', null)
+        cSelect = cSelect.is('owner_id', null)
+      }
+
+      const [jRes, cRes] = await Promise.all([
+        jSelect.order('nombre'),
+        cSelect.order('orden')
+      ])
+      
+      if (jRes.data) setJuegos(jRes.data)
+      if (cRes.data) setCategorias(cRes.data)
+    } catch (err) {
+      console.error("Error en fetchJuegos:", err)
+    } finally {
+      setLoading(false)
     }
-
-    const [jRes, cRes] = await Promise.all([
-      jSelect.order('nombre'),
-      cSelect.order('orden')
-    ])
-    
-    if (jRes.data) setJuegos(jRes.data)
-    if (cRes.data) setCategorias(cRes.data)
-    setLoading(false)
   }
 
   async function createJuego(data) {
@@ -88,21 +93,26 @@ export function useProductos(juegoId) {
 
   async function fetchProductos() {
     if (!juegoId) { setProductos([]); setLoading(false); return }
-    let query = supabase
-      .from('productos')
-      .select('*')
-      .eq('juego_id', juegoId)
+    try {
+      let query = supabase
+        .from('productos')
+        .select('*')
+        .eq('juego_id', juegoId)
 
-    if (isNegocio) {
-      query = query.eq('owner_id', user.id)
-    } else {
-      query = query.is('owner_id', null)
+      if (isNegocio) {
+        query = query.eq('owner_id', user?.id)
+      } else {
+        query = query.is('owner_id', null)
+      }
+
+      const { data, error: dbError } = await query.order('orden')
+      if (dbError) setError(dbError)
+      if (data) setProductos(data)
+    } catch (err) {
+      console.error("Error en fetchProductos:", err)
+    } finally {
+      setLoading(false)
     }
-
-    const { data, error: dbError } = await query.order('orden')
-    if (dbError) setError(dbError)
-    if (data) setProductos(data)
-    setLoading(false)
   }
 
   async function toggleProducto(id, currentActivo) {
@@ -113,16 +123,21 @@ export function useProductos(juegoId) {
   }
 
   async function fetchCategorias() {
-    let query = supabase.from('categorias').select('*')
-    if (isNegocio) {
-      query = query.eq('owner_id', user.id)
-    } else {
-      query = query.is('owner_id', null)
+    try {
+      let query = supabase.from('categorias').select('*')
+      if (isNegocio) {
+        query = query.eq('owner_id', user?.id)
+      } else {
+        query = query.is('owner_id', null)
+      }
+      const { data, error: dbError } = await query.order('orden')
+      if (dbError) setError(dbError)
+      if (data) setCategorias(data)
+    } catch (err) {
+      console.error("Error en fetchCategorias:", err)
+    } finally {
+      setLoading(false)
     }
-    const { data, error: dbError } = await query.order('orden')
-    if (dbError) setError(dbError)
-    if (data) setCategorias(data)
-    setLoading(false)
   }
 
   async function createCategoria(data) {
@@ -461,20 +476,45 @@ export function useVentas() {
   }
 
   async function fetchResumenPeriodo(fechaDesde, fechaHasta, forceOwnSales = false) {
-    const ventas = await fetchHistorial(fechaDesde, fechaHasta, forceOwnSales)
+    const startISO = getLocalBounds(fechaDesde).start
+    const endISO = getLocalBounds(fechaHasta).end
+
+    let query = supabase
+      .from('ventas')
+      .select('created_at, ganancia_usd, precio_venta_usd, precio_venta_bs')
+      .gte('created_at', startISO)
+      .lte('created_at', endISO)
+      .order('created_at', { ascending: false })
+
+    if (isNegocio) {
+      query = query.eq('owner_id', user.id)
+    } else {
+      query = query.is('owner_id', null)
+    }
+
+    if ((user?.email !== 'recargashulk@gmail.com' || forceOwnSales) && perfil?.cliente_uuid) {
+      query = query.eq('vendedor_id', perfil.cliente_uuid)
+    } else if (user?.email !== 'recargashulk@gmail.com' && !perfil?.cliente_uuid) {
+      query = query.eq('vendedor_id', '00000000-0000-0000-0000-000000000000')
+    }
+
+    const { data: ventas } = await query
+    
     const resMap = {}
-    ventas.forEach(v => {
-      const d = new Date(v.created_at)
-      const localDate = getLocalDateString(d)
-      
-      if (!resMap[localDate]) {
-        resMap[localDate] = { fecha: localDate, ganancias_totales: 0, ventas_totales_usd: 0, ventas_totales_bs: 0, recargas_totales: 0 }
-      }
-      resMap[localDate].ganancias_totales += Number(v.ganancia_usd || 0)
-      resMap[localDate].ventas_totales_usd += Number(v.precio_venta_usd || 0)
-      resMap[localDate].ventas_totales_bs += Number(v.precio_venta_bs || 0)
-      resMap[localDate].recargas_totales += 1
-    })
+    if (ventas) {
+      ventas.forEach(v => {
+        const d = new Date(v.created_at)
+        const localDate = getLocalDateString(d)
+        
+        if (!resMap[localDate]) {
+          resMap[localDate] = { fecha: localDate, ganancias_totales: 0, ventas_totales_usd: 0, ventas_totales_bs: 0, recargas_totales: 0 }
+        }
+        resMap[localDate].ganancias_totales += Number(v.ganancia_usd || 0)
+        resMap[localDate].ventas_totales_usd += Number(v.precio_venta_usd || 0)
+        resMap[localDate].ventas_totales_bs += Number(v.precio_venta_bs || 0)
+        resMap[localDate].recargas_totales += 1
+      })
+    }
     return Object.values(resMap).sort((a,b) => a.fecha > b.fecha ? -1 : 1)
   }
 
@@ -598,48 +638,16 @@ export function useClientes() {
 
   async function fetchClientes() {
     setLoading(true)
-    const [clientesRes, perfilesRes, billeterasRes, rolesAdicionalesRes] = await Promise.all([
-      supabase
-        .from('clientes')
-        .select('*')
-        .order('fecha_registro', { ascending: false }),
-      supabase
-        .from('perfiles')
-        .select('id, rol, estado, porcentaje_descuento, config_modulos, motivo_estado, juegos_deshabilitados'),
-      supabase
-        .from('billeteras')
-        .select('auth_user_id, saldo, saldo_bs'),
-      supabase
-        .from('usuario_roles_adicionales')
-        .select('usuario_id, rol')
-    ])
+    const { data, error } = await supabase
+      .from('v_clientes_admin')
+      .select('*')
+      .order('fecha_registro', { ascending: false })
+      .limit(600) // Limitar la cantidad de usuarios para no saturar la memoria ni la red
 
-    if (clientesRes.data) {
-      const perfilesMap = new Map((perfilesRes.data || []).map(p => [p.id, p]))
-      const billeterasMap = new Map((billeterasRes.data || []).map(b => [b.auth_user_id, { saldo: b.saldo, saldo_bs: b.saldo_bs }]))
-      const rolesAdicionalesMap = new Map()
-      ;(rolesAdicionalesRes.data || []).forEach(r => {
-        const lista = rolesAdicionalesMap.get(r.usuario_id) || []
-        lista.push(r.rol)
-        rolesAdicionalesMap.set(r.usuario_id, lista)
-      })
-
-      const formatted = clientesRes.data.map(c => {
-        const p = perfilesMap.get(c.auth_user_id)
-        return {
-          ...c,
-          rol: p?.rol || 'cliente',
-          estado: p?.estado || c.estado || 'pendiente',
-          porcentaje_descuento: p?.porcentaje_descuento || 0,
-          config_modulos: p?.config_modulos || [],
-          motivo_estado: p?.motivo_estado || null,
-          juegos_deshabilitados: p?.juegos_deshabilitados || [],
-          roles_adicionales: rolesAdicionalesMap.get(c.auth_user_id) || [],
-          billetera_saldo: billeterasMap.get(c.auth_user_id)?.saldo || 0,
-          billetera_saldo_bs: billeterasMap.get(c.auth_user_id)?.saldo_bs || 0
-        }
-      })
-      setClientes(formatted)
+    if (data) {
+      setClientes(data)
+    } else {
+      console.error("Error fetching clientes:", error)
     }
     setLoading(false)
   }

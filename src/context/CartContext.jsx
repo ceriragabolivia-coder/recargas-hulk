@@ -1,8 +1,6 @@
 import React, { useState, useEffect, createContext, useContext, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
-import { processAutoDeliveryOrder } from '../utils/autoProcess'
-import { processTiendaGiftVenOrder } from '../utils/apiProcessor'
 import { calcularPrecioVenta } from '../utils/helpers'
 
 const CartContext = createContext()
@@ -199,7 +197,7 @@ export function CartProvider({ children }) {
         total_bs: finalBs,
         estado: 'pendiente',
         comprobante_url: comprobanteUrl || null,
-        pago_verificado: (isAutomatic || pagoVerificadoApk) ? true : null,
+        pago_verificado: pagoVerificadoApk ? true : null,
         cupon_id: activeCupon?.id || null,
         descuento_cupon_usd: descuento_cupon_usd,
         descuento_cupon_bs: descuento_cupon_bs
@@ -276,23 +274,12 @@ export function CartProvider({ children }) {
         }
       }
 
-      if (isAutomatic || pagoVerificadoApk) {
-        try {
-          console.log('⏳ Ejecutando auto-procesamiento antes de finalizar...');
-          const processed = await processAutoDeliveryOrder(pedido.id);
-          if (processed) {
-             console.log('✅ Pedido auto-procesado correctamente por baúl');
-          } else {
-             // Si no se procesó por el baúl, intentamos con la API
-             const apiProcessed = await processTiendaGiftVenOrder(pedido.id, null, false).catch(() => false);
-             if (apiProcessed) console.log('✅ Pedido auto-procesado correctamente por API');
-          }
-        } catch (err) {
-          console.error('Error en auto-procesamiento:', err);
-        }
-      }
-
-      return [{ id: 'pedido', data: pedido, error: null }]
+      return [{ 
+        id: 'pedido', 
+        data: pedido, 
+        error: null, 
+        shouldAutoProcess: (isAutomatic || pagoVerificadoApk) 
+      }]
 
     } catch (err) {
       console.error('Error in checkout:', err)
