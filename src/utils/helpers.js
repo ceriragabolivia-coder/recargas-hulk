@@ -84,7 +84,8 @@ export function formatUSD(value) {
 }
 
 export function formatBs(value) {
-  const num = Math.round(Number(value || 0)).toString()
+  const isNegative = Number(value) < 0;
+  const num = Math.abs(Math.round(Number(value || 0))).toString()
   let result = ""
   for (let i = 0; i < num.length; i++) {
     const posFromEnd = num.length - i
@@ -97,7 +98,7 @@ export function formatBs(value) {
       }
     }
   }
-  return `${result} B\u200Cs`
+  return `${isNegative ? '-' : ''}${result} B\u200Cs`
 }
 
 export function formatDate(dateStr) {
