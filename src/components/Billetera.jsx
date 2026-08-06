@@ -973,6 +973,15 @@ export default function Billetera({ onNavigate }) {
                         <div style={{ fontSize: '10px', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Datos para la transferencia</div>
                       </div>
                     </div>
+                    
+                    {/* Código QR */}
+                    {selected.qr_url && (
+                      <div style={{ marginBottom: '16px', textAlign: 'center', backgroundColor: '#fff', padding: '12px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', display: 'inline-block', width: '100%', boxSizing: 'border-box' }}>
+                        <img loading="lazy" decoding="async" src={selected.qr_url} alt="QR Code de Pago" style={{ width: '180px', height: '180px', objectFit: 'contain', margin: '0 auto' }} />
+                        <div style={{ fontSize: '12px', color: '#666', marginTop: '8px', fontWeight: 600 }}>Escanea para pagar</div>
+                      </div>
+                    )}
+
                     {/* Botón Copiar Todo */}
                     {selected.datos && (
                       <button 
