@@ -1614,28 +1614,30 @@ export default function Landing({ onNavigate }) {
                                     )}
                                   </div>
 
-                                  <div className="assax-product-info">
-                                    <div className="product-name">{prod.nombre}</div>
-                                    {(prod.info_adicional_texto || prod.info_adicional_imagen_url) && (
-                                      <div 
-                                        onClick={(e) => { e.stopPropagation(); setInfoProductModal(prod); }} 
-                                        className="product-info-trigger"
-                                        title="Información importante"
-                                      >
-                                        i
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  <div className="assax-product-price-box">
-                                    <div className="assax-product-price">
-                                      {isRevendedor ? formatUSD(pricing.venta_usd) : formatBsAssax(pricing.venta_bs)}
+                                  <div className="assax-product-details-col">
+                                    <div className="assax-product-info">
+                                      <div className="product-name">{prod.nombre}</div>
+                                      {(prod.info_adicional_texto || prod.info_adicional_imagen_url) && (
+                                        <div 
+                                          onClick={(e) => { e.stopPropagation(); setInfoProductModal(prod); }} 
+                                          className="product-info-trigger"
+                                          title="Información importante"
+                                        >
+                                          i
+                                        </div>
+                                      )}
                                     </div>
-                                    {selectedJuego.mostrar_precio_dual && !isRevendedor && (
-                                      <div className="price-secondary-usd">
-                                        ({formatUSD(pricing.venta_usd)})
+
+                                    <div className="assax-product-price-box">
+                                      <div className="assax-product-price">
+                                        {isRevendedor ? formatUSD(pricing.venta_usd) : formatBsAssax(pricing.venta_bs)}
                                       </div>
-                                    )}
+                                      {selectedJuego.mostrar_precio_dual && !isRevendedor && (
+                                        <div className="price-secondary-usd">
+                                          ({formatUSD(pricing.venta_usd)})
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
 
                                   {/* CASHBACK BADGE */}

@@ -1,23 +1,4 @@
-CREATE TABLE IF NOT EXISTS pines (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    codigo VARCHAR(50) UNIQUE NOT NULL,
-    monto NUMERIC NOT NULL,
-    moneda VARCHAR(10) NOT NULL CHECK (moneda IN ('usd', 'bs')),
-    estado VARCHAR(20) NOT NULL DEFAULT 'activo' CHECK (estado IN ('activo', 'canjeado')),
-    creado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    canjeado_en TIMESTAMP WITH TIME ZONE,
-    canjeado_por UUID REFERENCES auth.users(id),
-    transaccion_id UUID -- Reference to billetera_transacciones
-);
-
--- Tabla de seguridad para intentos fallidos
-CREATE TABLE IF NOT EXISTS seguridad_intentos_pines (
-    auth_user_id UUID PRIMARY KEY REFERENCES auth.users(id),
-    intentos_fallidos INTEGER DEFAULT 0,
-    bloqueado_hasta TIMESTAMP WITH TIME ZONE
-);
-
-CREATE OR REPLACE FUNCTION canjear_pin(
+CREATE OR REPLACE FUNCTION public.canjear_pin(
     p_codigo VARCHAR,
     p_user_id UUID
 ) RETURNS JSON AS $$
@@ -139,37 +120,5 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Habilitar RLS en las tablas
-ALTER TABLE pines ENABLE ROW LEVEL SECURITY;
-ALTER TABLE seguridad_intentos_pines ENABLE ROW LEVEL SECURITY;
-
--- Limpiar políticas anteriores (en caso de que existieran)
-DROP POLICY IF EXISTS "Acceso total para usuarios autenticados" ON pines;
-DROP POLICY IF EXISTS "Solo administradores pueden gestionar pines" ON pines;
-DROP POLICY IF EXISTS "Acceso a seguridad intentos" ON seguridad_intentos_pines;
-
--- Crear política estricta para la tabla pines (solo lectura/escritura para admins)
-CREATE POLICY "Solo administradores pueden gestionar pines" 
-ON pines FOR ALL 
-TO authenticated 
-USING (
-    EXISTS (
-        SELECT 1 FROM perfiles
-        WHERE perfiles.id = auth.uid()
-        AND (perfiles.rol = 'admin' OR perfiles.rol = 'administrador')
-    )
-) 
-WITH CHECK (
-    EXISTS (
-        SELECT 1 FROM perfiles
-        WHERE perfiles.id = auth.uid()
-        AND (perfiles.rol = 'admin' OR perfiles.rol = 'administrador')
-    )
-);
-
--- Crear política de seguridad para la tabla de intentos (bloqueo total)
-CREATE POLICY "Nadie puede ver la tabla de intentos excepto rpc" 
-ON seguridad_intentos_pines FOR ALL 
-TO authenticated 
-USING (false) 
-WITH CHECK (false);
+-- Notificar a postgREST para que recargue el schema
+NOTIFY pgrst, 'reload schema';

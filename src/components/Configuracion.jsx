@@ -250,7 +250,7 @@ export default function Configuracion() {
     setUploadingImage(true)
     try {
       const pngBlob = await removeWhiteBackground(file)
-      const path = `payment-icons/${Date.now()}.png`
+      const path = `payment-icons/${Date.now()}.${pngBlob.name ? pngBlob.name.split('.').pop() : 'png'}`
       const { error: uploadError } = await supabase.storage.from('logos').upload(path, await compressImage(pngBlob), { cacheControl: '31536000', upsert: true })
       if (uploadError) throw uploadError
       const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(path)

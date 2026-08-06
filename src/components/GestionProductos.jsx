@@ -526,10 +526,10 @@ export default function GestionProductos() {
 
         if (shouldRemoveBg) {
           finalFile = await removeWhiteBackground(newIconFile)
-          contentType = 'image/png'
+          contentType = finalFile.type || 'image/png'
         }
 
-        const fileName = `prod-new-${Date.now()}${shouldRemoveBg ? '.png' : ''}`
+        const fileName = `prod-new-${Date.now()}.${finalFile.name ? finalFile.name.split('.').pop() : (contentType === 'image/webp' ? 'webp' : 'png')}`
         const { error: uploadError } = await supabase.storage
           .from('logos')
           .upload(fileName, await compressImage(finalFile), { cacheControl: '31536000', upsert: true })
@@ -670,7 +670,7 @@ export default function GestionProductos() {
 
       if (shouldRemoveBg) {
         finalFile = await removeWhiteBackground(file)
-        contentType = 'image/png'
+        contentType = finalFile.type || 'image/png'
       }
 
       const fileName = `prod-${prodId}-${Date.now()}${shouldRemoveBg ? '.png' : ''}`
@@ -725,7 +725,7 @@ export default function GestionProductos() {
 
       if (shouldRemoveBg) {
         finalFile = await removeWhiteBackground(file)
-        contentType = 'image/png'
+        contentType = finalFile.type || 'image/png'
       }
 
       const fileName = `${selectedJuego.id}-${Date.now()}${shouldRemoveBg ? '.png' : ''}`
@@ -1629,7 +1629,7 @@ export default function GestionProductos() {
                   let contentType = file.type
                   if (shouldRemoveBg) {
                     finalFile = await removeWhiteBackground(file)
-                    contentType = 'image/png'
+                    contentType = finalFile.type || 'image/png'
                   }
                   const fileName = `game-${Date.now()}${shouldRemoveBg ? '.png' : ''}`
                   const { error: uploadError } = await supabase.storage.from('logos').upload(fileName, await compressImage(finalFile), { cacheControl: '31536000', upsert: true })

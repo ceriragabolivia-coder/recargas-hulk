@@ -528,6 +528,23 @@ export default function App() {
     else if (location.pathname === '/login') setIsRegistering(false)
   }, [location.pathname])
 
+  // Prevenir click derecho y arrastre en todas las imágenes de la web
+  useEffect(() => {
+    const preventImageActions = (e) => {
+      if (e.target && e.target.tagName === 'IMG') {
+        e.preventDefault()
+      }
+    }
+    
+    document.addEventListener('contextmenu', preventImageActions)
+    document.addEventListener('dragstart', preventImageActions)
+
+    return () => {
+      document.removeEventListener('contextmenu', preventImageActions)
+      document.removeEventListener('dragstart', preventImageActions)
+    }
+  }, [])
+
   const currentPage = location.pathname.split('/')[1]?.toLowerCase() || 'catalogo'
 
   const handleNavigate = (page, params = null) => {

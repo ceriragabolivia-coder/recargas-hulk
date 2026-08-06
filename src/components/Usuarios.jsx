@@ -102,7 +102,7 @@ export default function Usuarios({ onNavigate, params }) {
   }
 
   const handleEditClick = (cliente) => {
-    setEditingRow(cliente.id)
+    setEditingRow(cliente.auth_user_id)
     setEditingData({
       rol: cliente.rol || 'cliente',
       porcentaje_descuento: cliente.porcentaje_descuento || 0,
@@ -607,9 +607,9 @@ export default function Usuarios({ onNavigate, params }) {
               </thead>
               <tbody>
                 {currentClientes.map(cliente => {
-                  const isEditing = editingRow === cliente.id
+                  const isEditing = editingRow === cliente.auth_user_id
                   return (
-                    <tr key={cliente.id} style={{ backgroundColor: isEditing ? 'rgba(52, 152, 219, 0.05)' : 'transparent' }}>
+                    <tr key={cliente.auth_user_id} style={{ backgroundColor: isEditing ? 'rgba(52, 152, 219, 0.05)' : 'transparent' }}>
                       <td>
                         <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
                           {maskSensitive(cliente.nombres + ' ' + (cliente.apellidos || ''))}

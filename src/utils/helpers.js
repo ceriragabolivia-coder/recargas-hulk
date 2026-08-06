@@ -192,6 +192,10 @@ export function playClientWelcomeSound() {
  */
 export function removeWhiteBackground(file, threshold = 240) {
   return new Promise((resolve, reject) => {
+    // Si la imagen ya es webp, usualmente ya tiene transparencia y no necesita removerse el fondo
+    // o podemos simplemente procesarla y devolverla como webp.
+    const outType = file.type === 'image/webp' ? 'image/webp' : 'image/png';
+    
     const img = new Image()
     img.onload = () => {
       const canvas = document.createElement('canvas')
@@ -205,8 +209,6 @@ export function removeWhiteBackground(file, threshold = 240) {
       const h = canvas.height
 
       const visited = new Uint8Array(w * h)
-      // Usamos una pila (stack) con pop() que es O(1) en JS, 
-      // transformando el BFS en DFS pero mucho más rápido.
       const stack = []
 
       const checkAndPush = (x, y) => {
@@ -220,7 +222,6 @@ export function removeWhiteBackground(file, threshold = 240) {
         }
       }
 
-      // Semillas iniciales: bordes
       for (let x = 0; x < w; x++) {
         checkAndPush(x, 0)
         checkAndPush(x, h - 1)
@@ -242,9 +243,9 @@ export function removeWhiteBackground(file, threshold = 240) {
 
       ctx.putImageData(imageData, 0, 0)
       canvas.toBlob(blob => {
-        if (blob) resolve(blob)
+        if (blob) resolve(new File([blob], file.name.replace(/\.[^/.]+$/, "") + (outType === 'image/webp' ? '.webp' : '.png'), { type: outType }))
         else reject(new Error('Error al convertir imagen'))
-      }, 'image/png')
+      }, outType)
     }
     img.onerror = () => reject(new Error('Error al cargar imagen'))
     img.src = URL.createObjectURL(file)

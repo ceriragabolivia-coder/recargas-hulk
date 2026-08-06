@@ -2007,14 +2007,14 @@
 }
 
 .assax-product-icon-box {
-  width: 48px;
-  height: 48px;
+  width: 64px;
+  height: 64px;
   background: rgba(56, 189, 248, 0.1); /* Fondo celeste traslúcido para diamante */
-  border-radius: 12px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 32px; /* Increased font-size slightly for fallback emoji */
   flex-shrink: 0;
   margin-right: 14px;
   border: 1px solid rgba(56, 189, 248, 0.2);
@@ -2026,13 +2026,20 @@
 }
 
 .assax-product-icon-box img {
-  width: 28px;
-  height: 28px;
+  width: 52px;
+  height: 52px;
   object-fit: contain;
 }
 
-.assax-product-info {
+.assax-product-details-col {
   flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.assax-product-info {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2065,9 +2072,10 @@
 }
 
 .assax-product-price-box {
-  text-align: right;
-  flex-shrink: 0;
-  margin-left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .assax-product-price {
@@ -2078,10 +2086,9 @@
 }
 
 .price-secondary-usd {
-  font-size: 11px;
-  color: var(--text-muted);
+  font-size: 13px;
   font-weight: 600;
-  margin-top: 2px;
+  color: var(--text-muted);
 }
 
 .product-cashback-badge {
