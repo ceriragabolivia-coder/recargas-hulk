@@ -552,6 +552,12 @@ export default function LandingWallet({ onClose }) {
                   )}
 
                   <div className="payment-details fade-in">
+                    {metodos.find(m => m.id === metodoId)?.qr_url && (
+                      <div style={{ marginBottom: '16px', textAlign: 'center', backgroundColor: '#fff', padding: '12px', borderRadius: '12px', display: 'inline-block', width: '100%', boxSizing: 'border-box' }}>
+                        <img loading="lazy" decoding="async" src={metodos.find(m => m.id === metodoId)?.qr_url} alt="QR Code" style={{ width: '160px', height: '160px', objectFit: 'contain', margin: '0 auto' }} />
+                        <div style={{ fontSize: '11px', color: '#666', marginTop: '8px', fontWeight: 600 }}>Escanea para pagar</div>
+                      </div>
+                    )}
                     <div className="details-header">Datos para el pago:</div>
                     <pre className="details-text">{metodos.find(m => m.id === metodoId)?.datos}</pre>
                     <button 
