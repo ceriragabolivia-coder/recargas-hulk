@@ -88,6 +88,103 @@ async function procesarPedidoConApi(pedidoId, apiKey) {
   return { anySent, allCompleted };
 }
 
+// --- HELPER: Procesar pedido con FazerCards API ---
+async function procesarPedidoConFazerCards(pedidoId, apiKey) {
+  let anySent = false;
+  let allCompleted = true;
+
+  const { data: pedidoActual } = await supabase
+    .from('pedidos')
+    .select('*, pedido_items(*, productos(*, juegos(procesamiento_automatico_api, api_provider)))')
+    .eq('id', pedidoId)
+    .single();
+
+  if (!pedidoActual?.pedido_items) return { anySent: false, allCompleted: false };
+
+  for (const item of pedidoActual.pedido_items) {
+    const prod = Array.isArray(item.productos) ? item.productos[0] : item.productos;
+    const j = Array.isArray(prod?.juegos) ? prod.juegos[0] : prod?.juegos;
+    const isPendingOrFailed = !item.estado_proveedor || item.estado_proveedor === 'error' || item.estado_proveedor === 'fallido';
+    const isFazerCards = (j?.api_provider === 'fazercards');
+    
+    if (prod?.proveedor_api_id && j?.procesamiento_automatico_api && isFazerCards && !item.proveedor_pedido_id && isPendingOrFailed) {
+      anySent = true;
+      try {
+        console.log(`🚀 [Webhook] Enviando item ${item.id} a FazerCards...`);
+        const category_id = j.api_provider_category_id || '';
+        const offer_id = prod.proveedor_api_id || '';
+
+        const payload = {
+          category_id,
+          offer_id,
+          fields: {}
+        };
+
+        if (item.player_id) {
+          const pId = String(item.player_id).trim();
+          payload.fields.user_id = pId;
+          payload.fields.player_id = pId;
+          payload.fields.account = pId;
+          payload.fields.uid = pId;
+          
+          if (item.zone_id) {
+            const zId = String(item.zone_id).trim();
+            payload.fields.server_id = zId;
+            payload.fields.zone_id = zId;
+            payload.fields.server = zId;
+          }
+        }
+
+        const res = await fetch(`https://api.fzr.cards/api/v2/topups/order`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          let errData = {};
+          try { errData = JSON.parse(text); } catch(e) {}
+          throw new Error(errData.error || errData.message || 'Error HTTP ' + res.status);
+        }
+
+        const data = await res.json();
+        if (data.ok && data.order) {
+          const respEstado = data.order.status ? data.order.status.toLowerCase() : '';
+          const isCompleted = respEstado === 'completed';
+          if (!isCompleted) allCompleted = false;
+          await supabase.rpc('webhook_update_pedido_item', {
+            p_item_id: item.id,
+            p_estado_proveedor: data.order.status || 'processing',
+            p_proveedor_pedido_id: data.order.id,
+            p_mensaje_proveedor: data.order.pin || '',
+            p_estado: isCompleted ? 'completado' : 'procesando'
+          });
+        } else {
+          throw new Error(data.error || 'Error en respuesta de FazerCards');
+        }
+      } catch (e) {
+        console.error(`❌ [Webhook] Error en item ${item.id} con FazerCards:`, e.message);
+        allCompleted = false;
+        await supabase.rpc('webhook_update_pedido_item', {
+          p_item_id: item.id,
+          p_estado_proveedor: 'error',
+          p_mensaje_proveedor: e.message
+        });
+      }
+    } else if (isFazerCards) {
+      if (item.estado !== 'completado') {
+        allCompleted = false;
+      }
+    }
+  }
+
+  return { anySent, allCompleted };
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -169,26 +266,40 @@ export default async function handler(req, res) {
           // --- Obtener items del pedido + juego para checar auto-procesamiento ---
           const { data: pedidoConItems } = await supabase
             .from('pedidos')
-            .select('pedido_items(*, productos(proveedor_api_id, juego_id))')
+            .select('pedido_items(*, productos(proveedor_api_id, juego_id, juegos(procesamiento_automatico_api, api_provider)))')
             .eq('id', pedido.id)
             .single();
 
           const tieneApiItems = pedidoConItems?.pedido_items?.some(
             i => {
               const p = Array.isArray(i.productos) ? i.productos[0] : i.productos;
-              return p?.proveedor_api_id;
+              const j = Array.isArray(p?.juegos) ? p.juegos[0] : p?.juegos;
+              return p?.proveedor_api_id && j?.procesamiento_automatico_api;
             }
           );
           
           if (tieneApiItems) {
-            // --- AUTO-PROCESAMIENTO VÍA TIENDAGIFTVEN ---
-            console.log(`⚡ Pedido tiene items con proveedor_api_id. Llamando API automáticamente...`);
+            // Identificar el proveedor del primer item para obtener la key adecuada
+            let providerName = 'tiendagiftven';
+            const firstApiItem = pedidoConItems.pedido_items.find(i => {
+              const p = Array.isArray(i.productos) ? i.productos[0] : i.productos;
+              const j = Array.isArray(p?.juegos) ? p.juegos[0] : p?.juegos;
+              return p?.proveedor_api_id && j?.procesamiento_automatico_api;
+            });
+            if (firstApiItem) {
+              const p = Array.isArray(firstApiItem.productos) ? firstApiItem.productos[0] : firstApiItem.productos;
+              const j = Array.isArray(p?.juegos) ? p.juegos[0] : p?.juegos;
+              providerName = j?.api_provider || 'tiendagiftven';
+            }
+
+            console.log(`⚡ Pedido tiene items con proveedor_api_id. Proveedor: ${providerName}. Llamando API automáticamente...`);
 
             // Obtener API key de configuración
+            const configKey = providerName === 'fazercards' ? 'fazercards_api_key' : 'tiendagiftven_api_key';
             const { data: configRow } = await supabase
               .from('configuracion')
               .select('valor, valor_texto')
-              .eq('clave', 'tiendagiftven_api_key')
+              .eq('clave', configKey)
               .single();
 
             const apiKey = configRow?.valor_texto || configRow?.valor;
@@ -202,7 +313,18 @@ export default async function handler(req, res) {
 
               console.log(`🔑 Obteniendo items del pedido para procesar con API...`);
               // Ejecutar procesamiento
-              const { anySent, allCompleted } = await procesarPedidoConApi(pedido.id, apiKey);
+              let anySent = false;
+              let allCompleted = false;
+
+              if (providerName === 'fazercards') {
+                const resProvider = await procesarPedidoConFazerCards(pedido.id, apiKey);
+                anySent = resProvider.anySent;
+                allCompleted = resProvider.allCompleted;
+              } else {
+                const resProvider = await procesarPedidoConApi(pedido.id, apiKey);
+                anySent = resProvider.anySent;
+                allCompleted = resProvider.allCompleted;
+              }
 
               if (anySent && allCompleted) {
                 // Marcar pedido como completado
@@ -213,7 +335,7 @@ export default async function handler(req, res) {
                   p_fecha_respuesta: new Date().toISOString()
                 });
                 auto_despachado = true;
-                console.log(`🎉 Pedido #${pedido.id} completado automáticamente vía API TiendaGiftVen`);
+                console.log(`🎉 Pedido #${pedido.id} completado automáticamente vía API ${providerName}`);
               } else if (anySent) {
                 console.log(`⏳ Pedido #${pedido.id} en procesamiento. Algunos items no completados aún.`);
                 auto_despachado = true;
@@ -221,7 +343,7 @@ export default async function handler(req, res) {
                 console.warn(`⚠️ Pedido #${pedido.id}: no se pudo enviar a la API.`);
               }
             } else {
-              console.warn(`⚠️ No hay tiendagiftven_api_key en configuración. Pago verificado pero no procesado vía API.`);
+              console.warn(`⚠️ No hay ${configKey} en configuración. Pago verificado pero no procesado vía API.`);
             }
           } else {
             // Sin auto-procesamiento API: solo queda con pago_verificado=true para proceso manual

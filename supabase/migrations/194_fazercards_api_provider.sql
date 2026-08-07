@@ -1,0 +1,1 @@
+ALTER TABLE public.juegos ADD COLUMN IF NOT EXISTS api_provider TEXT DEFAULT 'tiendagiftven';

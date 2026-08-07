@@ -180,8 +180,8 @@ export default function Usuarios({ onNavigate, params }) {
 
   const handleAbrirAjuste = async (cliente) => {
     setAjustandoCliente(cliente)
-    setNuevoSaldo(cliente.billetera_saldo || 0)
-    setNuevoSaldoBs(cliente.billetera_saldo_bs || 0)
+    setNuevoSaldo(cliente.saldo || 0)
+    setNuevoSaldoBs(cliente.saldo_bs || 0)
     setNotaAjuste('')
     setAjusteMoneda('usd')
     setAjusteTipoBilletera('general')
@@ -440,8 +440,8 @@ export default function Usuarios({ onNavigate, params }) {
       .order('created_at', { ascending: false })
       
     if (data) {
-      let currentBalanceUSD = Number(cliente.billetera_saldo) || 0;
-      let currentBalanceBs = Number(cliente.billetera_saldo_bs) || 0;
+      let currentBalanceUSD = Number(cliente.saldo) || 0;
+      let currentBalanceBs = Number(cliente.saldo_bs) || 0;
       
       const dataWithBalance = data.map(m => {
           const isBs = m.moneda === 'bs';
@@ -506,7 +506,7 @@ export default function Usuarios({ onNavigate, params }) {
   const sortedClientes = [...filteredClientes].sort((a, b) => {
     if (sortBilletera.order === 'none') return 0
     
-    const field = sortBilletera.currency === 'bs' ? 'billetera_saldo_bs' : 'billetera_saldo'
+    const field = sortBilletera.currency === 'bs' ? 'saldo_bs' : 'saldo'
     const saldoA = a[field] || 0
     const saldoB = b[field] || 0
     
@@ -652,10 +652,10 @@ export default function Usuarios({ onNavigate, params }) {
                       <td>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                           <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent-success)' }}>
-                            💵 {isEmpleado ? '***' : formatUSD(cliente.billetera_saldo)}
+                            💵 {isEmpleado ? '***' : formatUSD(cliente.saldo)}
                           </span>
                           <span style={{ fontSize: '13px', fontWeight: 600, color: '#a855f7' }}>
-                            🏦 {isEmpleado ? '***' : formatBs(cliente.billetera_saldo_bs)}
+                            🏦 {isEmpleado ? '***' : formatBs(cliente.saldo_bs)}
                           </span>
                         </div>
                       </td>
@@ -1179,8 +1179,8 @@ export default function Usuarios({ onNavigate, params }) {
                     type="button"
                     onClick={() => {
                       setAjusteTipoBilletera('general')
-                      setNuevoSaldo(ajustandoCliente.billetera_saldo || 0)
-                      setNuevoSaldoBs(ajustandoCliente.billetera_saldo_bs || 0)
+                      setNuevoSaldo(ajustandoCliente.saldo || 0)
+                      setNuevoSaldoBs(ajustandoCliente.saldo_bs || 0)
                     }}
                     style={{
                       flex: 1, padding: '10px', borderRadius: '12px', cursor: 'pointer',
@@ -1251,8 +1251,8 @@ export default function Usuarios({ onNavigate, params }) {
               <input type="text" className="form-input" style={{ backgroundColor: 'rgba(0,0,0,0.2)', color: ajusteMoneda === 'bs' ? '#a855f7' : 'var(--accent-success)', fontWeight: 'bold' }} 
                 value={
                   ajusteMoneda === 'bs' 
-                    ? formatBs(ajusteTipoBilletera === 'general' ? ajustandoCliente.billetera_saldo_bs : saldoOperativoBs) 
-                    : formatUSD(ajusteTipoBilletera === 'general' ? ajustandoCliente.billetera_saldo : saldoOperativoUsd)
+                    ? formatBs(ajusteTipoBilletera === 'general' ? ajustandoCliente.saldo_bs : saldoOperativoBs) 
+                    : formatUSD(ajusteTipoBilletera === 'general' ? ajustandoCliente.saldo : saldoOperativoUsd)
                 } 
                 disabled />
             </div>
@@ -1297,7 +1297,7 @@ export default function Usuarios({ onNavigate, params }) {
           backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 9999, animation: 'fadeIn 0.2s ease'
         }}>
-          <div style={{ backgroundColor: '#1a1d21', borderRadius: '24px', width: '100%', maxWidth: '700px', padding: '32px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ backgroundColor: '#1a1d21', borderRadius: '24px', width: '95%', maxWidth: '900px', padding: '32px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.05)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <h3 style={{ fontSize: '20px' }}>Historial Completo de Billetera</h3>
               <button className="btn btn-ghost btn-sm" onClick={() => setViendoMovimientos(null)}>✕ Cerrar</button>
