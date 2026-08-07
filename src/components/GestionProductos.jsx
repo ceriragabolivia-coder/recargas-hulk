@@ -198,7 +198,8 @@ export default function GestionProductos() {
       imagen_pedido_completado_url: null,
       verificacion_api_activa: false,
       verificacion_api_url: '',
-      mostrar_precio_dual: false
+      mostrar_precio_dual: false,
+      api_provider_category_id: ''
     })
     setIsGameModalOpen(true)
   }
@@ -227,7 +228,8 @@ export default function GestionProductos() {
         ? (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('blood strike'))
         : !!selectedJuego.verificacion_api_activa,
       verificacion_api_url: selectedJuego.verificacion_api_url || '',
-      mostrar_precio_dual: !!selectedJuego.mostrar_precio_dual
+      mostrar_precio_dual: !!selectedJuego.mostrar_precio_dual,
+      api_provider_category_id: selectedJuego.api_provider_category_id || ''
     })
     setIsGameModalOpen(true)
   }
@@ -235,6 +237,11 @@ export default function GestionProductos() {
   const handleToggleProcesamientoApi = async (nuevoValor) => {
     if (!selectedJuego) return
     await updateJuego(selectedJuego.id, { procesamiento_automatico_api: nuevoValor })
+  }
+
+  const handleApiProviderChange = async (e) => {
+    if (!selectedJuego) return
+    await updateJuego(selectedJuego.id, { api_provider: e.target.value })
   }
 
   const handleGameSubmit = async (e) => {
@@ -262,7 +269,8 @@ export default function GestionProductos() {
         imagen_pedido_completado_url: formGame.imagen_pedido_completado_url,
         verificacion_api_activa: formGame.verificacion_api_activa,
         verificacion_api_url: formGame.verificacion_api_url,
-        mostrar_precio_dual: formGame.mostrar_precio_dual
+        mostrar_precio_dual: formGame.mostrar_precio_dual,
+        api_provider_category_id: formGame.api_provider_category_id
       })
       if (!res.error) {
         // useJuegos hook will refresh the 'juegos' list automatically
@@ -376,49 +384,78 @@ export default function GestionProductos() {
   // Trae el costo (precio) del producto en el catálogo del proveedor TiendaGiftVen
   // y lo asigna automáticamente a costo_base, sobreescribiendo cualquier valor manual previo.
   const sincronizarCostoProveedor = async (proveedorApiId) => {
-    const id = parseInt(proveedorApiId, 10)
-    if (!id || isNaN(id)) return
-    if (lastProveedorIdSincronizado.current === id) return
-    const apiKey = config?.tiendagiftven_api_key
-    if (!apiKey || apiKey === '0') {
-      setAlertModal({ 
-        type: 'error', 
-        message: 'No se puede sincronizar el costo porque no has configurado la API Key de TiendaGiftVen. Ve al panel de "Proveedor API" para configurarla.' 
-      })
-      return
-    }
+    const id = (proveedorApiId || '').trim();
+    if (!id) return;
+    if (lastProveedorIdSincronizado.current === id) return;
+    
+    const isFazerCards = selectedJuego?.api_provider === 'fazercards';
 
     setSincronizandoCosto(true)
     try {
-      const res = await fetch('/api/tiendagiftven/proxy?endpoint=productos', {
-        headers: { 'X-API-Key': apiKey }
-      })
-      
-      const text = await res.text()
-      let data
-      try {
-        data = JSON.parse(text)
-      } catch (parseErr) {
-        throw new Error('La respuesta del servidor no es un JSON válido. Revisa la consola o la configuración del servidor.')
-      }
+      if (isFazerCards) {
+        const apiKey = config?.fazercards_api_key;
+        if (!apiKey || apiKey === '0') {
+          setAlertModal({ type: 'error', message: 'No has configurado la API Key de FazerCards.' })
+          return;
+        }
+        const categoryId = selectedJuego.api_provider_category_id;
+        if (!categoryId) {
+          setAlertModal({ type: 'error', message: 'Falta el Category ID en la configuración del juego para sincronizar con FazerCards.' })
+          return;
+        }
 
-      if (data.ok) {
-        const prodProveedor = (data.productos || []).find(p => p.id === id)
-        if (prodProveedor) {
-          lastProveedorIdSincronizado.current = id
-          setFormData(prev => ({ ...prev, costo_base: parseFloat(prodProveedor.precio) }))
+        const res = await fetch(`/api/fazercards/proxy?endpoint=topups/offers&category_id=${categoryId}`, {
+          headers: { 'X-API-Key': apiKey }
+        })
+        const data = await res.json()
+        if (data.ok && data.offers) {
+          const offer = data.offers.find(o => o.offer_id === id);
+          if (offer) {
+            lastProveedorIdSincronizado.current = id
+            setFormData(prev => ({ ...prev, costo_base: parseFloat(offer.price_usd) }))
+          } else {
+            setAlertModal({ type: 'error', message: `No se encontró la oferta ${id} en la categoría ${categoryId} de FazerCards.` })
+          }
         } else {
-          setAlertModal({ type: 'error', message: `No se encontró el producto con ID ${id} en el catálogo del proveedor.` })
+          setAlertModal({ type: 'error', message: data.error || 'Error consultando ofertas en FazerCards' })
         }
       } else {
-        setAlertModal({ type: 'error', message: data.error || 'Error consultando el catálogo del proveedor' })
+        const numId = parseInt(id, 10);
+        if (isNaN(numId)) return;
+
+        const apiKey = config?.tiendagiftven_api_key;
+        if (!apiKey || apiKey === '0') {
+          setAlertModal({ type: 'error', message: 'No has configurado la API Key de TiendaGiftVen.' })
+          return;
+        }
+
+        const res = await fetch('/api/tiendagiftven/proxy?endpoint=productos', {
+          headers: { 'X-API-Key': apiKey }
+        })
+        
+        const text = await res.text()
+        let data
+        try {
+          data = JSON.parse(text)
+        } catch (parseErr) {
+          throw new Error('La respuesta del servidor no es un JSON válido.')
+        }
+
+        if (data.ok) {
+          const prodProveedor = (data.productos || []).find(p => p.id === numId)
+          if (prodProveedor) {
+            lastProveedorIdSincronizado.current = id
+            setFormData(prev => ({ ...prev, costo_base: parseFloat(prodProveedor.precio) }))
+          } else {
+            setAlertModal({ type: 'error', message: `No se encontró el producto con ID ${numId} en el catálogo del proveedor.` })
+          }
+        } else {
+          setAlertModal({ type: 'error', message: data.error || 'Error consultando el catálogo del proveedor' })
+        }
       }
     } catch (err) {
       console.error('Error sincronizando costo del proveedor:', err)
-      setAlertModal({ 
-        type: 'error', 
-        message: `Error al sincronizar costo: ${err.message}` 
-      })
+      setAlertModal({ type: 'error', message: `Error al sincronizar costo: ${err.message}` })
     } finally {
       setSincronizandoCosto(false)
     }
@@ -564,7 +601,7 @@ export default function GestionProductos() {
         info_adicional_imagen_url: finalInfoUrl,
         entrega_automatica: formData.entrega_automatica,
         tipo_producto: formData.tipo_producto,
-        proveedor_api_id: formData.proveedor_api_id ? parseInt(formData.proveedor_api_id, 10) : null,
+        proveedor_api_id: formData.proveedor_api_id ? formData.proveedor_api_id.toString().trim() : null,
         opciones_recarga: formData.opciones_recarga || [],
         en_mantenimiento: formData.en_mantenimiento
       }
@@ -792,9 +829,9 @@ export default function GestionProductos() {
         <p className="page-subtitle">Añade o elimina los paquetes de cada juego y establece su rentabilidad.</p>
       </div>
 
-      <div className="content-grid" style={{ flex: 1, display: 'flex', gap: '24px', overflow: 'hidden', padding: '24px 32px 32px' }}>
+      <div className="content-grid gestion-productos-grid" style={{ flex: 1, display: 'flex', gap: '24px', overflow: 'hidden', padding: '24px 32px 32px' }}>
         {/* COLUMNA DE JUEGOS */}
-        <div className="card juegos-column" style={{ width: '280px', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+        <div className="card juegos-column" style={{ flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
           <div className="section-header" style={{ marginBottom: '16px' }}>
             <h2 className="card-title" style={{ margin: 0 }}>Juegos</h2>
             <div style={{ display: 'flex', gap: '4px' }}>
@@ -812,7 +849,7 @@ export default function GestionProductos() {
               onChange={(e) => setSearchJuego(e.target.value)}
             />
           </div>
-          <div style={{ flex: 1, overflowY: 'auto' }}>
+          <div className="juegos-list-container" style={{ flex: 1, overflowY: 'auto' }}>
             {juegosFiltrados.length === 0 ? (
               <div className="empty-state" style={{ padding: '40px 20px' }}>
                 <div className="empty-state-text">No se encontraron juegos</div>
@@ -842,8 +879,8 @@ export default function GestionProductos() {
             </div>
           ) : (
             <>
-              <div className="card-header" style={{ alignItems: 'flex-start' }}>
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+              <div className="card-header product-header-mobile" style={{ alignItems: 'flex-start' }}>
+        <div className="product-header-info-mobile" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <div
             title="Cambiar logo del juego"
             style={{
@@ -884,7 +921,7 @@ export default function GestionProductos() {
             </button>
           </div>
         </div>
-        <div className="flex gap-8" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="flex gap-8 product-actions-mobile" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', cursor: 'pointer', opacity: 0.8, color: 'var(--text-muted)', marginRight: '8px' }}>
             <input 
               type="checkbox" 
@@ -978,6 +1015,26 @@ export default function GestionProductos() {
               ⚡ Auto-procesar con API
             </span>
           </label>
+
+          {selectedJuego.procesamiento_automatico_api && (
+            <select
+              value={selectedJuego.api_provider || 'tiendagiftven'}
+              onChange={handleApiProviderChange}
+              style={{
+                backgroundColor: 'var(--surface-dark)',
+                color: 'var(--text-primary)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '8px',
+                padding: '4px 8px',
+                fontSize: '12px',
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="tiendagiftven">TiendaGiftVen</option>
+              <option value="fazercards">FazerCards</option>
+            </select>
+          )}
           <button className="btn btn-ghost btn-icon btn-sm" onClick={handleEditJuego} title="Editar Configuración del Juego">
             ✏️
           </button>
@@ -1414,9 +1471,9 @@ export default function GestionProductos() {
           </div>
 
           <div className="form-group" style={{ marginBottom: '24px' }}>
-            <label className="form-label" style={{ color: '#fbbf24' }}>📦 ID Producto Proveedor (Opcional - TiendaGiftVen API)</label>
+            <label className="form-label" style={{ color: '#fbbf24' }}>📦 ID Producto Proveedor (TiendaGiftVen o FazerCards)</label>
             <input
-              type="number"
+              type="text"
               className="form-input"
               value={formData.proveedor_api_id || ''}
               onChange={e => {
@@ -1424,11 +1481,11 @@ export default function GestionProductos() {
                 setFormData({ ...formData, proveedor_api_id: e.target.value })
               }}
               onBlur={e => sincronizarCostoProveedor(e.target.value)}
-              placeholder="Ej. 5"
+              placeholder="Ej. 5 (TiendaGiftVen) o 110_diamonds (FazerCards)"
               style={{ borderColor: formData.proveedor_api_id ? '#fbbf24' : '' }}
             />
             <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px' }}>
-              {sincronizandoCosto ? 'Consultando costo en el catálogo del proveedor...' : 'Si colocas el ID que obtuviste del catálogo, el pedido se procesará automáticamente por la API al ser aprobado y el "Costo tu proveedor" se actualizará automáticamente con el precio del proveedor.'}
+              {sincronizandoCosto ? 'Consultando costo en el catálogo del proveedor...' : 'Si colocas el ID que obtuviste del catálogo, el pedido se procesará automáticamente por la API al ser aprobado.'}
             </p>
           </div>
 
@@ -1686,6 +1743,23 @@ export default function GestionProductos() {
                 <option key={c.id} value={c.id}>{c.nombre}</option>
               ))}
             </select>
+          </div>
+
+          <div className="form-group" style={{ marginBottom: '24px' }}>
+            <label className="form-label" style={{ color: '#fbbf24' }}>
+              Category ID del Proveedor API (Opcional - FazerCards)
+            </label>
+            <input
+              type="text"
+              className="form-input"
+              value={formGame.api_provider_category_id || ''}
+              onChange={e => setFormGame({ ...formGame, api_provider_category_id: e.target.value })}
+              placeholder="Ej. free_fire_latam"
+              style={{ borderColor: formGame.api_provider_category_id ? '#fbbf24' : '' }}
+            />
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+              Si usas FazerCards como proveedor, ingresa aquí el código de categoría (Category ID).
+            </p>
           </div>
 
           <div className="form-group">
