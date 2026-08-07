@@ -116,6 +116,13 @@ async function procesarPedidoConFazerCards(pedidoId, apiKey) {
         const category_id = j.api_provider_category_id || '';
         const offer_id = prod.proveedor_api_id || '';
 
+        // Consultar los campos requeridos por FazerCards para esta categoría
+        const reqFields = await fetch(`https://api.fzr.cards/api/v2/topups/offers?category_id=${category_id}`, {
+          headers: { 'Authorization': `Bearer ${apiKey}` }
+        }).then(r => r.json());
+
+        const expectedFieldKeys = reqFields.ok && reqFields.fields ? reqFields.fields.map(f => f.key) : [];
+
         const payload = {
           category_id,
           offer_id,
@@ -124,16 +131,16 @@ async function procesarPedidoConFazerCards(pedidoId, apiKey) {
 
         if (item.player_id) {
           const pId = String(item.player_id).trim();
-          payload.fields.user_id = pId;
-          payload.fields.player_id = pId;
-          payload.fields.account = pId;
-          payload.fields.uid = pId;
+          if (expectedFieldKeys.includes('user_id')) payload.fields.user_id = pId;
+          if (expectedFieldKeys.includes('player_id')) payload.fields.player_id = pId;
+          if (expectedFieldKeys.includes('account')) payload.fields.account = pId;
+          if (expectedFieldKeys.includes('uid')) payload.fields.uid = pId;
           
           if (item.zone_id) {
             const zId = String(item.zone_id).trim();
-            payload.fields.server_id = zId;
-            payload.fields.zone_id = zId;
-            payload.fields.server = zId;
+            if (expectedFieldKeys.includes('server_id')) payload.fields.server_id = zId;
+            if (expectedFieldKeys.includes('zone_id')) payload.fields.zone_id = zId;
+            if (expectedFieldKeys.includes('server')) payload.fields.server = zId;
           }
         }
 
