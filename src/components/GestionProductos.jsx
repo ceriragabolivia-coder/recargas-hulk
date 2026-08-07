@@ -404,12 +404,31 @@ export default function GestionProductos() {
           return;
         }
 
-        const res = await fetch(`/api/fazercards/proxy?endpoint=topups/offers&category_id=${categoryId}`, {
+        let url = `/api/fazercards/proxy?endpoint=topups/offers&category_id=${categoryId}`;
+        if (categoryId === 'telegram_stars') {
+          url = `/api/fazercards/proxy?endpoint=telegram/stars`;
+        } else if (categoryId === 'telegram_premium') {
+          url = `/api/fazercards/proxy?endpoint=telegram/premium`;
+        }
+
+        const res = await fetch(url, {
           headers: { 'X-API-Key': apiKey }
         })
         const data = await res.json()
-        if (data.ok && data.offers) {
-          const offer = data.offers.find(o => o.offer_id === id);
+        
+        let offers = [];
+        if (data.ok) {
+          if (categoryId === 'telegram_stars') {
+            if (data.packages) offers = data.packages.map(p => ({ offer_id: p.amount, price_usd: p.priceUsd }));
+          } else if (categoryId === 'telegram_premium') {
+            if (data.plans) offers = data.plans.map(p => ({ offer_id: p.months, price_usd: p.priceUsd }));
+          } else if (data.offers) {
+            offers = data.offers;
+          }
+        }
+
+        if (data.ok && offers.length > 0) {
+          const offer = offers.find(o => String(o.offer_id) === String(id));
           if (offer) {
             lastProveedorIdSincronizado.current = id
             setFormData(prev => ({ ...prev, costo_base: parseFloat(offer.price_usd) }))

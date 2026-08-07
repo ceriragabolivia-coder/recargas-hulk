@@ -88,9 +88,27 @@ export default function ProveedorCatalogo() {
         headers: { 'X-API-Key': keyToUse }
       });
       const data = await res.json();
+      
+      let allItems = [];
       if (data.ok && data.items) {
-        setFcProductos(data.items);
-      } else {
+        allItems = [...data.items];
+      }
+      
+      // Añadir Telegram manualmente
+      allItems.unshift({
+        category_id: 'telegram_premium',
+        name: 'Telegram Premium',
+        note: 'Telegram premium plans'
+      });
+      allItems.unshift({
+        category_id: 'telegram_stars',
+        name: 'Telegram Stars',
+        note: 'Telegram stars quotes'
+      });
+
+      setFcProductos(allItems);
+
+      if (!data.ok && !data.items) {
         setAlertModal({ type: 'error', message: data.error || 'Error obteniendo catálogo de FazerCards' });
       }
     } catch (e) {
@@ -114,12 +132,40 @@ export default function ProveedorCatalogo() {
 
     setLoadingFcOffers(prev => ({ ...prev, [categoryId]: true }));
     try {
-      const res = await fetch(`/api/fazercards/proxy?endpoint=topups/offers&category_id=${categoryId}`, {
+      let url = `/api/fazercards/proxy?endpoint=topups/offers&category_id=${categoryId}`;
+      if (categoryId === 'telegram_stars') {
+        url = `/api/fazercards/proxy?endpoint=telegram/stars`;
+      } else if (categoryId === 'telegram_premium') {
+        url = `/api/fazercards/proxy?endpoint=telegram/premium`;
+      }
+
+      const res = await fetch(url, {
         headers: { 'X-API-Key': fcApiKey }
       });
       const data = await res.json();
-      if (data.ok && data.offers) {
-        setFcOffers(prev => ({ ...prev, [categoryId]: data.offers }));
+      
+      if (data.ok) {
+        if (categoryId === 'telegram_stars') {
+          if (data.packages) {
+            const offers = data.packages.map(p => ({
+              offer_id: p.amount,
+              name: `${p.amount} Stars`,
+              price_usd: p.priceUsd
+            }));
+            setFcOffers(prev => ({ ...prev, [categoryId]: offers }));
+          }
+        } else if (categoryId === 'telegram_premium') {
+          if (data.plans) {
+            const offers = data.plans.map(p => ({
+              offer_id: p.months,
+              name: `${p.months} Months Premium`,
+              price_usd: p.priceUsd
+            }));
+            setFcOffers(prev => ({ ...prev, [categoryId]: offers }));
+          }
+        } else if (data.offers) {
+          setFcOffers(prev => ({ ...prev, [categoryId]: data.offers }));
+        }
       }
     } catch (e) {
       console.error("Error fetching offers for", categoryId, e);
