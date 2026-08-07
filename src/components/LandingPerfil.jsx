@@ -30,6 +30,7 @@ export default function LandingPerfil({ onClose }) {
   const [savingDatos, setSavingDatos] = useState(false)
   
   const [misCupones, setMisCupones] = useState([])
+  const [misDescuentosRuleta, setMisDescuentosRuleta] = useState([])
   const [loadingCupones, setLoadingCupones] = useState(true)
 
   const [misCodigosCreador, setMisCodigosCreador] = useState([])
@@ -300,33 +301,46 @@ export default function LandingPerfil({ onClose }) {
 
       if (!usrCupones || usrCupones.length === 0) {
         setMisCupones([])
-        return
+      } else {
+        const cuponIds = usrCupones.map(c => c.cupon_id)
+        const { data: cuponesData, error: errC } = await supabase
+          .from('cupones')
+          .select('*')
+          .in('id', cuponIds)
+
+        if (errC) throw errC
+
+        const merged = usrCupones.map(uc => {
+          const cData = cuponesData?.find(c => c.id === uc.cupon_id)
+          return {
+            usos: uc.usos,
+            cupones: cData
+          }
+        })
+
+        const validos = merged.filter(item => 
+          item.cupones && 
+          item.cupones.activo && 
+          (!item.cupones.fecha_fin || new Date() < new Date(item.cupones.fecha_fin)) &&
+          (!item.cupones.max_usos_usuario || item.usos < item.cupones.max_usos_usuario)
+        )
+
+        setMisCupones(validos)
       }
 
-      const cuponIds = usrCupones.map(c => c.cupon_id)
-      const { data: cuponesData, error: errC } = await supabase
-        .from('cupones')
-        .select('*')
-        .in('id', cuponIds)
+      // Fetch ruleta discounts
+      const { data: descRuleta, error: errRul } = await supabase
+        .from('ruleta_descuentos_pendientes')
+        .select('id, nombre, porcentaje, created_at')
+        .eq('cliente_id', user.id)
+        .eq('usado', false)
 
-      if (errC) throw errC
-
-      const merged = usrCupones.map(uc => {
-        const cData = cuponesData?.find(c => c.id === uc.cupon_id)
-        return {
-          usos: uc.usos,
-          cupones: cData
-        }
-      })
-
-      const validos = merged.filter(item => 
-        item.cupones && 
-        item.cupones.activo && 
-        (!item.cupones.fecha_fin || new Date() < new Date(item.cupones.fecha_fin)) &&
-        (!item.cupones.max_usos_usuario || item.usos < item.cupones.max_usos_usuario)
-      )
-
-      setMisCupones(validos)
+      if (!errRul && descRuleta) {
+        setMisDescuentosRuleta(descRuleta)
+      } else {
+        setMisDescuentosRuleta([])
+      }
+      
     } catch (err) {
       console.error('Error fetching cupones:', err)
     } finally {
@@ -659,18 +673,18 @@ export default function LandingPerfil({ onClose }) {
 
             {/* Mis Cupones */}
             <div id="mis-cupones" className="perfil-form-card" style={{ scrollMarginTop: '80px' }}>
-              <h3><span className="icon">🎟️</span> Mis Cupones</h3>
+              <h3><span className="icon">🎟️</span> Mis Cupones y Premios</h3>
               {loadingCupones ? (
                 <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Cargando cupones...</div>
-              ) : misCupones.length === 0 ? (
+              ) : (misCupones.length === 0 && misDescuentosRuleta.length === 0) ? (
                 <div style={{ padding: '20px', textAlign: 'center', backgroundColor: 'rgba(0, 210, 255, 0.05)', borderRadius: '12px', border: '1px solid rgba(0, 210, 255, 0.1)' }}>
                   <span style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }}>🎫</span>
-                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px' }}>Aún no tienes cupones de descuento disponibles.</p>
+                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px' }}>Aún no tienes cupones ni premios disponibles.</p>
                 </div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
                   {misCupones.map((c, i) => (
-                    <div key={i} style={{ padding: '16px', background: 'var(--bg-hover)', borderRadius: '12px', border: '1px solid rgba(168, 85, 247, 0.2)', textAlign: 'center' }}>
+                    <div key={`cup-${i}`} style={{ padding: '16px', background: 'var(--bg-hover)', borderRadius: '12px', border: '1px solid rgba(168, 85, 247, 0.2)', textAlign: 'center' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                         <span style={{ fontWeight: 900, fontSize: '18px', color: '#a855f7' }}>{c.cupones.codigo}</span>
                         <span style={{ fontWeight: 800, fontSize: '16px', color: 'var(--text-primary)' }}>-{c.cupones.porcentaje_descuento}%</span>
@@ -686,6 +700,25 @@ export default function LandingPerfil({ onClose }) {
                       >
                         Copiar Código
                       </button>
+                    </div>
+                  ))}
+                  {misDescuentosRuleta.map((d, i) => (
+                    <div key={`rul-${i}`} style={{ padding: '16px', background: 'rgba(255,215,0,0.05)', borderRadius: '12px', border: '1px solid rgba(255,215,0,0.2)', textAlign: 'center' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                        <span style={{ fontWeight: 900, fontSize: '14px', color: '#FFD700', textTransform: 'uppercase' }}>Premio Ruleta</span>
+                        <span style={{ fontWeight: 900, fontSize: '18px', color: '#00c853' }}>-{d.porcentaje}%</span>
+                      </div>
+                      <div style={{ fontSize: '13px', color: 'var(--text-main)', marginBottom: '4px', fontWeight: 'bold' }}>
+                        {d.nombre}
+                      </div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                        Ganado el: {new Date(d.created_at).toLocaleDateString()}
+                      </div>
+                      <div 
+                        style={{ width: '100%', fontSize: '12px', padding: '8px', background: 'rgba(255,215,0,0.1)', color: '#FFD700', border: '1px solid rgba(255,215,0,0.3)', borderRadius: '8px' }}
+                      >
+                        Úsalo al pagar
+                      </div>
                     </div>
                   ))}
                 </div>
