@@ -560,13 +560,17 @@ export default function Checkout({ onFinish, embedded = false }) {
         finalReferencia = 'PENDIENTE_BINANCE_PAY';
       }
 
-      const results = await checkout(registrarVenta, user?.id || perfil?.id, finalMetodoId, finalReferencia, null, activeRuletaDesc, createdPedidoId, comprobanteUrl, true, activeCupon, finalRemainingBs)
+      const actualUsdDeduct = (useWalletPartial || currentIsWalletOnly) ? amountUSDToDeduct : 0;
+      const actualBsDeduct = (useWalletBs || currentIsWalletBsOnly) ? amountBsToDeduct : 0;
+
+      const results = await checkout(
+        registrarVenta, user?.id || perfil?.id, finalMetodoId, finalReferencia, null, activeRuletaDesc, createdPedidoId, comprobanteUrl, true, activeCupon, finalRemainingBs,
+        actualUsdDeduct, actualBsDeduct
+      )
       
       const pedidoResult = results.find(r => r.id === 'pedido')
       
       if (!pedidoResult || pedidoResult.error) {
-        // SI EL PEDIDO FALLÓ PERO YA COBRAMOS (Caso raro), DEBERÍAMOS DEVOLVER EL DINERO
-        // Por ahora, lanzamos el error
         throw new Error(pedidoResult?.error || 'No se pudo crear el pedido');
       }
 
@@ -574,49 +578,6 @@ export default function Checkout({ onFinish, embedded = false }) {
       const numeroPedido = pedidoResult.data.numero_pedido;
       
       if (!targetUserId) throw new Error('No se pudo identificar al usuario para la transacción.');
-
-      // 1. Procesar débitos de billetera DESPUÉS de crear el pedido para vincularlo correctamente
-      if ((useWalletPartial || currentIsWalletOnly) && amountUSDToDeduct > 0) {
-        try {
-          const { data: walletRes, error: walletError } = await supabase.rpc('pagar_con_billetera_rpc', {
-            p_user_id: targetUserId,
-            p_amount: amountUSDToDeduct,
-            p_pedido_id: pedidoId, 
-            p_description: `Pago Billetera - Pedido #${numeroPedido}`
-          })
-
-          if (walletError || walletRes === false || walletRes?.success === false) {
-            await supabase.rpc('eliminar_pedido_fallido_rpc', { p_pedido_id: pedidoId });
-            throw new Error(`ERROR COBRO USD: ${walletError?.message || walletRes?.message || 'Fondos insuficientes'}`);
-          }
-        } catch (e) {
-          await supabase.rpc('eliminar_pedido_fallido_rpc', { p_pedido_id: pedidoId });
-          alert("CRASH COBRO USD: " + e.message);
-          setIsProcessing(false);
-          return;
-        }
-      }
-
-      if ((useWalletBs || currentIsWalletBsOnly) && amountBsToDeduct > 0) {
-        try {
-          const { data: walletBsRes, error: walletErrorBs } = await supabase.rpc('pagar_con_billetera_bs_rpc', {
-            p_user_id: targetUserId,
-            p_amount: amountBsToDeduct,
-            p_pedido_id: pedidoId,
-            p_description: `Pago Billetera Bs - Pedido #${numeroPedido}`
-          })
-
-          if (walletErrorBs || walletBsRes === false || walletBsRes?.success === false) {
-            await supabase.rpc('eliminar_pedido_fallido_rpc', { p_pedido_id: pedidoId });
-            throw new Error(`ERROR COBRO BS: ${walletErrorBs?.message || walletBsRes?.message || 'Fondos insuficientes'}`);
-          }
-        } catch (e) {
-          await supabase.rpc('eliminar_pedido_fallido_rpc', { p_pedido_id: pedidoId });
-          alert("CRASH COBRO BS: " + e.message);
-          setIsProcessing(false);
-          return;
-        }
-      }
 
       // AUTO-PROCESAMIENTO DESPUÉS DEL COBRO DE BILLETERA
       if (pedidoResult?.shouldAutoProcess) {

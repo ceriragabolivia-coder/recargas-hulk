@@ -131,7 +131,7 @@ export function CartProvider({ children }) {
     }
   };
 
-  const checkout = async (registrarVenta, clienteId, metodoPagoId, referencia, whatsapp, ruletaDesc, existingPedidoId, comprobanteUrl, shouldUpdate, activeCupon, expectedPagoMovilMonto = null) => {
+  const checkout = async (registrarVenta, clienteId, metodoPagoId, referencia, whatsapp, ruletaDesc, existingPedidoId, comprobanteUrl, shouldUpdate, activeCupon, expectedPagoMovilMonto = null, amountUSDToDeduct = 0, amountBsToDeduct = 0) => {
     if (!user || cart.length === 0) return [{ id: 'pedido', error: 'Carrito vacío o sesión no iniciada' }]
 
     if (perfil && ['baneado', 'suspendido', 'rechazado'].includes(perfil.estado?.toLowerCase())) {
@@ -203,40 +203,10 @@ export function CartProvider({ children }) {
         descuento_cupon_bs: descuento_cupon_bs
       }
 
-      let pedido;
-      let error;
-
-      if (existingPedidoId) {
-        const { data, error: updateError } = await supabase
-          .from('pedidos')
-          .update(pedidoData)
-          .eq('id', existingPedidoId)
-          .select()
-          .single()
-        pedido = data
-        error = updateError
-      } else {
-        const { data, error: insertError } = await supabase
-          .from('pedidos')
-          .insert(pedidoData)
-          .select()
-          .single()
-        pedido = data
-        error = insertError
-      }
-
-      if (error) throw error
-
-      // Usamos 'pedido_items' que es el nombre real en la base de datos
-      if (existingPedidoId) {
-        await supabase.from('pedido_items').delete().eq('pedido_id', existingPedidoId)
-      }
-
       const items = cart.flatMap(item => {
         const rows = []
         for (let i = 0; i < item.quantity; i++) {
           rows.push({
-            pedido_id: pedido.id,
             producto_id: item.id,
             juego_nombre: item.juego || 'Sin juego',
             producto_nombre: item.nombre || 'Producto',
@@ -256,8 +226,21 @@ export function CartProvider({ children }) {
         return rows
       })
 
-      const { error: itemsError } = await supabase.from('pedido_items').insert(items)
-      if (itemsError) throw itemsError
+      // ATOMIC CALL TO SECURE RPC
+      const { data: rpcData, error: rpcError } = await supabase.rpc('crear_pedido_seguro_rpc', {
+        p_pedido_data: pedidoData,
+        p_items_data: items,
+        p_wallet_usd_deduct: amountUSDToDeduct || 0,
+        p_wallet_bs_deduct: amountBsToDeduct || 0,
+        p_existing_pedido_id: existingPedidoId || null
+      });
+
+      if (rpcError) throw rpcError;
+      if (!rpcData || !rpcData.success) {
+         throw new Error(rpcData?.message || 'Error desconocido al crear el pedido o descontar billetera');
+      }
+
+      const pedido = rpcData.pedido;
 
       clearCart()
 
@@ -265,10 +248,8 @@ export function CartProvider({ children }) {
         try {
           await supabase.from('pagos_apk').update({
             status: 'usado',
-            pedido_id: pedido.id,
-            usuario_id: user.id
+            usado_por_pedido: pedido.id
           }).eq('id', apkPagoId);
-          console.log(`✅ Pago del pedido ${pedido.id} auto-aprobado por APK.`);
         } catch (err) {
           console.error("Error al actualizar pagos_apk:", err);
         }
