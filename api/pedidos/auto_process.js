@@ -365,7 +365,7 @@ export default async function handler(req, res) {
           allCompleted = resProvider.allCompleted;
         }
 
-        if (anySent && allCompleted) {
+        if ((anySent && allCompleted) || (force && allCompleted)) {
           // Fallback: Assign to SuperAdmin if automatically processed
           let vendedorClientUuid = null;
           const { data: superAdmin } = await supabase
