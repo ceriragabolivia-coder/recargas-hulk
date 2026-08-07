@@ -28,16 +28,14 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, message: 'Test recibido' });
     }
 
-    // Estructura esperada (a ser ajustada si el formato varía)
-    // Asumimos que el id de la orden de FazerCards viene en payload.order.id o payload.id
-    // Y el estado en payload.order.status o payload.status
-    const orderData = payload.order || payload;
-    const providerOrderId = orderData.id;
-    const providerStatus = orderData.status ? orderData.status.toLowerCase() : '';
-    const pin = orderData.pin || orderData.code || '';
+    // FazerCards suele enviar { event: "...", data: { id: "ord-...", status: "completed" } }
+    const orderData = payload.data || payload.order || payload;
+    const providerOrderId = orderData.id || orderData.order_id || payload.order_id;
+    const providerStatus = orderData.status ? orderData.status.toLowerCase() : (payload.status ? payload.status.toLowerCase() : '');
+    const pin = orderData.pin || orderData.code || payload.pin || payload.code || '';
 
     if (!providerOrderId) {
-      console.warn('⚠️ [FazerCards Webhook] No se encontró el ID de la orden en el payload.');
+      console.warn('⚠️ [FazerCards Webhook] No se encontró el ID de la orden en el payload:', JSON.stringify(payload).substring(0, 500));
       return res.status(400).json({ error: 'No order ID provided' });
     }
 
