@@ -197,7 +197,7 @@ export function CartProvider({ children }) {
         total_bs: finalBs,
         estado: 'pendiente',
         comprobante_url: comprobanteUrl || null,
-        pago_verificado: pagoVerificadoApk ? true : null,
+        pago_verificado: (pagoVerificadoApk || isAutomatic) ? true : null,
         cupon_id: activeCupon?.id || null,
         descuento_cupon_usd: descuento_cupon_usd,
         descuento_cupon_bs: descuento_cupon_bs
