@@ -146,11 +146,12 @@ export default function ProveedorCatalogo() {
       
       if (data.ok) {
         if (categoryId === 'telegram_stars') {
-          if (data.packages) {
-            const offers = data.packages.map(p => ({
-              offer_id: p.amount,
-              name: `${p.amount} Stars`,
-              price_usd: p.priceUsd
+          if (data.price_per_star) {
+            const presetAmounts = [50, 100, 200, 250, 500, 750, 1000, 1500, 2000, 3000, 5000, 10000];
+            const offers = presetAmounts.map(amount => ({
+              offer_id: amount,
+              name: `${amount} Stars`,
+              price_usd: parseFloat(data.price_per_star) * amount
             }));
             setFcOffers(prev => ({ ...prev, [categoryId]: offers }));
           }
@@ -159,7 +160,7 @@ export default function ProveedorCatalogo() {
             const offers = data.plans.map(p => ({
               offer_id: p.months,
               name: `${p.months} Months Premium`,
-              price_usd: p.priceUsd
+              price_usd: p.price_usd
             }));
             setFcOffers(prev => ({ ...prev, [categoryId]: offers }));
           }

@@ -419,9 +419,12 @@ export default function GestionProductos() {
         let offers = [];
         if (data.ok) {
           if (categoryId === 'telegram_stars') {
-            if (data.packages) offers = data.packages.map(p => ({ offer_id: p.amount, price_usd: p.priceUsd }));
+            if (data.price_per_star) {
+              const presetAmounts = [50, 100, 200, 250, 500, 750, 1000, 1500, 2000, 3000, 5000, 10000];
+              offers = presetAmounts.map(amount => ({ offer_id: amount, price_usd: parseFloat(data.price_per_star) * amount }));
+            }
           } else if (categoryId === 'telegram_premium') {
-            if (data.plans) offers = data.plans.map(p => ({ offer_id: p.months, price_usd: p.priceUsd }));
+            if (data.plans) offers = data.plans.map(p => ({ offer_id: p.months, price_usd: p.price_usd }));
           } else if (data.offers) {
             offers = data.offers;
           }
