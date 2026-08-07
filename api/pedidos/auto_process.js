@@ -117,34 +117,55 @@ async function procesarPedidoConFazerCards(pedidoId, apiKey) {
         const offer_id = prod.proveedor_api_id || '';
 
         // Consultar los campos requeridos por FazerCards para esta categoría
-        const reqFields = await fetch(`https://api.fzr.cards/api/v2/topups/offers?category_id=${category_id}`, {
-          headers: { 'Authorization': `Bearer ${apiKey}` }
-        }).then(r => r.json());
+        let reqFields;
+        let expectedFieldKeys = [];
+        let endpointUrl = `https://api.fzr.cards/api/v2/topups/order`;
+        let payload = {};
 
-        const expectedFieldKeys = reqFields.ok && reqFields.fields ? reqFields.fields.map(f => f.key) : [];
+        if (category_id === 'telegram_stars' || category_id === 'telegram_premium') {
+            if (category_id === 'telegram_stars') {
+                endpointUrl = `https://api.fzr.cards/api/v2/telegram/stars/buy`;
+                payload = {
+                    telegram_username: item.player_id || item.account_user,
+                    quantity: parseInt(offer_id)
+                };
+            } else if (category_id === 'telegram_premium') {
+                endpointUrl = `https://api.fzr.cards/api/v2/telegram/premium/buy`;
+                payload = {
+                    telegram_username: item.player_id || item.account_user,
+                    months: parseInt(offer_id)
+                };
+            }
+        } else {
+            reqFields = await fetch(`https://api.fzr.cards/api/v2/topups/offers?category_id=${category_id}`, {
+              headers: { 'Authorization': `Bearer ${apiKey}` }
+            }).then(r => r.json());
 
-        const payload = {
-          category_id,
-          offer_id,
-          fields: {}
-        };
+            expectedFieldKeys = reqFields.ok && reqFields.fields ? reqFields.fields.map(f => f.key) : [];
 
-        if (item.player_id) {
-          const pId = String(item.player_id).trim();
-          if (expectedFieldKeys.includes('user_id')) payload.fields.user_id = pId;
-          if (expectedFieldKeys.includes('player_id')) payload.fields.player_id = pId;
-          if (expectedFieldKeys.includes('account')) payload.fields.account = pId;
-          if (expectedFieldKeys.includes('uid')) payload.fields.uid = pId;
-          
-          if (item.zone_id) {
-            const zId = String(item.zone_id).trim();
-            if (expectedFieldKeys.includes('server_id')) payload.fields.server_id = zId;
-            if (expectedFieldKeys.includes('zone_id')) payload.fields.zone_id = zId;
-            if (expectedFieldKeys.includes('server')) payload.fields.server = zId;
-          }
+            payload = {
+              category_id,
+              offer_id,
+              fields: {}
+            };
+
+            if (item.player_id) {
+              const pId = String(item.player_id).trim();
+              if (expectedFieldKeys.includes('user_id')) payload.fields.user_id = pId;
+              if (expectedFieldKeys.includes('player_id')) payload.fields.player_id = pId;
+              if (expectedFieldKeys.includes('account')) payload.fields.account = pId;
+              if (expectedFieldKeys.includes('uid')) payload.fields.uid = pId;
+              
+              if (item.zone_id) {
+                const zId = String(item.zone_id).trim();
+                if (expectedFieldKeys.includes('server_id')) payload.fields.server_id = zId;
+                if (expectedFieldKeys.includes('zone_id')) payload.fields.zone_id = zId;
+                if (expectedFieldKeys.includes('server')) payload.fields.server = zId;
+              }
+            }
         }
 
-        const res = await fetch(`https://api.fzr.cards/api/v2/topups/order`, {
+        const res = await fetch(endpointUrl, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${apiKey}`,
