@@ -84,7 +84,7 @@ export default function ProveedorCatalogo() {
     if (!keyToUse) return;
     setLoadingFcProductos(true);
     try {
-      const res = await fetch('/api/fazercards/proxy?endpoint=topups', {
+      const res = await fetch('/api/fazercards/proxy?endpoint=topups&limit=2000', {
         headers: { 'X-API-Key': keyToUse }
       });
       const data = await res.json();

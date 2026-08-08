@@ -1,17 +1,22 @@
 const { Client } = require('ssh2');
-
-const cmd = `docker exec -i supabase-db psql -U supabase_admin -d postgres -c "SELECT id, numero_pedido, pago_verificado, referencia_pago FROM pedidos WHERE numero_pedido = '000750';"`;
+const fs = require('fs');
+const sql = fs.readFileSync('./supabase/migrations/195_update_proveedor_id_type.sql', 'utf8');
 
 const conn = new Client();
 conn.on('ready', () => {
+  const b64 = Buffer.from(sql).toString('base64');
+  const cmd = `echo "${b64}" | base64 -d | docker exec -i supabase-db psql -U supabase_admin -d postgres`;
+  
   conn.exec(cmd, (err, stream) => {
     if (err) throw err;
+    let out = '';
     stream.on('close', (code, signal) => {
+      console.log(out);
       conn.end();
     }).on('data', (data) => {
-      console.log('STDOUT: ' + data);
+      out += data.toString();
     }).stderr.on('data', (data) => {
-      console.log('STDERR: ' + data);
+      out += data.toString();
     });
   });
 }).connect({

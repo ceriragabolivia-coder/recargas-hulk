@@ -27,7 +27,7 @@ async function procesarPedidoConApi(pedidoId, apiKey) {
         console.log(`🚀 [AutoProcess] Enviando item ${item.id} a TiendaGiftVen...`);
         const payload = {
           producto_id: parseInt(prod.proveedor_api_id, 10),
-          merchant_ref: `HULK-ITEM-${item.id}-${Date.now()}`
+          merchant_ref: `HULK-ITEM-${item.id}`
         };
 
         if (item.player_id) {

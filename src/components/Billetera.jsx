@@ -289,7 +289,7 @@ export default function Billetera({ onNavigate }) {
     }
   }
 
-  const handleProcesarRecarga = async (recargaId, status) => {
+  const handleProcesarRecarga = async (recargaId, status, referencia = null) => {
     try {
       if (status === 'aprobado') {
         const { data, error } = await supabase.rpc('aprobar_recarga_rpc', {
@@ -298,6 +298,14 @@ export default function Billetera({ onNavigate }) {
         })
         if (error) throw error
         if (!data) throw new Error('No se pudo aprobar la recarga.')
+
+        if (referencia) {
+          try {
+            await supabase.from('pagos_apk').update({ status: 'usado' }).eq('referencia', referencia.toString().trim()).eq('status', 'disponible');
+          } catch(err) {
+            console.error("Error actualizando pagos_apk:", err);
+          }
+        }
       } else {
         const { error, data } = await supabase
           .from('billetera_recargas')
@@ -524,8 +532,8 @@ export default function Billetera({ onNavigate }) {
                             </td>
                             <td data-label="Acciones">
                               <div style={{ display: 'flex', gap: '8px' }}>
-                                <button className="btn btn-primary btn-sm" onClick={() => handleProcesarRecarga(r.id, 'aprobado')}>✅ Aprobar</button>
-                                <button className="btn btn-ghost btn-sm" style={{ color: 'var(--accent-error)' }} onClick={() => handleProcesarRecarga(r.id, 'rechazado')}>❌ Rechazar</button>
+                                <button className="btn btn-primary btn-sm" onClick={() => handleProcesarRecarga(r.id, 'aprobado', r.referencia_pago)}>✅ Aprobar</button>
+                                <button className="btn btn-ghost btn-sm" style={{ color: 'var(--accent-error)' }} onClick={() => handleProcesarRecarga(r.id, 'rechazado', r.referencia_pago)}>❌ Rechazar</button>
                               </div>
                             </td>
                           </tr>

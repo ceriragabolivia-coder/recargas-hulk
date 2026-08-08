@@ -1,7 +1,7 @@
 const { Client } = require('ssh2');
 const fs = require('fs');
 
-const sql = fs.readFileSync('c:/hulk/app/supabase/migrations/194_update_tiendagiftven_webhook_rpc.sql', 'utf8');
+const sql = fs.readFileSync('c:/hulk/app/supabase/migrations/197_crear_pedido_seguro_rpc.sql', 'utf8');
 
 // Escaping the SQL string correctly for bash or using standard input
 const cmd = `docker exec -i supabase-db psql -U supabase_admin -d postgres`;

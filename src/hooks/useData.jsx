@@ -317,11 +317,11 @@ export function useVentas() {
               
             if (apkPago) {
               // Actualizamos pagos_apk para marcarlo como usado
-              await supabase.from('pagos_apk').update({
-                status: 'usado',
-                pedido_id: pedidoId,
-                usuario_id: perfil?.id || cliente_id
-              }).eq('id', apkPago.id);
+              await fetch('/api/pagos/marcar_usado', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ referencia: referencia_pago, pedido_id: pedidoId })
+              });
 
               // Auto-despachar el pedido recién creado (baúl)
               const { data: rpcData } = await supabase.rpc('procesar_pedido_automatico_rpc', {
@@ -375,11 +375,11 @@ export function useVentas() {
           // Validar el monto con una tolerancia de redondeo
           if (Math.abs(parseFloat(apkPago.monto) - parseFloat(monto)) <= 0.05) {
             // Actualizamos pagos_apk para marcarlo como usado
-            await supabase.from('pagos_apk').update({
-              status: 'usado',
-              pedido_id: data.pedido_id,
-              usuario_id: perfil?.id
-            }).eq('id', apkPago.id);
+            await fetch('/api/pagos/marcar_usado', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ referencia: referencia, pedido_id: data.pedido_id })
+            });
 
             // Auto-despachar el pedido recién creado (baúl)
             const { data: rpcData } = await supabase.rpc('procesar_pedido_automatico_rpc', {

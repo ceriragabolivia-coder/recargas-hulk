@@ -8,10 +8,7 @@ envFile.forEach(line => {
 });
 const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_SERVICE_ROLE_KEY);
 async function run() {
-  const { data, error } = await supabase.rpc('crear_pedido_seguro_rpc', {
-    p_pedido_data: {},
-    p_items_data: []
-  });
-  console.log(error ? error.message : 'Success');
+  const { data, error } = await supabase.from('pedidos').select('*').limit(1);
+  if (data && data.length > 0) console.log(Object.keys(data[0]));
 }
 run();

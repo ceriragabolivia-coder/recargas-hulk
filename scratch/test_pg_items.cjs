@@ -1,6 +1,6 @@
 const { Client } = require('ssh2');
 
-const cmd = `docker exec -i supabase-db psql -U supabase_admin -d postgres -c "SELECT id, numero_pedido, pago_verificado, referencia_pago FROM pedidos WHERE numero_pedido = '000750';"`;
+const cmd = `docker exec -i supabase-db psql -U supabase_admin -d postgres -c "SELECT id, pedido_id, proveedor_pedido_id, estado_proveedor FROM pedido_items ORDER BY id DESC LIMIT 5;"`;
 
 const conn = new Client();
 conn.on('ready', () => {

@@ -200,7 +200,8 @@ export function CartProvider({ children }) {
         pago_verificado: (pagoVerificadoApk || isAutomatic) ? true : null,
         cupon_id: activeCupon?.id || null,
         descuento_cupon_usd: descuento_cupon_usd,
-        descuento_cupon_bs: descuento_cupon_bs
+        descuento_cupon_bs: descuento_cupon_bs,
+        monto_restante_bs: expectedPagoMovilMonto !== null ? expectedPagoMovilMonto : finalBs
       }
 
       const items = cart.flatMap(item => {
@@ -246,12 +247,13 @@ export function CartProvider({ children }) {
 
       if (pagoVerificadoApk && apkPagoId) {
         try {
-          await supabase.from('pagos_apk').update({
-            status: 'usado',
-            usado_por_pedido: pedido.id
-          }).eq('id', apkPagoId);
+          await fetch('/api/pagos/marcar_usado', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ referencia: referencia.trim(), pedido_id: pedido.id })
+          });
         } catch (err) {
-          console.error("Error al actualizar pagos_apk:", err);
+          console.error("Error al actualizar pagos_apk vía API:", err);
         }
       }
 

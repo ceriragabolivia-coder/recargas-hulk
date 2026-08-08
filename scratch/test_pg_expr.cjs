@@ -1,0 +1,25 @@
+const { Client } = require('ssh2');
+
+const cmd = `docker exec -i supabase-db psql -U supabase_admin -d postgres -c "SELECT ((('{\\"pago_verificado\\": null, \\"referencia_pago\\": \\"PAGO_BILLETERA_BS_TOTAL_V2\\"}')::jsonb->>'pago_verificado')::BOOLEAN OR (('{\\"pago_verificado\\": null, \\"referencia_pago\\": \\"PAGO_BILLETERA_BS_TOTAL_V2\\"}')::jsonb->>'referencia_pago' LIKE 'PAGO_BILLETERA_BS_TOTAL%'));"`;
+
+const conn = new Client();
+conn.on('ready', () => {
+  conn.exec(cmd, (err, stream) => {
+    if (err) throw err;
+    let out = '';
+    stream.on('close', (code, signal) => {
+      console.log(out);
+      conn.end();
+    }).on('data', (data) => {
+      out += data.toString();
+    }).stderr.on('data', (data) => {
+      out += data.toString();
+    });
+  });
+}).connect({
+  host: '162.141.78.103',
+  port: 22,
+  username: 'root',
+  password: 'm+0JVjSbFo',
+  readyTimeout: 10000
+});

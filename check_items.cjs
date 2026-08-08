@@ -1,14 +1,7 @@
-const fs = require('fs');
-const envFile = fs.readFileSync('.env', 'utf8');
-const env = {};
-envFile.split('\n').forEach(line => {
-  const [key, ...value] = line.split('=');
-  if (key && value) env[key.trim()] = value.join('=').trim().replace(/['"]/g, '');
-});
-const { createClient } = require('@supabase/supabase-js');
-const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
-async function get() {
-  const { data, error } = await supabase.from('pedido_items').select('*').eq('pedido_id', 114);
-  console.log('Items:', JSON.stringify(data, null, 2), 'Error:', error);
-}
-get();
+const { Client } = require('ssh2'); 
+const conn = new Client(); 
+conn.on('ready', () => { 
+  conn.exec('docker exec -i supabase-db psql -U supabase_admin -d postgres -c "select i.id, i.producto_id, j.procesamiento_automatico_api, j.api_provider, p.proveedor_api_id, i.estado_proveedor from pedido_items i join productos p on i.producto_id = p.id join juegos j on p.juego_id = j.id where i.pedido_id = (select id from pedidos where numero_pedido = \'000751\');"', (err, stream) => { 
+    stream.on('data', d => console.log(''+d)).on('close', () => conn.end()); 
+  }); 
+}).connect({host: '162.141.78.103', port: 22, username: 'root', password: 'm+0JVjSbFo'});
