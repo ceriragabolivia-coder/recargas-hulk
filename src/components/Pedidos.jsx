@@ -503,6 +503,24 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
       return;
     }
 
+    // Guardar los códigos y referencias que estén en los inputs antes de completar
+    if (nuevoEstado === 'completado') {
+      for (const item of pedidoActual.pedido_items || []) {
+        let itemsUpdate = {};
+        const codeInput = document.getElementById("codigo_input_" + item.id);
+        if (codeInput && codeInput.value && codeInput.value !== (item.codigo_entregado || '')) {
+          itemsUpdate.codigo_entregado = codeInput.value;
+        }
+        const refInput = document.getElementById("ref_input_" + item.id);
+        if (refInput && refInput.value && refInput.value !== (item.referencia_admin || '')) {
+          itemsUpdate.referencia_admin = refInput.value;
+        }
+        if (Object.keys(itemsUpdate).length > 0) {
+          await supabase.from('pedido_items').update(itemsUpdate).eq('id', item.id);
+        }
+      }
+    }
+
     const updateData = { estado: nuevoEstado, updated_at: new Date().toISOString() }
 
     // Si se completa, registrar quién lo hizo como responsable
@@ -1436,6 +1454,17 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
   const updateItemEstado = async (itemId, nuevoEstado, adminMsg = null) => {
     const updateData = { estado: nuevoEstado }
     if (adminMsg !== null) updateData.notas_admin = adminMsg
+
+    if (nuevoEstado === 'completado' || nuevoEstado === 'procesando') {
+      const codeInput = document.getElementById("codigo_input_" + itemId);
+      if (codeInput && codeInput.value) {
+        updateData.codigo_entregado = codeInput.value;
+      }
+      const refInput = document.getElementById("ref_input_" + itemId);
+      if (refInput && refInput.value) {
+        updateData.referencia_admin = refInput.value;
+      }
+    }
 
     const { error } = await supabase.from('pedido_items').update(updateData).eq('id', itemId)
     if (error) {
@@ -2420,6 +2449,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                   {canManage && esElOperador(selectedPedido) && selectedPedido.estado === 'procesando' ? (
                      <div style={{ marginBottom: '8px' }}>
                         <input 
+                           id={"ref_input_" + item.id}
                            type="text" 
                            placeholder="Escribir Ref. de Recarga (Ej: Transacción #83274)" 
                            defaultValue={item.referencia_admin || ''}
@@ -2434,6 +2464,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                         {/* INPUT CÓDIGO GIFT CARD */}
                         <div style={{ marginTop: '8px' }}>
                            <input 
+                              id={"codigo_input_" + item.id}
                               type="text" 
                               placeholder="Escribir Código de Gift Card (Ej: XXXX-XXXX-XXXX)" 
                               defaultValue={item.codigo_entregado || ''}
