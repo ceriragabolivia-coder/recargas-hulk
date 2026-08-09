@@ -75,15 +75,15 @@ export default function Checkout({ onFinish, embedded = false }) {
   const { config } = useConfiguracion()
   const permitirPagoDirecto = config?.permitir_pago_directo !== 'false'
   
-  const isRevendedor = perfil?.rol === 'revendedor';
+  const isRevendedor = perfil?.rol === 'revendedor' || (Array.isArray(perfil?.roles_adicionales) && perfil.roles_adicionales.includes('revendedor'));
 
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador';
 
   const hasWalletUSD = useMemo(() => {
     if (isAdmin) return true;
-    if (perfil?.rol === 'revendedor') return !(perfil.config_modulos || []).includes('disable_wallet_usd');
+    if (isRevendedor) return !(perfil.config_modulos || []).includes('disable_wallet_usd');
     return (perfil?.config_modulos || []).includes('enable_wallet_usd');
-  }, [isAdmin, perfil]);
+  }, [isAdmin, perfil, isRevendedor]);
 
   const hasWalletBs = useMemo(() => {
     if (isAdmin) return true;

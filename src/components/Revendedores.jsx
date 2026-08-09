@@ -21,7 +21,10 @@ export default function Revendedores({ onNavigate }) {
 
   // Filtrar solo revendedores
   const revendedores = useMemo(() => {
-    let list = clientes.filter(c => c.rol === 'revendedor')
+    let list = clientes.filter(c => 
+      c.rol?.toLowerCase() === 'revendedor' || 
+      (Array.isArray(c.roles_adicionales) && c.roles_adicionales.includes('revendedor'))
+    )
     if (searchTerm) {
       const term = searchTerm.toLowerCase()
       list = list.filter(c => 
