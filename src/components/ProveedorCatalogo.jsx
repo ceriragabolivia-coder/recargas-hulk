@@ -84,30 +84,38 @@ export default function ProveedorCatalogo() {
     if (!keyToUse) return;
     setLoadingFcProductos(true);
     try {
-      const res = await fetch('/api/fazercards/proxy?endpoint=topups&limit=2000', {
-        headers: { 'X-API-Key': keyToUse }
-      });
-      const data = await res.json();
-      
-      let allItems = [];
-      if (data.ok && data.items) {
-        allItems = [...data.items];
-      }
+      // Helper para hacer fetch con paginación
+      const fetchAllPages = async (endpoint) => {
+        let all = [];
+        let cursor = null;
+        while (true) {
+          let url = `/api/fazercards/proxy?endpoint=${endpoint}&limit=500`;
+          if (cursor) url += `&cursor=${cursor}`;
+          const res = await fetch(url, { headers: { 'X-API-Key': keyToUse } });
+          const data = await res.json();
+          if (data.ok && data.items) {
+            all = all.concat(data.items);
+          } else {
+             break; // Si falla, salir del loop con lo que tengamos
+          }
+          if (!data.meta || !data.meta.has_more || !data.meta.next_cursor) break;
+          cursor = data.meta.next_cursor;
+        }
+        return all;
+      };
+
+      const topupItems = await fetchAllPages('topups');
+      let allItems = [...topupItems];
       
       // Consultar Gift Cards
       try {
-        const resGc = await fetch('/api/fazercards/proxy?endpoint=giftcards&limit=2000', {
-          headers: { 'X-API-Key': keyToUse }
-        });
-        const dataGc = await resGc.json();
-        if (dataGc.ok && dataGc.items) {
-          const gcItems = dataGc.items.map(item => ({
-            ...item,
-            category_id: `giftcard:${item.category_id}`,
-            name: `[Gift Card] ${item.name}`
-          }));
-          allItems = [...allItems, ...gcItems];
-        }
+        const gcItemsRaw = await fetchAllPages('giftcards');
+        const gcItems = gcItemsRaw.map(item => ({
+          ...item,
+          category_id: `giftcard:${item.category_id}`,
+          name: `[Gift Card] ${item.name}`
+        }));
+        allItems = [...allItems, ...gcItems];
       } catch (e) {
         console.error("Error fetching giftcards", e);
       }
@@ -126,8 +134,8 @@ export default function ProveedorCatalogo() {
 
       setFcProductos(allItems);
 
-      if (!data.ok && !data.items && allItems.length === 2) {
-        setAlertModal({ type: 'error', message: data.error || 'Error obteniendo catálogo de FazerCards' });
+      if (allItems.length <= 2 && fcApiKey) {
+        setAlertModal({ type: 'warning', message: 'No se encontraron productos o hubo un problema de conexión parcial con FazerCards.' });
       }
     } catch (e) {
       setAlertModal({ type: 'error', message: 'Error de red al consultar FazerCards' });
