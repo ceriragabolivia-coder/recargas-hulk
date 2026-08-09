@@ -2123,7 +2123,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                   </div>
                 )}
               </div>
-              <div className="summary-row" translate="no" className="notranslate">
+              <div className="summary-row notranslate" translate="no">
                 <span className="summary-label">Total</span>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontWeight: 800, fontSize: '18px', color: 'var(--accent-success)' }}>{formatBs(selectedPedido.total_bs)}</div>
@@ -2132,7 +2132,7 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
               </div>
 
               {selectedPedido.cupon_id && selectedPedido.cupones && (
-                <div className="summary-row" translate="no" className="notranslate" style={{ backgroundColor: 'rgba(0, 210, 255, 0.05)', borderRadius: '8px', padding: '8px 12px', marginTop: '8px', border: '1px dashed rgba(0, 210, 255, 0.3)' }}>
+                <div className="summary-row notranslate" translate="no" style={{ backgroundColor: 'rgba(0, 210, 255, 0.05)', borderRadius: '8px', padding: '8px 12px', marginTop: '8px', border: '1px dashed rgba(0, 210, 255, 0.3)' }}>
                   <span className="summary-label" style={{ color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>🎟️ Cupón Aplicado</span>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontWeight: 800, fontSize: '15px', color: '#fff' }}>{selectedPedido.cupones.codigo}</div>
