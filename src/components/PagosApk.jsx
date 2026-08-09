@@ -10,11 +10,17 @@ export default function PagosApk({ onNavigate }) {
   const [search, setSearch] = useState('')
   const [apkEnabled, setApkEnabled] = useState(true)
   const [savingConfig, setSavingConfig] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
+  const itemsPerPage = 20
 
   useEffect(() => {
-    fetchPagos()
     fetchConfig()
   }, [])
+
+  useEffect(() => {
+    fetchPagos(currentPage)
+  }, [currentPage])
 
   const fetchConfig = async () => {
     try {
@@ -48,21 +54,38 @@ export default function PagosApk({ onNavigate }) {
     }
   }
 
-  const fetchPagos = async () => {
+  const fetchPagos = async (page = currentPage) => {
     setLoading(true)
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('pagos_apk')
-        .select('*, pedidos(numero_pedido)')
+        .select('*, pedidos(numero_pedido)', { count: 'exact' })
         .order('created_at', { ascending: false })
-        .limit(100)
+
+      if (search.trim() !== '') {
+        query = query.or(`referencia.ilike.%${search.trim()}%,telefono.ilike.%${search.trim()}%`)
+      }
+
+      const from = (page - 1) * itemsPerPage
+      const to = from + itemsPerPage - 1
+
+      const { data, count, error } = await query.range(from, to)
 
       if (error) throw error
       setPagos(data || [])
+      setTotalItems(count || 0)
     } catch (err) {
       console.error('Error cargando pagos apk:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSearch = () => {
+    if (currentPage === 1) {
+      fetchPagos(1)
+    } else {
+      setCurrentPage(1)
     }
   }
 
@@ -95,10 +118,7 @@ export default function PagosApk({ onNavigate }) {
     }
   }
 
-  const filteredPagos = pagos.filter(p => 
-    p.referencia?.toLowerCase().includes(search.toLowerCase()) ||
-    p.telefono?.toLowerCase().includes(search.toLowerCase())
-  )
+
 
   return (
     <div className="page-content">
@@ -142,7 +162,7 @@ export default function PagosApk({ onNavigate }) {
             onChange={(e) => setSearch(e.target.value)}
             style={{ maxWidth: '300px' }}
           />
-          <button className="btn-primary" onClick={fetchPagos}>
+          <button className="btn-primary" onClick={handleSearch}>
             Actualizar
           </button>
         </div>
@@ -151,7 +171,7 @@ export default function PagosApk({ onNavigate }) {
       <div className="card">
         {loading ? (
           <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Cargando pagos...</div>
-        ) : filteredPagos.length === 0 ? (
+        ) : pagos.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No se encontraron pagos.</div>
         ) : (
           <div className="table-responsive">
@@ -169,7 +189,7 @@ export default function PagosApk({ onNavigate }) {
                 </tr>
               </thead>
               <tbody>
-                {filteredPagos.map((pago) => (
+                {pagos.map((pago) => (
                   <tr key={pago.id}>
                     <td>
                       {new Date(pago.fecha_pago || pago.created_at).toLocaleString()}
@@ -232,6 +252,37 @@ export default function PagosApk({ onNavigate }) {
                 ))}
               </tbody>
             </table>
+            
+            {/* Controles de Paginación */}
+            {totalItems > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', flexWrap: 'wrap', gap: '10px' }}>
+                <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
+                  Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems} pagos
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button 
+                    className="btn-secondary" 
+                    disabled={currentPage === 1 || loading}
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    style={{ padding: '6px 12px', fontSize: '13px' }}
+                  >
+                    ⬅️ Anterior
+                  </button>
+                  <span style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', color: 'var(--text-light)', fontSize: '14px', fontWeight: 600 }}>
+                    Página {currentPage} de {Math.ceil(totalItems / itemsPerPage) || 1}
+                  </span>
+                  <button 
+                    className="btn-secondary" 
+                    disabled={currentPage >= Math.ceil(totalItems / itemsPerPage) || loading}
+                    onClick={() => setCurrentPage(prev => Math.min(Math.ceil(totalItems / itemsPerPage), prev + 1))}
+                    style={{ padding: '6px 12px', fontSize: '13px' }}
+                  >
+                    Siguiente ➡️
+                  </button>
+                </div>
+              </div>
+            )}
+            
           </div>
         )}
       </div>
