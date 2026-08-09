@@ -64,13 +64,18 @@ export default function Checkout({ onFinish, embedded = false }) {
   const { registrarVenta, verificarYRegistrarReferencia } = useVentas()
   const { metodos, cancelarPedidosExpirados, loading: loadingMetodos } = useMetodosPago()
   
-  const metodosDisponibles = useMemo(() => {
-    return metodos.filter(m => m.activo);
-  }, [metodos]);
   const { perfil, user, isCliente, refreshPerfil } = useAuth()
+  
+  const metodosDisponibles = useMemo(() => {
+    const isRev = perfil?.rol === 'revendedor';
+    if (isRev) return [];
+    return metodos.filter(m => m.activo);
+  }, [metodos, perfil]);
   const { wallet } = useWallet()
   const { config } = useConfiguracion()
   const permitirPagoDirecto = config?.permitir_pago_directo !== 'false'
+  
+  const isRevendedor = perfil?.rol === 'revendedor';
 
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador';
 
@@ -1423,7 +1428,14 @@ export default function Checkout({ onFinish, embedded = false }) {
                         </div>
                       ) : (
                         <div className="payment-methods-grid">
-                          <label className="form-label" style={{ gridColumn: '1 / -1', marginBottom: '4px', textAlign: 'center', fontSize: '13px', fontWeight: 700 }}>Selecciona un Método de Pago</label>
+                          <label className="form-label" style={{ gridColumn: '1 / -1', marginBottom: '4px', textAlign: 'center', fontSize: '13px', fontWeight: 700 }}>
+                            {isRevendedor ? 'Métodos de pago deshabilitados' : 'Selecciona un Método de Pago'}
+                          </label>
+                          {isRevendedor && (
+                            <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#f5af19', fontSize: '13px', fontWeight: 600, padding: '10px', backgroundColor: 'rgba(245, 175, 25, 0.1)', borderRadius: '12px' }}>
+                              Como revendedor, debes pagar la totalidad de tus pedidos utilizando el saldo de tu billetera. Por favor, asegúrate de activar el uso de billetera y tener saldo suficiente.
+                            </div>
+                          )}
                           {metodosDisponibles.map(m => (
                             <button key={m.id} onClick={() => handleSelectMetodo(m.id)} className={`payment-method-btn ${selectedMetodoId === m.id ? 'active' : ''}`} style={{ borderRadius: '16px', padding: '8px 4px' }}>
                               <div style={{ width: 48, height: 48, borderRadius: '12px', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 6px', padding: '6px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
