@@ -75,6 +75,7 @@ export default function GestionProductos() {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
   const [saving, setSaving] = useState(false)
+  const [sincronizandoMasivo, setSincronizandoMasivo] = useState(false)
   const [alertModal, setAlertModal] = useState(null) // { type, title, message, onConfirm }
   const [shouldRemoveBg, setShouldRemoveBg] = useState(true)
 
@@ -143,6 +144,39 @@ export default function GestionProductos() {
       setAlertModal({ type: 'error', message: 'Error al guardar opciones de recarga' })
     }
     setSavingOpciones(false)
+  }
+
+  // Sincronización Masiva
+  const handleSincronizacionMasiva = async () => {
+    setSincronizandoMasivo(true);
+    setAlertModal({ type: 'info', title: 'Sincronizando...', message: 'Sincronizando precios de todo el catálogo. Esto puede tardar un momento...' });
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      
+      const res = await fetch('/api/sync/prices', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+         setAlertModal({ 
+            type: 'success', 
+            title: 'Sincronización Completada', 
+            message: data.message + (data.details?.length > 0 ? `\n⚠️ Nota: ${data.details.length} productos no pudieron actualizarse (ej. no existen en el catálogo del proveedor o el ID es incorrecto).` : '') 
+         });
+      } else {
+         setAlertModal({ type: 'error', message: data.error || 'Error en la sincronización masiva.' });
+      }
+    } catch (err) {
+      setAlertModal({ type: 'error', message: 'Error de red al intentar sincronizar masivamente.' });
+    }
+    setSincronizandoMasivo(false);
   }
 
   // Formulario de nuevo/editar juego
@@ -853,9 +887,20 @@ export default function GestionProductos() {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div className="page-header">
-        <h1 className="page-title">Gestión de Productos</h1>
-        <p className="page-subtitle">Añade o elimina los paquetes de cada juego y establece su rentabilidad.</p>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h1 className="page-title">Gestión de Productos</h1>
+          <p className="page-subtitle">Añade o elimina los paquetes de cada juego y establece su rentabilidad.</p>
+        </div>
+        <button 
+          className="btn btn-primary" 
+          onClick={handleSincronizacionMasiva}
+          disabled={sincronizandoMasivo}
+          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          {sincronizandoMasivo ? <span className="spinner-small"></span> : '🔄'} 
+          Sincronizar Todos los Precios
+        </button>
       </div>
 
       <div className="content-grid gestion-productos-grid" style={{ flex: 1, display: 'flex', gap: '24px', overflow: 'hidden', padding: '24px 32px 32px' }}>

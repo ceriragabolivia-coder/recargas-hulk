@@ -36,5 +36,11 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/sync/prices",
+      "schedule": "0 0 * * *"
+    }
   ]
 }
