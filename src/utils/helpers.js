@@ -1,7 +1,12 @@
 // Un usuario puede tener varios roles (rol principal + roles adicionales asignados por un admin)
 export function hasRole(perfil, ...roles) {
-  const rolesUsuario = perfil?.roles || [perfil?.rol?.toLowerCase()]
-  return roles.some(r => rolesUsuario.includes(r))
+  const rolesUsuario = [
+    ...(Array.isArray(perfil?.roles) ? perfil.roles : []),
+    perfil?.rol?.toLowerCase(),
+    ...(Array.isArray(perfil?.roles_adicionales) ? perfil.roles_adicionales.map(r => r?.toLowerCase()) : [])
+  ].filter(Boolean);
+  
+  return roles.some(r => rolesUsuario.includes(r?.toLowerCase()));
 }
 
 /**
@@ -16,7 +21,7 @@ export function calcularPrecioVenta(producto, juego, config, perfilUsuario = nul
   if (tasa <= 0) tasa = 1
 
   const aplicarDescuentoRevendedor = (precio) => {
-    if (perfilUsuario?.rol === 'revendedor') {
+    if (hasRole(perfilUsuario, 'revendedor')) {
       // 1. Prioridad: Descuento específico del producto
       // 2. Prioridad: Descuento global del juego
       // 3. Fallback: Descuento individual del perfil del usuario
