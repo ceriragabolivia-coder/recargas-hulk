@@ -136,6 +136,14 @@ async function procesarPedidoConFazerCards(pedidoId, apiKey) {
                     months: parseInt(offer_id)
                 };
             }
+        } else if (category_id.startsWith('giftcard:')) {
+            const actualCategoryId = category_id.replace('giftcard:', '');
+            endpointUrl = `https://api.fzr.cards/api/v2/giftcards/order`;
+            payload = {
+                category_id: actualCategoryId,
+                card_id: offer_id,
+                quantity: item.cantidad || 1
+            };
         } else {
             reqFields = await fetch(`https://api.fzr.cards/api/v2/topups/offers?category_id=${category_id}`, {
               headers: { 'Authorization': `Bearer ${apiKey}` }

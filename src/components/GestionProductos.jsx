@@ -409,6 +409,9 @@ export default function GestionProductos() {
           url = `/api/fazercards/proxy?endpoint=telegram/stars`;
         } else if (categoryId === 'telegram_premium') {
           url = `/api/fazercards/proxy?endpoint=telegram/premium`;
+        } else if (categoryId.startsWith('giftcard:')) {
+          const actualCategoryId = categoryId.replace('giftcard:', '');
+          url = `/api/fazercards/proxy?endpoint=giftcards/cards&category_id=${actualCategoryId}`;
         }
 
         const res = await fetch(url, {
@@ -425,6 +428,10 @@ export default function GestionProductos() {
             }
           } else if (categoryId === 'telegram_premium') {
             if (data.plans) offers = data.plans.map(p => ({ offer_id: p.months, price_usd: p.price_usd }));
+          } else if (categoryId.startsWith('giftcard:')) {
+            if (data.offers) {
+              offers = data.offers.map(o => ({ offer_id: o.card_id, price_usd: o.price_usd }));
+            }
           } else if (data.offers) {
             offers = data.offers;
           }

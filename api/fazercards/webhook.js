@@ -32,7 +32,11 @@ export default async function handler(req, res) {
     const orderData = payload.data || payload.order || payload;
     const providerOrderId = orderData.id || orderData.order_id || payload.order_id;
     const providerStatus = orderData.status ? orderData.status.toLowerCase() : (payload.status ? payload.status.toLowerCase() : '');
-    const pin = orderData.pin || orderData.code || payload.pin || payload.code || '';
+    
+    let pin = orderData.pin || orderData.code || payload.pin || payload.code || '';
+    if (!pin && Array.isArray(orderData.cards) && orderData.cards.length > 0) {
+      pin = orderData.cards.map(c => c.pin || c.code || '').filter(Boolean).join('\n');
+    }
 
     if (!providerOrderId) {
       console.warn('⚠️ [FazerCards Webhook] No se encontró el ID de la orden en el payload:', JSON.stringify(payload).substring(0, 500));

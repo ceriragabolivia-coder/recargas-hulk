@@ -94,6 +94,24 @@ export default function ProveedorCatalogo() {
         allItems = [...data.items];
       }
       
+      // Consultar Gift Cards
+      try {
+        const resGc = await fetch('/api/fazercards/proxy?endpoint=giftcards&limit=2000', {
+          headers: { 'X-API-Key': keyToUse }
+        });
+        const dataGc = await resGc.json();
+        if (dataGc.ok && dataGc.items) {
+          const gcItems = dataGc.items.map(item => ({
+            ...item,
+            category_id: `giftcard:${item.category_id}`,
+            name: `[Gift Card] ${item.name}`
+          }));
+          allItems = [...allItems, ...gcItems];
+        }
+      } catch (e) {
+        console.error("Error fetching giftcards", e);
+      }
+      
       // Añadir Telegram manualmente
       allItems.unshift({
         category_id: 'telegram_premium',
@@ -108,7 +126,7 @@ export default function ProveedorCatalogo() {
 
       setFcProductos(allItems);
 
-      if (!data.ok && !data.items) {
+      if (!data.ok && !data.items && allItems.length === 2) {
         setAlertModal({ type: 'error', message: data.error || 'Error obteniendo catálogo de FazerCards' });
       }
     } catch (e) {
@@ -133,10 +151,17 @@ export default function ProveedorCatalogo() {
     setLoadingFcOffers(prev => ({ ...prev, [categoryId]: true }));
     try {
       let url = `/api/fazercards/proxy?endpoint=topups/offers&category_id=${categoryId}`;
+      let isGiftcard = false;
+      let actualCategoryId = categoryId;
+      
       if (categoryId === 'telegram_stars') {
         url = `/api/fazercards/proxy?endpoint=telegram/stars`;
       } else if (categoryId === 'telegram_premium') {
         url = `/api/fazercards/proxy?endpoint=telegram/premium`;
+      } else if (categoryId.startsWith('giftcard:')) {
+        isGiftcard = true;
+        actualCategoryId = categoryId.replace('giftcard:', '');
+        url = `/api/fazercards/proxy?endpoint=giftcards/cards&category_id=${actualCategoryId}`;
       }
 
       const res = await fetch(url, {
@@ -164,6 +189,13 @@ export default function ProveedorCatalogo() {
             }));
             setFcOffers(prev => ({ ...prev, [categoryId]: offers }));
           }
+        } else if (isGiftcard && data.offers) {
+           const offers = data.offers.map(o => ({
+             offer_id: o.card_id,
+             name: o.name,
+             price_usd: o.price_usd
+           }));
+           setFcOffers(prev => ({ ...prev, [categoryId]: offers }));
         } else if (data.offers) {
           setFcOffers(prev => ({ ...prev, [categoryId]: data.offers }));
         }
@@ -424,7 +456,12 @@ export default function ProveedorCatalogo() {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: 800, margin: 0 }}>📚 Catálogo de FazerCards</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: 800, margin: 0 }}>📚 Catálogo de FazerCards</h2>
+              <button className="btn btn-ghost btn-sm" onClick={() => fetchFcProductos()} disabled={loadingFcProductos}>
+                🔄 Recargar Catálogo
+              </button>
+            </div>
             <input 
               type="text" 
               placeholder="🔍 Buscar juego o servicio..." 
