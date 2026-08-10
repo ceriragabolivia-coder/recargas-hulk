@@ -2556,12 +2556,37 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
                       }}>
                         {item.codigo_entregado}
                       </div>
-                      <button 
-                        onClick={() => { navigator.clipboard.writeText(item.codigo_entregado); alert('Código copiado al portapapeles'); }}
-                        style={{ marginTop: '12px', padding: '6px 12px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', fontSize: '11px', cursor: 'pointer', fontWeight: 600 }}
-                      >
-                        📋 Copiar Código
-                      </button>
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <button 
+                          onClick={() => { navigator.clipboard.writeText(item.codigo_entregado); alert('Código copiado al portapapeles'); }}
+                          style={{ marginTop: '12px', padding: '6px 12px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', fontSize: '11px', cursor: 'pointer', fontWeight: 600 }}
+                        >
+                          📋 Copiar Código
+                        </button>
+                        
+                        {(item.productos?.juegos?.url_canje || (Array.isArray(item.productos) && item.productos[0]?.juegos?.url_canje)) && (
+                          <a 
+                            href={item.productos?.juegos?.url_canje || item.productos[0]?.juegos?.url_canje} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            style={{ 
+                              display: 'inline-block',
+                              marginTop: '12px', 
+                              padding: '6px 12px', 
+                              borderRadius: '6px', 
+                              backgroundColor: 'var(--accent-primary)', 
+                              border: 'none', 
+                              color: '#000', 
+                              fontSize: '11px', 
+                              cursor: 'pointer', 
+                              fontWeight: 800,
+                              textDecoration: 'none'
+                            }}
+                          >
+                            🔗 Canjear
+                          </a>
+                        )}
+                      </div>
                     </div>
                   )}
                   

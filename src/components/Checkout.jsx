@@ -1683,25 +1683,52 @@ function OrderTracking({ pedidoInitial, onBack }) {
                     </div>
                   )}
                   {item.codigo_entregado && (
-                    <div style={{ 
-                      marginTop: '8px', 
-                      padding: '8px', 
-                      backgroundColor: 'rgba(34, 197, 94, 0.1)', 
-                      border: '1px dashed #22c55e', 
-                      borderRadius: '8px',
-                      color: '#22c55e',
-                      fontSize: '13px',
-                      fontWeight: 800,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => {
-                      navigator.clipboard.writeText(item.codigo_entregado);
-                      alert('¡Código copiado al portapapeles!');
-                    }}>
-                      🎁 Código: {item.codigo_entregado} 📋
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+                      <div style={{ 
+                        padding: '8px', 
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)', 
+                        border: '1px dashed #22c55e', 
+                        borderRadius: '8px',
+                        color: '#22c55e',
+                        fontSize: '13px',
+                        fontWeight: 800,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => {
+                        navigator.clipboard.writeText(item.codigo_entregado);
+                        alert('¡Código copiado al portapapeles!');
+                      }}>
+                        🎁 Código: {item.codigo_entregado} 📋
+                      </div>
+                      
+                      {(item.productos?.juegos?.url_canje || (Array.isArray(item.productos) && item.productos[0]?.juegos?.url_canje)) && (
+                        <a 
+                          href={item.productos?.juegos?.url_canje || item.productos[0]?.juegos?.url_canje} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          style={{ 
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '6px', 
+                            borderRadius: '8px', 
+                            backgroundColor: 'var(--accent-primary)', 
+                            border: 'none', 
+                            color: '#000', 
+                            fontSize: '12px', 
+                            cursor: 'pointer', 
+                            fontWeight: 800,
+                            textDecoration: 'none',
+                            gap: '4px'
+                          }}
+                        >
+                          🔗 Canjear Código
+                        </a>
+                      )}
                     </div>
                   )}
                 </div>

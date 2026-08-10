@@ -232,6 +232,7 @@ export default function GestionProductos() {
       imagen_pedido_completado_url: null,
       verificacion_api_activa: false,
       verificacion_api_url: '',
+      url_canje: '',
       mostrar_precio_dual: false,
       api_provider_category_id: ''
     })
@@ -262,6 +263,7 @@ export default function GestionProductos() {
         ? (selectedJuego.nombre.toLowerCase().includes('free fire') || selectedJuego.nombre.toLowerCase().includes('blood strike'))
         : !!selectedJuego.verificacion_api_activa,
       verificacion_api_url: selectedJuego.verificacion_api_url || '',
+      url_canje: selectedJuego.url_canje || '',
       mostrar_precio_dual: !!selectedJuego.mostrar_precio_dual,
       api_provider_category_id: selectedJuego.api_provider_category_id || ''
     })
@@ -303,6 +305,7 @@ export default function GestionProductos() {
         imagen_pedido_completado_url: formGame.imagen_pedido_completado_url,
         verificacion_api_activa: formGame.verificacion_api_activa,
         verificacion_api_url: formGame.verificacion_api_url,
+        url_canje: formGame.url_canje || null,
         mostrar_precio_dual: formGame.mostrar_precio_dual,
         api_provider_category_id: formGame.api_provider_category_id
       })
@@ -2105,6 +2108,20 @@ export default function GestionProductos() {
           <hr style={{ margin: '24px 0', borderColor: 'var(--border-color)' }} />
           <h3 style={{ fontSize: 13, textTransform: 'uppercase', color: 'var(--accent-primary)', marginBottom: 12 }}>Visualización de Precios</h3>
           
+          <div className="form-group" style={{ marginBottom: 16 }}>
+            <label className="form-label">URL del Centro de Canje (Opcional)</label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Ej: https://www.roblox.com/redeem"
+              value={formGame.url_canje || ''}
+              onChange={e => setFormGame({ ...formGame, url_canje: e.target.value })}
+            />
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+              Si agregas este enlace, los clientes verán un botón de "Canjear" junto al código entregado que los redirigirá automáticamente a esta página.
+            </p>
+          </div>
+
           <div className="form-group" style={{ marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <input
