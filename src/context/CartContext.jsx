@@ -153,10 +153,7 @@ export function CartProvider({ children }) {
 
       const isAutomatic = (referencia && (referencia.includes('BILLETERA') || referencia.includes('PAGO_TOTAL')))
       
-      // DOBLE VERIFICACIÓN CONTRA DUPLICADOS (Blindaje extra cliente a nivel inserción)
-      let pagoVerificadoApk = false;
-      let apkPagoId = null;
-
+      // VERIFICACIÓN CONTRA DUPLICADOS HISTÓRICOS (Opcional, pre-chequeo)
       if (referencia && !isAutomatic && referencia !== 'N/A') {
         const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
         const { data: existingPedidos } = await supabase
@@ -169,24 +166,6 @@ export function CartProvider({ children }) {
         if (existingPedidos && existingPedidos.length > 0 && (!existingPedidoId || existingPedidos[0].id !== existingPedidoId)) {
           return [{ id: 'pedido', error: `La referencia de pago ${referencia} ya ha sido registrada en otro pedido. No se pueden duplicar referencias.` }]
         }
-
-        // VERIFICACIÓN CON PAGOS APK (AUTO-APROBACIÓN DE PAGO)
-        try {
-          const { data: apkPago } = await supabase
-            .from('pagos_apk')
-            .select('id, monto')
-            .eq('referencia', referencia.trim())
-            .eq('status', 'disponible')
-            .single();
-
-          const amountToCheck = expectedPagoMovilMonto !== null ? expectedPagoMovilMonto : finalBs;
-          if (apkPago && Math.abs(parseFloat(apkPago.monto) - parseFloat(amountToCheck)) <= 0.05) {
-            pagoVerificadoApk = true;
-            apkPagoId = apkPago.id;
-          }
-        } catch (err) {
-          console.error("Error verificando APK en checkout:", err);
-        }
       }
 
       const pedidoData = {
@@ -197,7 +176,7 @@ export function CartProvider({ children }) {
         total_bs: finalBs,
         estado: 'pendiente',
         comprobante_url: comprobanteUrl || null,
-        pago_verificado: (pagoVerificadoApk || isAutomatic) ? true : null,
+        pago_verificado: isAutomatic ? true : null,
         cupon_id: activeCupon?.id || null,
         descuento_cupon_usd: descuento_cupon_usd,
         descuento_cupon_bs: descuento_cupon_bs,
@@ -245,23 +224,11 @@ export function CartProvider({ children }) {
 
       clearCart()
 
-      if (pagoVerificadoApk && apkPagoId) {
-        try {
-          await fetch('/api/pagos/marcar_usado', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ referencia: referencia.trim(), pedido_id: pedido.id })
-          });
-        } catch (err) {
-          console.error("Error al actualizar pagos_apk vía API:", err);
-        }
-      }
-
       return [{ 
         id: 'pedido', 
         data: pedido, 
         error: null, 
-        shouldAutoProcess: (isAutomatic || pagoVerificadoApk) 
+        shouldAutoProcess: (isAutomatic || pedido.pago_verificado === true) 
       }]
 
     } catch (err) {
