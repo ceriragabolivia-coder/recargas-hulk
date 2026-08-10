@@ -9,7 +9,7 @@ import { processTiendaGiftVenOrder } from '../utils/apiProcessor'
 import AlertModal from './AlertModal'
 import FloatingBackground from './FloatingBackground'
 import { compressImage } from '../utils/imageCompression'
-
+import { extractReferenceFromImage } from '../utils/ocrHelper'
 // ============================================================
 // CountdownTimer - FUERA del componente Checkout
 // Si se define dentro, React lo recreará en cada render causando parpadeo
@@ -105,6 +105,7 @@ export default function Checkout({ onFinish, embedded = false }) {
   const [orderFinished, setOrderFinished] = useState(false)
   const [createdPedidoId, setCreatedPedidoId] = useState(null)
   const [expiresAt, setExpiresAt] = useState(null)
+  const [isExtractingRef, setIsExtractingRef] = useState(false)
   const [darkMode, setDarkMode] = useState(true)
   const [currentBanner, setCurrentBanner] = useState(0)
   const orderPreparingRef = React.useRef(false)
@@ -460,7 +461,14 @@ export default function Checkout({ onFinish, embedded = false }) {
     let file = e.target.files[0]
     if (!file) return
     setUploadingComprobante(true)
+    setIsExtractingRef(true)
     try {
+      const extractedRef = await extractReferenceFromImage(file)
+      if (extractedRef && extractedRef.length === 6) {
+        setReferencia(extractedRef)
+        setAlertModal({ type: 'success', message: `Referencia detectada y autocompletada: ${extractedRef}` })
+      }
+
       file = await compressImage(file)
       const fileName = `pedidos/${Date.now()}_${createdPedidoId || 'tmp'}-${file.name}`
       const { error: uploadError } = await supabase.storage
@@ -473,6 +481,7 @@ export default function Checkout({ onFinish, embedded = false }) {
       alert('Error al subir el comprobante: ' + err.message)
     } finally {
       setUploadingComprobante(false)
+      setIsExtractingRef(false)
     }
   }
 
@@ -1420,9 +1429,9 @@ export default function Checkout({ onFinish, embedded = false }) {
                             onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; }}
                             onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
                             >
-                              <div style={{ fontSize: '32px', marginBottom: '8px' }}>{uploadingComprobante ? '⏳' : comprobanteUrl ? '✅' : '📤'}</div>
-                              <span style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>{uploadingComprobante ? 'Subiendo...' : comprobanteUrl ? 'Comprobante Listo' : 'Toca para subir captura'}</span>
-                              <input type="file" accept="image/*" onChange={handleComprobanteUpload} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
+                              <div style={{ fontSize: '32px', marginBottom: '8px' }}>{uploadingComprobante ? '⏳' : isExtractingRef ? '🔍' : comprobanteUrl ? '✅' : '📤'}</div>
+                              <span style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>{uploadingComprobante ? 'Subiendo...' : isExtractingRef ? 'Analizando imagen...' : comprobanteUrl ? 'Comprobante Listo' : 'Toca para subir captura'}</span>
+                              <input type="file" accept="image/*" onChange={handleComprobanteUpload} disabled={uploadingComprobante || isExtractingRef} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
                             </div>
                           </div>
                         </div>

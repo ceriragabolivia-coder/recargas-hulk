@@ -4,6 +4,7 @@ import { useWallet, useAuth, useMetodosPago, useVentas, useConfiguracion } from 
 import { formatUSD, formatBs, getOptimizedImageUrl } from '../utils/helpers'
 import { supabase } from '../lib/supabase'
 import { compressImage } from '../utils/imageCompression'
+import { extractReferenceFromImage } from '../utils/ocrHelper'
 
 export default function LandingWallet({ onClose }) {
   const navigate = useNavigate()
@@ -30,6 +31,7 @@ export default function LandingWallet({ onClose }) {
   const [referencia, setReferencia] = useState('')
   const [comprobanteUrl, setComprobanteUrl] = useState(null)
   const [uploading, setUploading] = useState(false)
+  const [isExtractingRef, setIsExtractingRef] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [alert, setAlert] = useState(null) // { type, message }
   const [pinAlert, setPinAlert] = useState(null)
@@ -119,7 +121,14 @@ export default function LandingWallet({ onClose }) {
     let file = e.target.files[0]
     if (!file) return
     setUploading(true)
+    setIsExtractingRef(true)
     try {
+      const extractedRef = await extractReferenceFromImage(file)
+      if (extractedRef && extractedRef.length === 6) {
+        setReferencia(extractedRef)
+        setAlert({ type: 'success', message: `Referencia detectada y autocompletada: ${extractedRef}` })
+      }
+
       file = await compressImage(file)
       const fileName = `${Date.now()}_receipt-${file.name}`
       const { error: uploadError } = await supabase.storage
@@ -137,6 +146,7 @@ export default function LandingWallet({ onClose }) {
       setAlert({ type: 'error', message: 'Error al subir comprobante: ' + err.message })
     } finally {
       setUploading(false)
+      setIsExtractingRef(false)
     }
   }
 
@@ -598,11 +608,11 @@ export default function LandingWallet({ onClose }) {
                     <img loading="lazy" decoding="async" src={getOptimizedImageUrl(comprobanteUrl, 400)} alt="Comprobante" className="preview-img" />
                   ) : (
                     <div className="upload-placeholder">
-                      <span>📤</span>
-                      <small>{uploading ? 'Subiendo...' : 'Subir imagen'}</small>
+                      <span>{isExtractingRef ? '🔍' : '📤'}</span>
+                      <small>{uploading ? 'Subiendo...' : isExtractingRef ? 'Analizando...' : 'Subir imagen'}</small>
                     </div>
                   )}
-                  <input type="file" accept="image/*" onChange={handleFileUpload} disabled={uploading} />
+                  <input type="file" accept="image/*" onChange={handleFileUpload} disabled={uploading || isExtractingRef} />
                 </div>
               </div>
 
