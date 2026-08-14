@@ -49,7 +49,7 @@ export function WalletProvider({ children }) {
     initialLoadDone.current = true
   }
 
-  async function solicitarRecarga(monto, metodoId, referencia, comprobanteUrl = null, moneda = 'usd') {
+  async function solicitarRecarga(monto, metodoId, referencia, comprobanteUrl = null, moneda = 'usd', ocrReferencia = null) {
     // Validación de seguridad para montos fijos
     if (moneda === 'bs' && config?.montos_billetera_bs) {
       const allowedAmounts = config.montos_billetera_bs.split(',').map(v => Number(v.trim())).filter(v => !isNaN(v) && v > 0)
@@ -98,7 +98,8 @@ export function WalletProvider({ children }) {
           p_recarga_id: recargaId,
           p_referencia: referencia.trim(),
           p_monto: parseFloat(monto),
-          p_usuario_id: user.id
+          p_usuario_id: user.id,
+          p_ocr_referencia: ocrReferencia
         });
         
         if (result && result.success) {

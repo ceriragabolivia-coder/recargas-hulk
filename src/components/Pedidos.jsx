@@ -719,22 +719,32 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
 
   const handleReembolsoSelect = (pedido) => {
     setReembolsoPedido(pedido);
-    // Pre-llenar con el total y verificar si se usó billetera por referencia
-    const isBsUsed = pedido.referencia_pago?.toLowerCase().includes('billetera bs');
-    const isUsUsed = pedido.referencia_pago?.toLowerCase().includes('billetera usd');
+    const ref = (pedido.referencia_pago || '').toLowerCase();
+
+    // Detectar si se usó billetera USD (pago total o parcial)
+    const isUsdUsed = ref.includes('billetera usd') 
+      || ref.includes('pago_billetera_usd_total')
+      || ref.startsWith('pago_billetera_usd');
     
-    setReembolsoMoneda(isUsUsed ? 'usd' : 'bs');
+    // Detectar si se usó billetera Bs (pago total o parcial)
+    const isBsUsed = ref.includes('billetera bs')
+      || ref.includes('pago_billetera_bs_total')
+      || ref.startsWith('pago_billetera_bs');
+
+    // Pre-seleccionar moneda según el tipo de pago detectado
+    setReembolsoMoneda(isUsdUsed ? 'usd' : 'bs');
     
-    // Intentar extraer el monto parcial si existe en la referencia
+    // Intentar extraer el monto parcial si existe en la referencia (ej: "Billetera USD: $15.00")
     let prefillMonto = null;
-    if (isBsUsed || isUsUsed) {
-      const match = pedido.referencia_pago.match(/billetera\s+(bs|usd):\s*([0-9.,]+)/i);
+    if (isBsUsed || isUsdUsed) {
+      const match = pedido.referencia_pago.match(/billetera\s+(bs|usd):\s*\$?\s*([0-9.,]+)/i);
       if (match && match[2]) {
-        prefillMonto = match[2].replace(/\./g, '').replace(/,/g, '.'); // Convertir "1.500" o "15,50" a numero
+        prefillMonto = match[2].replace(/\./g, '').replace(/,/g, '.'); // "1.500" o "15,50" → número
       }
     }
     
-    setReembolsoMonto(prefillMonto || (isUsUsed ? pedido.total_usd : pedido.total_bs));
+    // Si no encontramos monto parcial, pre-llenar con el total en la moneda correcta
+    setReembolsoMonto(prefillMonto || (isUsdUsed ? pedido.total_usd : pedido.total_bs));
     setReembolsoCambiarEstado(true);
     setShowReembolsoModal(true);
   }
@@ -1566,36 +1576,74 @@ export default function Pedidos({ filterKey, params, onNavigate, embedded = fals
     try {
       // 1. Detección y ejecución de reembolsos automáticos si aplica
       const refBaja = (selectedPedido.referencia_pago || "").toLowerCase();
+      const isUsdTotal = refBaja.includes('pago_billetera_usd_total') || refBaja.startsWith('pago_billetera_usd');
+      const isBsTotal  = refBaja.includes('pago_billetera_bs_total')  || refBaja.startsWith('pago_billetera_bs');
       const needsRefund = refBaja.includes('billetera bs') || 
                           refBaja.includes('billetera usd') || 
-                          refBaja.includes('pago parcial');
+                          refBaja.includes('pago parcial') ||
+                          isUsdTotal || isBsTotal;
 
       if (needsRefund) {
-        // Regex robusta: busca la palabra billetera y el monto que le sigue
-        const regexValores = /(bs|usd):\s*[$]?\s*([0-9.,]+)/gi;
-        let match;
-        
-        // Usamos un array de promesas si queremos paralelismo, o secuencial para evitar race conditions en la billetera
-        // Secuencial es más seguro para integridad de saldos si es el mismo usuario
-        while ((match = regexValores.exec(refBaja)) !== null) {
-          const moneda = match[1].toLowerCase();
-          const montoStr = match[2].replace(/\./g, '').replace(/,/g, '.');
-          const monto = parseFloat(montoStr);
-          
+        if (isUsdTotal) {
+          // Pago total en USD por billetera: reembolsar total_usd
+          const monto = Number(selectedPedido.total_usd);
           if (monto > 0) {
             const { data: refundResult, error: refundError } = await supabase.rpc('reembolsar_pedido_rpc', {
               p_pedido_id: selectedPedido.id,
               p_admin_id: user.id,
-              p_notas: `Reembolso automático por cancelación de pago no encontrado (Pedido #${selectedPedido.numero_pedido})`,
-              p_moneda: moneda,
+              p_notas: `Reembolso automático por cancelación (Pedido #${selectedPedido.numero_pedido})`,
+              p_moneda: 'usd',
               p_monto: monto,
               p_cambiar_estado: false
             });
-
             if (!refundError && !refundResult?.error) {
-              reembolsosRealizados.push(moneda === 'bs' ? formatBs(monto) : formatUSD(monto));
+              reembolsosRealizados.push(formatUSD(monto));
             } else {
-              console.error(`Error en reembolso automático (${moneda}):`, refundError || refundResult?.error);
+              console.error(`Error en reembolso automático (usd):`, refundError || refundResult?.error);
+            }
+          }
+        } else if (isBsTotal) {
+          // Pago total en Bs por billetera: reembolsar total_bs
+          const monto = Number(selectedPedido.total_bs);
+          if (monto > 0) {
+            const { data: refundResult, error: refundError } = await supabase.rpc('reembolsar_pedido_rpc', {
+              p_pedido_id: selectedPedido.id,
+              p_admin_id: user.id,
+              p_notas: `Reembolso automático por cancelación (Pedido #${selectedPedido.numero_pedido})`,
+              p_moneda: 'bs',
+              p_monto: monto,
+              p_cambiar_estado: false
+            });
+            if (!refundError && !refundResult?.error) {
+              reembolsosRealizados.push(formatBs(monto));
+            } else {
+              console.error(`Error en reembolso automático (bs):`, refundError || refundResult?.error);
+            }
+          }
+        } else {
+          // Pago parcial: extraer montos de la referencia con regex
+          const regexValores = /billetera\s+(bs|usd):\s*\$?\s*([0-9.,]+)/gi;
+          let match;
+          while ((match = regexValores.exec(selectedPedido.referencia_pago)) !== null) {
+            const moneda = match[1].toLowerCase();
+            const montoStr = match[2].replace(/\./g, '').replace(/,/g, '.');
+            const monto = parseFloat(montoStr);
+            
+            if (monto > 0) {
+              const { data: refundResult, error: refundError } = await supabase.rpc('reembolsar_pedido_rpc', {
+                p_pedido_id: selectedPedido.id,
+                p_admin_id: user.id,
+                p_notas: `Reembolso automático por cancelación de pago no encontrado (Pedido #${selectedPedido.numero_pedido})`,
+                p_moneda: moneda,
+                p_monto: monto,
+                p_cambiar_estado: false
+              });
+
+              if (!refundError && !refundResult?.error) {
+                reembolsosRealizados.push(moneda === 'bs' ? formatBs(monto) : formatUSD(monto));
+              } else {
+                console.error(`Error en reembolso automático (${moneda}):`, refundError || refundResult?.error);
+              }
             }
           }
         }

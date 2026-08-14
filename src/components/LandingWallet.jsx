@@ -29,6 +29,7 @@ export default function LandingWallet({ onClose }) {
   const [monedaRecarga, setMonedaRecarga] = useState(isCliente ? 'bs' : 'usd')
   const [metodoId, setMetodoId] = useState('')
   const [referencia, setReferencia] = useState('')
+  const [ocrReferencia, setOcrReferencia] = useState(null)
   const [comprobanteUrl, setComprobanteUrl] = useState(null)
   const [uploading, setUploading] = useState(false)
   const [isExtractingRef, setIsExtractingRef] = useState(false)
@@ -125,6 +126,7 @@ export default function LandingWallet({ onClose }) {
     try {
       const extractedRef = await extractReferenceFromImage(file)
       if (extractedRef && extractedRef.length === 6) {
+        setOcrReferencia(extractedRef)
         setReferencia(extractedRef)
         setAlert({ type: 'success', message: `Referencia detectada y autocompletada: ${extractedRef}` })
       }
@@ -178,7 +180,7 @@ export default function LandingWallet({ onClose }) {
         throw err
       }
 
-      const { error } = await solicitarRecarga(Number(monto), metodoId, referencia, comprobanteUrl, monedaRecarga)
+      const { error } = await solicitarRecarga(Number(monto), metodoId, referencia, comprobanteUrl, monedaRecarga, ocrReferencia)
       if (error) throw error
 
       setAlert({ type: 'success', message: 'Solicitud enviada con éxito. Se actualizará al ser verificada.' })

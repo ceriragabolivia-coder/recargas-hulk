@@ -154,12 +154,17 @@ export default function GestionPines() {
     })
   }
 
-  const handleUpdateCooldown = async (val) => {
-    const newVal = parseInt(val)
-    if (isNaN(newVal) || newVal < 0) return
+  // El valor en DB es en SEGUNDOS totales
+  const cooldownSecs = Number(config?.tiempo_espera_pines ?? 300)
+  const cooldownMins = Math.floor(cooldownSecs / 60)
+  const cooldownSegsRest = cooldownSecs % 60
+
+  const handleUpdateCooldown = async (mins, segs) => {
+    const totalSegs = (parseInt(mins) || 0) * 60 + (parseInt(segs) || 0)
+    if (totalSegs < 0) return
     setSavingConfig(true)
     try {
-      await updateConfig('tiempo_espera_pines', newVal, false)
+      await updateConfig('tiempo_espera_pines', totalSegs, false)
     } catch (err) {
       console.error(err)
     } finally {
@@ -263,15 +268,28 @@ export default function GestionPines() {
           </div>
           <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--bg-card)', padding: '0 16px', borderRadius: '12px', height: '48px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)' }}>Tiempo de espera (min):</span>
+              <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>⏱ Espera entre canjes:</span>
               <input 
                 type="number" 
                 min="0"
-                value={config?.tiempo_espera_pines ?? 5}
-                onChange={e => handleUpdateCooldown(e.target.value)}
+                value={cooldownMins}
+                onChange={e => handleUpdateCooldown(e.target.value, cooldownSegsRest)}
                 disabled={savingConfig}
-                style={{ width: '60px', background: 'transparent', border: 'none', color: 'var(--accent-primary)', fontWeight: 'bold', fontSize: '16px', outline: 'none' }}
+                title="Minutos"
+                style={{ width: '44px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.15)', color: 'var(--accent-primary)', fontWeight: 'bold', fontSize: '16px', outline: 'none', textAlign: 'center' }}
               />
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>min</span>
+              <input 
+                type="number" 
+                min="0"
+                max="59"
+                value={cooldownSegsRest}
+                onChange={e => handleUpdateCooldown(cooldownMins, e.target.value)}
+                disabled={savingConfig}
+                title="Segundos"
+                style={{ width: '44px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.15)', color: '#a855f7', fontWeight: 'bold', fontSize: '16px', outline: 'none', textAlign: 'center' }}
+              />
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>seg</span>
               {savingConfig && <span style={{ fontSize: '12px', color: 'var(--accent-warning)' }}>...</span>}
             </div>
             <input 

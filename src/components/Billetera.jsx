@@ -5,6 +5,7 @@ import { formatUSD, formatBs, getOptimizedImageUrl } from '../utils/helpers'
 import { supabase } from '../lib/supabase'
 import AlertModal from './AlertModal'
 import { compressImage } from '../utils/imageCompression'
+import { extractReferenceFromImage } from '../utils/ocrHelper'
 
 export default function Billetera({ onNavigate }) {
   const navigate = useNavigate()
@@ -30,8 +31,10 @@ export default function Billetera({ onNavigate }) {
   const [monedaRecarga, setMonedaRecarga] = useState('bs') // Cambiado a 'bs' por defecto
   const [metodoId, setMetodoId] = useState('')
   const [referencia, setReferencia] = useState('')
+  const [ocrReferencia, setOcrReferencia] = useState(null)
   const [comprobanteUrl, setComprobanteUrl] = useState(null)
   const [uploading, setUploading] = useState(false)
+  const [isExtractingRef, setIsExtractingRef] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [alertModal, setAlertModal] = useState(null)
   const [selectedComprobante, setSelectedComprobante] = useState(null) // Modal para ver el comprobante de pago
@@ -176,7 +179,15 @@ export default function Billetera({ onNavigate }) {
     if (!file) return
 
     setUploading(true)
+    setIsExtractingRef(true)
     try {
+      const extractedRef = await extractReferenceFromImage(file)
+      if (extractedRef && extractedRef.length === 6) {
+        setOcrReferencia(extractedRef)
+        setReferencia(extractedRef)
+        setAlertModal({ type: 'success', message: `Referencia detectada y autocompletada: ${extractedRef}` })
+      }
+
       file = await compressImage(file)
       const fileName = `${Date.now()}-${file.name}`
       const { error: uploadError } = await supabase.storage
@@ -194,6 +205,7 @@ export default function Billetera({ onNavigate }) {
       setAlertModal({ type: 'error', message: 'Error al subir comprobante: ' + err.message })
     } finally {
       setUploading(false)
+      setIsExtractingRef(false)
     }
   }
 
@@ -267,7 +279,7 @@ export default function Billetera({ onNavigate }) {
         throw err
       }
 
-      const { error } = await solicitarRecarga(Number(monto), metodoId, referencia, comprobanteUrl, monedaRecarga)
+      const { error } = await solicitarRecarga(Number(monto), metodoId, referencia, comprobanteUrl, monedaRecarga, ocrReferencia)
       if (error) throw error
 
       setAlertModal({ type: 'success', message: `Solicitud de recarga en ${monedaRecarga === 'bs' ? 'Bolívares' : 'Dólares'} enviada con éxito. Tu saldo se actualizará una vez sea verificado por administración.` })

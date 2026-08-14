@@ -17,9 +17,18 @@ import { WalletProvider } from './context/WalletContext'
 class RootErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { hasError: false, error: null }; }
   static getDerivedStateFromError(error) { 
-    // Auto-recargar silenciosamente si el error es de un archivo JS desactualizado por un nuevo despliegue
     if (error && error.message && error.message.includes("Failed to fetch dynamically imported module")) {
-      window.location.reload();
+      const reloadCount = parseInt(sessionStorage.getItem('chunk_reload_count') || '0');
+      if (reloadCount < 2) {
+        sessionStorage.setItem('chunk_reload_count', (reloadCount + 1).toString());
+        // Forzar recarga ignorando caché añadiendo un query param
+        const url = new URL(window.location.href);
+        url.searchParams.set('v', new Date().getTime());
+        window.location.href = url.toString();
+      } else {
+        sessionStorage.removeItem('chunk_reload_count');
+        return { hasError: true, error: new Error("No se pudo cargar una sección de la página. Por favor, borra la caché de tu navegador e intenta nuevamente.") };
+      }
       return { hasError: false, error: null };
     }
     return { hasError: true, error }; 

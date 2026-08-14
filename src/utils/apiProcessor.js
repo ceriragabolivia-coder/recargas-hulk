@@ -4,7 +4,8 @@ export const processTiendaGiftVenOrder = async (pedidoId, apiKey, forceTrigger =
     const res = await fetch('/api/pedidos/auto_process', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pedido_id: pedidoId, force: forceTrigger })
+      body: JSON.stringify({ pedido_id: pedidoId, force: forceTrigger }),
+      keepalive: true
     });
     
     const data = await res.json();

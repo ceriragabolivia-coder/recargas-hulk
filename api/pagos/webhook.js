@@ -185,11 +185,18 @@ async function procesarPedidoConFazerCards(pedidoId, apiKey) {
           const respEstado = data.order.status ? data.order.status.toLowerCase() : '';
           const isCompleted = respEstado === 'completed';
           if (!isCompleted) allCompleted = false;
+          
+          let extractedPin = data.order.pin || '';
+          if (!extractedPin && data.order.codes) {
+             extractedPin = Array.isArray(data.order.codes) ? data.order.codes.join(', ') : data.order.codes;
+          }
+          if (!extractedPin && data.order.code) extractedPin = data.order.code;
+
           await supabase.rpc('webhook_update_pedido_item', {
             p_item_id: item.id,
             p_estado_proveedor: data.order.status || 'processing',
             p_proveedor_pedido_id: data.order.id,
-            p_mensaje_proveedor: data.order.pin || '',
+            p_mensaje_proveedor: extractedPin,
             p_estado: isCompleted ? 'completado' : 'procesando'
           });
         } else {
@@ -395,18 +402,18 @@ export default async function handler(req, res) {
         .single();
 
       if (recarga && !recargaError) {
-        usuario_id = recarga.auth_user_id;
-
         if (recarga.estado === 'pendiente') {
           const montoRecibido = parseFloat(monto);
           const montoEsperado = parseFloat(recarga.monto);
 
           if (Math.abs(montoRecibido - montoEsperado) <= 0.05) {
-            const { data: processData, error: processError } = await supabase.rpc('procesar_recarga_automatica_rpc', {
-              p_recarga_id: recarga.id
+            const { data: processData, error: processError } = await supabase.rpc('aprobar_recarga_automatica_bdv_rpc', {
+              p_recarga_id: recarga.id,
+              p_notas: 'Recarga automática de saldo vía Pago APK'
             });
             if (!processError && processData?.success) {
               auto_despachado = true;
+              usuario_id = recarga.auth_user_id; // ONLY set usuario_id if it succeeded!
               console.log(`⚡ Recarga ${recarga.id} auto-aprobada vía Webhook APK`);
             } else {
               console.error(`❌ Error en auto-aprobación de recarga ${recarga.id}:`, processError || processData);

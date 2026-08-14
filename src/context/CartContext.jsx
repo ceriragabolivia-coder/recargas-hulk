@@ -131,7 +131,7 @@ export function CartProvider({ children }) {
     }
   };
 
-  const checkout = async (registrarVenta, clienteId, metodoPagoId, referencia, whatsapp, ruletaDesc, existingPedidoId, comprobanteUrl, shouldUpdate, activeCupon, expectedPagoMovilMonto = null, amountUSDToDeduct = 0, amountBsToDeduct = 0) => {
+  const checkout = async (registrarVenta, clienteId, metodoPagoId, referencia, whatsapp, ruletaDesc, existingPedidoId, comprobanteUrl, shouldUpdate, activeCupon, expectedPagoMovilMonto = null, amountUSDToDeduct = 0, amountBsToDeduct = 0, ocrReferencia = null) => {
     if (!user || cart.length === 0) return [{ id: 'pedido', error: 'Carrito vacío o sesión no iniciada' }]
 
     if (perfil && ['baneado', 'suspendido', 'rechazado'].includes(perfil.estado?.toLowerCase())) {
@@ -180,7 +180,8 @@ export function CartProvider({ children }) {
         cupon_id: activeCupon?.id || null,
         descuento_cupon_usd: descuento_cupon_usd,
         descuento_cupon_bs: descuento_cupon_bs,
-        monto_restante_bs: expectedPagoMovilMonto !== null ? expectedPagoMovilMonto : finalBs
+        monto_restante_bs: expectedPagoMovilMonto !== null ? expectedPagoMovilMonto : finalBs,
+        ocr_referencia_pago: ocrReferencia
       }
 
       const items = cart.flatMap(item => {

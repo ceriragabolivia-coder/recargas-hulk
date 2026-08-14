@@ -1,4 +1,26 @@
-import Tesseract from 'tesseract.js';
+import { createWorker } from 'tesseract.js';
+
+let workerPromise = null;
+
+/**
+ * Pre-inicializa el worker de Tesseract en segundo plano para que esté listo cuando se necesite.
+ */
+export function preloadOcrWorker() {
+  if (!workerPromise) {
+    console.log("🚀 Pre-cargando OCR Worker en segundo plano...");
+    workerPromise = createWorker('spa', 1, {
+      logger: m => {
+        if (m.status === 'recognizing text' && m.progress % 0.2 < 0.05) {
+          console.log(`OCR Progreso: ${Math.round(m.progress * 100)}%`);
+        }
+      }
+    });
+  }
+  return workerPromise;
+}
+
+// Iniciar carga inmediatamente al cargar el módulo
+preloadOcrWorker();
 
 /**
  * Procesa una imagen de comprobante y extrae los últimos 6 dígitos de la posible referencia.
@@ -7,29 +29,22 @@ import Tesseract from 'tesseract.js';
  */
 export async function extractReferenceFromImage(file) {
   try {
-    // Usaremos 'spa' (español) para un mejor reconocimiento de los comprobantes locales.
-    // Usamos el logger para poder depurar o mostrar progreso si fuera necesario.
-    const result = await Tesseract.recognize(file, 'spa', {
-      logger: m => console.log(m)
-    });
+    // Reutilizar el worker ya cargado (o esperar a que termine de cargar)
+    const worker = await preloadOcrWorker();
+    const result = await worker.recognize(file);
 
     const text = result.data.text;
-    console.log("OCR Texto extraído:", text);
+    console.log("OCR Texto extraído (resumen de longitud):", text.length, "caracteres");
 
     // 1. Extraer todas las secuencias de 6 o más dígitos.
-    // Usamos \d{6,} para atrapar cualquier número de 6 o más dígitos consecutivos.
     const digitSequences = text.match(/\d{6,}/g);
 
     if (!digitSequences || digitSequences.length === 0) {
       return null;
     }
 
-    // 2. Heurística: En los comprobantes, la referencia suele ser el número más largo, 
-    // o al menos uno de los que tiene 6+ dígitos. 
-    // Vamos a ordenar por longitud (de mayor a menor) para priorizar el más largo.
+    // 2. Heurística: En los comprobantes, la referencia suele ser el número más largo
     digitSequences.sort((a, b) => b.length - a.length);
-
-    // Seleccionamos el más largo. Si hay varios iguales, tomamos el primero.
     const bestMatch = digitSequences[0];
 
     // 3. Retornar los ÚLTIMOS 6 dígitos de la secuencia seleccionada.
@@ -42,3 +57,4 @@ export async function extractReferenceFromImage(file) {
     return null;
   }
 }
+
