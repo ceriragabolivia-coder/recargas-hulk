@@ -39,7 +39,7 @@ const GestionLanding = lazy(() => import('./components/GestionLanding'))
 const GestionPaginas = lazy(() => import('./components/GestionPaginas'))
 const GestionCupones = lazy(() => import('./components/GestionCupones'))
 const GestionPines = lazy(() => import('./components/GestionPines'))
-const GestionCreadores = lazy(() => import('./components/GestionCreadores'))
+import GestionCreadores from './components/GestionCreadores'
 const PaginaEstatica = lazy(() => import('./components/PaginaEstatica'))
 const ProveedorCatalogo = lazy(() => import('./components/ProveedorCatalogo'))
 const GestionSocios = lazy(() => import('./components/GestionSocios'))
