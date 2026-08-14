@@ -60,12 +60,24 @@ async function procesarPedidoConApi(pedidoId, apiKey) {
           const respEstado = data.estado ? data.estado.toLowerCase() : '';
           const isCompleted = respEstado === 'completado' || respEstado === 'aprobado';
           if (!isCompleted) allCompleted = false;
+
+          // Extraer el código de la respuesta de TiendaGiftVen
+          let codigoTGV = '';
+          if (Array.isArray(data.codigos) && data.codigos.length > 0) {
+            codigoTGV = data.codigos.join('\n');
+          } else if (data.codigos && typeof data.codigos === 'string') {
+            codigoTGV = data.codigos;
+          } else if (data.mensaje) {
+            codigoTGV = data.mensaje;
+          }
+
           await supabase.rpc('webhook_update_pedido_item', {
             p_item_id: item.id,
             p_estado_proveedor: data.estado || 'procesando',
             p_proveedor_pedido_id: data.pedido_id,
-            p_mensaje_proveedor: Array.isArray(data.codigos) && data.codigos.length > 0 ? data.codigos.join('\n') : (data.codigos && typeof data.codigos === 'string' ? data.codigos : (data.mensaje || '')),
-            p_estado: isCompleted ? 'completado' : 'procesando'
+            p_mensaje_proveedor: codigoTGV,
+            p_estado: isCompleted ? 'completado' : 'procesando',
+            p_codigo_entregado: codigoTGV || null   // ✅ Ahora visible al cliente
           });
         } else {
           throw new Error(data.error || 'Error respuesta proveedor');
@@ -194,12 +206,22 @@ async function procesarPedidoConFazerCards(pedidoId, apiKey) {
           const respEstado = data.order.status ? data.order.status.toLowerCase() : '';
           const isCompleted = respEstado === 'completed';
           if (!isCompleted) allCompleted = false;
+          
+          // Extraer el código/PIN de la respuesta de FazerCards
+          let extractedPin = data.order.pin || '';
+          if (!extractedPin && data.order.codes) {
+             extractedPin = Array.isArray(data.order.codes) ? data.order.codes.join('\n') : data.order.codes;
+          }
+          if (!extractedPin && data.order.code) extractedPin = data.order.code;
+          if (!extractedPin && data.order.serial) extractedPin = data.order.serial;
+
           await supabase.rpc('webhook_update_pedido_item', {
             p_item_id: item.id,
             p_estado_proveedor: data.order.status || 'processing',
             p_proveedor_pedido_id: data.order.id,
-            p_mensaje_proveedor: data.order.pin || '',
-            p_estado: isCompleted ? 'completado' : 'procesando'
+            p_mensaje_proveedor: extractedPin,
+            p_estado: isCompleted ? 'completado' : 'procesando',
+            p_codigo_entregado: extractedPin || null   // ✅ Ahora visible al cliente
           });
         } else {
           throw new Error(data.error || 'Error en respuesta de FazerCards');
