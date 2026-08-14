@@ -2542,12 +2542,25 @@
   gap: 10px;
   transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
   backdrop-filter: blur(8px);
+  animation: search-neon-pulse 2.5s infinite ease-in-out;
+}
+
+@keyframes search-neon-pulse {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(0, 210, 255, 0.1), 0 0 8px rgba(0, 210, 255, 0.1);
+    border-color: rgba(0, 210, 255, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 6px rgba(0, 210, 255, 0.5), 0 0 14px rgba(0, 210, 255, 0.3), inset 0 0 4px rgba(0, 210, 255, 0.1);
+    border-color: rgba(0, 210, 255, 0.7);
+  }
 }
 
 .landing-search-bar:focus-within {
-  border-color: rgba(0, 210, 255, 0.7);
-  background: rgba(0, 210, 255, 0.06);
-  box-shadow: 0 0 0 3px rgba(0, 210, 255, 0.1), 0 4px 20px rgba(0, 210, 255, 0.08);
+  border-color: rgba(0, 210, 255, 0.9);
+  background: rgba(0, 210, 255, 0.08);
+  box-shadow: 0 0 8px rgba(0, 210, 255, 0.6), 0 0 16px rgba(0, 210, 255, 0.4), 0 0 24px rgba(0, 210, 255, 0.2);
+  animation: none; /* Detiene el pulso automático al enfocar para dejar el glow fijo e intenso */
 }
 
 .landing-search-icon {
