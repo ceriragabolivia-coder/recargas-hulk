@@ -1819,31 +1819,72 @@ export default function Landing({ onNavigate }) {
         ) : (
           /* VISTA CATALOGO PRINCIPAL */
           <>
-            {/* BESTSELLERS / DESTACADOS */}
-            {!search.trim() && activeCategory === 'Todos' && config?.landing_show_bestsellers !== '0' && (
+            {/* BUSCADOR PRINCIPAL — siempre visible */}
+            {activeCategory === 'Todos' && config?.landing_show_bestsellers !== '0' && (
               <section className="landing-section landing-container">
                 <div className="section-header">
                   <h3>Recarga Aquí</h3>
-                  <a href="#all-games" className="view-all" onClick={(e) => { e.preventDefault(); const el = document.getElementById('all-games'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }}>Ver todos &gt;</a>
-                </div>
-                <div className="games-grid">
-                  {loading ? (
-                    Array(8).fill(0).map((_, i) => (
-                      <div key={i} className="game-card-skeleton" style={{ height: '220px', backgroundColor: 'var(--bg-hover)', borderRadius: '12px', opacity: 0.5, animation: 'pulse 1.5s infinite' }}></div>
-                    ))
-                  ) : bestsellers.length > 0 ? (
-                    bestsellers.map(juego => (
-                      <GameCard key={juego.id} juego={juego} hasRegions={juegos.some(c => c.parent_id === juego.id)} onSelect={() => handleGameSelect(juego)} />
-                    ))
-                  ) : (
-                    <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No se encontraron servicios destacados.</div>
+                  {!search.trim() && (
+                    <a href="#all-games" className="view-all" onClick={(e) => { e.preventDefault(); const el = document.getElementById('all-games'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }}>Ver todos &gt;</a>
                   )}
                 </div>
+
+                {/* BUSCADOR */}
+                <div className="landing-search-wrapper">
+                  <div className="landing-search-bar">
+                    <svg className="landing-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="8"/>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input
+                      className="landing-search-input"
+                      type="text"
+                      placeholder="Busca tu juego o servicio aquí"
+                      value={search}
+                      onChange={e => setSearch(e.target.value)}
+                      autoComplete="off"
+                    />
+                    {search.trim().length > 0 && (
+                      <button className="landing-search-clear" onClick={() => setSearch('')} aria-label="Limpiar búsqueda">✕</button>
+                    )}
+                  </div>
+                </div>
+
+                {/* RESULTADOS DE BÚSQUEDA inline */}
+                {search.trim() ? (
+                  <div className="games-grid">
+                    {filteredJuegos.length > 0 ? (
+                      filteredJuegos.map(juego => (
+                        <GameCard key={juego.id} juego={juego} hasRegions={juegos.some(c => c.parent_id === juego.id)} onSelect={() => handleGameSelect(juego)} />
+                      ))
+                    ) : (
+                      <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
+                        😕 No se encontraron resultados para "<strong style={{ color: '#fff' }}>{search}</strong>"
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* BESTSELLERS normales cuando no hay búsqueda */
+                  <div className="games-grid">
+                    {loading ? (
+                      Array(8).fill(0).map((_, i) => (
+                        <div key={i} className="game-card-skeleton" style={{ height: '220px', backgroundColor: 'var(--bg-hover)', borderRadius: '12px', opacity: 0.5, animation: 'pulse 1.5s infinite' }}></div>
+                      ))
+                    ) : bestsellers.length > 0 ? (
+                      bestsellers.map(juego => (
+                        <GameCard key={juego.id} juego={juego} hasRegions={juegos.some(c => c.parent_id === juego.id)} onSelect={() => handleGameSelect(juego)} />
+                      ))
+                    ) : (
+                      <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No se encontraron servicios destacados.</div>
+                    )}
+                  </div>
+                )}
               </section>
             )}
 
             {/* SECCIÓN PRINCIPAL: SLIDERS O GRILLA FILTRADA */}
             {(!search.trim() && activeCategory === 'Todos' && config?.landing_show_sliders !== '0') ? (
+
               /* VISTA DE SLIDERS HORIZONTALES (ESTILO CONECTA2VE) */
               <div className="landing-sliders-catalog" id="all-games">
                 {categorias.map(cat => {

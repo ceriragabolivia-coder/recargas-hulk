@@ -2522,3 +2522,95 @@
     height: 20px !important;
   }
 }
+
+/* =====================================================
+   BUSCADOR PRINCIPAL - SECCIÓN "RECARGA AQUÍ"
+   ===================================================== */
+
+.landing-search-wrapper {
+  padding: 4px 0 18px 0;
+}
+
+.landing-search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(0, 210, 255, 0.25);
+  border-radius: 14px;
+  padding: 0 16px;
+  gap: 10px;
+  transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+  backdrop-filter: blur(8px);
+}
+
+.landing-search-bar:focus-within {
+  border-color: rgba(0, 210, 255, 0.7);
+  background: rgba(0, 210, 255, 0.06);
+  box-shadow: 0 0 0 3px rgba(0, 210, 255, 0.1), 0 4px 20px rgba(0, 210, 255, 0.08);
+}
+
+.landing-search-icon {
+  width: 18px;
+  height: 18px;
+  color: rgba(0, 210, 255, 0.5);
+  flex-shrink: 0;
+  transition: color 0.25s;
+}
+
+.landing-search-bar:focus-within .landing-search-icon {
+  color: rgba(0, 210, 255, 0.9);
+}
+
+.landing-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 13px 0;
+  letter-spacing: 0.2px;
+  font-family: inherit;
+}
+
+.landing-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.28);
+  font-weight: 400;
+  font-style: italic;
+  text-shadow: 0 1px 6px rgba(0, 210, 255, 0.15);
+}
+
+.landing-search-clear {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  font-size: 13px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s, color 0.2s;
+  padding: 0;
+  line-height: 1;
+}
+
+.landing-search-clear:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+@media (max-width: 600px) {
+  .landing-search-input {
+    font-size: 13px;
+  }
+  .landing-search-bar {
+    padding: 0 12px;
+    border-radius: 11px;
+  }
+}
