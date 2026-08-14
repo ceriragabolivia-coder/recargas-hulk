@@ -2480,6 +2480,9 @@ function VaultCodesList({ codigos, loading, pedidoLoading, reorderCodigos, delet
   const [editingOrderId, setEditingOrderId] = useState(null)
   const [editOrderVal, setEditOrderVal] = useState('')
   const [codigoToDelete, setCodigoToDelete] = useState(null)
+  
+  // NUEVO: Estado para selección de códigos
+  const [selectedIds, setSelectedIds] = useState([])
 
   const handleDragStart = (e, codigo) => {
     if (codigo.usado) return
@@ -2529,6 +2532,26 @@ function VaultCodesList({ codigos, loading, pedidoLoading, reorderCodigos, delet
     setEditOrderVal('')
   }
 
+  // NUEVO: Funciones de Copia y Selección
+  const copySelected = () => {
+    const codesToCopy = allRows.filter(c => selectedIds.includes(c.id)).map(c => c.codigo).join('\n')
+    if (codesToCopy) {
+      navigator.clipboard.writeText(codesToCopy)
+      alert(`Se han copiado ${selectedIds.length} código(s) al portapapeles.`)
+      setSelectedIds([]) // Limpiar selección opcionalmente
+    }
+  }
+
+  const toggleSelect = (id) => {
+    if (selectedIds.includes(id)) setSelectedIds(selectedIds.filter(i => i !== id))
+    else setSelectedIds([...selectedIds, id])
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === allRows.length) setSelectedIds([])
+    else setSelectedIds(allRows.map(c => c.id))
+  }
+
   if (loading || pedidoLoading) {
     return <div style={{ padding: '20px', textAlign: 'center' }}><div className="spinner-small"></div></div>
   }
@@ -2539,20 +2562,40 @@ function VaultCodesList({ codigos, loading, pedidoLoading, reorderCodigos, delet
 
   return (
     <div style={{ marginTop: '16px' }}>
-      {available.length > 0 && (
-        <p style={{ fontSize: '10px', color: 'var(--text-muted)', margin: '0 0 6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span>⠿</span> Arrastra para reordenar · Haz clic en el número para editar la posición
-        </p>
-      )}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        {available.length > 0 ? (
+          <p style={{ fontSize: '10px', color: 'var(--text-muted)', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span>⠿</span> Arrastra para reordenar · Clic en posición para editar
+          </p>
+        ) : <div />}
+        {selectedIds.length > 0 && (
+          <button 
+            type="button" 
+            onClick={copySelected}
+            style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '6px', backgroundColor: 'var(--accent-primary)', color: '#000', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+          >
+            📋 Copiar ({selectedIds.length})
+          </button>
+        )}
+      </div>
+
       <div style={{ maxHeight: '260px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
         <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse' }}>
           <thead style={{ position: 'sticky', top: 0, backgroundColor: 'var(--bg-panel)', borderBottom: '1px solid var(--border-color)', zIndex: 1 }}>
             <tr>
-              <th style={{ padding: '6px 4px', textAlign: 'center', width: '24px', color: 'var(--text-muted)' }}></th>
+              <th style={{ padding: '6px 4px', textAlign: 'center', width: '24px' }}>
+                <input 
+                  type="checkbox" 
+                  checked={selectedIds.length === allRows.length && allRows.length > 0} 
+                  onChange={toggleSelectAll} 
+                  style={{ cursor: 'pointer' }}
+                />
+              </th>
+              <th style={{ padding: '6px 4px', textAlign: 'center', width: '20px', color: 'var(--text-muted)' }}></th>
               <th style={{ padding: '6px 8px', textAlign: 'left' }}>Código</th>
               <th style={{ padding: '6px 8px', textAlign: 'center' }}>Estado</th>
-              <th style={{ padding: '6px 8px', textAlign: 'center', width: '60px' }}>Pos.</th>
-              <th style={{ padding: '6px 8px', textAlign: 'center', width: '40px' }}>Acción</th>
+              <th style={{ padding: '6px 8px', textAlign: 'center', width: '50px' }}>Pos.</th>
+              <th style={{ padding: '6px 8px', textAlign: 'center', width: '70px' }}>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -2560,6 +2603,8 @@ function VaultCodesList({ codigos, loading, pedidoLoading, reorderCodigos, delet
               const pos = available.findIndex(a => a.id === c.id)
               const isDragging = dragItem.current?.id === c.id
               const isOver = dragOverId === c.id
+              const isSelected = selectedIds.includes(c.id)
+
               return (
                 <tr
                   key={c.id}
@@ -2570,16 +2615,27 @@ function VaultCodesList({ codigos, loading, pedidoLoading, reorderCodigos, delet
                   onDragEnd={handleDragEnd}
                   style={{
                     borderBottom: '1px solid rgba(255,255,255,0.03)',
-                    backgroundColor: isOver
-                      ? 'rgba(99,102,241,0.18)'
-                      : isDragging
-                      ? 'rgba(255,255,255,0.04)'
-                      : 'transparent',
+                    backgroundColor: isSelected 
+                      ? 'rgba(0, 210, 255, 0.1)'
+                      : isOver
+                        ? 'rgba(99,102,241,0.18)'
+                        : isDragging
+                          ? 'rgba(255,255,255,0.04)'
+                          : 'transparent',
                     opacity: isDragging ? 0.5 : 1,
                     transition: 'background-color 0.15s',
                     cursor: c.usado ? 'default' : 'grab',
                   }}
                 >
+                  {/* Checkbox */}
+                  <td style={{ padding: '6px 4px', textAlign: 'center' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={isSelected} 
+                      onChange={() => toggleSelect(c.id)} 
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </td>
                   {/* Handle drag */}
                   <td style={{ padding: '6px 4px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px', userSelect: 'none' }}>
                     {!c.usado && <span title="Arrastra para reordenar">⠿</span>}
@@ -2647,8 +2703,22 @@ function VaultCodesList({ codigos, loading, pedidoLoading, reorderCodigos, delet
                       <span style={{ color: 'var(--text-muted)', fontSize: '10px' }}>-</span>
                     )}
                   </td>
-                  {/* Acción */}
-                  <td style={{ padding: '6px 8px', textAlign: 'center' }}>
+                  {/* Acciones */}
+                  <td style={{ padding: '6px 8px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                    {/* Botón Copiar */}
+                    <button
+                      type="button"
+                      onClick={() => { navigator.clipboard.writeText(c.codigo); alert('Código copiado al portapapeles'); }}
+                      style={{
+                        background: 'none', border: 'none',
+                        color: 'var(--accent-primary)', cursor: 'pointer',
+                        fontSize: '14px', padding: '2px 4px', opacity: 0.7, transition: 'opacity 0.2s', marginRight: '4px'
+                      }}
+                      title="Copiar código"
+                      onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                      onMouseLeave={e => e.currentTarget.style.opacity = '0.7'}
+                    >📋</button>
+                    {/* Botón Eliminar */}
                     {c.usado ? (
                       <button
                         type="button"
