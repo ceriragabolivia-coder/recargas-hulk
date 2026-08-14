@@ -8,6 +8,7 @@ import { processAutoDeliveryOrder } from '../utils/autoProcess'
 import { processTiendaGiftVenOrder } from '../utils/apiProcessor'
 import AlertModal from './AlertModal'
 import FloatingBackground from './FloatingBackground'
+import TutorialVideoModal from './TutorialVideoModal'
 import { compressImage } from '../utils/imageCompression'
 import { extractReferenceFromImage } from '../utils/ocrHelper'
 // ============================================================
@@ -93,6 +94,7 @@ export default function Checkout({ onFinish, embedded = false }) {
   const [currentStep, setCurrentStep] = useState(1)
   const [selectedMetodoId, setSelectedMetodoId] = useState('')
   const [referencia, setReferencia] = useState('')
+  const [ocrReferencia, setOcrReferencia] = useState(null)
   const [useWalletPartial, setUseWalletPartial] = useState(false) // Toggle para usar saldo USD
   const [useWalletBs, setUseWalletBs] = useState(false) // Toggle para usar saldo Bs
   const [useRuletaDesc, setUseRuletaDesc] = useState(false) // Toggle para usar descuento de ruleta
@@ -465,6 +467,7 @@ export default function Checkout({ onFinish, embedded = false }) {
     try {
       const extractedRef = await extractReferenceFromImage(file)
       if (extractedRef && extractedRef.length === 6) {
+        setOcrReferencia(extractedRef)
         setReferencia(extractedRef)
         setAlertModal({ type: 'success', message: `Referencia detectada y autocompletada: ${extractedRef}` })
       }
@@ -579,7 +582,7 @@ export default function Checkout({ onFinish, embedded = false }) {
 
       const results = await checkout(
         registrarVenta, user?.id || perfil?.id, finalMetodoId, finalReferencia, null, activeRuletaDesc, createdPedidoId, comprobanteUrl, true, activeCupon, finalRemainingBs,
-        actualUsdDeduct, actualBsDeduct
+        actualUsdDeduct, actualBsDeduct, ocrReferencia
       )
       
       const pedidoResult = results.find(r => r.id === 'pedido')
@@ -601,8 +604,10 @@ export default function Checkout({ onFinish, embedded = false }) {
           if (processed) {
              console.log('✅ Pedido auto-procesado correctamente por baúl');
           } else {
-             const apiProcessed = await processTiendaGiftVenOrder(pedidoId, null, false).catch(() => false);
-             if (apiProcessed) console.log('✅ Pedido auto-procesado correctamente por API');
+             // Se llama sin await para no bloquear la pantalla de carga del usuario
+             processTiendaGiftVenOrder(pedidoId, null, false).then(apiProcessed => {
+               if (apiProcessed) console.log('✅ Pedido auto-procesado correctamente por API');
+             }).catch(() => false);
           }
         } catch (err) {
           console.error('Error en auto-procesamiento:', err);
@@ -1538,6 +1543,7 @@ function OrderTracking({ pedidoInitial, onBack }) {
   const [pedido, setPedido] = useState(pedidoInitial)
   const [items, setItems] = useState([])
   const [loadingItems, setLoadingItems] = useState(true)
+  const [tutorialModal, setTutorialModal] = useState({ isOpen: false, videoUrl: '' })
 
   useEffect(() => {
     if (!pedido?.id) return
@@ -1556,7 +1562,7 @@ function OrderTracking({ pedidoInitial, onBack }) {
       // Actualizar Items
       const { data: itemsData } = await supabase
         .from('pedido_items')
-        .select('*, productos(juegos(imagen_pedido_completado_url))')
+        .select('*, productos(juegos(imagen_pedido_completado_url, url_canje, tutorial_video_url))')
         .eq('pedido_id', pedido.id)
       
       if (itemsData) setItems(itemsData)
@@ -1613,34 +1619,15 @@ function OrderTracking({ pedidoInitial, onBack }) {
 
   return (
     <div className="order-tracking fade-in">
-      <div style={{ marginBottom: '24px' }}>
-        <h3 style={{ color: 'var(--text-primary)', marginBottom: '4px', fontSize: '20px', fontWeight: 800 }}>Resumen del Pedido</h3>
-        <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>#{String(pedido.numero_pedido).padStart(6, '0')}</p>
-      </div>
-
-      {pedido.estado === 'completado' && items?.length > 0 && items[0].productos?.juegos?.imagen_pedido_completado_url && (
-        <div style={{ marginBottom: '24px', textAlign: 'center' }}>
-          <img 
-            src={items[0].productos.juegos.imagen_pedido_completado_url} 
-            alt="Pedido Completado" 
-            style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '16px', objectFit: 'contain' }}
-          />
+      {/* 1. Estatus General (Compacto en el tope) */}
+      <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <h3 style={{ color: 'var(--text-primary)', margin: 0, fontSize: '20px', fontWeight: 800 }}>Estado de Pedido</h3>
+          <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '14px' }}>#{String(pedido.numero_pedido).padStart(6, '0')}</p>
         </div>
-      )}
-
-      <div style={{ 
-        padding: '24px', borderRadius: '24px', 
-        backgroundColor: status.bg, 
-        border: `1px solid ${status.color}33`,
-        marginBottom: '24px',
-        display: 'flex', alignItems: 'center', gap: '20px',
-        justifyContent: 'center',
-        boxShadow: `0 8px 24px ${status.color}11`
-      }}>
-        <span style={{ fontSize: '40px' }}>{status.icon}</span>
-        <div style={{ textAlign: 'left' }}>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Estatus Actual</div>
-          <div style={{ fontSize: '22px', fontWeight: 900, color: status.color }}>{status.label}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', backgroundColor: status.bg, borderRadius: '12px', border: `1px solid ${status.color}33` }}>
+          <span style={{ fontSize: '20px' }}>{status.icon}</span>
+          <span style={{ color: status.color, fontWeight: 800, fontSize: '14px' }}>{status.label}</span>
         </div>
       </div>
 
@@ -1659,102 +1646,149 @@ function OrderTracking({ pedidoInitial, onBack }) {
         </div>
       )}
 
-      {/* Lista de Paquetes Detallada */}
+      {/* 2. PAQUETES (PRINCIPAL ARRIBA) */}
       <div style={{ textAlign: 'left', marginBottom: '24px' }}>
-        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Paquetes en tu orden:</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <h3 style={{ marginBottom: '16px', color: 'var(--text-primary)', fontWeight: 800, fontSize: '18px', textTransform: 'uppercase' }}>Paquetes (Actualizado)</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {loadingItems ? (
              <div style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '10px' }}>Cargando detalles...</div>
           ) : items.map((item, idx) => (
             <div key={idx} style={{ 
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
-              padding: '12px 16px', borderRadius: '16px', 
+              padding: '16px', borderRadius: '16px', 
               backgroundColor: 'rgba(255,255,255,0.02)', 
-              border: item.estado === 'completado' ? '1px solid rgba(34, 197, 94, 0.2)' : '1px solid var(--border-color)'
+              border: item.estado === 'completado' ? '2px solid rgba(34, 197, 94, 0.4)' : item.estado === 'fallido' ? '2px solid rgba(239, 68, 68, 0.4)' : '1px solid var(--border-color)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '18px' }}>{getItemStatusIcon(item.estado)}</span>
-                <div>
-                  <div style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '14px' }}>{item.producto_nombre}</div>
-                  <div style={{ color: 'var(--text-muted)', fontSize: '11px' }}>ID: {item.player_id || item.account_email || 'N/A'}</div>
-                  {item.referencia_admin && (
-                    <div style={{ marginTop: '4px', fontSize: '11px', color: 'var(--accent-primary)', fontWeight: 700 }}>
-                      📌 Ref: {item.referencia_admin}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {item.producto_icono || item.productos?.icono_url || item.icono_url ? (
+                    <img src={item.producto_icono || item.productos?.icono_url || item.icono_url} alt="Icono" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} />
+                  ) : <span style={{ fontSize: '24px' }}>{getItemStatusIcon(item.estado)}</span>}
+                  
+                  <div>
+                    <div style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '15px' }}>{item.producto_nombre}</div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '2px' }}>
+                       ID/User: {item.player_id || item.account_email || item.account_user || 'N/A'}
                     </div>
-                  )}
-                  {item.codigo_entregado && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-                      <div style={{ 
-                        padding: '8px', 
-                        backgroundColor: 'rgba(34, 197, 94, 0.1)', 
-                        border: '1px dashed #22c55e', 
-                        borderRadius: '8px',
-                        color: '#22c55e',
-                        fontSize: '13px',
-                        fontWeight: 800,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                        cursor: 'pointer'
-                      }}
-                      onClick={() => {
-                        navigator.clipboard.writeText(item.codigo_entregado);
-                        alert('¡Código copiado al portapapeles!');
-                      }}>
-                        🎁 Código: {item.codigo_entregado} 📋
-                      </div>
-                      
-                      {(item.productos?.juegos?.url_canje || (Array.isArray(item.productos) && item.productos[0]?.juegos?.url_canje)) && (
-                        <a 
-                          href={item.productos?.juegos?.url_canje || item.productos[0]?.juegos?.url_canje} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          style={{ 
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '6px', 
-                            borderRadius: '8px', 
-                            backgroundColor: 'var(--accent-primary)', 
-                            border: 'none', 
-                            color: '#000', 
-                            fontSize: '12px', 
-                            cursor: 'pointer', 
-                            fontWeight: 800,
-                            textDecoration: 'none',
-                            gap: '4px'
-                          }}
-                        >
-                          🔗 Canjear Código
-                        </a>
-                      )}
-                    </div>
-                  )}
+                  </div>
+                </div>
+                
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ color: item.estado === 'completado' ? '#22c55e' : item.estado === 'fallido' ? '#ef4444' : 'var(--text-muted)', fontSize: '12px', fontWeight: 800, padding: '4px 8px', backgroundColor: item.estado === 'completado' ? 'rgba(34, 197, 94, 0.1)' : item.estado === 'fallido' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.05)', borderRadius: '6px' }}>
+                    {item.estado === 'completado' ? '✅ RECARGADO' : item.estado === 'fallido' ? '❌ FALLIDO' : '⏳ PENDIENTE'}
+                  </div>
                 </div>
               </div>
-              <div style={{ color: item.estado === 'completado' ? '#22c55e' : 'var(--text-muted)', fontSize: '12px', fontWeight: 800 }}>
-                {item.estado === 'completado' ? 'RECARGADO' : item.estado?.toUpperCase() || 'PENDIENTE'}
-              </div>
+
+              {/* IMAGEN DE RECARGA EXITOSA (e.g., Free Fire) */}
+              {item.estado === 'completado' && item.productos?.juegos?.imagen_pedido_completado_url && (
+                <div style={{ marginTop: '12px', textAlign: 'center', backgroundColor: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                  <img 
+                    src={item.productos.juegos.imagen_pedido_completado_url} 
+                    alt="Recarga Exitosa" 
+                    style={{ maxWidth: '100%', maxHeight: '180px', borderRadius: '8px', objectFit: 'contain' }}
+                  />
+                  <div style={{ color: '#22c55e', fontWeight: 800, marginTop: '12px', fontSize: '18px', textTransform: 'uppercase', letterSpacing: '1px', textShadow: '0 2px 10px rgba(34, 197, 94, 0.3)' }}>¡Recarga Exitosa!</div>
+                </div>
+              )}
+
+              {/* CÓDIGO DE GIFT CARD (Estilo Pedidos.jsx) */}
+              {item.codigo_entregado && (
+                <div style={{ 
+                  marginTop: '16px', padding: '20px', 
+                  backgroundColor: 'rgba(34, 197, 94, 0.08)', 
+                  borderRadius: '16px', 
+                  border: '2px dashed rgba(34, 197, 94, 0.4)',
+                  textAlign: 'center',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, transparent, #22c55e, transparent)' }}></div>
+                  <div style={{ fontSize: '13px', color: '#22c55e', fontWeight: 800, textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '1.5px' }}>
+                    🎁 CÓDIGO DE GIFT CARD
+                  </div>
+                  <div style={{ 
+                    fontSize: '26px', fontFamily: 'monospace', fontWeight: 900, color: '#fff', 
+                    letterSpacing: '3px', textShadow: '0 0 15px rgba(34, 197, 94, 0.6)',
+                    wordBreak: 'break-all', padding: '0 10px'
+                  }}>
+                    {item.codigo_entregado}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginTop: '16px' }}>
+                    <button 
+                      onClick={() => { navigator.clipboard.writeText(item.codigo_entregado); alert('¡Código copiado al portapapeles!'); }}
+                      style={{ padding: '8px 16px', borderRadius: '8px', backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', fontSize: '13px', cursor: 'pointer', fontWeight: 700, transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      📋 Copiar Código
+                    </button>
+                    
+                    {(item.productos?.juegos?.url_canje || (Array.isArray(item.productos) && item.productos[0]?.juegos?.url_canje)) && (
+                      <a 
+                        href={item.productos?.juegos?.url_canje || item.productos[0]?.juegos?.url_canje} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', backgroundColor: '#22c55e', border: 'none', color: '#000', fontSize: '13px', cursor: 'pointer', fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)' }}
+                      >
+                        🔗 Canjear
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
       </div>
 
+      {/* 3. RESUMEN DEL PEDIDO (INFO DETALLADA ABAJO) */}
       <div style={{ 
-        textAlign: 'left', marginBottom: '32px', padding: '16px', 
-        borderRadius: '20px', backgroundColor: 'rgba(0, 210, 255, 0.05)',
-        border: '1px solid var(--accent-primary)33'
+        textAlign: 'left', marginBottom: '24px', padding: '20px', 
+        borderRadius: '16px', backgroundColor: 'rgba(0, 0, 0, 0.2)',
+        border: '1px solid var(--border-color)'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-primary)', fontWeight: 600, fontSize: '16px', alignItems: 'center' }}>
-          <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Monto Total:</span>
-          <span style={{ color: 'var(--accent-primary)', fontSize: '20px', fontWeight: 900 }}>{formatBs(pedido.total_bs)}</span>
+        <h3 style={{ color: 'var(--text-primary)', fontSize: '16px', fontWeight: 800, marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          Resumen
+        </h3>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            <span style={{ color: 'var(--text-muted)', fontSize: '14px', fontWeight: 600 }}>N° Pedido</span>
+            <span style={{ color: 'var(--accent-primary)', fontSize: '14px', fontWeight: 800 }}>#{String(pedido.numero_pedido).padStart(6, '0')}</span>
+          </div>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            <span style={{ color: 'var(--text-muted)', fontSize: '14px', fontWeight: 600 }}>Fecha / Hora</span>
+            <span style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: 600 }}>
+              {new Date(pedido.created_at).toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' })}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ color: 'var(--text-muted)', fontSize: '14px', fontWeight: 600 }}>Referencia de Pago</span>
+            <span style={{ color: 'var(--accent-primary)', fontSize: '14px', fontWeight: 800, wordBreak: 'break-all' }}>
+              {pedido.referencia || (pedido.metodo_pago === 'billetera_bs' ? 'PAGO_BILLETERA_BS' : pedido.metodo_pago === 'billetera_usd' ? 'PAGO_BILLETERA_USD' : pedido.metodo_pago)}
+            </span>
+            {pedido.estado === 'completado' && (
+              <span style={{ color: '#22c55e', fontSize: '12px', fontWeight: 700, marginTop: '2px' }}>✅ Verificado</span>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '4px' }}>
+            <span style={{ color: 'var(--text-muted)', fontSize: '15px', fontWeight: 700 }}>Total</span>
+            <span style={{ color: 'var(--accent-primary)', fontSize: '18px', fontWeight: 900 }}>{formatBs(pedido.total_bs)}</span>
+          </div>
         </div>
       </div>
 
       <button className="btn btn-primary" onClick={onBack} style={{ width: '100%', height: '56px', borderRadius: '16px', fontSize: '16px', fontWeight: 800, background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0088ff 100%)' }}>
         Cerrar Seguimiento
       </button>
+
+      <TutorialVideoModal 
+        isOpen={tutorialModal.isOpen} 
+        onClose={() => setTutorialModal({ isOpen: false, videoUrl: '' })} 
+        videoUrl={tutorialModal.videoUrl} 
+        title="¿Cómo canjear tu código?" 
+      />
     </div>
   )
 }
