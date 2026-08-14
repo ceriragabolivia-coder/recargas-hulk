@@ -185,26 +185,14 @@ export default function Perfil() {
       
       if (opcionElegida.tipo === 'producto') {
         productoElegidoId = opcionElegida.p.id
-        // 1. Crear Pedido $0
-        const { data: pedidoData, error: pedidoError } = await supabase.from('pedidos').insert([{
-          cliente_id: user.id,
-          estado: 'procesando',
-          total_usd: 0,
-          total_bs: 0
-        }]).select().single()
+        const { data: pId, error: pedidoError } = await supabase.rpc('reclamar_premio_creador_rpc', {
+          p_cliente_id: user.id,
+          p_producto_id: productoElegidoId,
+          p_producto_nombre: opcionElegida.p.nombre
+        })
         
         if (pedidoError) throw pedidoError
-        pedidoId = pedidoData.id
-        
-        await supabase.from('pedido_items').insert([{
-          pedido_id: pedidoId,
-          producto_id: productoElegidoId,
-          juego_nombre: 'Premio Creador', // Fallback
-          producto_nombre: opcionElegida.p.nombre,
-          cantidad: 1,
-          precio_usd: 0,
-          precio_bs: 0
-        }])
+        pedidoId = pId
       } else {
         // Es saldo
         const moneda = opcionElegida.tipo === 'saldo_usd' ? 'usd' : 'bs'
