@@ -1562,7 +1562,7 @@ function OrderTracking({ pedidoInitial, onBack }) {
       // Actualizar Items
       const { data: itemsData } = await supabase
         .from('pedido_items')
-        .select('*, productos(juegos(imagen_pedido_completado_url, url_canje, tutorial_video_url))')
+        .select('*, productos(juegos(imagen_pedido_completado_url, url_canje, tutorial_video_url, tutorial_banner_img, tutorial_banner_texto))')
         .eq('pedido_id', pedido.id)
       
       if (itemsData) setItems(itemsData)
@@ -1732,6 +1732,49 @@ function OrderTracking({ pedidoInitial, onBack }) {
                       </a>
                     )}
                   </div>
+                </div>
+              )}
+
+              {/* TUTORIAL DEL JUEGO SI LO HAY */}
+              {(item.productos?.juegos?.tutorial_banner_img || item.productos?.juegos?.tutorial_video_url) && (
+                <div 
+                  className="tutorial-banner-card"
+                  onClick={() => {
+                    if (item.productos?.juegos?.tutorial_video_url) {
+                      setTutorialModal({ isOpen: true, videoUrl: item.productos.juegos.tutorial_video_url });
+                    }
+                  }}
+                  style={{
+                    position: 'relative',
+                    cursor: item.productos?.juegos?.tutorial_video_url ? 'pointer' : 'default',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    marginTop: '16px',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'rgba(255,255,255,0.02)',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  {item.productos.juegos.tutorial_banner_img ? (
+                    <img loading="lazy" decoding="async" src={item.productos.juegos.tutorial_banner_img} alt="Tutorial" style={{ width: '100%', display: 'block' }} />
+                  ) : (
+                    <div style={{ padding: '16px', display: 'flex', gap: '16px', alignItems: 'center', background: 'rgba(0, 210, 255, 0.08)' }}>
+                      <div style={{ 
+                        width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)', 
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0
+                      }}>
+                        🔔
+                      </div>
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)' }}>
+                          {item.productos.juegos.tutorial_banner_texto || `¿Cómo canjear?`}
+                        </h4>
+                        <p style={{ margin: '2px 0 0 0', fontSize: '10px', color: 'var(--accent-primary)', fontWeight: 600 }}>
+                          Ver video tutorial
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
