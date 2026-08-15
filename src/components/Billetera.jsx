@@ -181,6 +181,8 @@ export default function Billetera({ onNavigate }) {
     setUploading(true)
     setIsExtractingRef(true)
     try {
+      file = await compressImage(file)
+
       const extractedRef = await extractReferenceFromImage(file)
       if (extractedRef && extractedRef.length === 6) {
         setOcrReferencia(extractedRef)
@@ -188,7 +190,6 @@ export default function Billetera({ onNavigate }) {
         setAlertModal({ type: 'success', message: `Referencia detectada y autocompletada: ${extractedRef}` })
       }
 
-      file = await compressImage(file)
       const fileName = `${Date.now()}-${file.name}`
       const { error: uploadError } = await supabase.storage
         .from('comprobantes')

@@ -124,6 +124,8 @@ export default function LandingWallet({ onClose }) {
     setUploading(true)
     setIsExtractingRef(true)
     try {
+      file = await compressImage(file)
+      
       const extractedRef = await extractReferenceFromImage(file)
       if (extractedRef && extractedRef.length === 6) {
         setOcrReferencia(extractedRef)
@@ -131,7 +133,6 @@ export default function LandingWallet({ onClose }) {
         setAlert({ type: 'success', message: `Referencia detectada y autocompletada: ${extractedRef}` })
       }
 
-      file = await compressImage(file)
       const fileName = `${Date.now()}_receipt-${file.name}`
       const { error: uploadError } = await supabase.storage
         .from('logos')

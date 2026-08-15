@@ -8,13 +8,22 @@ let workerPromise = null;
 export function preloadOcrWorker() {
   if (!workerPromise) {
     console.log("🚀 Pre-cargando OCR Worker en segundo plano...");
-    workerPromise = createWorker('spa', 1, {
-      logger: m => {
-        if (m.status === 'recognizing text' && m.progress % 0.2 < 0.05) {
-          console.log(`OCR Progreso: ${Math.round(m.progress * 100)}%`);
+    workerPromise = (async () => {
+      const worker = await createWorker('eng', 1, {
+        logger: m => {
+          if (m.status === 'recognizing text' && m.progress % 0.2 < 0.05) {
+            console.log(`OCR Progreso: ${Math.round(m.progress * 100)}%`);
+          }
         }
-      }
-    });
+      });
+      
+      // Restringir el OCR solo a números para que sea ultra rápido y preciso
+      await worker.setParameters({
+        tessedit_char_whitelist: '0123456789',
+      });
+      
+      return worker;
+    })();
   }
   return workerPromise;
 }

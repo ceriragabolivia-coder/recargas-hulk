@@ -465,6 +465,8 @@ export default function Checkout({ onFinish, embedded = false }) {
     setUploadingComprobante(true)
     setIsExtractingRef(true)
     try {
+      file = await compressImage(file)
+      
       const extractedRef = await extractReferenceFromImage(file)
       if (extractedRef && extractedRef.length === 6) {
         setOcrReferencia(extractedRef)
@@ -472,7 +474,6 @@ export default function Checkout({ onFinish, embedded = false }) {
         setAlertModal({ type: 'success', message: `Referencia detectada y autocompletada: ${extractedRef}` })
       }
 
-      file = await compressImage(file)
       const fileName = `pedidos/${Date.now()}_${createdPedidoId || 'tmp'}-${file.name}`
       const { error: uploadError } = await supabase.storage
         .from('logos')
