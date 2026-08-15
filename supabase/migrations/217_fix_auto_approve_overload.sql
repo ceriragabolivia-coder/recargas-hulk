@@ -15,7 +15,7 @@ CREATE OR REPLACE FUNCTION public.intentar_auto_aprobar_recarga_rpc(
 ) RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS \$\$
+AS $$
 DECLARE
     v_apk_pago RECORD;
     v_recarga RECORD;
@@ -103,5 +103,5 @@ BEGIN
 
     RETURN jsonb_build_object('success', true, 'message', 'Recarga aprobada automáticamente con éxito.');
 END;
-\$\$;
+$$;
 
