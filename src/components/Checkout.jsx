@@ -1363,19 +1363,23 @@ export default function Checkout({ onFinish, embedded = false }) {
                           )}
                                                         {/* --- ADJUNTAR COMPROBANTE --- */}
                           <div className="form-group mb-16">
-                            <label className="form-label" style={{ fontSize: '13px', fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', display: 'block' }}>Adjuntar Comprobante</label>
+                            <label className="form-label" style={{ fontSize: '13px', fontWeight: 800, color: '#00d2ff', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', display: 'block', textShadow: '0 0 10px rgba(0, 210, 255, 0.3)' }}>Adjuntar Comprobante</label>
                             <div style={{ 
-                              padding: '24px', border: '2px dashed rgba(255,255,255,0.1)', borderRadius: '16px', 
-                              textAlign: 'center', position: 'relative', backgroundColor: 'rgba(255,255,255,0.02)',
-                              transition: 'all 0.3s', cursor: 'pointer'
+                              padding: '32px 24px', border: '2px dashed rgba(0, 210, 255, 0.4)', borderRadius: '20px', 
+                              textAlign: 'center', position: 'relative', backgroundColor: 'rgba(0, 210, 255, 0.03)',
+                              transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)', cursor: 'pointer',
+                              boxShadow: '0 0 20px rgba(0, 210, 255, 0.1), inset 0 0 15px rgba(0, 210, 255, 0.05)'
                             }}
-                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.08)'; e.currentTarget.style.borderColor = '#00d2ff'; e.currentTarget.style.boxShadow = '0 0 30px rgba(0, 210, 255, 0.3), inset 0 0 20px rgba(0, 210, 255, 0.15)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.03)'; e.currentTarget.style.borderColor = 'rgba(0, 210, 255, 0.4)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 210, 255, 0.1), inset 0 0 15px rgba(0, 210, 255, 0.05)'; e.currentTarget.style.transform = 'translateY(0)'; }}
                             >
-                              <div style={{ fontSize: '32px', marginBottom: '8px' }}>{uploadingComprobante ? '⏳' : isExtractingRef ? '🔍' : comprobanteUrl ? '✅' : '📷'}</div>
-                              <span style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>
-                                {uploadingComprobante ? 'Subiendo...' : isExtractingRef ? 'Analizando imagen...' : comprobanteUrl ? 'Comprobante Listo' : 'Validación automática, sube tu comprobante de pago'}
+                              <div style={{ fontSize: '42px', marginBottom: '12px', filter: 'drop-shadow(0 0 10px rgba(0, 210, 255, 0.5))' }}>{uploadingComprobante ? '⏳' : isExtractingRef ? '🔍' : comprobanteUrl ? '✅' : '📷'}</div>
+                              <span style={{ fontSize: '15px', fontWeight: 800, color: '#fff', textShadow: '0 0 8px rgba(255,255,255,0.3)', display: 'block' }}>
+                                {uploadingComprobante ? 'Subiendo archivo...' : isExtractingRef ? 'Analizando imagen mágicamente...' : comprobanteUrl ? 'Comprobante Listo' : 'Sube tu comprobante aquí'}
                               </span>
+                              {!uploadingComprobante && !isExtractingRef && !comprobanteUrl && (
+                                <span style={{ fontSize: '12px', color: '#00d2ff', opacity: 0.8, marginTop: '8px', display: 'block', fontWeight: 600 }}>Validación ultra-rápida automática ⚡</span>
+                              )}
                               <input type="file" accept="image/*" onChange={handleComprobanteUpload} disabled={uploadingComprobante || isExtractingRef} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
                             </div>
                             <div style={{ textAlign: 'center', marginTop: '12px' }}>

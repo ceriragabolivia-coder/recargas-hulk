@@ -586,19 +586,32 @@ export default function LandingWallet({ onClose }) {
               )}
 
               <div className="form-group">
-                <label style={{ fontSize: '13px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', display: 'block' }}>Adjuntar Comprobante</label>
-                <div className="upload-box" style={{ padding: '24px', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                <label style={{ fontSize: '13px', fontWeight: 800, color: '#00d2ff', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', display: 'block', textShadow: '0 0 10px rgba(0, 210, 255, 0.3)' }}>Adjuntar Comprobante</label>
+                <div style={{ 
+                  padding: '32px 24px', border: '2px dashed rgba(0, 210, 255, 0.4)', borderRadius: '20px', 
+                  textAlign: 'center', position: 'relative', backgroundColor: 'rgba(0, 210, 255, 0.03)',
+                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)', cursor: 'pointer',
+                  boxShadow: '0 0 20px rgba(0, 210, 255, 0.1), inset 0 0 15px rgba(0, 210, 255, 0.05)'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.08)'; e.currentTarget.style.borderColor = '#00d2ff'; e.currentTarget.style.boxShadow = '0 0 30px rgba(0, 210, 255, 0.3), inset 0 0 20px rgba(0, 210, 255, 0.15)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.03)'; e.currentTarget.style.borderColor = 'rgba(0, 210, 255, 0.4)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 210, 255, 0.1), inset 0 0 15px rgba(0, 210, 255, 0.05)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                >
                   {comprobanteUrl ? (
-                    <img loading="lazy" decoding="async" src={getOptimizedImageUrl(comprobanteUrl, 400)} alt="Comprobante" className="preview-img" />
+                    <img loading="lazy" decoding="async" src={getOptimizedImageUrl(comprobanteUrl, 400)} alt="Comprobante" className="preview-img" style={{ borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.3)' }} />
                   ) : (
-                    <div className="upload-placeholder">
-                      <span style={{ fontSize: '32px', marginBottom: '8px', display: 'block' }}>{uploading ? '⏳' : isExtractingRef ? '🔍' : '📷'}</span>
-                      <small style={{ fontSize: '14px', fontWeight: 700, opacity: 1 }}>{uploading ? 'Subiendo...' : isExtractingRef ? 'Analizando...' : 'Validación automática, sube tu comprobante de pago'}</small>
+                    <div>
+                      <div style={{ fontSize: '42px', marginBottom: '12px', filter: 'drop-shadow(0 0 10px rgba(0, 210, 255, 0.5))' }}>{uploading ? '⏳' : isExtractingRef ? '🔍' : '📷'}</div>
+                      <span style={{ fontSize: '15px', fontWeight: 800, color: '#fff', textShadow: '0 0 8px rgba(255,255,255,0.3)', display: 'block' }}>
+                        {uploading ? 'Subiendo archivo...' : isExtractingRef ? 'Analizando imagen mágicamente...' : 'Sube tu comprobante aquí'}
+                      </span>
+                      {!uploading && !isExtractingRef && (
+                        <span style={{ fontSize: '12px', color: '#00d2ff', opacity: 0.8, marginTop: '8px', display: 'block', fontWeight: 600 }}>Validación ultra-rápida automática ⚡</span>
+                      )}
                     </div>
                   )}
-                  <input type="file" accept="image/*" onChange={handleFileUpload} disabled={uploading || isExtractingRef} />
+                  <input type="file" accept="image/*" onChange={handleFileUpload} disabled={uploading || isExtractingRef} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
                 </div>
-                <div style={{ textAlign: 'center', marginTop: '12px' }}>
+                <div style={{ textAlign: 'center', marginTop: '16px' }}>
                   <span 
                     onClick={() => setShowManualRef(!showManualRef)}
                     style={{ fontSize: '11px', color: 'var(--text-muted)', cursor: 'pointer', textDecoration: 'underline' }}
