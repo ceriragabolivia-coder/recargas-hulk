@@ -468,7 +468,8 @@ export default function Checkout({ onFinish, embedded = false }) {
     try {
       file = await compressImage(file)
       
-      const extractedRef = await extractReferenceFromImage(file)
+      const excludedNumbers = [perfil?.identificacion || user?.identificacion, perfil?.telefono || user?.telefono, perfil?.whatsapp || user?.whatsapp];
+      const extractedRef = await extractReferenceFromImage(file, excludedNumbers)
       if (extractedRef && extractedRef.length === 6) {
         setOcrReferencia(extractedRef)
         setReferencia(extractedRef)

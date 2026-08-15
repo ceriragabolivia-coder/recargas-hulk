@@ -184,7 +184,8 @@ export default function Billetera({ onNavigate }) {
     try {
       file = await compressImage(file)
 
-      const extractedRef = await extractReferenceFromImage(file)
+      const excludedNumbers = [perfil?.identificacion, perfil?.telefono, perfil?.whatsapp];
+      const extractedRef = await extractReferenceFromImage(file, excludedNumbers)
       if (extractedRef && extractedRef.length === 6) {
         setOcrReferencia(extractedRef)
         setReferencia(extractedRef)
