@@ -122,6 +122,7 @@ export default function Checkout({ onFinish, embedded = false }) {
   const [showNotiDropdown, setShowNotiDropdown] = useState(false)
   const [showInsufficientBalanceError, setShowInsufficientBalanceError] = useState(false)
   const [autoSubmitPedido, setAutoSubmitPedido] = useState(false)
+  const [showManualRef, setShowManualRef] = useState(false)
 
   // Banners (igual que Landing.jsx)
   const banners = useMemo(() => {
@@ -1356,13 +1357,35 @@ export default function Checkout({ onFinish, embedded = false }) {
                                 border: '4px solid var(--bg-panel)'
                               }}>
                                 <img loading="lazy" decoding="async" src={selectedMetodo.qr_url} alt="QR" style={{ width: '160px', height: '160px', objectFit: 'contain' }} />
-                              </div>
-                              <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>Escanea para pagar</p>
+                                                        {/* --- ADJUNTAR COMPROBANTE --- */}
+                          <div className="form-group mb-16">
+                            <label className="form-label" style={{ fontSize: '13px', fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', display: 'block' }}>Adjuntar Comprobante</label>
+                            <div style={{ 
+                              padding: '24px', border: '2px dashed rgba(255,255,255,0.1)', borderRadius: '16px', 
+                              textAlign: 'center', position: 'relative', backgroundColor: 'rgba(255,255,255,0.02)',
+                              transition: 'all 0.3s', cursor: 'pointer'
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                            >
+                              <div style={{ fontSize: '32px', marginBottom: '8px' }}>{uploadingComprobante ? '⏳' : isExtractingRef ? '🔍' : comprobanteUrl ? '✅' : '📷'}</div>
+                              <span style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>
+                                {uploadingComprobante ? 'Subiendo...' : isExtractingRef ? 'Analizando imagen...' : comprobanteUrl ? 'Comprobante Listo' : 'Validación automática, sube tu comprobante de pago'}
+                              </span>
+                              <input type="file" accept="image/*" onChange={handleComprobanteUpload} disabled={uploadingComprobante || isExtractingRef} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
                             </div>
-                          )}
+                            <div style={{ textAlign: 'center', marginTop: '12px' }}>
+                              <span 
+                                onClick={() => setShowManualRef(!showManualRef)}
+                                style={{ fontSize: '11px', color: 'var(--text-muted)', cursor: 'pointer', textDecoration: 'underline' }}
+                              >
+                                (Tengo solamente los últimos 6 dígitos de la referencia)
+                              </span>
+                            </div>
+                          </div>
 
-                          {selectedMetodoId !== 'binance_pay_auto' && (
-                            <div className="form-group mb-16">
+                          {(selectedMetodoId !== 'binance_pay_auto' && showManualRef) && (
+                            <div className="form-group mb-16 fade-in">
                               <label className="form-label" style={{ color: '#00d2ff', fontWeight: 900, fontSize: '13px', marginBottom: '12px', display: 'block', textTransform: 'uppercase', letterSpacing: '1px' }}>
                                 Número de Referencia <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: 600 }}>(Últimos 6 dígitos)</span>
                               </label>
@@ -1403,7 +1426,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                             </div>
                           )}
 
-                          {/* ── BOTÓN CONFIRMAR justo bajo la referencia ── */}
+                          {/* ⬇️ BOTÓN CONFIRMAR ⬇️ */}
                           <button
                             className="btn btn-primary btn-lg"
                             style={{
@@ -1424,20 +1447,8 @@ export default function Checkout({ onFinish, embedded = false }) {
                               </div>
                             ) : 'Confirmar y Pagar'}
                           </button>
-
-                          <div className="form-group mb-0">
-                            <label className="form-label" style={{ fontSize: '13px', fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', display: 'block' }}>Adjuntar Comprobante (Opcional)</label>
-                            <div style={{ 
-                              padding: '24px', border: '2px dashed rgba(255,255,255,0.1)', borderRadius: '16px', 
-                              textAlign: 'center', position: 'relative', backgroundColor: 'rgba(255,255,255,0.02)',
-                              transition: 'all 0.3s', cursor: 'pointer'
-                            }}
-                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
-                            >
-                              <div style={{ fontSize: '32px', marginBottom: '8px' }}>{uploadingComprobante ? '⏳' : isExtractingRef ? '🔍' : comprobanteUrl ? '✅' : '📤'}</div>
-                              <span style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>{uploadingComprobante ? 'Subiendo...' : isExtractingRef ? 'Analizando imagen...' : comprobanteUrl ? 'Comprobante Listo' : 'Toca para subir captura'}</span>
-                              <input type="file" accept="image/*" onChange={handleComprobanteUpload} disabled={uploadingComprobante || isExtractingRef} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
+                        </div>
+                      ) : (Comprobante || isExtractingRef} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
                             </div>
                           </div>
                         </div>

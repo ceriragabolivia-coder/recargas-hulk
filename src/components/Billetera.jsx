@@ -43,6 +43,7 @@ export default function Billetera({ onNavigate }) {
   const [pinCode, setPinCode] = useState('')
   const [isRedeemingPin, setIsRedeemingPin] = useState(false)
   const [pinAlert, setPinAlert] = useState(null)
+  const [showManualRef, setShowManualRef] = useState(false)
 
   // Estado para solicitudes pendientes (Solo Admin)
   const [pendingRecargas, setPendingRecargas] = useState([])
@@ -1059,51 +1060,24 @@ export default function Billetera({ onNavigate }) {
                               onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
                             >📋</button>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )
-              })()}
-
-
-              <div className="form-group">
-                <label className="form-label">Número de Referencia <span style={{ fontSize: '10px', opacity: 0.7 }}>(Últimos 6 dígitos)</span></label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  placeholder="Escribe los 6 últimos dígitos aquí..."
-                  value={referencia}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-                    setReferencia(val);
-                  }}
-                  onPaste={e => {
-                    e.preventDefault();
-                    const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
-                    setReferencia(pasteData);
-                  }}
-                  style={{ letterSpacing: '2px', fontSize: '16px', fontWeight: 600 }}
-                  required
-                />
-                <div style={{ fontSize: '11px', color: 'var(--accent-warning)', marginTop: '6px', fontWeight: 600 }}>
-                  ⚠️ Recuerda que debes colocar exactamente los 6 últimos números de la referencia del pago.
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Comprobante de Pago (Opcional)</label>
+                         <div className="form-group">
+                <label className="form-label" style={{ fontSize: '13px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', display: 'block' }}>Adjuntar Comprobante</label>
                 <div style={{ 
                   border: '2px dashed var(--border-color)', borderRadius: '12px', 
-                  padding: '20px', textAlign: 'center', cursor: 'pointer',
-                  position: 'relative'
-                }}>
+                  padding: '24px', textAlign: 'center', cursor: 'pointer',
+                  position: 'relative', backgroundColor: 'rgba(255,255,255,0.02)', transition: 'all 0.3s'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'var(--text-muted)'; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'var(--border-color)'; }}
+                >
                   {comprobanteUrl ? (
                     <img loading="lazy" decoding="async" src={getOptimizedImageUrl(comprobanteUrl, 400)} alt="Comprobante" style={{ maxHeight: '100px', margin: '0 auto' }} />
                   ) : (
                     <>
-                      <div style={{ fontSize: '24px', marginBottom: '8px' }}>📤</div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Haz clic para subir imagen</div>
+                      <div style={{ fontSize: '32px', marginBottom: '8px' }}>{uploading ? '⏳' : isExtractingRef ? '🔍' : '📷'}</div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                        {uploading ? 'Subiendo...' : isExtractingRef ? 'Analizando imagen...' : 'Validación automática, sube tu comprobante de pago'}
+                      </div>
                     </>
                   )}
                   <input 
@@ -1111,17 +1085,57 @@ export default function Billetera({ onNavigate }) {
                     accept="image/*" 
                     onChange={handleFileUpload}
                     style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
-                    disabled={uploading}
+                    disabled={uploading || isExtractingRef}
                   />
+                </div>
+                <div style={{ textAlign: 'center', marginTop: '12px' }}>
+                  <span 
+                    onClick={() => setShowManualRef(!showManualRef)}
+                    style={{ fontSize: '11px', color: 'var(--text-muted)', cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    (Tengo solamente los últimos 6 dígitos de la referencia)
+                  </span>
                 </div>
               </div>
 
+              {showManualRef && (
+                <div className="form-group fade-in">
+                  <label className="form-label">Número de Referencia <span style={{ fontSize: '10px', opacity: 0.7 }}>(Últimos 6 dígitos)</span></label>
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    placeholder="Escribe los 6 últimos dígitos aquí..."
+                    value={referencia}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                      setReferencia(val);
+                    }}
+                    onPaste={e => {
+                      e.preventDefault();
+                      const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+                      setReferencia(pasteData);
+                    }}
+                    style={{ letterSpacing: '2px', fontSize: '16px', fontWeight: 600 }}
+                    required={showManualRef}
+                  />
+                  <div style={{ fontSize: '11px', color: 'var(--accent-warning)', marginTop: '6px', fontWeight: 600 }}>
+                    ⚠️ Recuerda que debes colocar exactamente los 6 últimos números de la referencia del pago.
+                  </div>
+                </div>
+              )}
+
               <button 
-                type="submit" 
-                className="btn btn-primary" 
+                type="button" 
+                onClick={(e) => { e.preventDefault(); handleSolicitarRecarga(e); }}
+                className="btn btn-primary btn-lg" 
                 disabled={isProcessing || uploading || (referencia.trim().length !== 6)}
-                style={{ height: '48px', marginTop: '8px' }}
+                style={{ height: '60px', marginTop: '16px', fontSize: '18px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', borderRadius: '16px', width: '100%' }}
               >
+                {isProcessing ? 'Enviando...' : 'Solicitar Recarga'}
+              </button>
+            </form>
+          </div>
+        ) : null}   >
                 {isProcessing ? 'Enviando...' : 'Solicitar Recarga'}
               </button>
             </form>

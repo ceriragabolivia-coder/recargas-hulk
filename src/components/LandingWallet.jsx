@@ -36,6 +36,7 @@ export default function LandingWallet({ onClose }) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [alert, setAlert] = useState(null) // { type, message }
   const [pinAlert, setPinAlert] = useState(null)
+  const [showManualRef, setShowManualRef] = useState(false)
   
   const [pinCode, setPinCode] = useState('')
   const [isRedeemingPin, setIsRedeemingPin] = useState(false)
@@ -580,44 +581,50 @@ export default function LandingWallet({ onClose }) {
                     >
                       Copiar Datos
                     </button>
-                  </div>
-                </>
-              )}
-
-              <div className="form-group">
-                <label>Número de Referencia <span style={{ fontSize: '10px', opacity: 0.8 }}>(Últimos 6 dígitos)</span></label>
-                <input 
-                  type="text" 
-                  placeholder="Escribe los 6 últimos dígitos aquí..."
-                  value={referencia}
-                  onChange={e => setReferencia(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  onPaste={e => {
-                    e.preventDefault();
-                    const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
-                    setReferencia(pasteData);
-                  }}
-                  style={{ letterSpacing: '2px', fontSize: '16px', fontWeight: 600 }}
-                  required
-                />
-                <div style={{ fontSize: '11px', color: 'var(--accent-warning)', marginTop: '6px', fontWeight: 600 }}>
-                  ⚠️ Recuerda que debes colocar exactamente los 6 últimos números de la referencia del pago.
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Comprobante (Opcional)</label>
-                <div className="upload-box">
+                  </              <div className="form-group">
+                <label style={{ fontSize: '13px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', display: 'block' }}>Adjuntar Comprobante</label>
+                <div className="upload-box" style={{ padding: '24px', backgroundColor: 'rgba(255,255,255,0.02)' }}>
                   {comprobanteUrl ? (
                     <img loading="lazy" decoding="async" src={getOptimizedImageUrl(comprobanteUrl, 400)} alt="Comprobante" className="preview-img" />
                   ) : (
                     <div className="upload-placeholder">
-                      <span>{isExtractingRef ? '🔍' : '📤'}</span>
-                      <small>{uploading ? 'Subiendo...' : isExtractingRef ? 'Analizando...' : 'Subir imagen'}</small>
+                      <span style={{ fontSize: '32px', marginBottom: '8px', display: 'block' }}>{uploading ? '⏳' : isExtractingRef ? '🔍' : '📷'}</span>
+                      <small style={{ fontSize: '14px', fontWeight: 700, opacity: 1 }}>{uploading ? 'Subiendo...' : isExtractingRef ? 'Analizando...' : 'Validación automática, sube tu comprobante de pago'}</small>
                     </div>
                   )}
                   <input type="file" accept="image/*" onChange={handleFileUpload} disabled={uploading || isExtractingRef} />
                 </div>
+                <div style={{ textAlign: 'center', marginTop: '12px' }}>
+                  <span 
+                    onClick={() => setShowManualRef(!showManualRef)}
+                    style={{ fontSize: '11px', color: 'var(--text-muted)', cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    (Tengo solamente los últimos 6 dígitos de la referencia)
+                  </span>
+                </div>
               </div>
+
+              {showManualRef && (
+                <div className="form-group fade-in">
+                  <label>Número de Referencia <span style={{ fontSize: '10px', opacity: 0.8 }}>(Últimos 6 dígitos)</span></label>
+                  <input 
+                    type="text" 
+                    placeholder="Escribe los 6 últimos dígitos aquí..."
+                    value={referencia}
+                    onChange={e => setReferencia(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    onPaste={e => {
+                      e.preventDefault();
+                      const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+                      setReferencia(pasteData);
+                    }}
+                    style={{ letterSpacing: '2px', fontSize: '16px', fontWeight: 600 }}
+                    required={showManualRef}
+                  />
+                  <div style={{ fontSize: '11px', color: 'var(--accent-warning)', marginTop: '6px', fontWeight: 600 }}>
+                    ⚠️ Recuerda que debes colocar exactamente los 6 últimos números de la referencia del pago.
+                  </div>
+                </div>
+              )}
 
               {alert && (
                 <div className={`alert-inline ${alert.type}`}>
@@ -626,11 +633,15 @@ export default function LandingWallet({ onClose }) {
               )}
 
               <button 
-                type="submit" 
+                type="button" 
+                onClick={(e) => { e.preventDefault(); handleSolicitarRecarga(e); }}
                 className="btn-submit-recharge" 
-                disabled={isProcessing || (referencia.trim().length !== 6)}
+                disabled={isProcessing || uploading || (referencia.trim().length !== 6)}
               >
                 {isProcessing ? 'Procesando...' : 'Enviar Reporte'}
+              </button>
+            </form>
+            ) : (
               </button>
             </form>
             ) : (
