@@ -1,8 +1,9 @@
 const { Client } = require('ssh2');
 
 const sql = `
-  SELECT public.validar_y_registrar_referencia_rpc('857452503', 7273.76, '00000000-0000-0000-0000-000000000000', 'pedido');
-  SELECT public.validar_y_registrar_referencia_rpc('452503', 7273.76, '00000000-0000-0000-0000-000000000000', 'pedido');
+  SELECT id, referencia, monto_registrado, created_at 
+  FROM referencias_pagos_control 
+  ORDER BY created_at DESC LIMIT 10;
 `;
 
 const conn = new Client();

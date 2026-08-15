@@ -1,8 +1,15 @@
 const { Client } = require('ssh2');
 
 const sql = `
-  SELECT public.validar_y_registrar_referencia_rpc('857452503', 7273.76, '00000000-0000-0000-0000-000000000000', 'pedido');
-  SELECT public.validar_y_registrar_referencia_rpc('452503', 7273.76, '00000000-0000-0000-0000-000000000000', 'pedido');
+  SELECT id, referencia_pago, pago_verificado, created_at 
+  FROM pedidos 
+  WHERE pago_verificado = false AND created_at > NOW() - INTERVAL '48 hours'
+  ORDER BY created_at DESC LIMIT 10;
+  
+  SELECT id, referencia_pago, estado, created_at 
+  FROM billetera_recargas 
+  WHERE estado = 'rechazado' AND created_at > NOW() - INTERVAL '48 hours'
+  ORDER BY created_at DESC LIMIT 10;
 `;
 
 const conn = new Client();

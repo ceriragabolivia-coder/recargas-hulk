@@ -723,7 +723,7 @@ export default function App() {
         
       const effectiveTimeoutMinutes = individualTimeout !== null ? Number(individualTimeout) : baseTimeout;
       
-      if (elapsedMinutes >= effectiveTimeoutMinutes) {
+      if (effectiveTimeoutMinutes > 0 && elapsedMinutes >= effectiveTimeoutMinutes) {
         sessionStorage.setItem('logout_reason', 'security_timeout');
         if (logout) {
           logout().then(() => {

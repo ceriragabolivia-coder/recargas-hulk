@@ -1,8 +1,12 @@
 const { Client } = require('ssh2');
+const fs = require('fs');
 
 const sql = `
-  SELECT public.validar_y_registrar_referencia_rpc('857452503', 7273.76, '00000000-0000-0000-0000-000000000000', 'pedido');
-  SELECT public.validar_y_registrar_referencia_rpc('452503', 7273.76, '00000000-0000-0000-0000-000000000000', 'pedido');
+  SELECT column_name, data_type, column_default 
+  FROM information_schema.columns 
+  WHERE table_name = 'pedidos' AND column_name = 'pago_verificado';
+  
+  SELECT id, estado, pago_verificado FROM pedidos ORDER BY created_at DESC LIMIT 5;
 `;
 
 const conn = new Client();

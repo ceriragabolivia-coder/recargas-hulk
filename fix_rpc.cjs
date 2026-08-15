@@ -1,13 +1,13 @@
 const { Client } = require('ssh2');
 
-const sqlContent = \
+const sqlContent = `
 CREATE OR REPLACE FUNCTION public.crear_pedido_seguro_rpc(
     p_pedido_data JSONB,
     p_items_data JSONB,
     p_wallet_usd_deduct NUMERIC DEFAULT 0,
     p_wallet_bs_deduct NUMERIC DEFAULT 0,
     p_existing_pedido_id INT DEFAULT NULL
-) RETURNS JSON AS \\\$\\\$
+) RETURNS JSON AS $$
 DECLARE
     v_user_id UUID;
     v_current_balance_usd NUMERIC;
@@ -200,9 +200,9 @@ BEGIN
 EXCEPTION WHEN OTHERS THEN
     RETURN json_build_object('success', false, 'message', SQLERRM);
 END;
-\\\$\\\$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 NOTIFY pgrst, 'reload schema';
-\;
+`;
 
 const conn = new Client();
 conn.on('ready', () => {
@@ -213,6 +213,7 @@ conn.on('ready', () => {
         let out = '';
         stream2.on('close', () => {
           console.log('Done!');
+          console.log(out);
           conn.end();
         }).on('data', d => out+=d).stderr.on('data', d => out+=d);
       });

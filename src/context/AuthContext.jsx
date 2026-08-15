@@ -369,7 +369,11 @@ export function AuthProvider({ children }) {
       setLoading(true)
       sessionStorage.removeItem('admin_welcome_played')
       sessionStorage.removeItem('client_welcome_played')
-      await supabase.auth.signOut()
+      try {
+        await supabase.auth.signOut()
+      } catch (err) {
+        console.error('Error signing out:', err)
+      }
       setPerfil(null)
       setUser(null)
       lastUserIdRef.current = null

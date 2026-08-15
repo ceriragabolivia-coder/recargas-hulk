@@ -1,8 +1,9 @@
 const { Client } = require('ssh2');
 
 const sql = `
-  SELECT public.validar_y_registrar_referencia_rpc('857452503', 7273.76, '00000000-0000-0000-0000-000000000000', 'pedido');
-  SELECT public.validar_y_registrar_referencia_rpc('452503', 7273.76, '00000000-0000-0000-0000-000000000000', 'pedido');
+  SELECT usuario_id, referencia_pago, estado, created_at 
+  FROM billetera_recargas 
+  WHERE referencia_pago = '324012' OR referencia_pago LIKE '324012 %';
 `;
 
 const conn = new Client();
