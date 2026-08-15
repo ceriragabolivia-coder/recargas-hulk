@@ -1136,8 +1136,7 @@ export default function Billetera({ onNavigate }) {
               )}
 
               <button 
-                type="button" 
-                onClick={(e) => { e.preventDefault(); handleSolicitarRecarga(e); }}
+                type="submit" 
                 className="btn btn-primary btn-lg" 
                 disabled={isProcessing || uploading || (referencia.trim().length !== 6)}
                 style={{ height: '60px', marginTop: '16px', fontSize: '18px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', borderRadius: '16px', width: '100%' }}

@@ -650,8 +650,7 @@ export default function LandingWallet({ onClose }) {
               )}
 
               <button 
-                type="button" 
-                onClick={(e) => { e.preventDefault(); handleSolicitarRecarga(e); }}
+                type="submit" 
                 className="btn-submit-recharge" 
                 disabled={isProcessing || uploading || (referencia.trim().length !== 6)}
               >
