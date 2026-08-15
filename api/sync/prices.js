@@ -122,7 +122,7 @@ export default async function handler(req, res) {
 
       for (const [categoryId, prods] of Object.entries(fcGroups)) {
         try {
-          let url = `https://api.fzr.cards/api/v2/topups/offers?category_id=${categoryId}`;
+          let url = `https://api.fzr.cards/api/v2/topups/offers?category_id=${encodeURIComponent(categoryId)}`;
           let isGiftcard = false;
           let isTelegramStars = false;
           let isTelegramPremium = false;
