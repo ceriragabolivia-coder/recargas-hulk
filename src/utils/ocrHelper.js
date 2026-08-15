@@ -17,9 +17,9 @@ export function preloadOcrWorker() {
         }
       });
       
-      // Restringir el OCR solo a números para que sea ultra rápido y preciso
+      // Optimizamos para comprobantes (texto disperso)
       await worker.setParameters({
-        tessedit_char_whitelist: '0123456789',
+        tessedit_pageseg_mode: '11',
       });
       
       return worker;
@@ -46,7 +46,15 @@ export async function extractReferenceFromImage(file, excludedNumbers = []) {
     const text = result.data.text;
     console.log("OCR Texto extraído (resumen de longitud):", text.length, "caracteres");
 
-    // 1. Extraer todas las secuencias de 6 o más dígitos.
+    // 1. Buscar explícitamente la palabra "referencia" o "ref" seguida de números
+    // Esto previene que tome horas (ej. 10:51:44 -> 105144) o fechas
+    const refMatch = text.match(/ref[a-z]*[^0-9]{0,15}(\d{6,})/i);
+    if (refMatch && refMatch[1]) {
+      console.log("OCR Encontrado por palabra clave 'ref':", refMatch[1]);
+      return refMatch[1].slice(-6);
+    }
+
+    // 2. Si no encuentra la palabra clave, extraemos todas las secuencias de 6 o más dígitos.
     let digitSequences = text.match(/\d{6,}/g);
 
     if (!digitSequences || digitSequences.length === 0) {
