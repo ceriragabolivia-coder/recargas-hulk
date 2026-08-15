@@ -1060,7 +1060,14 @@ export default function Billetera({ onNavigate }) {
                               onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
                             >📋</button>
                           </div>
-                         <div className="form-group">
+                        );
+                      })}
+                    </div>
+                  </div>
+                )
+              })()}
+
+              <div className="form-group">
                 <label className="form-label" style={{ fontSize: '13px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', display: 'block' }}>Adjuntar Comprobante</label>
                 <div style={{ 
                   border: '2px dashed var(--border-color)', borderRadius: '12px', 
@@ -1131,11 +1138,6 @@ export default function Billetera({ onNavigate }) {
                 disabled={isProcessing || uploading || (referencia.trim().length !== 6)}
                 style={{ height: '60px', marginTop: '16px', fontSize: '18px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', borderRadius: '16px', width: '100%' }}
               >
-                {isProcessing ? 'Enviando...' : 'Solicitar Recarga'}
-              </button>
-            </form>
-          </div>
-        ) : null}   >
                 {isProcessing ? 'Enviando...' : 'Solicitar Recarga'}
               </button>
             </form>

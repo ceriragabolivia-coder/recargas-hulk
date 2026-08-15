@@ -1357,6 +1357,10 @@ export default function Checkout({ onFinish, embedded = false }) {
                                 border: '4px solid var(--bg-panel)'
                               }}>
                                 <img loading="lazy" decoding="async" src={selectedMetodo.qr_url} alt="QR" style={{ width: '160px', height: '160px', objectFit: 'contain' }} />
+                              </div>
+                              <div style={{ fontSize: '12px', color: '#666', fontWeight: 600 }}>Escanea para pagar</div>
+                            </div>
+                          )}
                                                         {/* --- ADJUNTAR COMPROBANTE --- */}
                           <div className="form-group mb-16">
                             <label className="form-label" style={{ fontSize: '13px', fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', display: 'block' }}>Adjuntar Comprobante</label>
@@ -1447,10 +1451,6 @@ export default function Checkout({ onFinish, embedded = false }) {
                               </div>
                             ) : 'Confirmar y Pagar'}
                           </button>
-                        </div>
-                      ) : (Comprobante || isExtractingRef} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
-                            </div>
-                          </div>
                         </div>
                       ) : (
                         <div className="payment-methods-grid">

@@ -581,7 +581,11 @@ export default function LandingWallet({ onClose }) {
                     >
                       Copiar Datos
                     </button>
-                  </              <div className="form-group">
+                  </div>
+                </>
+              )}
+
+              <div className="form-group">
                 <label style={{ fontSize: '13px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', display: 'block' }}>Adjuntar Comprobante</label>
                 <div className="upload-box" style={{ padding: '24px', backgroundColor: 'rgba(255,255,255,0.02)' }}>
                   {comprobanteUrl ? (
@@ -639,9 +643,6 @@ export default function LandingWallet({ onClose }) {
                 disabled={isProcessing || uploading || (referencia.trim().length !== 6)}
               >
                 {isProcessing ? 'Procesando...' : 'Enviar Reporte'}
-              </button>
-            </form>
-            ) : (
               </button>
             </form>
             ) : (
