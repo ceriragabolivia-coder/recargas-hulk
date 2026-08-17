@@ -13,7 +13,7 @@ export default function Register({ onBackToLogin }) {
 
   // Capturar posible código de referido desde URL
   const queryParams = new URLSearchParams(window.location.search)
-  const refCode = queryParams.get('ref') || localStorage.getItem('referralCode') || null
+  const refCode = queryParams.get('ref') || null
 
   const [formData, setFormData] = useState({
     email: '',
