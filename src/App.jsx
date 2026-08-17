@@ -963,6 +963,15 @@ export default function App() {
              </div>
            </div>
          )
+      } else if (estado === 'cargando') {
+         return (
+           <div className="login-container">
+             <div className="login-card" style={{ textAlign: 'center', background: 'transparent', boxShadow: 'none' }}>
+               <div className="loading-spinner" style={{ margin: '0 auto 20px', width: '40px', height: '40px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--accent-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+               <p style={{ color: 'var(--text-muted)' }}>Cargando perfil...</p>
+             </div>
+           </div>
+         )
       }
 
       if (estado === 'pendiente') return <PendingView onLogout={logout} onRefresh={refetch} />

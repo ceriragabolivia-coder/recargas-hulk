@@ -169,7 +169,7 @@ export function AuthProvider({ children }) {
           const { data: nuevoPerfil } = await supabase.from('perfiles').insert({
             id: userId,
             rol: 'cliente',
-            estado: 'aprobado'
+            estado: 'pendiente'
           }).select().maybeSingle()
           // No sobreescribir perfilData si falló el insert, pero si funcionó usarlo
           if (nuevoPerfil) perfilData = nuevoPerfil
@@ -184,7 +184,7 @@ export function AuthProvider({ children }) {
             usuario: u.email || userId,
             nickname: u.user_metadata?.nickname || 'Usuario',
             whatsapp: u.user_metadata?.whatsapp || '',
-            estado: 'aprobado' // Por defecto aprobado para que puedan operar
+            estado: 'pendiente' // Por defecto pendiente para requerir validación
           }).select().maybeSingle()
           clienteData = nuevoCliente
         }
