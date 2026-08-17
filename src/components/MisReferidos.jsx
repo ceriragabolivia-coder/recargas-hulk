@@ -121,19 +121,19 @@ export default function MisReferidos() {
     <div className="mis-referidos-container" style={{ color: '#fff' }}>
       <h3 style={{ marginBottom: '1rem', color: '#00e5ff' }}>Mi Sistema de Referidos</h3>
       
-      <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem' }}>
+      <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '12px', marginBottom: '2rem' }}>
         <h4 style={{ marginBottom: '0.5rem' }}>Tu Link de Invitación</h4>
         <p style={{ fontSize: '0.9rem', color: '#ccc', marginBottom: '1rem' }}>
           Comparte este link con tus amigos. Cuando se registren y realicen compras, acumularás progreso para reclamar recompensas.
         </p>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <input 
             type="text" 
             readOnly 
             value={codigo ? `${window.location.origin}/?ref=${codigo}` : 'Generando...'} 
-            style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #333', background: '#000', color: '#00e5ff' }}
+            style={{ flex: '1 1 200px', minWidth: 0, padding: '10px', borderRadius: '8px', border: '1px solid #333', background: '#000', color: '#00e5ff' }}
           />
-          <button onClick={handleCopy} className="btn-primary" style={{ padding: '0 20px', borderRadius: '8px' }}>
+          <button onClick={handleCopy} className="btn-primary" style={{ padding: '10px 20px', borderRadius: '8px', flexShrink: 0, whiteSpace: 'nowrap' }}>
             Copiar
           </button>
         </div>
@@ -144,7 +144,7 @@ export default function MisReferidos() {
         {objetivos.length === 0 ? (
           <p style={{ color: '#aaa', fontStyle: 'italic' }}>No hay objetivos disponibles actualmente.</p>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '15px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '15px' }}>
             {objetivos.map(obj => {
               const validos = getReferidosValidos(obj.compras_minimas_usuario)
               const meta = obj.meta_registros_activos
