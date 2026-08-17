@@ -159,7 +159,7 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
       }
 
       const queryParams = new URLSearchParams(window.location.search)
-      const refCode = queryParams.get('ref') || null
+      const refCode = queryParams.get('ref') || localStorage.getItem('referralCode') || null
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: regEmail,
