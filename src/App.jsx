@@ -524,15 +524,6 @@ export default function App() {
   const isSocio = hasRole(perfil, 'socio')
   const isRevendedor = hasRole(perfil, 'revendedor')
 
-  // Capturar código de referido globalmente y guardarlo en localStorage
-  useEffect(() => {
-    const queryParams = new URLSearchParams(window.location.search)
-    const refCode = queryParams.get('ref')
-    if (refCode) {
-      localStorage.setItem('referralCode', refCode)
-    }
-  }, [location.search])
-
   // Sincronizar isRegistering con la ruta para compatibilidad
   useEffect(() => {
     if (location.pathname === '/register') setIsRegistering(true)
