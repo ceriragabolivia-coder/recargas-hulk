@@ -1,6 +1,6 @@
 const { Client } = require('ssh2'); 
 const sql = `
-  SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'creador_objetivos';
+  SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'clientes';
 `; 
 const conn = new Client(); 
 conn.on('ready', () => { 

@@ -162,13 +162,23 @@ export default function MisReferidos() {
                   <h5 style={{ color: '#ffb300', marginBottom: '0.5rem' }}>Invita a {meta} Amigos</h5>
                   <p style={{ fontSize: '0.8rem', color: '#aaa', marginBottom: '0.5rem' }}>Tus amigos deben realizar al menos {obj.compras_minimas_usuario} compra(s).</p>
                   
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '5px' }}>
-                    <span>Progreso: {validos}/{meta}</span>
-                    <span style={{ color: '#00e5ff', fontWeight: 'bold' }}>Premio: {descRecompensa}</span>
+                  <div style={{ marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '5px' }}>
+                      <span>Usuarios Registrados: {referidos.length}/{meta}</span>
+                    </div>
+                    <div style={{ width: '100%', height: '8px', background: '#333', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ width: `${Math.min((referidos.length / meta) * 100, 100)}%`, height: '100%', background: '#9c27b0', transition: 'width 0.3s ease' }}></div>
+                    </div>
                   </div>
-                  
-                  <div style={{ width: '100%', height: '8px', background: '#333', borderRadius: '4px', marginBottom: '1rem', overflow: 'hidden' }}>
-                    <div style={{ width: `${progress}%`, height: '100%', background: canClaim ? '#00e5ff' : '#00b0ff', transition: 'width 0.3s ease' }}></div>
+
+                  <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '5px' }}>
+                      <span>Usuarios con compras: {validos}/{meta}</span>
+                      <span style={{ color: '#00e5ff', fontWeight: 'bold' }}>Premio: {descRecompensa}</span>
+                    </div>
+                    <div style={{ width: '100%', height: '8px', background: '#333', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ width: `${progress}%`, height: '100%', background: canClaim ? '#00e5ff' : '#00b0ff', transition: 'width 0.3s ease' }}></div>
+                    </div>
                   </div>
 
                   <button 
