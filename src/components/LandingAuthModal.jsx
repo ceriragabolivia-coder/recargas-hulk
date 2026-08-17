@@ -158,6 +158,9 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
         if (codeData.limite_global > 0 && codeData.usos_totales >= codeData.limite_global) throw new Error('Este Código de Creador ya alcanzó su límite máximo de usos.');
       }
 
+      const queryParams = new URLSearchParams(window.location.search)
+      const refCode = queryParams.get('ref') || null
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: regEmail,
         password: regPassword,
@@ -170,7 +173,8 @@ export default function LandingAuthModal({ isOpen, onClose, initialView = 'login
             estado: '',
             nickname: '',
             creador_codigo: regCreadorCodigo.trim().toUpperCase(),
-            role_requested: regRole
+            role_requested: regRole,
+            codigo_referencia: refCode
           }
         }
       })

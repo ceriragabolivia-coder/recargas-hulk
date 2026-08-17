@@ -11,6 +11,10 @@ export default function Register({ onBackToLogin }) {
   const [ageOption, setAgeOption] = useState('')
   const [termsAccepted, setTermsAccepted] = useState(false)
 
+  // Capturar posible código de referido desde URL
+  const queryParams = new URLSearchParams(window.location.search)
+  const refCode = queryParams.get('ref') || null
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -95,7 +99,8 @@ export default function Register({ onBackToLogin }) {
       nickname: formData.nickname,
       whatsapp: fullWhatsapp,
       pais: formData.pais,
-      estado: formData.estado
+      estado: formData.estado,
+      codigo_referencia: refCode
     })
 
     if (signUpError) {

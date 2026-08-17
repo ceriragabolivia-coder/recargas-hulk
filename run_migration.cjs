@@ -1,7 +1,13 @@
 const { Client } = require('ssh2');
 const fs = require('fs');
 
-const sql = fs.readFileSync('supabase/migrations/217_fix_auto_approve_overload.sql', 'utf8');
+const fileName = process.argv[2];
+if (!fileName) {
+  console.error("Please provide a migration file name.");
+  process.exit(1);
+}
+
+const sql = fs.readFileSync('supabase/migrations/' + fileName, 'utf8');
 
 const conn = new Client();
 conn.on('ready', () => {

@@ -33,6 +33,7 @@ const NAV_ITEMS = [
   { key: 'gestion_cupones', icon: '🎟️', label: 'Cupones de Descuento', path: '/Gestion-Cupones' },
   { key: 'gestion_pines', icon: '💳', label: 'Pines de Recarga', path: '/Gestion-Pines' },
   { key: 'gestion_creadores', icon: '🌟', label: 'Códigos de Creadores', path: '/Gestion-Creadores' },
+  { key: 'gestion_referidos', icon: '🤝', label: 'Sistema de Referidos', path: '/Gestion-Referidos' },
   { key: 'interfaces_admin', icon: '🎨', label: 'Interfaces de Panel', path: '/Interfaces-Admin' },
   { key: 'sorteos', icon: '🎁', label: 'Sorteos', path: '/Sorteos' },
   { key: 'perfil', icon: '👤', label: 'Mi Perfil', path: '/Mi-Perfil' },
@@ -1133,7 +1134,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
               <div className="nav-section-label">Principal</div>
               {NAV_ITEMS.filter(i => ['dashboard', 'billetera', 'catalogo', 'ventas'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Gestión</div>
-              {NAV_ITEMS.filter(i => ['productos', 'pedidos', 'usuarios', 'revendedores', 'chats', 'proveedor_tgv', 'pagos_admins', 'pagos_apk', 'gestion_socios', 'config', 'gestion_landing', 'gestion_paginas', 'gestion_cupones', 'gestion_pines', 'gestion_creadores', 'interfaces_admin', 'sorteos'].includes(i.key)).map(renderNavItem)}
+              {NAV_ITEMS.filter(i => ['productos', 'pedidos', 'usuarios', 'revendedores', 'chats', 'proveedor_tgv', 'pagos_admins', 'pagos_apk', 'gestion_socios', 'config', 'gestion_landing', 'gestion_paginas', 'gestion_cupones', 'gestion_pines', 'gestion_creadores', 'gestion_referidos', 'interfaces_admin', 'sorteos'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Análisis</div>
               {NAV_ITEMS.filter(i => ['reportes', 'estadisticas', 'gestion_ruleta'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Cuenta</div>

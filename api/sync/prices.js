@@ -53,7 +53,7 @@ export default async function handler(req, res) {
     // 2. Obtener productos activos con proveedor_api_id
     const { data: productos, error: prodError } = await supabase
       .from('productos')
-      .select('id, nombre, costo_base, proveedor_api_id, juego_id, juegos(api_provider, api_provider_category_id)')
+      .select('id, nombre, costo_base, proveedor_api_id, api_provider, api_provider_category_id, juego_id, juegos(api_provider, api_provider_category_id)')
       .not('proveedor_api_id', 'is', null)
       .not('proveedor_api_id', 'eq', '')
       .eq('activo', true);
@@ -62,8 +62,14 @@ export default async function handler(req, res) {
       throw new Error(prodError?.message || 'Error fetching products');
     }
 
-    const tgvProducts = productos.filter(p => !p.juegos?.api_provider || p.juegos?.api_provider === 'tiendagiftven');
-    const fcProducts = productos.filter(p => p.juegos?.api_provider === 'fazercards');
+    const tgvProducts = productos.filter(p => {
+      const effectiveProvider = p.api_provider || p.juegos?.api_provider || 'tiendagiftven';
+      return effectiveProvider === 'tiendagiftven';
+    });
+    const fcProducts = productos.filter(p => {
+      const effectiveProvider = p.api_provider || p.juegos?.api_provider || 'tiendagiftven';
+      return effectiveProvider === 'fazercards';
+    });
 
     // ============================================
     // SINCRONIZACIÓN DE TIENDAGIFTVEN
@@ -113,7 +119,7 @@ export default async function handler(req, res) {
       // Agrupar por category_id
       const fcGroups = {};
       fcProducts.forEach(p => {
-        const cat = p.juegos?.api_provider_category_id;
+        const cat = p.api_provider_category_id || p.juegos?.api_provider_category_id;
         if (cat) {
           if (!fcGroups[cat]) fcGroups[cat] = [];
           fcGroups[cat].push(p);

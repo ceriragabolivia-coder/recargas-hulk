@@ -408,6 +408,8 @@ export default function GestionProductos() {
     entrega_automatica: false,
     tipo_producto: 'recarga',
     proveedor_api_id: '',
+    api_provider: '',
+    api_provider_category_id: '',
     opciones_recarga: [],
     en_mantenimiento: false
   })
@@ -559,7 +561,7 @@ export default function GestionProductos() {
   }
 
   const handleOpenModal = () => {
-    setFormData({ id: null, nombre: '', costo_base: '', margen_ganancia: '30', icono_url: null, descuento_revendedor: '', info_adicional_texto: '', info_adicional_imagen_url: null, entrega_automatica: false, tipo_producto: 'recarga', proveedor_api_id: '', opciones_recarga: [], en_mantenimiento: false })
+    setFormData({ id: null, nombre: '', costo_base: '', margen_ganancia: '30', icono_url: null, descuento_revendedor: '', info_adicional_texto: '', info_adicional_imagen_url: null, entrega_automatica: false, tipo_producto: 'recarga', proveedor_api_id: '', api_provider: '', api_provider_category_id: '', opciones_recarga: [], en_mantenimiento: false })
     lastProveedorIdSincronizado.current = null
     setNewIconFile(null)
     setIconPreview(null)
@@ -581,6 +583,8 @@ export default function GestionProductos() {
       entrega_automatica: prod.entrega_automatica || false,
       tipo_producto: prod.tipo_producto || 'recarga',
       proveedor_api_id: prod.proveedor_api_id || '',
+      api_provider: prod.api_provider || '',
+      api_provider_category_id: prod.api_provider_category_id || '',
       opciones_recarga: prod.opciones_recarga || [],
       en_mantenimiento: prod.en_mantenimiento || false
     })
@@ -604,6 +608,8 @@ export default function GestionProductos() {
       entrega_automatica: prod.entrega_automatica || false,
       tipo_producto: prod.tipo_producto || 'recarga',
       proveedor_api_id: prod.proveedor_api_id || '',
+      api_provider: prod.api_provider || '',
+      api_provider_category_id: prod.api_provider_category_id || '',
       opciones_recarga: prod.opciones_recarga || [],
       en_mantenimiento: false
     })
@@ -668,6 +674,8 @@ export default function GestionProductos() {
         entrega_automatica: formData.entrega_automatica,
         tipo_producto: formData.tipo_producto,
         proveedor_api_id: formData.proveedor_api_id ? formData.proveedor_api_id.toString().trim() : null,
+        api_provider: formData.api_provider ? formData.api_provider : null,
+        api_provider_category_id: formData.api_provider_category_id ? formData.api_provider_category_id.toString().trim() : null,
         opciones_recarga: formData.opciones_recarga || [],
         en_mantenimiento: formData.en_mantenimiento
       }
@@ -1564,6 +1572,35 @@ export default function GestionProductos() {
             <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px' }}>
               {sincronizandoCosto ? 'Consultando costo en el catálogo del proveedor...' : 'Si colocas el ID que obtuviste del catálogo, el pedido se procesará automáticamente por la API al ser aprobado.'}
             </p>
+          </div>
+
+          <div className="form-group" style={{ marginBottom: '24px', padding: '16px', backgroundColor: 'rgba(251, 191, 36, 0.05)', borderRadius: '12px', border: '1px solid rgba(251, 191, 36, 0.1)' }}>
+            <label className="form-label" style={{ color: '#fbbf24' }}>⚙️ Configuración Específica de API (Opcional)</label>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+              Usa estas opciones solo si este paquete específico requiere un proveedor o Category ID distinto al del juego.
+            </p>
+            
+            <label className="form-label" style={{ fontSize: '12px' }}>Proveedor API</label>
+            <select
+              className="form-input"
+              value={formData.api_provider || ''}
+              onChange={e => setFormData({ ...formData, api_provider: e.target.value })}
+              style={{ marginBottom: '12px' }}
+            >
+              <option value="">-- Heredar del Juego --</option>
+              <option value="tiendagiftven">TiendaGiftVen</option>
+              <option value="fazercards">FazerCards</option>
+            </select>
+
+            <label className="form-label" style={{ fontSize: '12px' }}>Category ID del Proveedor API (Opcional - FazerCards)</label>
+            <input
+              type="text"
+              className="form-input"
+              value={formData.api_provider_category_id || ''}
+              onChange={e => setFormData({ ...formData, api_provider_category_id: e.target.value })}
+              placeholder="Ej. giftcard:roblox_robux_us"
+              style={{ borderColor: formData.api_provider_category_id ? '#fbbf24' : '' }}
+            />
           </div>
 
           <div className="form-group" style={{ marginBottom: '24px', padding: '16px', backgroundColor: 'rgba(0, 210, 255, 0.05)', borderRadius: '12px', border: '1px solid rgba(0, 210, 255, 0.1)' }}>

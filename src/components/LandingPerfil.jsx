@@ -4,6 +4,7 @@ import { useAuth, useClientes } from '../hooks/useData'
 import AvatarEditor from './AvatarEditor'
 import { compressImage } from '../utils/imageCompression'
 import { getOptimizedImageUrl } from '../utils/helpers'
+import MisReferidos from './MisReferidos'
 
 export default function LandingPerfil({ onClose }) {
   const { user, perfil, updatePassword, refetch } = useAuth()
@@ -599,9 +600,16 @@ export default function LandingPerfil({ onClose }) {
             >
               Datos Personales
             </button>
+            <button 
+              className={`perfil-tab-btn ${activeTab === 'referidos' ? 'active' : ''}`} 
+              onClick={() => setActiveTab('referidos')}
+              style={{ flex: 1, padding: '10px', background: activeTab === 'referidos' ? 'var(--accent)' : 'var(--bg-secondary)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', transition: '0.3s' }}
+            >
+              Mis Referidos
+            </button>
           </div>
 
-          <div className="forms-stack">
+          <div className="perfil-tab-content">
             {activeTab === 'cuenta' && (
               <>
             {/* WhatsApp Form */}
@@ -972,6 +980,12 @@ export default function LandingPerfil({ onClose }) {
                       {savingDatos ? 'Guardando...' : 'Guardar Datos Personales'}
                     </button>
                  </form>
+              </div>
+            )}
+
+            {activeTab === 'referidos' && (
+              <div className="perfil-form-card fade-in">
+                <MisReferidos />
               </div>
             )}
           </div>

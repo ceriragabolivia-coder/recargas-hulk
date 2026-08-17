@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth, useClientes } from '../hooks/useData'
+import MisReferidos from './MisReferidos'
 
 export default function Perfil() {
   const { user, perfil, updatePassword } = useAuth()
@@ -683,6 +684,11 @@ export default function Perfil() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Sistema de Referidos */}
+      <div id="mis-referidos" className="card mt-24" style={{ scrollMarginTop: '80px' }}>
+        <MisReferidos />
       </div>
 
       {/* Modal Seleccionar Premio Múltiple */}

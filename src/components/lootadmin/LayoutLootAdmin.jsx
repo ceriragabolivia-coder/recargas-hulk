@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { key: 'gestion_cupones', label: 'Cupones', path: '/Gestion-Cupones', icon: '🎟️' },
   { key: 'gestion_pines', label: 'Pines', path: '/Gestion-Pines', icon: '💳' },
   { key: 'gestion_creadores', label: 'Creadores', path: '/Gestion-Creadores', icon: '🌟' },
+  { key: 'gestion_referidos', label: 'Sistema de Referidos', path: '/Gestion-Referidos', icon: '🤝' },
   { key: 'proveedor_tgv', label: 'Integración API', path: '/Proveedor-TiendaGiftVen', icon: '🔌' },
   { key: 'gestion_landing', label: 'Media', path: '/Gestion-Landing', icon: '🖼️' },
   { key: 'chats', label: 'Soporte Chat', path: '/Soporte', icon: '💬' },

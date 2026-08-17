@@ -1,5 +1,5 @@
 const { Client } = require('ssh2'); 
-const sql = "SELECT pg_get_functiondef(oid) FROM pg_proc WHERE proname = 'webhook_update_pedido_item';"; 
+const sql = "SELECT metodo_recarga FROM juegos WHERE nombre = 'Marvel Rivals';"; 
 const conn = new Client(); 
 conn.on('ready', () => { 
   conn.exec('docker exec -i supabase-db psql -U postgres -d postgres -t -c "' + sql + '"', (err, stream) => { 
