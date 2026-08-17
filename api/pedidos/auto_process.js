@@ -237,27 +237,46 @@ async function procesarPedidoConFazerCards(pedidoId, apiKey) {
           }
         }
 
-        const res = await fetch(endpointUrl, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
+        let maxRetries = 10;
+        let res;
+        let data;
+        let success = false;
 
-        if (!res.ok) {
-          const text = await res.text();
-          let errData = {};
-          try {
-            errData = JSON.parse(text);
-          } catch (e) {}
-          throw new Error(
-            errData.error || errData.message || "Error HTTP " + res.status
-          );
+        while (maxRetries > 0 && !success) {
+          res = await fetch(endpointUrl, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!res.ok) {
+            const text = await res.text();
+            let errData = {};
+            try {
+              errData = JSON.parse(text);
+            } catch (e) {}
+            
+            const errMsg = errData.error || errData.message || "Error HTTP " + res.status;
+            
+            // Check if FazerCards rejected an extra field we sent
+            const notExpectedMatch = errMsg.match(/Field "([^"]+)" is not expected/);
+            if (res.status === 400 && notExpectedMatch && payload.fields) {
+              const badField = notExpectedMatch[1];
+              console.log(`[AutoProcess] FazerCards rejected field '${badField}', removing and retrying...`);
+              delete payload.fields[badField];
+              maxRetries--;
+              continue; // Retry without the bad field
+            }
+
+            throw new Error(errMsg);
+          }
+
+          data = await res.json();
+          success = true;
         }
-
-        const data = await res.json();
         if (data.ok && data.order) {
           const respEstado = data.order.status
             ? data.order.status.toLowerCase()
