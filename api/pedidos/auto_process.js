@@ -39,7 +39,7 @@ async function procesarPedidoConApi(pedidoId, apiKey) {
       prod?.api_provider || j?.api_provider || "tiendagiftven";
     if (
       prod?.proveedor_api_id &&
-      j?.procesamiento_automatico_api &&
+      (j?.procesamiento_automatico_api || prod?.api_provider) &&
       effectiveProvider !== "fazercards" &&
       !item.proveedor_pedido_id &&
       isPendingOrFailed
@@ -163,7 +163,7 @@ async function procesarPedidoConFazerCards(pedidoId, apiKey) {
 
     if (
       prod?.proveedor_api_id &&
-      j?.procesamiento_automatico_api &&
+      (j?.procesamiento_automatico_api || prod?.api_provider) &&
       isFazerCards &&
       !item.proveedor_pedido_id &&
       isPendingOrFailed
@@ -207,7 +207,7 @@ async function procesarPedidoConFazerCards(pedidoId, apiKey) {
           if (isGiftcard) {
             endpointUrl = `https://api.fzr.cards/api/v2/giftcards/order`;
             payload = {
-              card_id: parseInt(offer_id),
+              card_id: isNaN(offer_id) ? offer_id : parseInt(offer_id, 10),
               quantity: item.cantidad || 1,
             };
             if (item.account_email) payload.email = item.account_email;
@@ -496,7 +496,7 @@ export default async function handler(req, res) {
     const tieneApiItems = pedidoConItems?.pedido_items?.some((i) => {
       const p = Array.isArray(i.productos) ? i.productos[0] : i.productos;
       const j = Array.isArray(p?.juegos) ? p.juegos[0] : p?.juegos;
-      return p?.proveedor_api_id && j?.procesamiento_automatico_api;
+      return p?.proveedor_api_id && (j?.procesamiento_automatico_api || p?.api_provider);
     });
 
     if (tieneApiItems) {
@@ -510,7 +510,7 @@ export default async function handler(req, res) {
       const firstApiItem = pedidoConItems.pedido_items.find((i) => {
         const p = Array.isArray(i.productos) ? i.productos[0] : i.productos;
         const j = Array.isArray(p?.juegos) ? p.juegos[0] : p?.juegos;
-        return p?.proveedor_api_id && j?.procesamiento_automatico_api;
+        return p?.proveedor_api_id && (j?.procesamiento_automatico_api || p?.api_provider);
       });
       if (firstApiItem) {
         const p = Array.isArray(firstApiItem.productos)
