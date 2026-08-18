@@ -207,6 +207,7 @@ async function procesarPedidoConFazerCards(pedidoId, apiKey) {
           if (isGiftcard) {
             endpointUrl = `https://api.fzr.cards/api/v2/giftcards/order`;
             payload = {
+              category_id: actualCategoryId,
               card_id: isNaN(offer_id) ? offer_id : parseInt(offer_id, 10),
               quantity: item.cantidad || 1,
             };
