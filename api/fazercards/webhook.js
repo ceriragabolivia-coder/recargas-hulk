@@ -35,7 +35,10 @@ export default async function handler(req, res) {
     
     let pin = orderData.pin || orderData.code || payload.pin || payload.code || '';
     if (!pin && Array.isArray(orderData.cards) && orderData.cards.length > 0) {
-      pin = orderData.cards.map(c => c.pin || c.code || '').filter(Boolean).join('\n');
+      pin = orderData.cards.map(c => {
+        if (typeof c === 'string') return c;
+        return c.pin || c.code || '';
+      }).filter(Boolean).join('\n');
     }
 
     if (!providerOrderId) {

@@ -275,10 +275,15 @@ async function procesarPedidoConFazerCards(pedidoId, apiKey) {
             throw new Error(errMsg);
           }
 
-          data = await res.json();
+          const responseText = await res.text();
+          try {
+            data = responseText ? JSON.parse(responseText) : {};
+          } catch (e) {
+            throw new Error("Respuesta inválida de FazerCards: " + responseText);
+          }
           success = true;
         }
-        if (data.ok && data.order) {
+        if (data && data.ok && data.order) {
           const respEstado = data.order.status
             ? data.order.status.toLowerCase()
             : "";
@@ -299,6 +304,7 @@ async function procesarPedidoConFazerCards(pedidoId, apiKey) {
           ) {
             extractedPin = data.order.cards
               .map((c) => {
+                if (typeof c === 'string') return c;
                 let res = c.code || c.pin || c.serial || "";
                 if (c.serial && res !== c.serial)
                   res += ` (Serial: ${c.serial})`;
