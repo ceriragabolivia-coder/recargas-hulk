@@ -57,6 +57,35 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Local order not found' });
     }
 
+    const isWebhookCompleted = providerStatus === 'completed' || providerStatus === 'delivered';
+    
+    // FazerCards webhooks sometimes only contain status updates without the pins.
+    // If it's completed but we have no pin, we must fetch the full order details.
+    if (isWebhookCompleted && !pin) {
+      const { data: configData } = await supabase.from('configuracion').select('valor, valor_texto').eq('clave', 'fazercards_api_key').single();
+      const apiKey = configData?.valor_texto || configData?.valor;
+      if (apiKey) {
+        try {
+          const apiRes = await fetch(`https://api.fzr.cards/api/v2/orders/${providerOrderId}`, {
+            headers: { 'Authorization': `Bearer ${apiKey}` }
+          });
+          if (apiRes.ok) {
+            const apiOrder = await apiRes.json();
+            if (apiOrder?.order?.cards && Array.isArray(apiOrder.order.cards)) {
+              pin = apiOrder.order.cards.map(c => {
+                if (typeof c === 'string') return c;
+                return c.pin || c.code || '';
+              }).filter(Boolean).join('\n');
+            } else if (apiOrder?.order?.pin) {
+              pin = apiOrder.order.pin;
+            }
+          }
+        } catch (e) {
+          console.error('Error fetching full order details from FazerCards API:', e.message);
+        }
+      }
+    }
+
     // Podría haber múltiples items si se agruparon, pero normalmente es 1 a 1
     for (const item of items) {
       console.log(`⚡ [FazerCards Webhook] Actualizando item ${item.id} (Pedido: ${item.pedido_id}) a estado: ${providerStatus}`);
@@ -72,7 +101,8 @@ export default async function handler(req, res) {
         p_estado_proveedor: providerStatus,
         p_proveedor_pedido_id: providerOrderId,
         p_mensaje_proveedor: pin,
-        p_estado: nuevoEstadoItem
+        p_estado: nuevoEstadoItem,
+        p_codigo_entregado: pin || null
       });
 
       // Intentar auto-procesar el pedido completo si todos los items ya terminaron
