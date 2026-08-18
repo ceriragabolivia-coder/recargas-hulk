@@ -1709,7 +1709,12 @@ function OrderTracking({ pedidoInitial, onBack }) {
               )}
 
               {/* CÓDIGO DE GIFT CARD (Estilo Pedidos.jsx) */}
-              {item.codigo_entregado && (
+              {item.codigo_entregado && (() => {
+                const prod = Array.isArray(item.productos) ? item.productos[0] : item.productos;
+                const isGiftCard = prod?.tipo_producto === 'gift_card' || prod?.juegos?.tipo_carga === 'PIN';
+                const isRecargaCompletadaMsg = item.codigo_entregado.toLowerCase().includes('recarga completada');
+                return isGiftCard || (!isRecargaCompletadaMsg && item.codigo_entregado.length < 50 && !item.codigo_entregado.includes(' '));
+              })() && (
                 <div style={{ 
                   marginTop: '16px', padding: '20px', 
                   backgroundColor: 'rgba(34, 197, 94, 0.08)', 
