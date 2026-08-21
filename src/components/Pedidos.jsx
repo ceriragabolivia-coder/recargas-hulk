@@ -2668,7 +2668,10 @@ export default function Pedidos({
             (match = regexValores.exec(selectedPedido.referencia_pago)) !== null
           ) {
             const moneda = match[1].toLowerCase();
-            const montoStr = match[2].replace(/\./g, "").replace(/,/g, ".");
+            let montoStr = match[2];
+            if (montoStr.includes(',')) {
+              montoStr = montoStr.replace(/\./g, "").replace(/,/g, ".");
+            }
             const monto = parseFloat(montoStr);
 
             if (monto > 0) {
