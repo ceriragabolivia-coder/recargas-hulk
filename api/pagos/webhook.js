@@ -554,7 +554,7 @@ export default async function handler(req, res) {
           const montoRecibido = parseFloat(monto);
           const montoEsperado = parseFloat(recarga.monto);
 
-          if (Math.abs(montoRecibido - montoEsperado) <= 0.05) {
+          if (Math.abs(montoRecibido - montoEsperado) <= 2.0) {
             const { data: processData, error: processError } =
               await supabase.rpc("aprobar_recarga_automatica_bdv_rpc", {
                 p_recarga_id: recarga.id,
