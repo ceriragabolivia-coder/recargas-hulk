@@ -46,15 +46,33 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No order ID provided' });
     }
 
-    // Buscar el item del pedido en nuestra base de datos utilizando el ID que nos dio FazerCards
-    const { data: items, error: searchError } = await supabase
+    let numericId = providerOrderId;
+    if (typeof providerOrderId === 'string' && providerOrderId.startsWith('ord-')) {
+       numericId = providerOrderId.replace('ord-', '');
+    } else if (typeof providerOrderId === 'number' || (typeof providerOrderId === 'string' && !isNaN(providerOrderId))) {
+       numericId = String(providerOrderId);
+    }
+
+    let { data: items, error: searchError } = await supabase
       .from('pedido_items')
       .select('id, pedido_id, estado_proveedor')
-      .eq('proveedor_pedido_id', providerOrderId);
+      .or(`proveedor_pedido_id.eq.${providerOrderId},proveedor_pedido_id.eq.${numericId},proveedor_pedido_id.eq.ord-${numericId}`);
 
     if (searchError || !items || items.length === 0) {
-      console.warn(`⚠️ [FazerCards Webhook] No se encontró un pedido local con el proveedor_pedido_id: ${providerOrderId}`);
-      return res.status(404).json({ error: 'Local order not found' });
+      console.warn(`⚠️ [FazerCards Webhook] No se encontró el pedido local: ${providerOrderId}. Reintentando en 3s...`);
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      const retry = await supabase
+        .from('pedido_items')
+        .select('id, pedido_id, estado_proveedor')
+        .or(`proveedor_pedido_id.eq.${providerOrderId},proveedor_pedido_id.eq.${numericId},proveedor_pedido_id.eq.ord-${numericId}`);
+      
+      items = retry.data;
+      searchError = retry.error;
+
+      if (searchError || !items || items.length === 0) {
+        console.warn(`⚠️ [FazerCards Webhook] Definitivamente no se encontró el pedido local con el proveedor_pedido_id: ${providerOrderId}`);
+        return res.status(404).json({ error: 'Local order not found' });
+      }
     }
 
     const isWebhookCompleted = providerStatus === 'completed' || providerStatus === 'delivered';
@@ -96,7 +114,7 @@ export default async function handler(req, res) {
       const nuevoEstadoItem = isCompleted ? 'completado' : (isFailed ? 'fallido' : 'procesando');
 
       // Actualizar el item usando el RPC
-      await supabase.rpc('webhook_update_pedido_item', {
+      const { error: rpcErr } = await supabase.rpc('webhook_update_pedido_item', {
         p_item_id: item.id,
         p_estado_proveedor: providerStatus,
         p_proveedor_pedido_id: providerOrderId,
@@ -104,6 +122,10 @@ export default async function handler(req, res) {
         p_estado: nuevoEstadoItem,
         p_codigo_entregado: pin || null
       });
+
+      if (rpcErr) {
+        console.error(`❌ [FazerCards Webhook] Error en RPC webhook_update_pedido_item:`, rpcErr);
+      }
 
       // Intentar auto-procesar el pedido completo si todos los items ya terminaron
       if (isCompleted || isFailed) {

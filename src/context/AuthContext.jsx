@@ -157,8 +157,7 @@ export function AuthProvider({ children }) {
         
         // Intercepción para Forzar Cierre de Sesión (__FORCE_LOGOUT__)
         if (perfilData?.motivo_estado && perfilData.motivo_estado.includes('__FORCE_LOGOUT__')) {
-            const newMotivo = perfilData.motivo_estado.replace('__FORCE_LOGOUT__', '').trim();
-            await supabase.from('perfiles').update({ motivo_estado: newMotivo || null }).eq('id', userId);
+            await supabase.rpc('clear_force_logout', { p_user_id: userId });
             await supabase.auth.signOut();
             window.location.href = '/';
             return null;
@@ -232,8 +231,7 @@ export function AuthProvider({ children }) {
           event: 'UPDATE', schema: 'public', table: 'perfiles', filter: `id=eq.${userId}`
         }, payload => {
            if (payload.new?.motivo_estado && payload.new.motivo_estado.includes('__FORCE_LOGOUT__')) {
-               const newMotivo = payload.new.motivo_estado.replace('__FORCE_LOGOUT__', '').trim();
-               supabase.from('perfiles').update({ motivo_estado: newMotivo || null }).eq('id', userId).then(() => {
+               supabase.rpc('clear_force_logout', { p_user_id: userId }).then(() => {
                    supabase.auth.signOut().then(() => {
                        window.location.href = '/';
                    });
