@@ -486,6 +486,16 @@ export default function Usuarios({ onNavigate, params }) {
     }
   }, [params?.openWalletUserId, clientes.length])
 
+  // Efecto para búsqueda en el servidor con debounce
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      // Usar searchTerm para buscar en DB
+      refetch(searchTerm)
+    }, 500)
+
+    return () => clearTimeout(delayDebounceFn)
+  }, [searchTerm]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const filteredClientes = clientes.filter(c => {
     if (filtroJuegoId) {
       if (!c.juegos_favoritos || !c.juegos_favoritos.includes(filtroJuegoId)) {

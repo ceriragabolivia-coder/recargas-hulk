@@ -636,13 +636,21 @@ export function useClientes() {
   const [clientes, setClientes] = useState([])
   const [loading, setLoading] = useState(true)
 
-  async function fetchClientes() {
+  async function fetchClientes(searchTerm = '') {
     setLoading(true)
-    const { data, error } = await supabase
+    let query = supabase
       .from('v_clientes_admin')
       .select('*')
       .order('fecha_registro', { ascending: false })
-      .limit(600) // Limitar la cantidad de usuarios para no saturar la memoria ni la red
+      
+    if (searchTerm) {
+      query = query.or(`nombres.ilike.%${searchTerm}%,apellidos.ilike.%${searchTerm}%,whatsapp.ilike.%${searchTerm}%,usuario.ilike.%${searchTerm}%,nickname.ilike.%${searchTerm}%`)
+      query = query.limit(100)
+    } else {
+      query = query.limit(600) // Limitar la cantidad de usuarios para no saturar la memoria ni la red
+    }
+
+    const { data, error } = await query
 
     if (data) {
       setClientes(data)
