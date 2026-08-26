@@ -19,6 +19,13 @@ export function WalletProvider({ children }) {
     if (!user) return
     if (!initialLoadDone.current) setLoading(true)
     
+    // Fallback absoluto para evitar que la UI quede bloqueada para siempre
+    const fallbackTimer = setTimeout(() => {
+      setLoading(false);
+      initialLoadDone.current = true;
+      console.warn("fetchWallet fallback timer triggered");
+    }, 8000);
+
     try {
       // 1. Saldo de Cliente
       const { data: walletData } = await supabase
@@ -49,6 +56,7 @@ export function WalletProvider({ children }) {
     } catch (err) {
       console.error("Critical error in fetchWallet:", err)
     } finally {
+      clearTimeout(fallbackTimer);
       setLoading(false)
       initialLoadDone.current = true
     }
