@@ -943,11 +943,31 @@ export default function Billetera({ onNavigate }) {
                 )}
               </div>
 
-              {metodoId && monto && (() => {
-                const selected = metodos.find(m => m.id === metodoId)
-                if (!selected || !selected.beneficios_extra) return null;
+              {monto && (() => {
                 const strMonto = monto.toString().replace('.00', '');
-                const porcentaje = selected.beneficios_extra[monedaRecarga]?.[strMonto];
+                let porcentaje = null;
+                let metodoConBono = null;
+
+                if (metodoId) {
+                  const selected = metodos.find(m => m.id === metodoId)
+                  if (selected && selected.beneficios_extra && selected.beneficios_extra[monedaRecarga]?.[strMonto]) {
+                    porcentaje = selected.beneficios_extra[monedaRecarga][strMonto];
+                    metodoConBono = selected;
+                  }
+                }
+
+                if (!porcentaje) {
+                  // Buscar algún método que ofrezca bono para este monto si no hay uno seleccionado o el seleccionado no tiene
+                  const metodosHabilitados = metodos.filter(m => m.activo && (monedaRecarga === 'bs' ? m.habilitado_billetera_bs : m.habilitado_billetera));
+                  for (const m of metodosHabilitados) {
+                    if (m.beneficios_extra && m.beneficios_extra[monedaRecarga]?.[strMonto]) {
+                      porcentaje = m.beneficios_extra[monedaRecarga][strMonto];
+                      metodoConBono = m;
+                      break;
+                    }
+                  }
+                }
+
                 if (!porcentaje) return null;
                 const bono = parseFloat(monto) * (parseFloat(porcentaje) / 100);
                 return (
@@ -959,9 +979,9 @@ export default function Billetera({ onNavigate }) {
                   }}>
                     <span style={{ fontSize: '24px' }}>🎁</span>
                     <div>
-                      <div style={{ fontWeight: 800 }}>¡BONO DEL {porcentaje}% APLICADO!</div>
+                      <div style={{ fontWeight: 800 }}>¡BONO DEL {porcentaje}% {metodoId ? 'APLICADO' : 'DISPONIBLE'}!</div>
                       <div style={{ fontSize: '12px', opacity: 0.9 }}>
-                        Recibirás {monedaRecarga === 'bs' ? formatBs(parseFloat(monto) + bono) + ' Bs' : formatUSD(parseFloat(monto) + bono)} en total en tu billetera.
+                        Recibirás {monedaRecarga === 'bs' ? formatBs(parseFloat(monto) + bono) + ' Bs' : formatUSD(parseFloat(monto) + bono)} en total en tu billetera{(!metodoId && metodoConBono) ? ` (Pagando con ${metodoConBono.nombre}).` : '.'}
                       </div>
                     </div>
                   </div>
