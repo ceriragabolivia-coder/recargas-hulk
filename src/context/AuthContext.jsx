@@ -118,7 +118,7 @@ export function AuthProvider({ children }) {
 
     try {
       // 2. Consulta paralela con Timeout (Failsafe)
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 3000))
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 15000))
       
       const fetchPromise = (async () => {
         const { data: rpcData } = await supabase.rpc('get_perfil_completo_rpc', { p_user_id: userId })
