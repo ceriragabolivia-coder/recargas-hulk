@@ -3185,15 +3185,46 @@ export default function Pedidos({
                       </button>
                     )}
                     {selectedPedido.estado === "procesando" && (
-                      <button
-                        className="btn btn-primary btn-sm"
-                        style={{ padding: "4px 8px", fontSize: "11px" }}
-                        onClick={() =>
-                          updateEstado(selectedPedido.id, "completado")
-                        }
-                      >
-                        ✅ Pedido Completado
-                      </button>
+                      <>
+                        <button
+                          className="btn btn-primary btn-sm"
+                          style={{ padding: "4px 8px", fontSize: "11px", marginRight: "5px" }}
+                          onClick={() =>
+                            updateEstado(selectedPedido.id, "completado")
+                          }
+                        >
+                          ✅ Pedido Completado
+                        </button>
+                        <button
+                          className="btn btn-sm"
+                          style={{ padding: "4px 8px", fontSize: "11px", backgroundColor: "#00b8d4", color: "white", borderColor: "#00b8d4" }}
+                          disabled={procesandoApi}
+                          onClick={async () => {
+                            setProcesandoApi(true);
+                            try {
+                              const res = await fetch('/api/tiendagiftven/sync_order', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ pedido_id: selectedPedido.id })
+                              });
+                              const data = await res.json();
+                              if (data.updated) {
+                                playSuccessSound();
+                                await fetchPedidos();
+                                showAlert('¡Éxito! El pedido se ha sincronizado correctamente.', 'success');
+                                refreshPedidoData(selectedPedido.id);
+                              } else {
+                                showAlert('El pedido aún se está procesando en el proveedor o no hay actualizaciones.', 'warning');
+                              }
+                            } catch (e) {
+                              showAlert('Error al sincronizar con TiendaGiftVen.', 'error');
+                            }
+                            setProcesandoApi(false);
+                          }}
+                        >
+                          {procesandoApi ? "⏳ Sincronizando..." : "🔄 Forzar Sincronización API"}
+                        </button>
+                      </>
                     )}
                     {selectedPedido.estado !== "pago_no_encontrado" && (
                       <button
