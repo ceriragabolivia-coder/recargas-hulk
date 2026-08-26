@@ -15,6 +15,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     // Eliminamos storageKey personalizada para evitar conflictos de Lock entre pestañas
     // Supabase usará el valor por defecto 'supabase.auth.token'
+    
+    // OVERRIDE CRÍTICO: Evitar el uso de navigator.locks que causa deadlocks infinitos en React
+    lock: async (name, acquireTimeout, fn) => {
+      // Ejecutamos la función directamente sin intentar adquirir un lock real
+      return await fn();
+    }
   }
 })
-
