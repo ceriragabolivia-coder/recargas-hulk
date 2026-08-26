@@ -826,9 +826,17 @@ export function useMetodosPago() {
   const [loading, setLoading] = useState(true)
 
   async function fetchMetodos() {
-    const { data } = await supabase.from('metodos_pago').select('*').order('nombre')
-    if (data) setMetodos(data)
-    setLoading(false)
+    try {
+      const { data, error } = await supabase.from('metodos_pago').select('*').order('nombre')
+      if (error) {
+        console.error("Error fetching metodos_pago:", error)
+      }
+      if (data) setMetodos(data)
+    } catch (err) {
+      console.error("Critical error in fetchMetodos:", err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function createMetodo(nombre, datos, iconoUrl = null, qrUrl = null, beneficiosExtra = {}) {
