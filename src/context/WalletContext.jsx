@@ -36,16 +36,50 @@ export function WalletProvider({ children }) {
     }
     
     try {
-      const fetchPromise = supabase.rpc('get_wallet_data_rpc', { p_user_id: user.id });
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => {
-          const err = new Error('AbortError');
-          err.name = 'AbortError';
-          reject(err);
-        }, 15000);
-      });
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      // Bypass supabase.auth.getSession() COMPLETELY to prevent GoTrue lock deadlocks
+      let token = null;
+      try {
+        const projectId = supabaseUrl.split('//')[1].split('.')[0];
+        const storageKey = `sb-${projectId}-auth-token`;
+        const sessionStr = localStorage.getItem(storageKey);
+        if (sessionStr) {
+          const sessionObj = JSON.parse(sessionStr);
+          token = sessionObj?.access_token;
+        }
+      } catch (e) {
+        console.warn('Error reading token from localStorage', e);
+      }
+      
+      let data = null;
+      let error = null;
 
-      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+      if (token) {
+        // Bypass supabase-js client to avoid GoTrue interceptor deadlocks on reload
+        const response = await fetch(`${supabaseUrl}/rest/v1/rpc/get_wallet_data_rpc`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': supabaseAnonKey,
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ p_user_id: user.id })
+        });
+
+        if (response.ok) {
+          data = await response.json();
+        } else {
+          const errText = await response.text();
+          error = { message: errText };
+        }
+      } else {
+        // Fallback if no token (shouldn't happen since user is present)
+        const result = await supabase.rpc('get_wallet_data_rpc', { p_user_id: user.id });
+        data = result.data;
+        error = result.error;
+      }
       
       if (data) {
         setWallet(data.wallet || { saldo: 0, saldo_bs: 0 })
@@ -61,12 +95,7 @@ export function WalletProvider({ children }) {
       }
     } catch (err) {
       console.error("Critical error in fetchWallet:", err)
-      if (err.name === 'AbortError') {
-        console.log("Fetch aborted")
-        setFatalError("La conexión ha excedido el tiempo de espera.")
-      } else {
-        setFatalError("Error de red: La conexión está tardando demasiado o no hay internet.")
-      }
+      setFatalError("Error de red: La conexión está tardando demasiado o no hay internet.")
     } finally {
       clearTimeout(timeoutId)
       setLoading(false)
