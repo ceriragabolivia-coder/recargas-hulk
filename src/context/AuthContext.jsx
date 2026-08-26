@@ -245,7 +245,7 @@ export function AuthProvider({ children }) {
         }, () => {
            refreshRoles()
         })
-        .subscribe()
+        /* .subscribe() DISABLED */
     }
 
     const initializeAuth = async () => {
@@ -289,7 +289,7 @@ export function AuthProvider({ children }) {
          await supabase.auth.signOut();
          window.location.reload(true);
       })
-      .subscribe();
+      /* .subscribe() DISABLED */;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'TOKEN_REFRESHED') return

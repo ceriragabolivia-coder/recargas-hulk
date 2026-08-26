@@ -435,7 +435,7 @@ export default function Landing({ onNavigate }) {
           playNotificationSound();
         }
       })
-      .subscribe();
+      /* .subscribe() DISABLED */;
 
     // 📦 Suscripción Realtime para Cambios en Mis Pedidos
     const channelPedidos = supabase
@@ -468,7 +468,7 @@ export default function Landing({ onNavigate }) {
           playNotificationSound();
         }
       })
-      .subscribe();
+      /* .subscribe() DISABLED */;
 
     // 🏦 Suscripción Realtime para Billetera
     const channelWallet = supabase
@@ -493,7 +493,7 @@ export default function Landing({ onNavigate }) {
           playNotificationSound();
         }
       })
-      .subscribe();
+      /* .subscribe() DISABLED */;
 
     const playNotificationSound = () => {
       try {

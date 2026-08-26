@@ -150,7 +150,7 @@ export function WalletProvider({ children }) {
            setWallet(payload.new);
         }
       })
-      .subscribe();
+      /* .subscribe() DISABLED */;
 
     // Suscripción Realtime: Saldo Admin
     let adminChannel;
@@ -164,7 +164,7 @@ export function WalletProvider({ children }) {
              setAdminSalesBalance(payload.new);
           }
         })
-        .subscribe();
+        /* .subscribe() DISABLED */;
     }
 
     return () => {
