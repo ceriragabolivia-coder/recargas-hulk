@@ -13,16 +13,22 @@ export function WalletProvider({ children }) {
   const [recargas, setRecargas] = useState([])
   const [transacciones, setTransacciones] = useState([])
   const [loading, setLoading] = useState(true)
+  const [fallbackTriggered, setFallbackTriggered] = useState(false)
   const initialLoadDone = useRef(false)
+  const isMounted = useRef(true)
 
   async function fetchWallet() {
     if (!user) return
-    if (!initialLoadDone.current) setLoading(true)
+    if (!initialLoadDone.current) {
+      setLoading(true)
+      setFallbackTriggered(false)
+    }
     
     // Fallback absoluto para evitar que la UI quede bloqueada para siempre
     const fallbackTimer = setTimeout(() => {
       setLoading(false);
       initialLoadDone.current = true;
+      setFallbackTriggered(true);
       console.warn("fetchWallet fallback timer triggered");
     }, 8000);
 
@@ -172,6 +178,7 @@ export function WalletProvider({ children }) {
     recargas,
     transacciones,
     loading,
+    fallbackTriggered,
     solicitarRecarga,
     refetch: fetchWallet
   }

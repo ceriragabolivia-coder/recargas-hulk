@@ -8,9 +8,9 @@ import { extractReferenceFromImage } from '../utils/ocrHelper'
 
 export default function LandingWallet({ onClose }) {
   const navigate = useNavigate()
-  const { wallet, adminSalesBalance, recargas, transacciones, loading, solicitarRecarga, refetch } = useWallet()
+  const { wallet, adminSalesBalance, recargas, transacciones, loading, fallbackTriggered, solicitarRecarga, refetch } = useWallet()
   const { perfil, isCliente, user } = useAuth()
-  const { metodos } = useMetodosPago()
+  const { metodos, loading: metodosLoading } = useMetodosPago()
   const { config } = useConfiguracion()
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin' || perfil?.rol?.toLowerCase() === 'administrador'
   const { verificarYRegistrarReferencia } = useVentas()
@@ -286,11 +286,18 @@ export default function LandingWallet({ onClose }) {
   return (
     <div className="landing-wallet-container">
       <div className="wallet-header">
-        <div className="wallet-title-area">
-          <h2>Mi Billetera</h2>
-          <p>Gestiona tu saldo y realiza recargas de forma segura.</p>
+        <div className="wallet-header">
+          <div>
+            <h2>Mi Billetera</h2>
+            <p>Gestiona tu saldo y realiza recargas de forma segura.</p>
+            {fallbackTriggered && (
+              <div style={{ background: 'rgba(255, 165, 0, 0.2)', color: 'orange', padding: '10px', borderRadius: '8px', fontSize: '12px', marginTop: '10px' }}>
+                ⚠️ <strong>Conexión muy lenta.</strong> Los datos aún se están descargando de forma invisible. Espera unos segundos y vuelve a abrir la billetera, o refresca la página.
+              </div>
+            )}
+          </div>
+          <button className="btn-close-wallet" onClick={onClose}>✕</button>
         </div>
-        <button className="btn-close-wallet" onClick={onClose}>✕</button>
       </div>
 
       <div className="wallet-content-grid">
@@ -503,7 +510,11 @@ export default function LandingWallet({ onClose }) {
               <div className="form-group">
                 <label>Método de Pago</label>
                 <div className="methods-grid">
-                  {metodos.filter(m => m.activo && (monedaRecarga === 'bs' ? m.habilitado_billetera_bs : m.habilitado_billetera)).map(m => (
+                  {metodosLoading ? (
+                    <div style={{ color: '#fff', fontSize: '14px', padding: '10px 0', opacity: 0.7 }}>Cargando métodos...</div>
+                  ) : metodos.filter(m => m.activo && (monedaRecarga === 'bs' ? m.habilitado_billetera_bs : m.habilitado_billetera)).length === 0 ? (
+                    <div style={{ color: '#fff', fontSize: '14px', padding: '10px 0', opacity: 0.7 }}>No hay métodos disponibles para esta moneda.</div>
+                  ) : metodos.filter(m => m.activo && (monedaRecarga === 'bs' ? m.habilitado_billetera_bs : m.habilitado_billetera)).map(m => (
                     <div 
                       key={m.id} 
                       className={`method-item ${metodoId === m.id ? 'active' : ''}`}
