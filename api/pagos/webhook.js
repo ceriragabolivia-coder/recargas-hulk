@@ -220,27 +220,69 @@ async function procesarPedidoConFazerCards(pedidoId, apiKey) {
           }
         }
 
-        const res = await fetch(endpointUrl, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
+        let maxRetries = 10;
+        let res;
+        let data;
+        let success = false;
 
-        if (!res.ok) {
-          const text = await res.text();
-          let errData = {};
+        while (maxRetries > 0 && !success) {
           try {
-            errData = JSON.parse(text);
-          } catch (e) {}
-          throw new Error(
-            errData.error || errData.message || "Error HTTP " + res.status
-          );
-        }
+            res = await fetch(endpointUrl, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(payload),
+            });
 
-        const data = await res.json();
+            if (!res.ok) {
+              const text = await res.text();
+              let errData = {};
+              try {
+                errData = JSON.parse(text);
+              } catch (e) {}
+              
+              const errMsg = errData.error || errData.message || "Error HTTP " + res.status;
+              
+              // Check if FazerCards rejected an extra field we sent
+              const notExpectedMatch = errMsg.match(/Field "([^"]+)" is not expected/);
+              if (res.status === 400 && notExpectedMatch && payload.fields) {
+                const badField = notExpectedMatch[1];
+                console.log(`[Webhook] FazerCards rejected field '${badField}', removing and retrying...`);
+                delete payload.fields[badField];
+                maxRetries--;
+                continue; // Retry without the bad field
+              }
+
+              throw new Error(errMsg);
+            }
+
+            const responseText = await res.text();
+            try {
+              data = responseText ? JSON.parse(responseText) : {};
+            } catch (e) {
+              throw new Error("Respuesta inválida de FazerCards: " + responseText);
+            }
+            success = true;
+          } catch (err) {
+            // Check if it's a network error (like fetch failed)
+            const isNetworkError = err.message.includes('fetch failed') || err.message.includes('network') || err.message.includes('timeout') || err.message.includes('ECONNREFUSED');
+            
+            if (isNetworkError) {
+              console.log(`[Webhook] Error de red con FazerCards: ${err.message}. Reintentos restantes: ${maxRetries - 1}`);
+              maxRetries--;
+              if (maxRetries === 0) {
+                throw new Error("Fallo de red tras múltiples reintentos: " + err.message);
+              }
+              // Esperar 1.5 segundos antes de reintentar
+              await new Promise(resolve => setTimeout(resolve, 1500));
+            } else {
+              // Si es un error estructurado, lanzarlo para salir del loop
+              throw err;
+            }
+          }
+        }
         if (data.ok && data.order) {
           const respEstado = data.order.status
             ? data.order.status.toLowerCase()
