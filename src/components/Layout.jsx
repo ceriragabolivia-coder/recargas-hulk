@@ -453,96 +453,35 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
   const adminIdsRef = useRef(new Set())
 
   const fetchCounts = useCallback(async () => {
-    // 1. Obtener IDs de administradores (solo una vez o según sea necesario)
-    if (adminIdsRef.current.size === 0) {
-      const { data: adminsP } = await supabase.from('perfiles').select('id').ilike('rol', 'admin')
-      const authIds = adminsP?.map(a => a.id) || []
-      
-      const { data: adminsC } = await supabase.from('clientes').select('id').in('auth_user_id', authIds)
-      const clienteIds = adminsC?.map(c => c.id) || []
-
-      const ids = new Set([...authIds, ...clienteIds])
-      if (perfil?.id) ids.add(perfil.id)
-      if (perfil?.cliente_uuid) ids.add(perfil.cliente_uuid)
-      adminIdsRef.current = ids
-    }
-    const adminIds = adminIdsRef.current
-
-    let pCount = 0, oCount = 0, rCount = 0, sCount = 0, brCount = 0
-
     // Solo admins, administradores y negocios ven estos contadores
     if (!isAdmin && !isNegocio) {
       return
     }
 
-    const isSuperAdmin = user?.email?.toLowerCase() === 'recargashulk@gmail.com'
-    const ownerId = perfil?.owner_id || (isNegocio ? user?.id : null)
-
     try {
-        let pQuery = supabase.from('pedidos').select('*', { count: 'exact', head: true }).is('pago_verificado', null).neq('estado', 'cancelado').neq('estado', 'reembolsado').neq('estado', 'completado')
-        let oQuery = supabase.from('pedidos').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente')
-        let rQuery = supabase.from('pedidos').select('*', { count: 'exact', head: true }).eq('pago_verificado', true).neq('estado', 'completado').neq('estado', 'cancelado').neq('estado', 'reembolsado')
-
-        if (!isSuperAdmin && ownerId) {
-          pQuery = pQuery.eq('owner_id', ownerId)
-          oQuery = oQuery.eq('owner_id', ownerId)
-          rQuery = rQuery.eq('owner_id', ownerId)
-        }
-
-        const [{ count: p, error: ep }, { count: o, error: eo }, { count: r, error: er }] = await Promise.all([
-          pQuery, oQuery, rQuery
-        ])
-        
-        if (ep) console.error("Error pCount:", ep)
-        if (eo) console.error("Error oCount:", eo)
-        if (er) console.error("Error rCount:", er)
-
-        const { count: br, error: ebr } = await supabase.from('billetera_recargas').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente')
-        if (ebr) console.error("Error brCount:", ebr)
-
-        pCount = p || 0
-        oCount = o || 0
-        rCount = r || 0
-        brCount = br || 0
-      } catch (err) {
-        console.error("Error general fetchCounts Pedidos:", err)
+      const { data, error } = await supabase.rpc('get_admin_counts_rpc', {
+        p_user_id: perfil?.id || user?.id
+      });
+      
+      if (error) {
+        console.error("Error fetchCounts RPC:", error);
+        return;
       }
-
-      try {
-        const { data: messages, error: es } = await supabase.from('soporte_mensajes').select('cliente_id, remitente_id').order('created_at', { ascending: false }).limit(200)
-        if (es) console.error("Error soporte:", es)
-        if (messages) {
-          const latestMap = new Map()
-          messages.forEach(m => { if (!latestMap.has(m.cliente_id)) latestMap.set(m.cliente_id, m) })
-          
-          const potentialClients = []
-          latestMap.forEach(m => { if (!adminIds.has(m.remitente_id)) potentialClients.push(m.cliente_id) })
-          
-          if (potentialClients.length > 0) {
-            const { data: clientsData } = await supabase.from('clientes').select('id, soporte_status').in('id', potentialClients)
-            if (clientsData) {
-              const clientsStatusMap = new Map(clientsData.map(c => [c.id, c.soporte_status]))
-              sCount = potentialClients.filter(id => {
-                const status = clientsStatusMap.get(id)
-                if (!status || status === 'resuelto') return false
-                return true
-              }).length
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Error general fetchCounts Soporte:", err)
+      
+      if (data) {
+        setCounts(prev => ({
+          ...prev,
+          pagos_pendientes: data.pedidos_verificando || 0,
+          ordenes_pendientes: data.pedidos_pendientes || 0,
+          recargas_pendientes: data.pedidos_reembolso || 0,
+          billetera_pendientes: data.recargas_pendientes || 0,
+          soporte_pendientes: data.mensajes_soporte || 0
+        }))
       }
-
-    setCounts(prev => ({
-      ...prev,
-      pagos_pendientes: pCount,
-      ordenes_pendientes: oCount,
-      recargas_pendientes: rCount,
-      billetera_pendientes: brCount,
-      soporte_pendientes: sCount
-    }))
-  }, [isAdmin, isNegocio, perfil?.id])
+    } catch (err) {
+      console.error("Error general fetchCounts:", err)
+    }
+  }, [isAdmin, isNegocio, perfil?.id, user?.id])
 
 
 
