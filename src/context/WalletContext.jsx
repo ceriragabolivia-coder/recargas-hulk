@@ -36,9 +36,16 @@ export function WalletProvider({ children }) {
     }
     
     try {
-      const { data, error } = await supabase.rpc('get_wallet_data_rpc', { p_user_id: user.id }, {
-         signal: abortControllerRef.current.signal 
-      })
+      const fetchPromise = supabase.rpc('get_wallet_data_rpc', { p_user_id: user.id });
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          const err = new Error('AbortError');
+          err.name = 'AbortError';
+          reject(err);
+        }, 15000);
+      });
+
+      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
       
       if (data) {
         setWallet(data.wallet || { saldo: 0, saldo_bs: 0 })
