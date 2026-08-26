@@ -827,7 +827,7 @@ export default function App() {
         setOnlineUsers(users)
         window.dispatchEvent(new CustomEvent('online-users-update', { detail: users.length }));
       })
-      .subscribe(async (status) => {
+      /* .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           await channel.track({
             user_id: trackId,
@@ -838,7 +838,7 @@ export default function App() {
             online_at: new Date().toISOString(),
           })
         }
-      })
+      }) DISABLED */
 
     // Canal de comandos del sistema (Broadcast)
     const cmdChannel = supabase.channel(`cmd_${trackId}`)
@@ -861,7 +861,7 @@ export default function App() {
              });
          }
       })
-      .subscribe()
+      /* .subscribe() DISABLED */
 
     return () => {
       supabase.removeChannel(channel)
