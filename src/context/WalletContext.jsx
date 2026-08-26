@@ -33,30 +33,18 @@ export function WalletProvider({ children }) {
     }, 8000);
 
     try {
-      // 1. Saldo de Cliente
-      const { data: walletData } = await supabase
-        .from('billeteras')
-        .select('*')
-        .eq('auth_user_id', user.id)
-        .maybeSingle()
-      setWallet(walletData || { saldo: 0, saldo_bs: 0 })
-
-      // 2. Saldo de Operaciones (Solo Admin)
-      if (perfil?.rol?.toLowerCase() === 'admin') {
-        const { data: salesData } = await supabase
-          .from('admin_saldos')
-          .select('*')
-          .eq('auth_user_id', user.id)
-          .maybeSingle()
-        if (salesData) setAdminSalesBalance(salesData)
+      const { data, error } = await supabase.rpc('get_wallet_data_rpc', { p_user_id: user.id })
+      
+      if (data) {
+        setWallet(data.wallet || { saldo: 0, saldo_bs: 0 })
+        if (perfil?.rol?.toLowerCase() === 'admin') {
+          setAdminSalesBalance(data.admin_sales || null)
+        }
+        setRecargas(data.recargas || [])
+        setTransacciones(data.transacciones || [])
+      } else if (error) {
+        console.error("RPC Error fetching wallet:", error)
       }
-
-      // 3. Recargas y Transacciones (Secuencial para no saturar la red)
-      const { data: recData } = await supabase.from('billetera_recargas').select('*, metodos_pago(nombre)').eq('auth_user_id', user.id).order('created_at', { ascending: false })
-      const { data: transData } = await supabase.from('billetera_transacciones').select('*').eq('auth_user_id', user.id).order('created_at', { ascending: false })
-
-      setRecargas(recData || [])
-      setTransacciones(transData || [])
     } catch (err) {
       console.error("Critical error in fetchWallet:", err)
     } finally {
