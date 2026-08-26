@@ -117,9 +117,7 @@ export function AuthProvider({ children }) {
     }
 
     try {
-      // 2. Consulta paralela con Timeout (Failsafe)
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 15000))
-      
+      // 2. Consulta paralela sin Timeout artificial para no bloquear conexiones lentas
       const fetchPromise = (async () => {
         const { data: rpcData } = await supabase.rpc('get_perfil_completo_rpc', { p_user_id: userId })
         
@@ -205,8 +203,9 @@ export function AuthProvider({ children }) {
         }
       })()
 
-      return await Promise.race([fetchPromise, timeoutPromise])
+      return await fetchPromise
     } catch (err) {
+      console.error("Error crítico al cargar perfil:", err);
       return { id: userId, rol: 'cliente', roles: ['cliente'], estado: 'cargando', is_fallback: true }
     }
   }
