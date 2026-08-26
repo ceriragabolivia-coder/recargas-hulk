@@ -27,8 +27,9 @@
           });
         }
         
-        var currentVersion = "v2.2";
+        var currentVersion = "v2.4";
         if (localStorage.getItem("app_version") !== currentVersion) {
+          localStorage.clear();
           localStorage.setItem("app_version", currentVersion);
           if (window.location.search.indexOf("v=" + currentVersion) === -1) {
             var sep = window.location.href.indexOf("?") === -1 ? "?" : "&";
