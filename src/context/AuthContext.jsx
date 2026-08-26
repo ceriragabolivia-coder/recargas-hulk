@@ -248,42 +248,6 @@ export function AuthProvider({ children }) {
         /* .subscribe() DISABLED */
     }
 
-    const initializeAuth = async () => {
-      if (isInitializedRef.current) return
-      isInitializedRef.current = true
-
-      try {
-        const sessionPromise = supabase.auth.getSession()
-        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('LOCK')), 8000))
-        
-        const { data: { session } } = await Promise.race([sessionPromise, timeout])
-        const u = session?.user ?? null
-        
-        if (u) {
-          lastUserIdRef.current = u.id
-          setUser(u)
-          const pData = await fetchPerfilData(u.id, u)
-          
-          // Actualización atómica para evitar parpadeos
-          if (pData) {
-            const blocked = await checkAndBlockPendingUser(pData, u)
-            if (!blocked) {
-              setPerfil(pData)
-              setupRealtime(u.id)
-            } else {
-              setUser(null)
-              setPerfil(null)
-            }
-          }
-        }
-      } catch (err) {
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    initializeAuth()
-
     const globalChannel = supabase.channel('global_events')
       .on('broadcast', { event: 'force_reload' }, async () => {
          await supabase.auth.signOut();
@@ -325,6 +289,8 @@ export function AuthProvider({ children }) {
             setPerfil(null)
           }
         }
+        setLoading(false)
+      } else if (!u) {
         setLoading(false)
       }
     })
