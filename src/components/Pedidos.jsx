@@ -3125,6 +3125,57 @@ export default function Pedidos({
                     >
                       ✅ Completado
                     </button>
+                    {selectedPedido.estado === "procesando" && (
+                        <button
+                          className="btn btn-sm"
+                          style={{ padding: "4px 8px", fontSize: "11px", backgroundColor: "#00b8d4", color: "white", borderColor: "#00b8d4" }}
+                          disabled={procesandoApi}
+                          onClick={async () => {
+                            setProcesandoApi(true);
+                            try {
+                              const ref = `HULK-ITEM-${selectedPedido.id}`; // Assuming order id is used, ideally loop through items
+                              // Let's just find the first item id
+                              const { data: items } = await supabase.from('pedido_items').select('id, estado').eq('pedido_id', selectedPedido.id);
+                              if (!items || items.length === 0) throw new Error("No items");
+                              
+                              let syncedAny = false;
+                              for(const item of items) {
+                                if (item.estado !== 'procesando') continue;
+                                const mRef = `HULK-ITEM-${item.id}`;
+                                const res = await fetch('/api/tiendagiftven/proxy', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ endpoint: `recargas/status?merchant_ref=${mRef}`, method: 'GET' })
+                                });
+                                const data = await res.json();
+                                if (data.ok && data.estado) {
+                                  const { error: rpcError } = await supabase.rpc('procesar_webhook_tiendagiftven_rpc', {
+                                    p_merchant_ref: mRef,
+                                    p_pedido_id: selectedPedido.id,
+                                    p_estado: data.estado,
+                                    p_mensaje: data.mensaje || 'Sincronización manual'
+                                  });
+                                  if (!rpcError) syncedAny = true;
+                                }
+                              }
+                              
+                              if (syncedAny) {
+                                playSuccessSound();
+                                await fetchPedidos();
+                                showAlert('¡Éxito! El pedido se ha sincronizado correctamente.', 'success');
+                                refreshPedidoData(selectedPedido.id);
+                              } else {
+                                showAlert('El pedido aún se está procesando en el proveedor o no hay actualizaciones.', 'warning');
+                              }
+                            } catch (e) {
+                              showAlert('Error al sincronizar con TiendaGiftVen.', 'error');
+                            }
+                            setProcesandoApi(false);
+                          }}
+                        >
+                          {procesandoApi ? "⏳ Sincronizando..." : "🔄 Forzar Sincronización API"}
+                        </button>
+                    )}
                     {selectedPedido.reembolso_billetera !== true && (
                       <button
                         className="btn btn-sm"
