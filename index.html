@@ -16,6 +16,18 @@
     <meta property="og:type" content="website" />
     
     <title>Recargas Hulk</title>
+    <script>
+      (function(){
+        var currentVersion = "v2.1";
+        if (localStorage.getItem("app_version") !== currentVersion) {
+          localStorage.setItem("app_version", currentVersion);
+          if (window.location.search.indexOf("v=" + currentVersion) === -1) {
+            var sep = window.location.href.indexOf("?") === -1 ? "?" : "&";
+            window.location.replace(window.location.href + sep + "v=" + currentVersion);
+          }
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
