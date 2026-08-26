@@ -424,23 +424,16 @@ export default function Pedidos({
     }
   }, [targetOrderId, targetOrderNumber, pedidos.length]);
 
-  // Suscripción Realtime para la lista de pedidos
+  // Suscripción Realtime (REEMPLAZADA POR POLLING PARA EVITAR LÍMITE DE CONEXIONES)
   useEffect(() => {
-    const channel = supabase
-      .channel("admin_pedidos_list")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "pedidos" },
-        () => {
-          fetchPedidos();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    // Polling cada 15 segundos para mantener la lista actualizada sin usar WebSockets
+    const intervalId = setInterval(() => {
+      fetchPedidos();
+    }, 15000);
+      
+    return () => clearInterval(intervalId);
   }, [user]);
+
   useEffect(() => {
     if (selectedPedido) {
       // Garantizar que el mensaje predeterminado use el número de pedido actual
