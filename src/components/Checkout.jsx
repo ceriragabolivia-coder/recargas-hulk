@@ -72,7 +72,7 @@ export default function Checkout({ onFinish, embedded = false }) {
     if (isRev) return [];
     return metodos.filter(m => m.activo);
   }, [metodos, perfil]);
-  const { wallet } = useWallet()
+  const { wallet, refetch: refetchWallet } = useWallet()
   const { config } = useConfiguracion()
   const permitirPagoDirecto = config?.permitir_pago_directo !== 'false'
   
@@ -654,6 +654,8 @@ export default function Checkout({ onFinish, embedded = false }) {
 
       // Actualizar el perfil para reflejar el nuevo saldo de la billetera
       refreshPerfil();
+      // Refrescar manualmente la data de la billetera (saldo, transacciones, etc)
+      refetchWallet();
       
       // Reproducir sonido de caja (original)
       playCashRegisterSound()
