@@ -600,7 +600,7 @@ export function useTodosLosProductos() {
     try {
       let query = supabase
         .from('productos')
-        .select('*, juegos!inner(*, categorias(*))')
+        .select('*, juegos!inner(id, nombre, activo, categorias(id, nombre, activa))')
         .eq('activo', true)
         .eq('juegos.activo', true)
 
