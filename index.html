@@ -18,7 +18,16 @@
     <title>Recargas Hulk</title>
     <script>
       (function(){
-        var currentVersion = "v2.1";
+        // Unregister any old Service Workers
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for(let registration of registrations) {
+              registration.unregister();
+            }
+          });
+        }
+        
+        var currentVersion = "v2.2";
         if (localStorage.getItem("app_version") !== currentVersion) {
           localStorage.setItem("app_version", currentVersion);
           if (window.location.search.indexOf("v=" + currentVersion) === -1) {
