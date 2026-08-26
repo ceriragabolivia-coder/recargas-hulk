@@ -13,27 +13,32 @@ export function WalletProvider({ children }) {
   const [recargas, setRecargas] = useState([])
   const [transacciones, setTransacciones] = useState([])
   const [loading, setLoading] = useState(true)
-  const [fallbackTriggered, setFallbackTriggered] = useState(false)
+  const [fatalError, setFatalError] = useState(null)
   const initialLoadDone = useRef(false)
   const isMounted = useRef(true)
+  const abortControllerRef = useRef(null)
 
   async function fetchWallet() {
     if (!user) return
+    
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    abortControllerRef.current = new AbortController()
+    
+    const timeoutId = setTimeout(() => {
+      if (abortControllerRef.current) abortControllerRef.current.abort()
+    }, 20000)
+
     if (!initialLoadDone.current) {
       setLoading(true)
-      setFallbackTriggered(false)
+      setFatalError(null)
     }
     
-    // Fallback absoluto para evitar que la UI quede bloqueada para siempre
-    const fallbackTimer = setTimeout(() => {
-      setLoading(false);
-      initialLoadDone.current = true;
-      setFallbackTriggered(true);
-      console.warn("fetchWallet fallback timer triggered");
-    }, 8000);
-
     try {
-      const { data, error } = await supabase.rpc('get_wallet_data_rpc', { p_user_id: user.id })
+      const { data, error } = await supabase.rpc('get_wallet_data_rpc', { p_user_id: user.id }, {
+         signal: abortControllerRef.current.signal 
+      })
       
       if (data) {
         setWallet(data.wallet || { saldo: 0, saldo_bs: 0 })
@@ -42,13 +47,21 @@ export function WalletProvider({ children }) {
         }
         setRecargas(data.recargas || [])
         setTransacciones(data.transacciones || [])
+        setFatalError(null)
       } else if (error) {
         console.error("RPC Error fetching wallet:", error)
+        setFatalError("Error del servidor: " + error.message)
       }
     } catch (err) {
       console.error("Critical error in fetchWallet:", err)
+      if (err.name === 'AbortError') {
+        console.log("Fetch aborted")
+        setFatalError("La conexión ha excedido el tiempo de espera.")
+      } else {
+        setFatalError("Error de red: La conexión está tardando demasiado o no hay internet.")
+      }
     } finally {
-      clearTimeout(fallbackTimer);
+      clearTimeout(timeoutId)
       setLoading(false)
       initialLoadDone.current = true
     }
@@ -166,7 +179,7 @@ export function WalletProvider({ children }) {
     recargas,
     transacciones,
     loading,
-    fallbackTriggered,
+    fatalError,
     solicitarRecarga,
     refetch: fetchWallet
   }

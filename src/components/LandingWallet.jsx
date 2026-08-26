@@ -8,7 +8,7 @@ import { extractReferenceFromImage } from '../utils/ocrHelper'
 
 export default function LandingWallet({ onClose }) {
   const navigate = useNavigate()
-  const { wallet, adminSalesBalance, recargas, transacciones, loading, fallbackTriggered, solicitarRecarga, refetch } = useWallet()
+  const { wallet, adminSalesBalance, recargas, transacciones, loading, fatalError, solicitarRecarga, refetch } = useWallet()
   const { perfil, isCliente, user } = useAuth()
   const { metodos, loading: metodosLoading } = useMetodosPago()
   const { config } = useConfiguracion()
@@ -290,9 +290,9 @@ export default function LandingWallet({ onClose }) {
           <div>
             <h2>Mi Billetera</h2>
             <p>Gestiona tu saldo y realiza recargas de forma segura.</p>
-            {fallbackTriggered && (
-              <div style={{ background: 'rgba(255, 165, 0, 0.2)', color: 'orange', padding: '10px', borderRadius: '8px', fontSize: '12px', marginTop: '10px' }}>
-                ⚠️ <strong>Conexión muy lenta.</strong> Los datos aún se están descargando de forma invisible. Espera unos segundos y vuelve a abrir la billetera, o refresca la página.
+            {fatalError && (
+              <div style={{ background: 'rgba(255, 82, 82, 0.2)', color: '#ff5252', padding: '12px', borderRadius: '8px', fontSize: '13px', marginTop: '10px', border: '1px solid #ff5252' }}>
+                ⚠️ <strong>Error de Conexión:</strong> {fatalError}
               </div>
             )}
           </div>
