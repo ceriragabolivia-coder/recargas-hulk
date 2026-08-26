@@ -14,11 +14,18 @@ export default async function handler(req, res) {
     const payload = req.body;
     console.log('📦 Webhook TiendaGiftVen Recibido:', payload);
 
+    // LOG DE DEPURACIÓN EN LA BASE DE DATOS
+    await supabase.from('mensajes_sistema').insert({
+      tipo: 'info',
+      titulo: 'Webhook Recibido TiendaGiftVen',
+      mensaje: JSON.stringify(payload)
+    });
+
     const merchant_ref = payload.merchant_ref || payload.ref;
     const pedido_id = payload.pedido_id || payload.id_pedido;
     const mensaje = payload.mensaje;
     const codigos = payload.codigos;
-    let estado = payload.estado ? payload.estado.toLowerCase() : '';
+    let estado = (payload.estado || payload.status || '').toLowerCase();
 
     if (!merchant_ref) {
       return res.status(400).json({ error: 'Missing merchant_ref or ref' });

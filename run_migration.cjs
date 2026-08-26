@@ -12,7 +12,7 @@ const sql = fs.readFileSync('supabase/migrations/' + fileName, 'utf8');
 const conn = new Client();
 conn.on('ready', () => {
   console.log('Client :: ready');
-  conn.exec(`docker exec -i supabase-db psql -U postgres -d postgres`, (err, stream) => {
+  conn.exec(`docker exec -i supabase-db psql -U supabase_admin -d postgres`, (err, stream) => {
     if (err) throw err;
     stream.on('close', (code, signal) => {
       console.log('Stream :: close :: code: ' + code + ', signal: ' + signal);
