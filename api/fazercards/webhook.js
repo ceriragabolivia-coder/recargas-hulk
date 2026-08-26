@@ -70,8 +70,8 @@ export default async function handler(req, res) {
       searchError = retry.error;
 
       if (searchError || !items || items.length === 0) {
-        console.warn(`⚠️ [FazerCards Webhook] Definitivamente no se encontró el pedido local con el proveedor_pedido_id: ${providerOrderId}. Devolviendo 200 para evitar bloqueo del webhook.`);
-        return res.status(200).json({ success: true, message: 'Local order not found, ignoring' });
+        console.warn(`⚠️ [FazerCards Webhook] Definitivamente no se encontró el pedido local con el proveedor_pedido_id: ${providerOrderId}`);
+        return res.status(404).json({ error: 'Local order not found' });
       }
     }
 

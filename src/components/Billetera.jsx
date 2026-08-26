@@ -903,7 +903,7 @@ export default function Billetera({ onNavigate }) {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Método de Pago (Billetera)</label>
+                <label className="form-label">Seleccionar Método de Pago</label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '10px' }}>
                   {metodos.filter(m => m.activo && (monedaRecarga === 'bs' ? m.habilitado_billetera_bs : m.habilitado_billetera)).map(m => (
                     <button
@@ -943,38 +943,13 @@ export default function Billetera({ onNavigate }) {
                 )}
               </div>
 
-              {monto && (() => {
-                // Ensure we handle "1.000" or similar just in case, though the key in the DB is "1000"
-                const strMonto = String(monto).replace(/[\.,]/g, '').replace('00', '');
-                let porcentaje = null;
-                let metodoConBono = null;
-                
-                console.log("Calculando bono para monto:", strMonto, "metodoId:", metodoId);
-
-                if (metodoId) {
-                  const selected = metodos.find(m => m.id === metodoId)
-                  if (selected && selected.beneficios_extra && selected.beneficios_extra[monedaRecarga]?.[strMonto]) {
-                    porcentaje = selected.beneficios_extra[monedaRecarga][strMonto];
-                    metodoConBono = selected;
-                  }
-                }
-
-                if (!porcentaje) {
-                  // Buscar algún método que ofrezca bono para este monto si no hay uno seleccionado o el seleccionado no tiene
-                  const metodosHabilitados = metodos.filter(m => m.activo && (monedaRecarga === 'bs' ? m.habilitado_billetera_bs : m.habilitado_billetera));
-                  for (const m of metodosHabilitados) {
-                    if (m.beneficios_extra && m.beneficios_extra[monedaRecarga]?.[strMonto]) {
-                      porcentaje = m.beneficios_extra[monedaRecarga][strMonto];
-                      metodoConBono = m;
-                      break;
-                    }
-                  }
-                }
-
-                console.log("Resultado bono:", { porcentaje, metodoConBono });
-
+              {metodoId && monto && (() => {
+                const selected = metodos.find(m => m.id === metodoId)
+                if (!selected || !selected.beneficios_extra) return null;
+                const strMonto = monto.toString().replace('.00', '');
+                const porcentaje = selected.beneficios_extra[monedaRecarga]?.[strMonto];
                 if (!porcentaje) return null;
-                const bono = parseFloat(strMonto) * (parseFloat(porcentaje) / 100);
+                const bono = parseFloat(monto) * (parseFloat(porcentaje) / 100);
                 return (
                   <div className="fade-in" style={{
                     padding: '12px 16px', backgroundColor: 'rgba(34, 197, 94, 0.1)',
@@ -984,9 +959,9 @@ export default function Billetera({ onNavigate }) {
                   }}>
                     <span style={{ fontSize: '24px' }}>🎁</span>
                     <div>
-                      <div style={{ fontWeight: 800 }}>¡BONO DEL {porcentaje}% {metodoId ? 'APLICADO' : 'DISPONIBLE'}!</div>
+                      <div style={{ fontWeight: 800 }}>¡BONO DEL {porcentaje}% APLICADO!</div>
                       <div style={{ fontSize: '12px', opacity: 0.9 }}>
-                        Recibirás {monedaRecarga === 'bs' ? formatBs(parseFloat(strMonto) + bono) + ' Bs' : formatUSD(parseFloat(strMonto) + bono)} en total en tu billetera{(!metodoId && metodoConBono) ? ` (Pagando con ${metodoConBono.nombre}).` : '.'}
+                        Recibirás {monedaRecarga === 'bs' ? formatBs(parseFloat(monto) + bono) + ' Bs' : formatUSD(parseFloat(monto) + bono)} en total en tu billetera.
                       </div>
                     </div>
                   </div>
