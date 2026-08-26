@@ -129,7 +129,7 @@ export function ConfigProvider({ children }) {
       }, (payload) => {
         fetchConfig()
       })
-      .subscribe()
+      /* .subscribe() DISABLED */;
 
     return () => {
       supabase.removeChannel(channel)

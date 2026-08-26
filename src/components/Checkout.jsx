@@ -297,7 +297,7 @@ export default function Checkout({ onFinish, embedded = false }) {
       }, () => {
         fetchDiscounts()
       })
-      .subscribe()
+      /* .subscribe() DISABLED */
 
     return () => {
       supabase.removeChannel(channel)
@@ -1593,13 +1593,13 @@ function OrderTracking({ pedidoInitial, onBack }) {
       .channel(`tracking_order_${pedido.id}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: `id=eq.${pedido.id}` }, 
         (payload) => setPedido(prev => ({ ...prev, ...payload.new })))
-      .subscribe()
+      /* .subscribe() DISABLED */
 
     const itemsChannel = supabase
       .channel(`tracking_items_${pedido.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pedido_items', filter: `pedido_id=eq.${pedido.id}` }, 
         () => refreshData())
-      .subscribe()
+      /* .subscribe() DISABLED */
 
     // 3. Capa de Seguridad (Polling cada 3 segundos)
     // Esto garantiza la actualización sin recargar la página

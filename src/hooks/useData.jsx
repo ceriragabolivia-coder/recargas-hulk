@@ -560,7 +560,7 @@ export function useVentas() {
         console.log('🔄 Venta detectada (Realtime), actualizando resumen...', payload)
         fetchVentasHoy(lastForceOwnSalesRef.current)
       })
-      .subscribe()
+      /* .subscribe() DISABLED */
 
     return () => {
       supabase.removeChannel(channel)
