@@ -45,14 +45,12 @@ export function WalletProvider({ children }) {
         if (salesData) setAdminSalesBalance(salesData)
       }
 
-      // 3. Recargas y Transacciones
-      const [recRes, transRes] = await Promise.all([
-        supabase.from('billetera_recargas').select('*, metodos_pago(nombre)').eq('auth_user_id', user.id).order('created_at', { ascending: false }),
-        supabase.from('billetera_transacciones').select('*').eq('auth_user_id', user.id).order('created_at', { ascending: false })
-      ])
+      // 3. Recargas y Transacciones (Secuencial para no saturar la red)
+      const { data: recData } = await supabase.from('billetera_recargas').select('*, metodos_pago(nombre)').eq('auth_user_id', user.id).order('created_at', { ascending: false })
+      const { data: transData } = await supabase.from('billetera_transacciones').select('*').eq('auth_user_id', user.id).order('created_at', { ascending: false })
 
-      setRecargas(recRes.data || [])
-      setTransacciones(transRes.data || [])
+      setRecargas(recData || [])
+      setTransacciones(transData || [])
     } catch (err) {
       console.error("Critical error in fetchWallet:", err)
     } finally {
