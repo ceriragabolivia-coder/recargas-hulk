@@ -19,34 +19,39 @@ export function WalletProvider({ children }) {
     if (!user) return
     if (!initialLoadDone.current) setLoading(true)
     
-    // 1. Saldo de Cliente
-    const { data: walletData } = await supabase
-      .from('billeteras')
-      .select('*')
-      .eq('auth_user_id', user.id)
-      .maybeSingle()
-    setWallet(walletData || { saldo: 0, saldo_bs: 0 })
-
-    // 2. Saldo de Operaciones (Solo Admin)
-    if (perfil?.rol?.toLowerCase() === 'admin') {
-      const { data: salesData } = await supabase
-        .from('admin_saldos')
+    try {
+      // 1. Saldo de Cliente
+      const { data: walletData } = await supabase
+        .from('billeteras')
         .select('*')
         .eq('auth_user_id', user.id)
         .maybeSingle()
-      if (salesData) setAdminSalesBalance(salesData)
+      setWallet(walletData || { saldo: 0, saldo_bs: 0 })
+
+      // 2. Saldo de Operaciones (Solo Admin)
+      if (perfil?.rol?.toLowerCase() === 'admin') {
+        const { data: salesData } = await supabase
+          .from('admin_saldos')
+          .select('*')
+          .eq('auth_user_id', user.id)
+          .maybeSingle()
+        if (salesData) setAdminSalesBalance(salesData)
+      }
+
+      // 3. Recargas y Transacciones
+      const [recRes, transRes] = await Promise.all([
+        supabase.from('billetera_recargas').select('*, metodos_pago(nombre)').eq('auth_user_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('billetera_transacciones').select('*').eq('auth_user_id', user.id).order('created_at', { ascending: false })
+      ])
+
+      setRecargas(recRes.data || [])
+      setTransacciones(transRes.data || [])
+    } catch (err) {
+      console.error("Critical error in fetchWallet:", err)
+    } finally {
+      setLoading(false)
+      initialLoadDone.current = true
     }
-
-    // 3. Recargas y Transacciones
-    const [recRes, transRes] = await Promise.all([
-      supabase.from('billetera_recargas').select('*, metodos_pago(nombre)').eq('auth_user_id', user.id).order('created_at', { ascending: false }),
-      supabase.from('billetera_transacciones').select('*').eq('auth_user_id', user.id).order('created_at', { ascending: false })
-    ])
-
-    setRecargas(recRes.data || [])
-    setTransacciones(transRes.data || [])
-    setLoading(false)
-    initialLoadDone.current = true
   }
 
   async function solicitarRecarga(monto, metodoId, referencia, comprobanteUrl = null, moneda = 'usd', ocrReferencia = null) {
