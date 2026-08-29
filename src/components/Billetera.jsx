@@ -219,6 +219,25 @@ export default function Billetera({ onNavigate }) {
     setIsRedeemingPin(true)
     setPinAlert(null)
     try {
+      // Validar si el usuario tiene pedidos completados en los últimos 30 días
+      const treintaDiasAtras = new Date();
+      treintaDiasAtras.setDate(treintaDiasAtras.getDate() - 30);
+      
+      const { data: pedidos, error: errPedidos } = await supabase
+        .from('pedidos')
+        .select('id')
+        .eq('cliente_id', user.id)
+        .eq('estado', 'completado')
+        .gte('created_at', treintaDiasAtras.toISOString())
+        .limit(1);
+
+      if (errPedidos) throw errPedidos;
+      if (!pedidos || pedidos.length === 0) {
+        setPinAlert({ type: 'error', message: 'Para canjear pines necesitas haber hecho una recarga exitosamente en los últimos 30 días.' });
+        setIsRedeemingPin(false);
+        return;
+      }
+
       const { data, error } = await supabase.rpc('canjear_pin', {
         p_codigo: pinCode.trim().toUpperCase(),
         p_user_id: user.id
