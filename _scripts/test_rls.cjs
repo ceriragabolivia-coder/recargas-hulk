@@ -7,9 +7,13 @@ envFile.split('\n').forEach(line => {
 });
 const { createClient } = require('@supabase/supabase-js');
 const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
-async function test() {
-  const { data: user, error: loginErr } = await supabase.auth.signInWithPassword({ email: 'ceriragabolivia@gmail.com', password: 'password123' });
-  const { data, error } = await supabase.from('pedidos').select('*, pedido_items(*)').eq('id', 114).single();
-  console.log('Pedidos Admin:', JSON.stringify(data, null, 2), 'Error:', error);
+
+async function check() {
+  const { data: pedido } = await supabase
+    .from("pedidos")
+    .select("*")
+    .limit(1)
+    .single();
+  console.log("Anon can read pedido?", pedido ? "YES: " + pedido.id : "NO");
 }
-test();
+check();

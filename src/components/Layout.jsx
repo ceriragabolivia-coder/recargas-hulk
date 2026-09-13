@@ -98,8 +98,7 @@ function NotificationBar({ counts, onNavigate, config, onlineUsers, isEmpleado }
   }, [])
 
   const activeItems = DEFAULT_TASKBAR_ITEMS.filter(item => {
-    if (config[`tb_show_${item.key}`] === 'false') return false
-    return counts[item.key] > 0
+    return config[`tb_show_${item.key}`] !== 'false'
   })
 
   if (activeItems.length === 0) return null
@@ -125,16 +124,17 @@ function NotificationBar({ counts, onNavigate, config, onlineUsers, isEmpleado }
           style={{
             display: 'flex', alignItems: 'center', gap: '8px',
             padding: '6px 12px', borderRadius: '12px',
-            backgroundColor: `${item.color}15`,
-            border: `1px solid ${item.color}30`,
+            backgroundColor: counts[item.key] > 0 ? `${item.color}15` : 'rgba(255, 255, 255, 0.05)',
+            border: counts[item.key] > 0 ? `1px solid ${item.color}30` : '1px solid rgba(255, 255, 255, 0.1)',
             cursor: 'pointer',
             transition: 'all 0.2s ease',
-            color: item.color,
+            color: counts[item.key] > 0 ? item.color : 'var(--text-muted)',
+            opacity: counts[item.key] > 0 ? 1 : 0.6,
             position: 'relative'
           }}
         >
-          <span>{item.icon}</span>
-          <span style={{ fontSize: '12px', fontWeight: 700 }}>{counts[item.key]}</span>
+          <span style={{ filter: counts[item.key] > 0 ? 'none' : 'grayscale(100%) opacity(70%)' }}>{item.icon}</span>
+          <span style={{ fontSize: '12px', fontWeight: 700 }}>{counts[item.key] || 0}</span>
 
           {item.key === 'usuarios_online' && showOnlineDropdown && (
             <div 

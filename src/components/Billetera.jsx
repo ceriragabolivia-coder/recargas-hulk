@@ -1119,12 +1119,12 @@ export default function Billetera({ onNavigate }) {
                     placeholder="Escribe los 6 últimos dígitos aquí..."
                     value={referencia}
                     onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                      const val = e.target.value.replace(/\D/g, '').slice(-6);
                       setReferencia(val);
                     }}
                     onPaste={e => {
                       e.preventDefault();
-                      const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+                      const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(-6);
                       setReferencia(pasteData);
                     }}
                     style={{ letterSpacing: '2px', fontSize: '16px', fontWeight: 600 }}

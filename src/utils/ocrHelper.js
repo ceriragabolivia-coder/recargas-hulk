@@ -37,7 +37,7 @@ preloadOcrWorker();
  * @param {Array<string|number>} excludedNumbers - (Opcional) Números a ignorar si el OCR los detecta (ej. Cédula o Teléfono).
  * @returns {Promise<string|null>} - Retorna los 6 dígitos detectados o null si no se detecta ninguno válido.
  */
-export async function extractReferenceFromImage(file, excludedNumbers = []) {
+export async function extractReferenceFromImage(file, excludedNumbers = [], returnFull = false) {
   try {
     // Reutilizar el worker ya cargado (o esperar a que termine de cargar)
     const worker = await preloadOcrWorker();
@@ -51,7 +51,7 @@ export async function extractReferenceFromImage(file, excludedNumbers = []) {
     const refMatch = text.match(/ref[a-z]*[^0-9]{0,15}(\d{6,})/i);
     if (refMatch && refMatch[1]) {
       console.log("OCR Encontrado por palabra clave 'ref':", refMatch[1]);
-      return refMatch[1].slice(-6);
+      return returnFull ? refMatch[1] : refMatch[1].slice(-6);
     }
 
     // 2. Si no encuentra la palabra clave, extraemos todas las secuencias de 6 o más dígitos.
@@ -82,13 +82,46 @@ export async function extractReferenceFromImage(file, excludedNumbers = []) {
 
     // 2. Heurística: En los comprobantes, la referencia suele ser el número más largo
     digitSequences.sort((a, b) => b.length - a.length);
-    const bestMatch = digitSequences[0];
+    let bestMatch = digitSequences[0];
 
-    // 3. Retornar los ÚLTIMOS 6 dígitos de la secuencia seleccionada.
-    const last6Digits = bestMatch.slice(-6);
+    // FIX INTELIGENTE: Diferenciar un '0' real de un ícono de copiar (ej. Banco de Venezuela)
+    if (bestMatch.endsWith('0') && bestMatch.length > 6) {
+      const word = result.data.words?.find(w => w.text.includes(bestMatch));
+      if (word && word.symbols) {
+        // Encontrar los símbolos que corresponden a la secuencia de dígitos
+        const symbolsMatch = word.symbols.filter(s => /\d/.test(s.text));
+        const len = symbolsMatch.length;
+        
+        if (len >= 3) {
+          const lastSymbol = symbolsMatch[len - 1];
+          const secondLast = symbolsMatch[len - 2];
+          
+          // 1. Verificar el espacio (gap) entre el último dígito y el supuesto '0'
+          const gapLast = lastSymbol.bbox.x0 - secondLast.bbox.x1;
+          const charWidth = secondLast.bbox.x1 - secondLast.bbox.x0;
+          const isLargeGap = gapLast > (charWidth * 0.4); // Si el espacio es más del 40% del ancho de un número
+          
+          // 2. Verificar si el tamaño (altura) es muy diferente a los demás números
+          const lastHeight = lastSymbol.bbox.y1 - lastSymbol.bbox.y0;
+          const prevHeight = secondLast.bbox.y1 - secondLast.bbox.y0;
+          const isDifferentSize = Math.abs(lastHeight - prevHeight) / prevHeight > 0.2;
+          
+          // 3. Confianza del OCR para ese caracter específico
+          const isLowConfidence = lastSymbol.confidence < 75;
+          
+          if (isLargeGap || isDifferentSize || isLowConfidence) {
+            console.log(`OCR: El '0' final parece un ícono (gap:${isLargeGap}, size:${isDifferentSize}, conf:${lastSymbol.confidence}). Recortando...`);
+            bestMatch = bestMatch.slice(0, -1);
+          }
+        }
+      }
+    }
 
-    console.log("OCR Referencia detectada:", bestMatch, "->", last6Digits);
-    return last6Digits;
+    // 3. Retornar los ÚLTIMOS 6 dígitos o toda la secuencia
+    const finalResult = returnFull ? bestMatch : bestMatch.slice(-6);
+
+    console.log("OCR Referencia detectada:", bestMatch, "->", finalResult);
+    return finalResult;
   } catch (error) {
     console.error("Error procesando OCR:", error);
     return null;

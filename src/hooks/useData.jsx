@@ -372,8 +372,9 @@ export function useVentas() {
           .single();
           
         if (apkPago) {
-          // Validar el monto con una tolerancia de redondeo
-          if (Math.abs(parseFloat(apkPago.monto) - parseFloat(monto)) <= 0.05) {
+          // Validar el monto con una tolerancia de +10 Bs (no se aceptan pagos menores)
+          const dif = parseFloat(apkPago.monto) - parseFloat(monto);
+          if (dif >= 0 && dif <= 10.0) {
             // Actualizamos pagos_apk para marcarlo como usado
             await fetch('/api/pagos/marcar_usado', {
               method: 'POST',

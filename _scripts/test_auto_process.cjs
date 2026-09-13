@@ -10,9 +10,9 @@ const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY)
 async function check() {
   const { data: pedidoConItems } = await supabase
       .from('pedidos')
-      .select('pedido_items(*, productos(proveedor_api_id, juego_id, juegos(procesamiento_automatico_api)))')
-      .eq('id', 107)
-      .single();
+      .select('id, numero_pedido, estado, pedido_items(*, productos(nombre, proveedor_api_id, api_provider, api_provider_category_id, juego_id, juegos(procesamiento_automatico_api, api_provider, api_provider_category_id)))')
+      .order('numero_pedido', { ascending: false })
+      .limit(5);
   
   console.log('pedidoConItems:', JSON.stringify(pedidoConItems, null, 2));
 

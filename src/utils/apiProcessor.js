@@ -12,17 +12,17 @@ export const processTiendaGiftVenOrder = async (pedidoId, apiKey, forceTrigger =
     
     if (!res.ok) {
       console.warn(`⚠️ Resultado API:`, data.error || data);
-      return false;
+      return { success: false, error: data.error || "Error en la respuesta de la API" };
     }
     
     if (data.success) {
       console.log(`🎉 Procesado:`, data.message);
-      return true;
+      return { success: true };
     }
     
-    return false;
+    return { success: false, error: "Respuesta no exitosa de la API" };
   } catch (error) {
-    console.error(`❌ Error invocando backend para TiendaGiftVen:`, error);
-    return false;
+    console.error(`❌ Error invocando backend para API:`, error);
+    return { success: false, error: error.message };
   }
 };

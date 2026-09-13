@@ -34,6 +34,8 @@ export default function LandingWallet({ onClose }) {
   const [uploading, setUploading] = useState(false)
   const [isExtractingRef, setIsExtractingRef] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [binanceTransferId, setBinanceTransferId] = useState('')
+  const [binanceVerifying, setBinanceVerifying] = useState(false)
   const [alert, setAlert] = useState(null) // { type, message }
   const [pinAlert, setPinAlert] = useState(null)
   const [showManualRef, setShowManualRef] = useState(false)
@@ -129,6 +131,72 @@ export default function LandingWallet({ onClose }) {
     } finally {
       setUploading(false)
       setIsExtractingRef(false)
+    }
+  }
+
+  // Detectar si el método seleccionado es Binance Pay
+  const selectedMetodo = metodos.find(m => m.id === metodoId)
+  const isBinancePay = selectedMetodo?.nombre?.toLowerCase().includes('binance')
+
+  const handleSubmitBinancePay = async (e) => {
+    e.preventDefault()
+    if (!monto || !metodoId) {
+      setAlert({ type: 'warning', message: 'Por favor selecciona el método y el monto.' })
+      return
+    }
+    if (!binanceTransferId.trim()) {
+      setAlert({ type: 'warning', message: 'Ingresa el Transfer ID de Binance Pay para verificar tu pago.' })
+      return
+    }
+    setBinanceVerifying(true)
+    setAlert(null)
+    try {
+      // 1. Crear la solicitud primero
+      const { data: recargaData, error: recargaError } = await solicitarRecarga(
+        Number(monto), metodoId, binanceTransferId.trim(), null, 'usd', null
+      )
+      if (recargaError) throw recargaError
+      const recargaId = recargaData?.[0]?.id
+      if (!recargaId) throw new Error('No se pudo crear la solicitud')
+
+      // 2. Verificar con Binance API
+      setAlert({ type: 'info', message: '🔍 Verificando pago en Binance Pay...' })
+      const resp = await fetch('/api/binance/verify-pay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transferId: binanceTransferId.trim(),
+          monto: Number(monto),
+          recargaId,
+          userId: user.id
+        })
+      })
+      const result = await resp.json()
+
+      if (result.success && result.verified) {
+        setAlert({ type: 'success', message: result.message })
+        setBinanceTransferId('')
+        setMonto('')
+        setMetodoId('')
+        refetch()
+      } else {
+        console.error("Binance Verification Failed:", result);
+        // Pago no verificado automáticamente — queda pendiente para revisión manual
+        setAlert({
+          type: 'warning',
+          message: (result.message || 'No se pudo verificar automáticamente.') +
+            ' Tu solicitud quedó registrada y será revisada por el administrador.' + (result.debug ? ' DEBUG: ' + JSON.stringify(result.debug) : '')
+        })
+        setBinanceTransferId('')
+        setMonto('')
+        setMetodoId('')
+        refetch()
+      }
+
+    } catch (err) {
+      setAlert({ type: 'error', message: 'Error: ' + err.message })
+    } finally {
+      setBinanceVerifying(false)
     }
   }
 
@@ -370,7 +438,9 @@ export default function LandingWallet({ onClose }) {
                       </td>
                       <td data-label="Monto" className={item.monto > 0 ? 'text-positive' : 'text-negative'}>
                         {item.monto > 0 ? '+' : ''}
-                        {item.moneda === 'bs' ? formatBs(item.monto) : (isAdmin ? formatUSD(item.monto) : formatBs(Math.round(item.monto * (Number(config?.tasa_dolar) || 1))))}
+                        {item.moneda === 'usd'
+                          ? formatUSD(item.monto)
+                          : (isAdmin ? formatBs(item.monto) : formatBs(Math.round(item.monto * (Number(config?.tasa_dolar) || 1))))}
                       </td>
                       <td data-label="Estado">
                         <span className={`status-badge ${item.estado}`}>
@@ -397,7 +467,7 @@ export default function LandingWallet({ onClose }) {
             <p>Selecciona tu método y envía el reporte.</p>
 
             {(hasWalletUSD && permitirRecargasUSD) || (hasWalletBs && permitirRecargasBs) ? (
-            <form onSubmit={handleSubmitRecarga}>
+            <form onSubmit={isBinancePay ? handleSubmitBinancePay : handleSubmitRecarga}>
               <div className="form-group">
                 <label>Moneda</label>
                 <div className="currency-selector">
@@ -530,10 +600,14 @@ export default function LandingWallet({ onClose }) {
                 )
               })()}
 
+
+
+              {/* ===== SECCIÓN NORMAL (no Binance): Comprobante + referencia ===== */}
+              {/* Mostrar datos/QR de cualquier método seleccionado */}
               {metodoId && (
                 <>
-                  {/* BANNER UBIIPAGOS (Recreado con CSS) */}
-                  {monedaRecarga === 'bs' && (
+                  {/* BANNER UBIIPAGOS — solo para métodos que no son Binance en Bs */}
+                  {monedaRecarga === 'bs' && !isBinancePay && (
                   <div style={{ marginBottom: '24px', width: '100%', backgroundColor: '#0a0a0a', borderRadius: '12px', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '24px', border: '1px solid rgba(255,255,255,0.08)', flexWrap: 'wrap', boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)' }}>
                     <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' }}>
                       <span style={{ color: '#fff', fontWeight: 900, fontSize: '18px', fontStyle: 'italic', letterSpacing: '0.5px', lineHeight: 1.2 }}>NO SE RECIBEN PAGOS</span>
@@ -554,6 +628,7 @@ export default function LandingWallet({ onClose }) {
                   </div>
                   )}
 
+                  {/* Datos de pago: QR y texto — se muestra para todos los métodos */}
                   <div className="payment-details fade-in">
                     {metodos.find(m => m.id === metodoId)?.qr_url && (
                       <div style={{ marginBottom: '16px', textAlign: 'center', backgroundColor: '#fff', padding: '12px', borderRadius: '12px', display: 'inline-block', width: '100%', boxSizing: 'border-box' }}>
@@ -563,9 +638,9 @@ export default function LandingWallet({ onClose }) {
                     )}
                     <div className="details-header">Datos para el pago:</div>
                     <pre className="details-text">{metodos.find(m => m.id === metodoId)?.datos}</pre>
-                    <button 
-                      type="button" 
-                      className="btn-copy" 
+                    <button
+                      type="button"
+                      className="btn-copy"
                       onClick={() => navigator.clipboard.writeText(metodos.find(m => m.id === metodoId)?.datos)}
                     >
                       Copiar Datos
@@ -574,77 +649,117 @@ export default function LandingWallet({ onClose }) {
                 </>
               )}
 
-              <div className="form-group">
-                <label style={{ fontSize: '13px', fontWeight: 800, color: '#00d2ff', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', display: 'block', textShadow: '0 0 10px rgba(0, 210, 255, 0.3)' }}>Adjuntar Comprobante</label>
-                <div style={{ 
-                  padding: '32px 24px', border: '2px dashed rgba(0, 210, 255, 0.4)', borderRadius: '20px', 
-                  textAlign: 'center', position: 'relative', backgroundColor: 'rgba(0, 210, 255, 0.03)',
-                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)', cursor: 'pointer',
-                  boxShadow: '0 0 20px rgba(0, 210, 255, 0.1), inset 0 0 15px rgba(0, 210, 255, 0.05)'
-                }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.08)'; e.currentTarget.style.borderColor = '#00d2ff'; e.currentTarget.style.boxShadow = '0 0 30px rgba(0, 210, 255, 0.3), inset 0 0 20px rgba(0, 210, 255, 0.15)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.03)'; e.currentTarget.style.borderColor = 'rgba(0, 210, 255, 0.4)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 210, 255, 0.1), inset 0 0 15px rgba(0, 210, 255, 0.05)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                >
-                  {comprobanteUrl ? (
-                    <img loading="lazy" decoding="async" src={getOptimizedImageUrl(comprobanteUrl, 400)} alt="Comprobante" className="preview-img" style={{ borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.3)' }} />
-                  ) : (
-                    <div>
-                      <div style={{ fontSize: '42px', marginBottom: '12px', filter: 'drop-shadow(0 0 10px rgba(0, 210, 255, 0.5))' }}>{uploading ? '⏳' : isExtractingRef ? '🔍' : '📷'}</div>
-                      <span style={{ fontSize: '15px', fontWeight: 800, color: '#fff', textShadow: '0 0 8px rgba(255,255,255,0.3)', display: 'block' }}>
-                        {uploading ? 'Subiendo archivo...' : isExtractingRef ? 'Analizando imagen mágicamente...' : 'Sube tu comprobante aquí'}
-                      </span>
-                      {!uploading && !isExtractingRef && (
-                        <span style={{ fontSize: '12px', color: '#00d2ff', opacity: 0.8, marginTop: '8px', display: 'block', fontWeight: 600 }}>Validación ultra-rápida automática ⚡</span>
-                      )}
+              {/* ===== SECCIÓN BINANCE PAY: Transfer ID ===== */}
+              {isBinancePay && (
+                <div className="form-group fade-in" style={{ marginTop: '16px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 800, color: '#F0B90B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', display: 'block' }}>
+                    🔑 Transfer ID de Binance Pay
+                  </label>
+                  <div style={{ marginBottom: '12px', padding: '12px 16px', backgroundColor: 'rgba(240,185,11,0.08)', borderRadius: '12px', border: '1px solid rgba(240,185,11,0.3)', fontSize: '13px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.6 }}>
+                    📱 En Binance: <strong>Historial → toca el pago → copia el "ID de orden"</strong>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Ej: 453144089445326848"
+                    value={binanceTransferId}
+                    onChange={e => setBinanceTransferId(e.target.value.trim())}
+                    style={{ letterSpacing: '1px', fontSize: '14px', fontWeight: 600, width: '100%', padding: '12px 16px', borderRadius: '12px', background: 'var(--bg-card)', border: '2px solid rgba(240,185,11,0.5)', color: 'var(--text-main)', outline: 'none' }}
+                    required
+                  />
+                  {alert && (
+                    <div className={`alert-inline ${alert.type}`} style={{ marginTop: '12px' }}>
+                      {alert.message}
                     </div>
                   )}
-                  <input type="file" accept="image/*" onChange={handleFileUpload} disabled={uploading || isExtractingRef} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
-                </div>
-                <div style={{ textAlign: 'center', marginTop: '16px' }}>
-                  <span 
-                    onClick={() => setShowManualRef(!showManualRef)}
-                    style={{ fontSize: '11px', color: 'var(--text-muted)', cursor: 'pointer', textDecoration: 'underline' }}
+                  <button
+                    type="submit"
+                    className="btn-submit-recharge"
+                    disabled={binanceVerifying || !binanceTransferId.trim() || !monto}
+                    style={{ background: 'linear-gradient(135deg, #F0B90B, #d4a109)', marginTop: '16px', color: '#000', fontWeight: 800 }}
                   >
-                    (Tengo solamente los últimos 6 dígitos de la referencia)
-                  </span>
+                    {binanceVerifying ? '🔍 Verificando con Binance...' : '⚡ Verificar y Acreditar Saldo'}
+                  </button>
                 </div>
-              </div>
+              )}
 
-              {showManualRef && (
-                <div className="form-group fade-in">
-                  <label>Número de Referencia <span style={{ fontSize: '10px', opacity: 0.8 }}>(Últimos 6 dígitos)</span></label>
-                  <input 
-                    type="text" 
-                    placeholder="Escribe los 6 últimos dígitos aquí..."
-                    value={referencia}
-                    onChange={e => setReferencia(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    onPaste={e => {
-                      e.preventDefault();
-                      const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
-                      setReferencia(pasteData);
+              {/* ===== SECCIÓN NORMAL (Pago Móvil, etc.): Comprobante + referencia ===== */}
+              {!isBinancePay && (
+                <>
+                  <div className="form-group">
+                    <label style={{ fontSize: '13px', fontWeight: 800, color: '#00d2ff', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', display: 'block', textShadow: '0 0 10px rgba(0, 210, 255, 0.3)' }}>Adjuntar Comprobante</label>
+                    <div style={{
+                      padding: '32px 24px', border: '2px dashed rgba(0, 210, 255, 0.4)', borderRadius: '20px',
+                      textAlign: 'center', position: 'relative', backgroundColor: 'rgba(0, 210, 255, 0.03)',
+                      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)', cursor: 'pointer',
+                      boxShadow: '0 0 20px rgba(0, 210, 255, 0.1), inset 0 0 15px rgba(0, 210, 255, 0.05)'
                     }}
-                    style={{ letterSpacing: '2px', fontSize: '16px', fontWeight: 600 }}
-                    required={showManualRef}
-                  />
-                  <div style={{ fontSize: '11px', color: 'var(--accent-warning)', marginTop: '6px', fontWeight: 600 }}>
-                    ⚠️ Recuerda que debes colocar exactamente los 6 últimos números de la referencia del pago.
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.08)'; e.currentTarget.style.borderColor = '#00d2ff'; e.currentTarget.style.boxShadow = '0 0 30px rgba(0, 210, 255, 0.3), inset 0 0 20px rgba(0, 210, 255, 0.15)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.03)'; e.currentTarget.style.borderColor = 'rgba(0, 210, 255, 0.4)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 210, 255, 0.1), inset 0 0 15px rgba(0, 210, 255, 0.05)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                    >
+                      {comprobanteUrl ? (
+                        <img loading="lazy" decoding="async" src={getOptimizedImageUrl(comprobanteUrl, 400)} alt="Comprobante" className="preview-img" style={{ borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.3)' }} />
+                      ) : (
+                        <div>
+                          <div style={{ fontSize: '42px', marginBottom: '12px', filter: 'drop-shadow(0 0 10px rgba(0, 210, 255, 0.5))' }}>{uploading ? '⏳' : isExtractingRef ? '🔍' : '📷'}</div>
+                          <span style={{ fontSize: '15px', fontWeight: 800, color: '#fff', textShadow: '0 0 8px rgba(255,255,255,0.3)', display: 'block' }}>
+                            {uploading ? 'Subiendo archivo...' : isExtractingRef ? 'Analizando imagen mágicamente...' : 'Sube tu comprobante aquí'}
+                          </span>
+                          {!uploading && !isExtractingRef && (
+                            <span style={{ fontSize: '12px', color: '#00d2ff', opacity: 0.8, marginTop: '8px', display: 'block', fontWeight: 600 }}>Validación ultra-rápida automática ⚡</span>
+                          )}
+                        </div>
+                      )}
+                      <input type="file" accept="image/*" onChange={handleFileUpload} disabled={uploading || isExtractingRef} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
+                    </div>
+                    <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                      <span
+                        onClick={() => setShowManualRef(!showManualRef)}
+                        style={{ fontSize: '11px', color: 'var(--text-muted)', cursor: 'pointer', textDecoration: 'underline' }}
+                      >
+                        (Tengo solamente los últimos 6 dígitos de la referencia)
+                      </span>
+                    </div>
                   </div>
-                </div>
+
+                  {showManualRef && (
+                    <div className="form-group fade-in">
+                      <label>Número de Referencia <span style={{ fontSize: '10px', opacity: 0.8 }}>(Últimos 6 dígitos)</span></label>
+                      <input
+                        type="text"
+                        placeholder="Escribe los 6 últimos dígitos aquí..."
+                        value={referencia}
+                        onChange={e => setReferencia(e.target.value.replace(/\D/g, '').slice(-6))}
+                        onPaste={e => {
+                          e.preventDefault();
+                          const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(-6);
+                          setReferencia(pasteData);
+                        }}
+                        style={{ letterSpacing: '2px', fontSize: '16px', fontWeight: 600 }}
+                        required={showManualRef}
+                      />
+                      <div style={{ fontSize: '11px', color: 'var(--accent-warning)', marginTop: '6px', fontWeight: 600 }}>
+                        ⚠️ Recuerda que debes colocar exactamente los 6 últimos números de la referencia del pago.
+                      </div>
+                    </div>
+                  )}
+
+                  {alert && (
+                    <div className={`alert-inline ${alert.type}`}>
+                      {alert.message}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="btn-submit-recharge"
+                    disabled={isProcessing || uploading || (referencia.trim().length !== 6)}
+                  >
+                    {isProcessing ? 'Procesando...' : 'Enviar Reporte'}
+                  </button>
+                </>
               )}
 
-              {alert && (
-                <div className={`alert-inline ${alert.type}`}>
-                  {alert.message}
-                </div>
-              )}
 
-              <button 
-                type="submit" 
-                className="btn-submit-recharge" 
-                disabled={isProcessing || uploading || (referencia.trim().length !== 6)}
-              >
-                {isProcessing ? 'Procesando...' : 'Enviar Reporte'}
-              </button>
             </form>
             ) : (
               <div style={{ padding: '30px 20px', textAlign: 'center', backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>

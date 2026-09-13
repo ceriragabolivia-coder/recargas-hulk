@@ -28,6 +28,15 @@ export default function ProveedorCatalogo() {
   // Buscadores
   const [searchTermTGV, setSearchTermTGV] = useState('');
   const [searchTermFC, setSearchTermFC] = useState('');
+  const [searchTermPC, setSearchTermPC] = useState('');
+
+  // PinCentral state
+  const [pcApiKey, setPcApiKey] = useState('');
+  const [pcApiSecret, setPcApiSecret] = useState('');
+  const [pcSaldo, setPcSaldo] = useState(null);
+  const [loadingPcSaldo, setLoadingPcSaldo] = useState(false);
+  const [pcProductos, setPcProductos] = useState([]);
+  const [loadingPcProductos, setLoadingPcProductos] = useState(false);
 
   // Cargar API Key inicial
   useEffect(() => {
@@ -36,6 +45,12 @@ export default function ProveedorCatalogo() {
     }
     if (config?.fazercards_api_key) {
       setFcApiKey(config.fazercards_api_key);
+    }
+    if (config?.pincentral_api_key) {
+      setPcApiKey(config.pincentral_api_key);
+    }
+    if (config?.pincentral_api_secret) {
+      setPcApiSecret(config.pincentral_api_secret);
     }
   }, [config]);
 
@@ -234,6 +249,42 @@ export default function ProveedorCatalogo() {
     setLoading(false);
   };
 
+  // Consultar Saldo PinCentral
+  const fetchPcSaldo = async () => {
+    if (!pcApiKey || !pcApiSecret) return;
+    setLoadingPcSaldo(true);
+    try {
+      const res = await fetch('/api/pincentral/proxy?endpoint=account');
+      const data = await res.json();
+      if (!data.error && data.balance) {
+        setPcSaldo(data.balance);
+      } else {
+        setPcSaldo(null);
+      }
+    } catch (e) {
+      setPcSaldo(null);
+    }
+    setLoadingPcSaldo(false);
+  };
+
+  // Consultar Productos PinCentral
+  const fetchPcProductos = async () => {
+    if (!pcApiKey || !pcApiSecret) return;
+    setLoadingPcProductos(true);
+    try {
+      const res = await fetch('/api/pincentral/proxy?endpoint=products');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setPcProductos(data);
+      } else {
+        setAlertModal({ type: 'error', message: data.error || 'Error obteniendo productos de PinCentral' });
+      }
+    } catch (e) {
+      setAlertModal({ type: 'error', message: 'Error de red al consultar productos PinCentral' });
+    }
+    setLoadingPcProductos(false);
+  };
+
   useEffect(() => {
     if (config?.tiendagiftven_api_key) {
       fetchSaldo(config.tiendagiftven_api_key);
@@ -243,7 +294,11 @@ export default function ProveedorCatalogo() {
       fetchFcSaldo(config.fazercards_api_key);
       fetchFcProductos(config.fazercards_api_key);
     }
-  }, [config?.tiendagiftven_api_key, config?.fazercards_api_key]);
+    if (config?.pincentral_api_key && config?.pincentral_api_secret) {
+      fetchPcSaldo();
+      fetchPcProductos();
+    }
+  }, [config?.tiendagiftven_api_key, config?.fazercards_api_key, config?.pincentral_api_key, config?.pincentral_api_secret]);
 
   const handleSaveApi = async () => {
     if (!apiKey.trim()) {
@@ -291,6 +346,26 @@ export default function ProveedorCatalogo() {
     }
   };
 
+  const handleSavePcApi = async () => {
+    if (!pcApiKey.trim() || !pcApiSecret.trim()) {
+      setAlertModal({ type: 'error', message: 'Debes ingresar API Key y API Secret' });
+      return;
+    }
+    try {
+      // Intentar una llamada rápida de prueba, el proxy usa la DB pero 
+      // para forzar el guardado guardaremos y luego llamaremos.
+      await updateConfig('pincentral_api_key', pcApiKey, true);
+      await updateConfig('pincentral_api_secret', pcApiSecret, true);
+      setAlertModal({ type: 'success', message: 'Credenciales de PinCentral guardadas correctamente.' });
+      setTimeout(() => {
+        fetchPcSaldo();
+        fetchPcProductos();
+      }, 1000); // Esperar que la DB propague
+    } catch (e) {
+      setAlertModal({ type: 'error', message: 'Error guardando credenciales de PinCentral' });
+    }
+  };
+
   if (perfil?.rol?.toLowerCase() !== 'admin' && perfil?.rol?.toLowerCase() !== 'administrador') {
     return <div style={{ padding: '20px' }}>Acceso denegado. Solo administradores.</div>;
   }
@@ -319,6 +394,16 @@ export default function ProveedorCatalogo() {
           }}
         >
           FazerCards
+        </button>
+        <button 
+          onClick={() => setActiveTab('pincentral')}
+          style={{ 
+            background: 'none', border: 'none', color: activeTab === 'pincentral' ? '#00d2ff' : 'var(--text-muted)', 
+            fontSize: '18px', fontWeight: activeTab === 'pincentral' ? 800 : 500, cursor: 'pointer', padding: '8px 16px',
+            borderBottom: activeTab === 'pincentral' ? '2px solid #00d2ff' : '2px solid transparent'
+          }}
+        >
+          PinCentral
         </button>
       </div>
 
@@ -531,6 +616,117 @@ export default function ProveedorCatalogo() {
                       )}
                     </div>
                   )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'pincentral' && (
+        <div className="fade-in">
+          <div style={{ marginBottom: '24px' }}>
+            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800 }}>📦 Proveedor: PinCentral</h1>
+            <p style={{ margin: '4px 0 0', color: 'var(--text-muted)' }}>
+              Catálogo y configuración de conexión con la API de PinCentral
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+            <div className="card">
+              <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '16px' }}>🔑 Credenciales API</h3>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label>API Key</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  placeholder="Ej: f4a8a5b2..."
+                  value={pcApiKey}
+                  onChange={(e) => setPcApiKey(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label>API Secret</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  placeholder="Ej: xxxxxxxx"
+                  value={pcApiSecret}
+                  onChange={(e) => setPcApiSecret(e.target.value)}
+                />
+              </div>
+              <button className="btn btn-primary" onClick={handleSavePcApi}>
+                Guardar y Conectar
+              </button>
+              
+              <div style={{ marginTop: '16px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                <strong>Webhook URL automático:</strong><br />
+                {window.location.origin}/api/pincentral/webhook
+              </div>
+            </div>
+
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', backgroundColor: 'rgba(0, 210, 255, 0.05)', border: '1px solid rgba(0, 210, 255, 0.1)' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px' }}>Saldo Disponible (PinCentral)</h3>
+              {loadingPcSaldo ? (
+                <div style={{ fontSize: '32px', fontWeight: 800 }}>Cargando...</div>
+              ) : pcSaldo !== null ? (
+                <div style={{ fontSize: '42px', fontWeight: 900, color: '#fff', textShadow: '0 0 20px rgba(0, 210, 255, 0.4)' }}>
+                  {pcSaldo}
+                </div>
+              ) : (
+                <div style={{ fontSize: '18px', fontWeight: 600, color: 'var(--accent-error)' }}>No conectado</div>
+              )}
+              <button className="btn btn-ghost btn-sm" style={{ marginTop: '12px' }} onClick={() => fetchPcSaldo()}>
+                🔄 Actualizar
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: 800, margin: 0 }}>📚 Catálogo de PinCentral</h2>
+              <button className="btn btn-ghost btn-sm" onClick={() => fetchPcProductos()} disabled={loadingPcProductos}>
+                🔄 Recargar Catálogo
+              </button>
+            </div>
+            <input 
+              type="text" 
+              placeholder="🔍 Buscar juego o servicio..." 
+              className="form-input" 
+              style={{ maxWidth: '300px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+              value={searchTermPC}
+              onChange={(e) => setSearchTermPC(e.target.value)}
+            />
+          </div>
+
+          {loadingPcProductos ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              Cargando catálogo desde PinCentral...
+            </div>
+          ) : pcProductos.length === 0 ? (
+            <div style={{ padding: '40px', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed var(--border-color)', color: 'var(--text-muted)' }}>
+              No se pudieron cargar los servicios. Asegúrate de tener Credenciales API válidas.
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+              {pcProductos.filter(p => (p.name || '').toLowerCase().includes(searchTermPC.toLowerCase()) || (p.code || '').toLowerCase().includes(searchTermPC.toLowerCase()) || (p.product_group || '').toLowerCase().includes(searchTermPC.toLowerCase())).map(prod => (
+                <div key={prod.code} className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                    <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>{prod.name}</h4>
+                    <div style={{ backgroundColor: 'rgba(0, 210, 255, 0.1)', color: 'var(--accent-primary)', padding: '4px 8px', borderRadius: '8px', fontSize: '14px', fontWeight: 800 }}>
+                      ${parseFloat(prod.price).toFixed(2)}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                    ID Proveedor: <strong>{prod.code}</strong> | {prod.product_group}
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#c8d6e8', flex: 1, whiteSpace: 'pre-wrap' }}>
+                    Tipo: {prod.type === 'recharge' ? 'Recarga Directa' : 'PIN/Código'}
+                    <br />
+                    {prod.required_fields && prod.required_fields.length > 0 && (
+                      <span>Campos extra: {prod.required_fields.join(', ')}</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

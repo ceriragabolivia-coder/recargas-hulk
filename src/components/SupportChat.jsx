@@ -721,7 +721,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       {/* Ventana de Chat */}
       {(isOpen || isPage) && (
         <div className={`support-chat-window ${isPage ? 'is-page' : ''}`} style={{
-          backgroundColor: '#0f111a',
+          backgroundColor: '#0d0f1c',
           borderRadius: isPage ? '0' : '24px',
           boxShadow: isPage ? 'none' : '0 30px 60px rgba(0,0,0,0.8), 0 0 40px rgba(17, 153, 142, 0.15)',
           border: isPage ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
@@ -731,7 +731,8 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
           right: isPage || isEmbedded ? 'auto' : '30px',
           width: isPage || isEmbedded ? '100%' : '380px',
           height: isPage || isEmbedded ? '100%' : '600px',
-          maxHeight: isPage || isEmbedded ? 'none' : 'calc(100vh - 120px)'
+          maxHeight: isPage || isEmbedded ? 'none' : 'calc(100vh - 120px)',
+          paddingBottom: isPage ? '64px' : '0'
         }}>
           
           {/* Header */}
@@ -766,7 +767,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
           </div>
 
           {/* Body */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '20px', backgroundColor: '#0f111a', backgroundImage: 'radial-gradient(circle at top, rgba(56, 239, 125, 0.03) 0%, transparent 80%)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '16px 14px', backgroundColor: '#0d0f1c', backgroundImage: 'radial-gradient(circle at top, rgba(56, 239, 125, 0.04) 0%, transparent 70%)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             
             {/* Vista Admin Principal (Lista de Chats) */}
             {isAdmin && !selectedChatClient ? (
@@ -874,6 +875,9 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                     ) : (
                       mensajes.map(m => {
                         const isMine = m.remitente_id === currentClienteId
+                        const isTicketInit = m.es_sistema && m.mensaje?.includes('TICKET INICIADO')
+                        const isTicketClose = m.es_sistema && m.mensaje?.includes('TICKET CERRADO')
+                        const isInfoMsg = m.es_sistema && !isTicketInit && !isTicketClose
                         return (
                           <div 
                             key={m.id} 
@@ -882,26 +886,71 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                               display: 'flex', 
                               flexDirection: 'column', 
                               alignItems: m.es_sistema ? 'center' : (isMine ? 'flex-end' : 'flex-start'),
-                              width: '100%'
+                              width: '100%',
+                              margin: m.es_sistema ? '4px 0' : '2px 0'
                             }}
                           >
                             {!m.es_sistema && (
-                              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', marginLeft: '4px', marginRight: '4px' }}>
+                              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginBottom: '3px', marginLeft: '6px', marginRight: '6px', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
                                 {isMine ? 'Tú' : (m.remitente?.nombres || 'Soporte')}
                               </div>
                             )}
+
+                            {/* TICKET INICIADO - special badge */}
+                            {isTicketInit ? (
+                              <div style={{
+                                display: 'flex', alignItems: 'center', gap: '8px',
+                                background: 'linear-gradient(135deg, rgba(124,91,247,0.25), rgba(56,239,125,0.15))',
+                                border: '1px solid rgba(124,91,247,0.4)',
+                                borderRadius: '12px', padding: '10px 16px',
+                                maxWidth: '90%', width: 'fit-content',
+                                boxShadow: '0 4px 20px rgba(124,91,247,0.2)'
+                              }}>
+                                <span style={{ fontSize: '18px' }}>🎫</span>
+                                <div>
+                                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '2px' }}>Ticket abierto</div>
+                                  <div style={{ fontSize: '13px', fontWeight: '700', color: '#c4b5fd' }}>
+                                    {m.mensaje?.replace('🎫 TICKET INICIADO: ', '').trim()}
+                                  </div>
+                                </div>
+                              </div>
+                            ) : isTicketClose ? (
+                              <div style={{
+                                display: 'flex', alignItems: 'center', gap: '8px',
+                                background: 'linear-gradient(135deg, rgba(56,239,125,0.15), rgba(17,153,142,0.15))',
+                                border: '1px solid rgba(56,239,125,0.3)',
+                                borderRadius: '12px', padding: '10px 16px',
+                                maxWidth: '90%', width: 'fit-content',
+                                boxShadow: '0 4px 20px rgba(56,239,125,0.15)'
+                              }}>
+                                <span style={{ fontSize: '18px' }}>✅</span>
+                                <div style={{ fontSize: '13px', fontWeight: '600', color: '#6ee7b7' }}>{m.mensaje}</div>
+                              </div>
+                            ) : isInfoMsg ? (
+                              <div style={{
+                                background: 'rgba(255,255,255,0.04)',
+                                border: '1px dashed rgba(255,255,255,0.12)',
+                                borderRadius: '12px', padding: '12px 14px',
+                                maxWidth: '95%',
+                                fontSize: '12px', lineHeight: '1.6',
+                                color: 'rgba(255,255,255,0.6)', fontStyle: 'italic'
+                              }}>
+                                ℹ️ {m.mensaje}
+                              </div>
+                            ) : (
                             <div className={`message-bubble ${m.es_sistema ? 'system' : ''}`} style={{ 
-                              background: m.es_sistema ? 'rgba(255, 171, 0, 0.1)' : (isMine ? 'linear-gradient(135deg, #00d2ff, #3a7bd5)' : 'rgba(255,255,255,0.05)'),
-                              color: m.es_sistema ? '#ffd166' : '#fff',
-                              padding: m.es_sistema ? '12px 16px' : '12px 18px', 
-                              borderRadius: '20px',
-                              borderBottomRightRadius: !m.es_sistema && isMine ? '4px' : '20px',
-                              borderBottomLeftRadius: !m.es_sistema && !isMine ? '4px' : '20px',
-                              maxWidth: m.es_sistema ? '100%' : '85%', 
+                              background: isMine 
+                                ? 'linear-gradient(135deg, #7c6af7 0%, #4f46e5 100%)' 
+                                : 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04))',
+                              color: '#fff',
+                              padding: '11px 16px', 
+                              borderRadius: isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                              maxWidth: '82%', 
                               wordBreak: 'break-word', 
                               fontSize: '14px',
-                              border: m.es_sistema ? '1px solid rgba(255, 171, 0, 0.3)' : (isMine ? 'none' : '1px solid rgba(255,255,255,0.1)'),
-                              boxShadow: isMine ? '0 4px 15px rgba(0, 210, 255, 0.3)' : '0 2px 10px rgba(0,0,0,0.1)',
+                              lineHeight: '1.5',
+                              border: isMine ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                              boxShadow: isMine ? '0 4px 20px rgba(124,106,247,0.35)' : '0 2px 12px rgba(0,0,0,0.2)',
                               position: 'relative'
                             }}>
                               {m.quoted_id && (
@@ -947,6 +996,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                                 </button>
                               )}
                             </div>
+                            )}
                           </div>
                         )
                       })
@@ -1082,43 +1132,44 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                     <button className="btn btn-primary btn-sm" onClick={sendAudio}>Enviar</button>
                   </div>
                 )}
-                <form onSubmit={handleSendMessage} style={{ padding: '16px', backgroundColor: 'rgba(15, 17, 26, 0.95)', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '12px', alignItems: 'center', backdropFilter: 'blur(10px)' }}>
-                  <label style={{ cursor: 'pointer', opacity: isUploading ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.05)', transition: 'background 0.2s', flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}>
-                    <span style={{ fontSize: '18px' }}>📎</span>
-                    <input type="file" hidden onChange={handleFileSelect} accept="image/*,video/*" disabled={isUploading} />
-                  </label>
-
-                {filePreview && (
-                  <div style={{ padding: '8px 12px', background: 'var(--bg-card)', borderTop: '1px solid var(--border-color)', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <div style={{ position: 'relative' }}>
-                      {pendingFile?.type.startsWith('image/') ? (
-                        <img loading="lazy" decoding="async" src={filePreview} style={{ height: '40px', borderRadius: '4px' }} alt="Preview" />
-                      ) : (
-                        <div style={{ height: '40px', width: '40px', background: 'var(--bg-panel)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🎥</div>
-                      )}
-                      <button onClick={removePendingFile} style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'var(--accent-red)', color: '#fff', border: 'none', borderRadius: '50%', width: '16px', height: '16px', fontSize: '10px', cursor: 'pointer' }}>×</button>
-                    </div>
-                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{pendingFile.name}</span>
-                  </div>
-                )}
-
                 {/* Advertencia de dos mensajes para tickets nuevos */}
                 {!isAdmin && ticketSubject && mensajes.length < 4 && (
                   <div style={{ 
-                    position: 'absolute', bottom: '100%', left: 0, right: 0, 
-                    padding: '8px', backgroundColor: 'var(--bg-panel)', 
-                    fontSize: '10px', color: 'var(--accent-primary)', textAlign: 'center',
-                    borderTop: '1px solid var(--border-color)', fontWeight: 'bold',
-                    zIndex: 10
+                    margin: '0', padding: '7px 14px',
+                    background: 'linear-gradient(135deg, rgba(251,191,36,0.15), rgba(245,158,11,0.08))',
+                    borderTop: '1px solid rgba(251,191,36,0.25)',
+                    fontSize: '11px', color: '#fbbf24', textAlign: 'center',
+                    fontWeight: '600', letterSpacing: '0.3px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
                   }}>
-                    ⚠️ Solo tienes dos mensajes para explicar tu caso.
+                    <span>⚠️</span> Solo tienes dos mensajes para explicar tu caso.
                   </div>
                 )}
 
+                {filePreview && (
+                  <div style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.04)', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div style={{ position: 'relative' }}>
+                      {pendingFile?.type.startsWith('image/') ? (
+                        <img loading="lazy" decoding="async" src={filePreview} style={{ height: '40px', borderRadius: '6px' }} alt="Preview" />
+                      ) : (
+                        <div style={{ height: '40px', width: '40px', background: 'var(--bg-panel)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px' }}>🎥</div>
+                      )}
+                      <button onClick={removePendingFile} style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: '16px', height: '16px', fontSize: '10px', cursor: 'pointer' }}>×</button>
+                    </div>
+                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>{pendingFile.name}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleSendMessage} style={{ padding: '10px 12px', backgroundColor: 'rgba(13,15,28,0.98)', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', gap: '10px', alignItems: 'center', backdropFilter: 'blur(12px)' }}>
+                  <label style={{ cursor: 'pointer', opacity: isUploading ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', transition: 'all 0.2s', flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'}>
+                    <span style={{ fontSize: '16px' }}>📎</span>
+                    <input type="file" hidden onChange={handleFileSelect} accept="image/*,video/*" disabled={isUploading} />
+                  </label>
+
                   {isRecording ? (
-                    <div style={{ flex: 1, color: '#ff453a', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px' }} onClick={stopRecording}>
+                    <div style={{ flex: 1, color: '#f87171', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(248,113,113,0.1)', borderRadius: '20px', padding: '10px 16px' }} onClick={stopRecording}>
                       <div className="recording-dot"></div>
-                      <span>{recordingTime}s - Click para parar</span>
+                      <span>{recordingTime}s — Toca para parar</span>
                     </div>
                   ) : (
                     <input 
@@ -1127,15 +1178,16 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                       style={{ 
                         flex: 1, 
                         fontSize: '14px', 
-                        borderRadius: '24px', 
-                        padding: '12px 20px', 
-                        backgroundColor: 'rgba(255,255,255,0.05)',
+                        borderRadius: '22px', 
+                        padding: '10px 18px', 
+                        backgroundColor: 'rgba(255,255,255,0.06)',
                         border: '1px solid rgba(255,255,255,0.1)',
                         color: '#fff',
                         outline: 'none',
-                        opacity: (isThrottled && !isAdmin) || isResolved ? 0.6 : 1 
+                        transition: 'border-color 0.2s',
+                        opacity: (isThrottled && !isAdmin) || isResolved ? 0.5 : 1 
                       }}
-                      placeholder={isResolved ? "Ticket resuelto" : ((isThrottled && !isAdmin) ? "Bloqueado" : "Escribe tu mensaje...")}
+                      placeholder={isResolved ? "Ticket resuelto" : ((isThrottled && !isAdmin) ? "Esperando respuesta..." : "Escribe tu mensaje...")}
                       value={newMessage}
                       onChange={e => setNewMessage(e.target.value)}
                       disabled={(isThrottled && !isAdmin) || isResolved || loadingThrottle || isUploading || !!audioBlob}
@@ -1143,16 +1195,16 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                   )}
 
                   {!isRecording && !audioBlob && isAdmin && (
-                    <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', padding: '8px', transition: 'transform 0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'} onClick={startRecording}>
+                    <button type="button" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '50%', width: '38px', height: '38px', cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'} onClick={startRecording}>
                        🎙️
                     </button>
                   )}
 
                   <button 
                     type="submit" 
-                    style={{ borderRadius: '50%', width: '45px', height: '45px', flexShrink: 0, padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)', border: 'none', color: '#000', fontSize: '18px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(56, 239, 125, 0.4)', transition: 'transform 0.2s' }}
-                    onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
-                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                    style={{ borderRadius: '50%', width: '42px', height: '42px', flexShrink: 0, padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'linear-gradient(135deg, #7c6af7 0%, #4f46e5 100%)', border: 'none', color: '#fff', fontSize: '17px', cursor: 'pointer', boxShadow: '0 4px 16px rgba(124,106,247,0.5)', transition: 'all 0.2s' }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(124,106,247,0.7)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(124,106,247,0.5)'; }}
                     disabled={(!newMessage.trim() && !pendingFile && !isAdmin) || (!isAdmin && mensajes.length === 0 && !ticketSubject) || (isThrottled && !isAdmin) || loadingThrottle || isUploading || !!audioBlob}
                   >
                     {isUploading ? '⌛' : (pendingFile ? '📤' : '➤')}

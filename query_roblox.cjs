@@ -1,8 +1,10 @@
-const { createClient } = require('@supabase/supabase-js');
-const supabase = createClient('https://api.recargashulk.com', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzg1NDY4MjE1LCJleHAiOjIxMDA4MjY3OTl9.GjBpb6QuAq07NqUfUL5f8Qcm91yvA3ZMDHUoVPEcrmA');
-
+require('dotenv').config();
+const { Client } = require('pg');
+const client = new Client({ connectionString: process.env.VITE_SUPABASE_DB_URL });
 async function run() {
-  const { data: productos } = await supabase.from('productos').select('*').eq('juego_id', 118);
-  console.log("Productos:", productos);
+  await client.connect();
+  let res = await client.query("SELECT trigger_name, action_statement FROM information_schema.triggers WHERE event_object_table = 'pedidos'");
+  console.log("Triggers in pedidos:", res.rows);
+  await client.end();
 }
-run();
+run().catch(console.error);

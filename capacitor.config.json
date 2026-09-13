@@ -1,5 +1,9 @@
 {
-  "appId": "com.ceriraga.app",
-  "appName": "Ceriraga",
-  "webDir": "dist"
+  "appId": "com.recargashulk.recargashulk",
+  "appName": "Recargas Hulk",
+  "webDir": "dist",
+  "server": {
+    "url": "https://recargashulk.com",
+    "cleartext": true
+  }
 }

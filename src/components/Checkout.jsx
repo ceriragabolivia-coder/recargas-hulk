@@ -469,8 +469,8 @@ export default function Checkout({ onFinish, embedded = false }) {
       file = await compressImage(file)
       
       const excludedNumbers = [perfil?.identificacion || user?.identificacion, perfil?.telefono || user?.telefono, perfil?.whatsapp || user?.whatsapp];
-      const extractedRef = await extractReferenceFromImage(file, excludedNumbers)
-      if (extractedRef && extractedRef.length === 6) {
+      const extractedRef = await extractReferenceFromImage(file, excludedNumbers, isBinanceSelected)
+      if (extractedRef && extractedRef.length >= 6) {
         setOcrReferencia(extractedRef)
         setReferencia(extractedRef)
         setAlertModal({ type: 'success', message: `Referencia detectada y autocompletada: ${extractedRef}` })
@@ -493,14 +493,19 @@ export default function Checkout({ onFinish, embedded = false }) {
 
   const handleFinalizar = async () => {
     const isBinancePay = selectedMetodo?.nombre?.toLowerCase().trim() === 'binance pay automático';
+    const isManualBinance = selectedMetodo?.nombre?.toLowerCase().includes('binance') && !isBinancePay;
     
     if (!isWalletOnly && !isWalletBsOnly && !isBinancePay && !isGratis) {
       if (!referencia.trim()) {
         setAlertModal({ type: 'warning', message: 'Por favor ingresa el número de referencia de tu pago.' })
         return
       }
-      if (referencia.trim().length !== 6) {
+      if (!isManualBinance && referencia.trim().length !== 6) {
         setAlertModal({ type: 'warning', message: 'La referencia debe contener exactamente los últimos 6 dígitos del comprobante.' })
+        return
+      }
+      if (isManualBinance && referencia.trim().length < 6) {
+        setAlertModal({ type: 'warning', message: 'Por favor ingresa el ID de pago de Binance válido.' })
         return
       }
     }
@@ -614,6 +619,23 @@ export default function Checkout({ onFinish, embedded = false }) {
           }
         } catch (err) {
           console.error('Error en auto-procesamiento:', err);
+        }
+      } else if (isManualBinance && finalReferencia && finalReferencia.length >= 6) {
+        try {
+          console.log('🔍 Verificando pago Binance automáticamente...');
+          const res = await fetch('/api/binance/verify-pay-pedido', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ transferId: finalReferencia, pedidoId: pedidoId, userId: targetUserId, monto: currentRemainingUSD > 0 ? currentRemainingUSD : totalUSD })
+          });
+          const vData = await res.json();
+          if (vData.success && vData.verified) {
+             console.log('✅ Pago Binance verificado y pedido auto-procesado.');
+          } else {
+             console.log('⚠️ Verificación Binance no acreditó automáticamente:', vData.message);
+          }
+        } catch (err) {
+          console.error('Error auto-verificando Binance:', err);
         }
       }
 
@@ -1390,7 +1412,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                                 onClick={() => setShowManualRef(!showManualRef)}
                                 style={{ fontSize: '11px', color: 'var(--text-muted)', cursor: 'pointer', textDecoration: 'underline' }}
                               >
-                                (Tengo solamente los últimos 6 dígitos de la referencia)
+                                {isBinanceSelected ? '(Escribir el ID manualmente)' : '(Tengo solamente los últimos 6 dígitos de la referencia)'}
                               </span>
                             </div>
                           </div>
@@ -1398,22 +1420,32 @@ export default function Checkout({ onFinish, embedded = false }) {
                           {(selectedMetodoId !== 'binance_pay_auto' && showManualRef) && (
                             <div className="form-group mb-16 fade-in">
                               <label className="form-label" style={{ color: '#00d2ff', fontWeight: 900, fontSize: '13px', marginBottom: '12px', display: 'block', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                                Número de Referencia <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: 600 }}>(Últimos 6 dígitos)</span>
+                                {isBinanceSelected ? 'ID de Binance (Pay ID o Order ID)' : (
+                                  <>Número de Referencia <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: 600 }}>(Últimos 6 dígitos)</span></>
+                                )}
                               </label>
                               <input 
                                 type="text" 
                                 className="form-input" 
-                                placeholder="Escribe los 6 últimos dígitos aquí..."
+                                placeholder={isBinanceSelected ? "Escribe todo el ID de tu pago a través de Binance aquí..." : "Escribe los 6 últimos dígitos aquí..."}
                                 value={referencia} 
                                 onChange={e => {
-                                  // Detener en 6 dígitos y no desplazar
-                                  const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-                                  setReferencia(val);
+                                  if (isBinanceSelected) {
+                                    setReferencia(e.target.value.replace(/\D/g, ''));
+                                  } else {
+                                    // Detener en 6 dígitos y no desplazar
+                                    const val = e.target.value.replace(/\D/g, '').slice(-6);
+                                    setReferencia(val);
+                                  }
                                 }}
                                 onPaste={e => {
                                   e.preventDefault();
-                                  const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
-                                  setReferencia(pasteData);
+                                  if (isBinanceSelected) {
+                                    setReferencia((e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, ''));
+                                  } else {
+                                    const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(-6);
+                                    setReferencia(pasteData);
+                                  }
                                 }}
                                 style={{ 
                                   border: '2px solid rgba(0, 210, 255, 0.3)', 
@@ -1422,17 +1454,19 @@ export default function Checkout({ onFinish, embedded = false }) {
                                   borderRadius: '16px', 
                                   height: '56px', 
                                   padding: '0 20px', 
-                                  letterSpacing: '3px', 
+                                  letterSpacing: isBinanceSelected ? '1px' : '3px', 
                                   fontSize: '18px', 
                                   fontWeight: 800,
                                   outline: 'none',
-                                  transition: 'all 0.3s'
+                                  transition: 'all 0.3s',
+                                  width: '100%',
+                                  boxSizing: 'border-box'
                                 }}
                                 onFocus={e => e.target.style.borderColor = '#00d2ff'}
                                 onBlur={e => e.target.style.borderColor = 'rgba(0, 210, 255, 0.3)'}
                               />
                               <div style={{ fontSize: '12px', color: '#f5af19', marginTop: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                ⚠️ Recuerda que debes colocar exactamente los 6 últimos números de la referencia.
+                                {isBinanceSelected ? '⚠️ Recuerda que debes colocar todo el ID de pago de Binance.' : '⚠️ Recuerda que debes colocar exactamente los 6 últimos números de la referencia.'}
                               </div>
                             </div>
                           )}
@@ -1446,7 +1480,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                               boxShadow: '0 10px 30px rgba(56, 239, 125, 0.4)', border: 'none', color: '#000',
                               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: isProcessing ? 'default' : 'pointer'
                             }}
-                            disabled={isProcessing || (!isGratis && !isWalletOnly && !isWalletBsOnly && selectedMetodoId !== 'binance_pay_auto' && selectedMetodoId && (referencia.trim().length !== 6))}
+                            disabled={isProcessing || (!isGratis && !isWalletOnly && !isWalletBsOnly && selectedMetodoId !== 'binance_pay_auto' && selectedMetodoId && (isBinanceSelected ? referencia.trim().length < 6 : referencia.trim().length !== 6))}
                             onClick={handleFinalizar}
                             onMouseEnter={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(-3px)')}
                             onMouseLeave={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(0)')}

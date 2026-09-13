@@ -1,5 +1,7 @@
 {
+  "regions": ["fra1"],
   "headers": [
+
     {
       "source": "/assets/(.*)",
       "headers": [
@@ -47,7 +49,7 @@
     },
     {
       "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "destination": "/api/index.js"
     },
     {
       "source": "/(.*)",

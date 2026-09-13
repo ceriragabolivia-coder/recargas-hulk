@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { compressImage } from "../utils/imageCompression";
 import { useAuth, useConfiguracion } from "../hooks/useData";
@@ -196,9 +196,14 @@ export default function Pedidos({
   const itemsPerPage = 10;
 
   const [totalItems, setTotalItems] = useState(0);
+  // Ref para siempre llamar la versión más reciente de fetchPedidos en el polling
+  const fetchPedidosRef = useRef(null);
+  // Estado para indicar que hay una búsqueda en progreso en el servidor
+  const [isSearching, setIsSearching] = useState(false);
 
-  async function fetchPedidos() {
-    setLoading(true);
+  async function fetchPedidos(silent = false) {
+    if (!silent) setLoading(true);
+    setIsSearching(true);
     let query = supabase
       .from("pedidos")
       .select("*, pedido_items(*, productos(*, juegos(*))), cupones(*)", {
@@ -213,7 +218,16 @@ export default function Pedidos({
       if (ownerId) {
         query = query.or(`owner_id.eq.${ownerId},cliente_id.eq.${user.id}`);
       } else if (!canManage) {
-        query = query.eq("cliente_id", user.id);
+        // Algunos pedidos almacenan auth UUID, otros el UUID del perfil (clientes.id)
+        // o cliente_uuid. Se busca por todos para no perder ninguno.
+        const ids = [user?.id, perfil?.id, perfil?.cliente_uuid]
+          .filter(Boolean)
+          .filter((v, i, a) => a.indexOf(v) === i); // únicos
+        if (ids.length === 1) {
+          query = query.eq("cliente_id", ids[0]);
+        } else if (ids.length > 1) {
+          query = query.or(ids.map((id) => `cliente_id.eq.${id}`).join(","));
+        }
       }
     }
 
@@ -238,7 +252,11 @@ export default function Pedidos({
       const cleanQ = busqueda.trim();
       const isNum = /^\d+$/.test(cleanQ);
       if (isNum) {
-        query = query.eq("numero_pedido", parseInt(cleanQ));
+        // numero_pedido es varchar almacenado con ceros: '001575'
+        // NO usar parseInt — comparar como string con padding
+        const paddedNum = cleanQ.padStart(6, "0");
+        query = query.eq("numero_pedido", paddedNum);
+
       } else {
         const { data: matchedClientes } = await supabase
           .from("clientes")
@@ -267,12 +285,17 @@ export default function Pedidos({
       console.error("Error fetching pedidos:", error);
       showAlert("Error al cargar pedidos: " + error.message, "error");
       setLoading(false);
+      setIsSearching(false);
       return;
     }
 
     if (count !== null) setTotalItems(count);
 
     if (rawPedidos && rawPedidos.length > 0) {
+      // Mostrar pedidos de inmediato para respuesta rápida (sin datos del cliente aún)
+      setPedidos(rawPedidos.map((p) => ({ ...p, cliente: null, atendido_por: null })));
+      setLoading(false);
+
       const uniqueUserIds = [
         ...new Set(
           rawPedidos
@@ -282,22 +305,25 @@ export default function Pedidos({
         ),
       ];
 
-      let usersData = [];
-      let usersError = null;
-
       const chunks = [];
       for (let i = 0; i < uniqueUserIds.length; i += 100) {
         chunks.push(uniqueUserIds.slice(i, i + 100));
       }
 
-      for (const chunk of chunks) {
-        const { data, error } = await supabase
-          .from("clientes")
-          .select(
-            "id, auth_user_id, nombres, apellidos, nickname, whatsapp, usuario, fecha_registro"
-          )
-          .in("auth_user_id", chunk);
-        if (error) usersError = error;
+      // Obtener todos los chunks en paralelo (en vez de secuencial)
+      const chunkResults = await Promise.all(
+        chunks.map((chunk) =>
+          supabase
+            .from("clientes")
+            .select(
+              "id, auth_user_id, nombres, apellidos, nickname, whatsapp, usuario, fecha_registro"
+            )
+            .in("auth_user_id", chunk)
+        )
+      );
+
+      let usersData = [];
+      for (const { data } of chunkResults) {
         if (data) usersData = usersData.concat(data);
       }
 
@@ -328,16 +354,24 @@ export default function Pedidos({
       }));
 
       setPedidos(finalPedidos);
+      setIsSearching(false);
     } else {
       setPedidos([]);
+      setLoading(false);
+      setIsSearching(false);
     }
-    setLoading(false);
   }
+
+  // Mantener ref actualizado en cada render para evitar stale closures
+  fetchPedidosRef.current = fetchPedidos;
 
   useEffect(() => {
     if (perfil) {
       const delayDebounceFn = setTimeout(() => {
-        fetchPedidos();
+        // Si ya hay datos cargados y solo cambió la búsqueda, no mostrar spinner
+        // El filtro client-side actúa de inmediato; el fetch corre en silencio
+        const silent = busqueda.trim() !== "" && pedidos.length > 0;
+        fetchPedidos(silent);
       }, 300);
       return () => clearTimeout(delayDebounceFn);
     }
@@ -424,15 +458,16 @@ export default function Pedidos({
     }
   }, [targetOrderId, targetOrderNumber, pedidos.length]);
 
-  // Suscripción Realtime (REEMPLAZADA POR POLLING PARA EVITAR LÍMITE DE CONEXIONES)
+  // Polling cada 15 segundos — usa ref para siempre tener el estado más reciente
+  // y corre en silencio para no interrumpir la UI con spinners
   useEffect(() => {
-    // Polling cada 15 segundos para mantener la lista actualizada sin usar WebSockets
     const intervalId = setInterval(() => {
-      fetchPedidos();
+      if (fetchPedidosRef.current) {
+        fetchPedidosRef.current(true); // silent = true, sin spinner
+      }
     }, 15000);
-      
     return () => clearInterval(intervalId);
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     if (selectedPedido) {
@@ -622,7 +657,9 @@ export default function Pedidos({
   if (busqueda.trim() !== "") {
     const q = busqueda.toLowerCase();
     pedidosFiltrados = pedidosFiltrados.filter((p) => {
-      const matchPedido = String(p.numero_pedido).toLowerCase().includes(q);
+      const matchPedido =
+        String(p.numero_pedido).toLowerCase().includes(q) ||
+        String(p.numero_pedido).padStart(6, "0").includes(q);
       const matchCliente =
         String(p.cliente?.usuario || "")
           .toLowerCase()
@@ -1317,12 +1354,15 @@ export default function Pedidos({
         const tieneApiItems = pedidoFull?.pedido_items?.some(
           (i) => i.productos?.proveedor_api_id
         );
+        const tieneBaulItems = pedidoFull?.pedido_items?.some(
+          (i) => i.productos?.entrega_automatica === true
+        );
         const juegoAutoProcess = pedidoFull?.pedido_items?.some(
           (i) => i.productos?.juegos?.procesamiento_automatico_api === true
         );
 
-        // Si tiene API y auto-procesamiento, intentamos API. Si no, solo verificamos.
-        const modoApi = tieneApiItems && juegoAutoProcess;
+        // Si tiene API o entrega automática (baúl), y auto-procesamiento activo, procesamos.
+        const modoApi = (tieneApiItems || tieneBaulItems) && juegoAutoProcess;
 
         const updatePayload = {
           pago_verificado: true,
@@ -1371,8 +1411,8 @@ export default function Pedidos({
               return;
             }
             // Luego API
-            const apiSent = await processTiendaGiftVenOrder(data.id, true);
-            if (apiSent) {
+            const apiRes = await processTiendaGiftVenOrder(data.id, true);
+            if (apiRes && apiRes.success) {
               refreshPedidoData(data.id);
               showAlert(
                 "🚀 Pago verificado. La recarga fue enviada al proveedor API automáticamente.",
@@ -1380,7 +1420,7 @@ export default function Pedidos({
               );
             } else {
               showAlert(
-                "⚠️ Pago verificado, pero hubo un problema al enviar al proveedor. Procesa manualmente.",
+                "⚠️ Pago verificado, pero hubo un problema al enviar al proveedor: " + (apiRes?.error || "Error desconocido") + ". Procesa manualmente.",
                 "warning"
               );
             }
@@ -5959,16 +5999,28 @@ export default function Pedidos({
                 className="card"
                 style={{ textAlign: "center", padding: "60px" }}
               >
-                <div style={{ fontSize: "48px", marginBottom: "16px" }}>📭</div>
-                <h3
-                  style={{ color: "var(--text-primary)", marginBottom: "8px" }}
-                >
-                  No hay pedidos en esta categoría
-                </h3>
-                <p style={{ color: "var(--text-muted)" }}>
-                  Selecciona otra categoría o espera a que se registren nuevos
-                  pedidos.
-                </p>
+                {isSearching && busqueda ? (
+                  <>
+                    <div style={{ fontSize: "36px", marginBottom: "12px" }}>🔍</div>
+                    <h3 style={{ color: "var(--text-primary)", marginBottom: "8px" }}>
+                      Buscando pedido...
+                    </h3>
+                    <p style={{ color: "var(--text-muted)" }}>
+                      Buscando en todos los pedidos, por favor espera.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontSize: "48px", marginBottom: "16px" }}>📭</div>
+                    <h3 style={{ color: "var(--text-primary)", marginBottom: "8px" }}>
+                      No hay pedidos en esta categoría
+                    </h3>
+                    <p style={{ color: "var(--text-muted)" }}>
+                      Selecciona otra categoría o espera a que se registren nuevos
+                      pedidos.
+                    </p>
+                  </>
+                )}
               </div>
             ) : (
               <>
