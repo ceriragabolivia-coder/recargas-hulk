@@ -70,3 +70,6 @@ if (!rootElement) {
     </RootErrorBoundary>
   )
 }
+
+console.log('Force Vercel cache bust final');
+
