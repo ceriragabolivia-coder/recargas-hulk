@@ -154,8 +154,7 @@ export default function GestionProductos() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
-      
-      const res = await fetch('/api/sync/prices', {
+      const res = await fetch('/api/sync/prices_manual', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -197,7 +196,11 @@ export default function GestionProductos() {
     tutorial_banner_texto: '',
     tutorial_banner_img: '',
     icono_url: null,
-    imagen_pedido_completado_url: null
+    imagen_pedido_completado_url: null,
+    popup_activo: false,
+    popup_titulo: '',
+    popup_mensaje: '',
+    popup_imagen: ''
   })
 
   const juegosFiltrados = useMemo(() => {
@@ -234,7 +237,11 @@ export default function GestionProductos() {
       verificacion_api_url: '',
       url_canje: '',
       mostrar_precio_dual: false,
-      api_provider_category_id: ''
+      api_provider_category_id: '',
+      popup_activo: false,
+      popup_titulo: '',
+      popup_mensaje: '',
+      popup_imagen: ''
     })
     setIsGameModalOpen(true)
   }
@@ -265,7 +272,11 @@ export default function GestionProductos() {
       verificacion_api_url: selectedJuego.verificacion_api_url || '',
       url_canje: selectedJuego.url_canje || '',
       mostrar_precio_dual: !!selectedJuego.mostrar_precio_dual,
-      api_provider_category_id: selectedJuego.api_provider_category_id || ''
+      api_provider_category_id: selectedJuego.api_provider_category_id || '',
+      popup_activo: !!selectedJuego.popup_activo,
+      popup_titulo: selectedJuego.popup_titulo || '',
+      popup_mensaje: selectedJuego.popup_mensaje || '',
+      popup_imagen: selectedJuego.popup_imagen || ''
     })
     setIsGameModalOpen(true)
   }
@@ -307,7 +318,11 @@ export default function GestionProductos() {
         verificacion_api_url: formGame.verificacion_api_url,
         url_canje: formGame.url_canje || null,
         mostrar_precio_dual: formGame.mostrar_precio_dual,
-        api_provider_category_id: formGame.api_provider_category_id
+        api_provider_category_id: formGame.api_provider_category_id,
+        popup_activo: formGame.popup_activo,
+        popup_titulo: formGame.popup_titulo,
+        popup_mensaje: formGame.popup_mensaje,
+        popup_imagen: formGame.popup_imagen
       })
       if (!res.error) {
         // useJuegos hook will refresh the 'juegos' list automatically
@@ -2299,6 +2314,101 @@ export default function GestionProductos() {
               </div>
             </div>
           </div>
+
+          <hr style={{ margin: '24px 0', borderColor: 'var(--border-color)' }} />
+          <h3 style={{ fontSize: 13, textTransform: 'uppercase', color: 'var(--accent-primary)', marginBottom: 12 }}>Aviso Emergente (Pop-up)</h3>
+          
+          <div className="form-group" style={{ marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <input
+                type="checkbox"
+                id="popup_activo"
+                checked={!!formGame.popup_activo}
+                onChange={e => setFormGame({ ...formGame, popup_activo: e.target.checked })}
+                style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--accent-primary)' }}
+              />
+              <label htmlFor="popup_activo" className="form-label" style={{ margin: 0, cursor: 'pointer', fontWeight: 700 }}>
+                Activar aviso emergente para este juego
+              </label>
+            </div>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+              Si se activa, el cliente verá este mensaje cada vez que entre a la lista de precios de este juego.
+            </p>
+          </div>
+
+          {formGame.popup_activo && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div className="form-group">
+                <label className="form-label">Título del Aviso</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Ej: ¡Nuevo Evento de Free Fire!"
+                  value={formGame.popup_titulo}
+                  onChange={e => setFormGame({ ...formGame, popup_titulo: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Mensaje del Aviso</label>
+                <textarea
+                  className="form-input"
+                  rows={3}
+                  placeholder="Ej: Aprovecha el evento de recarga de diamantes hoy mismo..."
+                  value={formGame.popup_mensaje}
+                  onChange={e => setFormGame({ ...formGame, popup_mensaje: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Imagen del Aviso (Opcional)</label>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: 8 }}>
+                  <div style={{
+                    width: 100, height: 100, borderRadius: 8, backgroundColor: 'var(--bg-panel)',
+                    border: '1px solid var(--border-color)', overflow: 'hidden', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center'
+                  }}>
+                    {formGame.popup_imagen ? (
+                      <img loading="lazy" decoding="async" src={getOptimizedImageUrl(formGame.popup_imagen, 600)} alt="Popup" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <span style={{ fontSize: 18, opacity: 0.3 }}>🖼️</span>
+                    )}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <input
+                      type="file"
+                      id="popup-imagen-upload"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={async (e) => {
+                        const file = e.target.files[0]
+                        if (!file) return
+                        setSaving(true)
+                        try {
+                          const fileName = `popup-${Date.now()}.png`
+                          const { error: uploadError } = await supabase.storage.from('logos').upload(fileName, await compressImage(file), { cacheControl: '31536000', upsert: true })
+                          if (uploadError) throw uploadError
+                          const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(fileName)
+                          setFormGame(prev => ({ ...prev, popup_imagen: publicUrl }))
+                        } catch (err) {
+                          setAlertModal({ type: 'error', message: 'Error subiendo imagen de popup: ' + err.message })
+                        } finally {
+                          setSaving(false)
+                        }
+                      }}
+                    />
+                    <label htmlFor="popup-imagen-upload" className="btn btn-ghost btn-sm">
+                      {saving ? 'Procesando...' : '📤 Subir Imagen'}
+                    </label>
+                    {formGame.popup_imagen && (
+                      <button type="button" className="btn btn-ghost btn-sm text-danger" style={{ marginLeft: '8px' }} onClick={() => setFormGame(prev => ({ ...prev, popup_imagen: '' }))}>🗑️</button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
 
           <div className="flex justify-between mt-24">
             <button type="button" className="btn btn-ghost" onClick={() => setIsGameModalOpen(false)}>Cancelar</button>

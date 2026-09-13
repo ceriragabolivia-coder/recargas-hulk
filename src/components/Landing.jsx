@@ -129,6 +129,7 @@ export default function Landing({ onNavigate }) {
   const [expandedImage, setExpandedImage] = useState(null)
   const [openFaqIndex, setOpenFaqIndex] = useState(null)
   const [showCashbackInfo, setShowCashbackInfo] = useState(false)
+  const [showGamePopup, setShowGamePopup] = useState(false)
 
   const banners = useMemo(() => {
     // Si está cargando y no hay caché, no devolvemos nada para evitar el banner genérico
@@ -560,6 +561,14 @@ export default function Landing({ onNavigate }) {
         setLoadingProductos(false)
       }
       fetchProductos()
+    }
+  }, [selectedJuego])
+
+  useEffect(() => {
+    if (selectedJuego && selectedJuego.popup_activo) {
+      setShowGamePopup(true)
+    } else {
+      setShowGamePopup(false)
     }
   }, [selectedJuego])
 
@@ -2087,6 +2096,57 @@ export default function Landing({ onNavigate }) {
             </div>
           </section>
         )}
+
+      {/* GAME SPECIFIC POPUP */}
+      {showGamePopup && selectedJuego && selectedJuego.popup_activo && (
+        <div className="modal-overlay" style={{ zIndex: 99999 }}>
+          <div className="modal" style={{ 
+            maxWidth: '500px', 
+            background: 'var(--bg-card)', 
+            border: '1px solid var(--border-color)',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+            overflow: 'hidden',
+            padding: 0,
+            borderRadius: '16px'
+          }}>
+            {selectedJuego.popup_imagen && (
+              <div style={{ width: '100%', maxHeight: '250px', overflow: 'hidden' }}>
+                <img 
+                  src={selectedJuego.popup_imagen} 
+                  alt={selectedJuego.popup_titulo || 'Aviso'} 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} 
+                />
+              </div>
+            )}
+            <div style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                <h2 style={{ margin: 0, color: 'var(--accent-primary)', fontSize: '22px', fontWeight: 700 }}>
+                  {selectedJuego.popup_titulo || 'Aviso'}
+                </h2>
+                <button 
+                  onClick={() => setShowGamePopup(false)}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '24px', cursor: 'pointer', lineHeight: 1 }}
+                >
+                  &times;
+                </button>
+              </div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '15px', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+                {selectedJuego.popup_mensaje}
+              </div>
+              <div style={{ marginTop: '24px', textAlign: 'center' }}>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => setShowGamePopup(false)}
+                  style={{ width: '100%', fontWeight: 600, padding: '12px', borderRadius: '8px' }}
+                >
+                  Entendido
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       </main>
 
       <footer className="landing-footer">
