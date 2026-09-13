@@ -2104,17 +2104,15 @@ export default function Landing({ onNavigate }) {
             width: '90%',
             maxWidth: '500px', 
             maxHeight: '90vh',
-            display: 'flex',
-            flexDirection: 'column',
+            overflowY: 'auto',
             background: 'var(--bg-card)', 
             border: '1px solid var(--border-color)',
             boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-            overflow: 'hidden',
             padding: 0,
             borderRadius: '16px'
           }}>
             {selectedJuego.popup_imagen && (
-              <div style={{ width: '100%', overflowY: 'auto', backgroundColor: '#000' }}>
+              <div style={{ width: '100%', backgroundColor: '#000' }}>
                 <img 
                   src={selectedJuego.popup_imagen} 
                   alt={selectedJuego.popup_titulo || 'Aviso'} 
