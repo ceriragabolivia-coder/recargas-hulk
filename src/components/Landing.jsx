@@ -2110,11 +2110,11 @@ export default function Landing({ onNavigate }) {
             borderRadius: '16px'
           }}>
             {selectedJuego.popup_imagen && (
-              <div style={{ width: '100%', maxHeight: '250px', overflow: 'hidden' }}>
+              <div style={{ width: '100%', textAlign: 'center', background: 'rgba(0,0,0,0.2)' }}>
                 <img 
                   src={selectedJuego.popup_imagen} 
                   alt={selectedJuego.popup_titulo || 'Aviso'} 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} 
+                  style={{ width: '100%', height: 'auto', maxHeight: '350px', objectFit: 'contain', display: 'block' }} 
                 />
               </div>
             )}
