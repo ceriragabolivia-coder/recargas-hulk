@@ -2101,7 +2101,11 @@ export default function Landing({ onNavigate }) {
       {showGamePopup && selectedJuego && selectedJuego.popup_activo && (
         <div className="modal-overlay" style={{ zIndex: 99999 }}>
           <div className="modal" style={{ 
+            width: '90%',
             maxWidth: '500px', 
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
             background: 'var(--bg-card)', 
             border: '1px solid var(--border-color)',
             boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
@@ -2110,11 +2114,11 @@ export default function Landing({ onNavigate }) {
             borderRadius: '16px'
           }}>
             {selectedJuego.popup_imagen && (
-              <div style={{ width: '100%', textAlign: 'center', background: 'rgba(0,0,0,0.2)' }}>
+              <div style={{ width: '100%', overflowY: 'auto', backgroundColor: '#000' }}>
                 <img 
                   src={selectedJuego.popup_imagen} 
                   alt={selectedJuego.popup_titulo || 'Aviso'} 
-                  style={{ width: '100%', height: 'auto', maxHeight: '350px', objectFit: 'contain', display: 'block' }} 
+                  style={{ width: '100%', height: 'auto', display: 'block' }} 
                 />
               </div>
             )}
