@@ -827,7 +827,7 @@ export default function App() {
         setOnlineUsers(users)
         window.dispatchEvent(new CustomEvent('online-users-update', { detail: users.length }));
       })
-      .subscribe(async (status) => {
+      /* .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           await channel.track({
             user_id: trackId,
@@ -838,7 +838,7 @@ export default function App() {
             online_at: new Date().toISOString(),
           })
         }
-      })
+      }) DISABLED */
 
     // Canal de comandos del sistema (Broadcast)
     const cmdChannel = supabase.channel(`cmd_${trackId}`)
@@ -905,13 +905,11 @@ export default function App() {
   if (loading && !forceLoad && !user && !isLandingPath) {
     return (
       <div className="loading-screen-modern">
-        <div style={{ width: 48, height: 48, border: '4px solid rgba(255,255,255,0.15)', borderTopColor: '#00d2ff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <img src={kidsGamingImg} alt="Cargando..." className="loading-illustration" width="320" height="320" />
         <div className="loading-text-dynamic">Cargando Sistema</div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     )
   }
-
 
   const normalizePath = (p) => p.toLowerCase().replace(/\/+$/, '') || '/'
   const currentPath = normalizePath(location.pathname)
@@ -1026,5 +1024,3 @@ export default function App() {
     </>
   )
 }
-c o n s o l e . l o g ( ' F o r c e   V e r c e l   c a c h e   b u s t ' ) ;  
- 
