@@ -937,12 +937,12 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                             style={{ 
                               display: 'flex', 
                               flexDirection: 'column', 
-                              alignItems: m.es_sistema ? 'center' : (isMine ? 'flex-end' : 'flex-start'),
+                              alignItems: m.es_sistema && !isInfoMsg ? 'center' : (isMine ? 'flex-end' : 'flex-start'),
                               width: '100%',
                               margin: m.es_sistema ? '4px 0' : '2px 0'
                             }}
                           >
-                            {!m.es_sistema && (
+                            {(!m.es_sistema || isInfoMsg) && (
                               <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginBottom: '3px', marginLeft: '6px', marginRight: '6px', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
                                 {isMine ? 'Tú' : (m.remitente?.nombres || 'Soporte')}
                               </div>
@@ -978,18 +978,6 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                                 <span style={{ fontSize: '18px' }}>✅</span>
                                 <div style={{ fontSize: '13px', fontWeight: '600', color: '#6ee7b7' }}>{m.mensaje}</div>
                               </div>
-                            ) : isInfoMsg ? (
-                              <div style={{
-                                background: 'rgba(255,255,255,0.04)',
-                                border: '1px dashed rgba(255,255,255,0.12)',
-                                borderRadius: '12px', padding: '12px 14px',
-                                maxWidth: '95%',
-                                fontSize: '12px', lineHeight: '1.6',
-                                color: 'rgba(255,255,255,0.6)', fontStyle: 'italic'
-                              }}>
-                                ℹ️ {m.mensaje}
-                              </div>
-                            ) : (
                             <div className={`message-bubble ${m.es_sistema ? 'system' : ''}`} style={{ 
                               background: isMine 
                                 ? 'linear-gradient(135deg, #7c6af7 0%, #4f46e5 100%)' 
