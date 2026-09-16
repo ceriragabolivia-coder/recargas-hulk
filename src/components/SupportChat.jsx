@@ -965,7 +965,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                         return (
                           <div 
                             key={m.id} 
-                            className={m.es_sistema ? 'message-bubble-wrapper system' : ''}
+                            className={m.es_sistema ? (isInfoMsg ? 'message-bubble-wrapper' : 'message-bubble-wrapper system') : ''}
                             style={{ 
                               display: 'flex', 
                               flexDirection: 'column', 
@@ -1011,7 +1011,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                                 <div style={{ fontSize: '13px', fontWeight: '600', color: '#6ee7b7' }}>{m.mensaje}</div>
                               </div>
                             ) : (
-                            <div className={`message-bubble ${m.es_sistema ? 'system' : ''}`} style={{ 
+                            <div className={`message-bubble ${m.es_sistema && !isInfoMsg ? 'system' : ''}`} style={{ 
                               background: isMine 
                                 ? 'linear-gradient(135deg, #7c6af7 0%, #4f46e5 100%)' 
                                 : 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04))',
@@ -1075,7 +1075,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                       })
                     )}
                     {isBotTyping && (
-                      <div className="message-bubble system typing-indicator" style={{ 
+                      <div className="message-bubble typing-indicator" style={{ 
                         alignSelf: 'flex-start',
                         background: 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04))',
                         color: 'rgba(255,255,255,0.7)',
