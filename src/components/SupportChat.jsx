@@ -524,6 +524,14 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
         
         const processNode = async () => {
           await supabase.from('soporte_mensajes').insert([{ cliente_id: currentClienteId, remitente_id: senderId, mensaje: rootNode.mensaje, es_sistema: true }]);
+          if (rootNode.contactar_humano) {
+            await supabase.from('soporte_mensajes').insert({
+              cliente_id: currentClienteId,
+              remitente_id: senderId,
+              mensaje: "Serás atendido por un agente en breve. Por favor, explica tu caso detalladamente a continuación.",
+              es_sistema: true
+            });
+          }
           if (rootNode.cerrar_ticket) {
             await supabase.from('clientes').update({ soporte_status: 'resuelto' }).eq('id', currentClienteId);
             await supabase.from('soporte_mensajes').insert({
@@ -684,6 +692,14 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
             mensaje: nextNode.mensaje,
             es_sistema: true
           });
+          if (nextNode.contactar_humano) {
+            await supabase.from('soporte_mensajes').insert({
+              cliente_id: activeChatId,
+              remitente_id: currentClienteId,
+              mensaje: "Serás atendido por un agente en breve. Por favor, explica tu caso detalladamente a continuación.",
+              es_sistema: true
+            });
+          }
           if (nextNode.cerrar_ticket) {
             await supabase.from('clientes').update({ soporte_status: 'resuelto' }).eq('id', activeChatId);
             await supabase.from('soporte_mensajes').insert({
