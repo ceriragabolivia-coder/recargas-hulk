@@ -129,6 +129,7 @@ const Chatbot = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
   const nodeTypes = useMemo(() => ({ customBotNode: CustomBotNode }), []);
 
@@ -253,10 +254,20 @@ const Chatbot = () => {
   };
 
   const addNode = () => {
+    let position = { x: 400, y: 100 };
+    if (reactFlowInstance) {
+      position = reactFlowInstance.screenToFlowPosition({
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2
+      });
+      position.x -= 150; // offset half width
+      position.y -= 100; // offset half height
+    }
+
     const newNode = {
       id: `nodo_${Date.now()}`,
       type: 'customBotNode',
-      position: { x: 400, y: 100 },
+      position,
       data: {
         titulo: 'Nueva Respuesta',
         mensaje: 'Nuevo mensaje del bot...',
@@ -402,6 +413,7 @@ const Chatbot = () => {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onEdgeClick={onEdgeClick}
+          onInit={setReactFlowInstance}
           nodeTypes={nodeTypes}
           fitView
           colorMode="dark"
