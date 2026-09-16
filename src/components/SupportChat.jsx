@@ -521,14 +521,29 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
         }
 
         const delay = (rootNode.retraso || 0) * 1000;
+        
+        const processNode = async () => {
+          await supabase.from('soporte_mensajes').insert([{ cliente_id: currentClienteId, remitente_id: senderId, mensaje: rootNode.mensaje, es_sistema: true }]);
+          if (rootNode.cerrar_ticket) {
+            await supabase.from('clientes').update({ soporte_status: 'resuelto' }).eq('id', currentClienteId);
+            await supabase.from('soporte_mensajes').insert({
+              cliente_id: currentClienteId, // Wait, it's activeChatId in this context? No, openTicket uses currentClienteId as chat ID for users. activeChatId works too.
+              remitente_id: senderId,
+              mensaje: "✅ TICKET CERRADO AUTOMÁTICAMENTE",
+              es_sistema: true
+            });
+            setClientStatus('resuelto');
+          }
+        };
+
         if (delay > 0) {
           setIsBotTyping(true);
           setTimeout(async () => {
-            await supabase.from('soporte_mensajes').insert([{ cliente_id: currentClienteId, remitente_id: senderId, mensaje: rootNode.mensaje, es_sistema: true }]);
+            await processNode();
             setIsBotTyping(false);
           }, delay);
         } else {
-          await supabase.from('soporte_mensajes').insert([{ cliente_id: currentClienteId, remitente_id: senderId, mensaje: rootNode.mensaje, es_sistema: true }]);
+          await processNode();
         }
       } else {
         const infoMsg = "Explica tu caso; sé detallado y explica en un sólo mensaje para ser atendida tu solicitud. Una vez que envíes el mensaje sólo podrás escribir nuevamente cuando la administración responda a tu chat, para evitar la saturación del chat."
@@ -661,24 +676,34 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       const nextNode = chatbotNodes.find(n => n.id === option.siguiente_nodo_id);
       if (nextNode) {
         const delay = (nextNode.retraso || 0) * 1000;
-        if (delay > 0) {
-          setIsBotTyping(true);
-          setTimeout(async () => {
-            await supabase.from('soporte_mensajes').insert({
-              cliente_id: activeChatId,
-              remitente_id: currentClienteId,
-              mensaje: nextNode.mensaje,
-              es_sistema: true
-            });
-            setIsBotTyping(false);
-          }, delay);
-        } else {
+        
+        const processNextNode = async () => {
           await supabase.from('soporte_mensajes').insert({
             cliente_id: activeChatId,
             remitente_id: currentClienteId,
             mensaje: nextNode.mensaje,
             es_sistema: true
           });
+          if (nextNode.cerrar_ticket) {
+            await supabase.from('clientes').update({ soporte_status: 'resuelto' }).eq('id', activeChatId);
+            await supabase.from('soporte_mensajes').insert({
+              cliente_id: activeChatId,
+              remitente_id: currentClienteId,
+              mensaje: "✅ TICKET CERRADO AUTOMÁTICAMENTE",
+              es_sistema: true
+            });
+            setClientStatus('resuelto');
+          }
+        };
+
+        if (delay > 0) {
+          setIsBotTyping(true);
+          setTimeout(async () => {
+            await processNextNode();
+            setIsBotTyping(false);
+          }, delay);
+        } else {
+          await processNextNode();
         }
       }
     }

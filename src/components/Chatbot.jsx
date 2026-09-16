@@ -71,6 +71,17 @@ const CustomBotNode = ({ data, id }) => {
         />
       </div>
 
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', background: 'rgba(255,255,255,0.05)', padding: '6px 8px', borderRadius: '4px' }}>
+        <span style={{ fontSize: '11px', color: '#aaa' }}>Cerrar ticket en este mensaje:</span>
+        <input 
+          type="checkbox" 
+          checked={!!data.cerrar_ticket}
+          onChange={(e) => data.onUpdateNode(id, { cerrar_ticket: e.target.checked })}
+          className="nodrag"
+          style={{ cursor: 'pointer', accentColor: '#ff4444' }}
+        />
+      </div>
+
       <div style={{ borderTop: '1px solid #333', marginTop: '12px', paddingTop: '12px' }}>
         <div style={{ fontSize: '12px', color: '#aaa', marginBottom: '8px' }}>Botones de respuesta:</div>
         <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '8px', fontStyle: 'italic' }}>
@@ -153,7 +164,8 @@ const Chatbot = () => {
             titulo: n.titulo, 
             mensaje: n.mensaje, 
             opciones: n.opciones || [],
-            retraso: n.retraso || 0
+            retraso: n.retraso || 0,
+            cerrar_ticket: !!n.cerrar_ticket
           }
         });
 
@@ -227,7 +239,8 @@ const Chatbot = () => {
         titulo: n.data.titulo,
         mensaje: n.data.mensaje,
         opciones: newOpciones,
-        retraso: n.data.retraso || 0
+        retraso: n.data.retraso || 0,
+        cerrar_ticket: !!n.data.cerrar_ticket
       };
     });
 
