@@ -983,7 +983,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                       </div>
                     ) : (
                       mensajes.map(m => {
-                        const isMine = m.remitente_id === currentClienteId
+                        const isMine = m.remitente_id === currentClienteId && !m.es_sistema
                         const isTicketInit = m.es_sistema && m.mensaje?.includes('TICKET INICIADO')
                         const isTicketClose = m.es_sistema && m.mensaje?.includes('TICKET CERRADO')
                         const isInfoMsg = m.es_sistema && !isTicketInit && !isTicketClose
