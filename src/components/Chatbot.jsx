@@ -57,6 +57,19 @@ const CustomBotNode = ({ data, id }) => {
         className="nodrag"
         style={{ width: '100%', padding: '6px', marginBottom: '8px', borderRadius: '4px', border: '1px solid #444', background: '#1a1a2e', color: '#fff', resize: 'vertical', minHeight: '60px' }}
       />
+      
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <span style={{ fontSize: '11px', color: '#aaa' }}>Retraso de respuesta (s):</span>
+        <input 
+          type="number" 
+          min="0" 
+          max="60" 
+          value={data.retraso || 0}
+          onChange={(e) => data.onUpdateNode(id, { retraso: parseInt(e.target.value) || 0 })}
+          className="nodrag"
+          style={{ width: '60px', padding: '4px', borderRadius: '4px', border: '1px solid #444', background: '#1a1a2e', color: '#fff', fontSize: '12px', textAlign: 'center' }}
+        />
+      </div>
 
       <div style={{ borderTop: '1px solid #333', marginTop: '12px', paddingTop: '12px' }}>
         <div style={{ fontSize: '12px', color: '#aaa', marginBottom: '8px' }}>Botones de respuesta:</div>
@@ -139,7 +152,8 @@ const Chatbot = () => {
           data: { 
             titulo: n.titulo, 
             mensaje: n.mensaje, 
-            opciones: n.opciones || []
+            opciones: n.opciones || [],
+            retraso: n.retraso || 0
           }
         });
 
@@ -212,7 +226,8 @@ const Chatbot = () => {
         id: n.id,
         titulo: n.data.titulo,
         mensaje: n.data.mensaje,
-        opciones: newOpciones
+        opciones: newOpciones,
+        retraso: n.data.retraso || 0
       };
     });
 

@@ -22,6 +22,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   let messagesEndRef = useRef(null)
   const audioNotify = useRef(null)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [isBotTyping, setIsBotTyping] = useState(false)
 
   useEffect(() => {
     // Sonido distintivo de "mensaje"
@@ -512,16 +513,31 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       
       if (isChatbotActiveGlobal && chatbotNodes.length > 0) {
         const rootNode = chatbotNodes.find(n => n.id === 'root') || chatbotNodes[0]
-        insertData.push({ cliente_id: currentClienteId, remitente_id: senderId, mensaje: rootNode.mensaje, es_sistema: true })
+        
+        let { error } = await supabase.from('soporte_mensajes').insert(insertData)
+        if (error && (error.code === '42703' || error.message?.includes('es_sistema'))) {
+          insertData.forEach(d => delete d.es_sistema)
+          await supabase.from('soporte_mensajes').insert(insertData)
+        }
+
+        const delay = (rootNode.retraso || 0) * 1000;
+        if (delay > 0) {
+          setIsBotTyping(true);
+          setTimeout(async () => {
+            await supabase.from('soporte_mensajes').insert([{ cliente_id: currentClienteId, remitente_id: senderId, mensaje: rootNode.mensaje, es_sistema: true }]);
+            setIsBotTyping(false);
+          }, delay);
+        } else {
+          await supabase.from('soporte_mensajes').insert([{ cliente_id: currentClienteId, remitente_id: senderId, mensaje: rootNode.mensaje, es_sistema: true }]);
+        }
       } else {
         const infoMsg = "Explica tu caso; sé detallado y explica en un sólo mensaje para ser atendida tu solicitud. Una vez que envíes el mensaje sólo podrás escribir nuevamente cuando la administración responda a tu chat, para evitar la saturación del chat."
         insertData.push({ cliente_id: currentClienteId, remitente_id: senderId, mensaje: infoMsg, es_sistema: true })
-      }
-      
-      let { error } = await supabase.from('soporte_mensajes').insert(insertData)
-      if (error && (error.code === '42703' || error.message?.includes('es_sistema'))) {
-        insertData.forEach(d => delete d.es_sistema)
-        await supabase.from('soporte_mensajes').insert(insertData)
+        let { error } = await supabase.from('soporte_mensajes').insert(insertData)
+        if (error && (error.code === '42703' || error.message?.includes('es_sistema'))) {
+          insertData.forEach(d => delete d.es_sistema)
+          await supabase.from('soporte_mensajes').insert(insertData)
+        }
       }
       
       await supabase.from('clientes').update({ soporte_status: 'pendiente' }).eq('id', currentClienteId)
@@ -631,23 +647,39 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
     });
 
     if (option.siguiente_nodo_id === 'humano') {
-      // The user wants to talk to a human.
-      // We don't call openTicket again, we just insert a system message saying "Transferring to human".
-      await supabase.from('soporte_mensajes').insert({
-        cliente_id: activeChatId,
-        remitente_id: currentClienteId,
-        mensaje: "Serás atendido por un agente en breve. Por favor, explica tu caso detalladamente a continuación.",
-        es_sistema: true
-      });
-    } else {
-      const nextNode = chatbotNodes.find(n => n.id === option.siguiente_nodo_id);
-      if (nextNode) {
+      setIsBotTyping(true);
+      setTimeout(async () => {
         await supabase.from('soporte_mensajes').insert({
           cliente_id: activeChatId,
           remitente_id: currentClienteId,
-          mensaje: nextNode.mensaje,
+          mensaje: "Serás atendido por un agente en breve. Por favor, explica tu caso detalladamente a continuación.",
           es_sistema: true
         });
+        setIsBotTyping(false);
+      }, 1000);
+    } else {
+      const nextNode = chatbotNodes.find(n => n.id === option.siguiente_nodo_id);
+      if (nextNode) {
+        const delay = (nextNode.retraso || 0) * 1000;
+        if (delay > 0) {
+          setIsBotTyping(true);
+          setTimeout(async () => {
+            await supabase.from('soporte_mensajes').insert({
+              cliente_id: activeChatId,
+              remitente_id: currentClienteId,
+              mensaje: nextNode.mensaje,
+              es_sistema: true
+            });
+            setIsBotTyping(false);
+          }, delay);
+        } else {
+          await supabase.from('soporte_mensajes').insert({
+            cliente_id: activeChatId,
+            remitente_id: currentClienteId,
+            mensaje: nextNode.mensaje,
+            es_sistema: true
+          });
+        }
       }
     }
   };
@@ -1041,6 +1073,21 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                           </div>
                         )
                       })
+                    )}
+                    {isBotTyping && (
+                      <div className="message-bubble system typing-indicator" style={{ 
+                        alignSelf: 'flex-start',
+                        background: 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04))',
+                        color: 'rgba(255,255,255,0.7)',
+                        padding: '11px 16px', 
+                        borderRadius: '18px 18px 18px 4px',
+                        margin: '4px 0',
+                        fontSize: '13px',
+                        fontStyle: 'italic',
+                        border: '1px solid rgba(255,255,255,0.08)'
+                      }}>
+                        Escribiendo...
+                      </div>
                     )}
                     <div ref={messagesEndRef} />
                   </>
