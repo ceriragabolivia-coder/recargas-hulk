@@ -42,7 +42,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   const [currentClienteId, setCurrentClienteId] = useState(perfil?.cliente_uuid)
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
   const { config } = useConfiguracion() || { config: null }
-  const [currentBotNodeId, setCurrentBotNodeId] = useState('root')
+  const [currentBotNodeId, setCurrentBotNodeId] = useState(null)
   
   let chatbotNodes = []
   try {
@@ -451,6 +451,20 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
     }
   }, [isOpen, activeChatId])
 
+  useEffect(() => {
+    if (mensajes.length > 0 && isChatbotActiveGlobal && !isAdmin && chatbotNodes.length > 0) {
+      const lastMsg = mensajes[mensajes.length - 1];
+      if (lastMsg.es_sistema) {
+        const node = chatbotNodes.find(n => n.mensaje === lastMsg.mensaje);
+        setCurrentBotNodeId(node ? node.id : null);
+      } else {
+        setCurrentBotNodeId(null);
+      }
+    } else {
+      setCurrentBotNodeId(null);
+    }
+  }, [mensajes, isChatbotActiveGlobal, isAdmin]);
+
   const handleSelectTicket = async (category) => {
     if (!currentClienteId || isAdmin) return
     
@@ -485,7 +499,6 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
     setShowOrderSelector(false) // Asegurar que el selector se cierre al iniciar ticket
 
     // 1. Enviar mensaje de sistema con el motivo
-    // Buscar un admin para que sea el remitente del sistema (o usar el propio cliente como fallback)
     const { data: adminProfile } = await supabase.from('perfiles').select('id').eq('rol', 'admin').limit(1).maybeSingle()
     let senderId = currentClienteId
     if (adminProfile) {
@@ -495,23 +508,22 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
     
     if (senderId) {
       const ticketMsg = `🎫 TICKET INICIADO: ${category.toUpperCase()}`
-      const infoMsg = "Explica tu caso; sé detallado y explica en un sólo mensaje para ser atendida tu solicitud. Una vez que envíes el mensaje sólo podrás escribir nuevamente cuando la administración responda a tu chat, para evitar la saturación del chat."
+      let insertData = [{ cliente_id: currentClienteId, remitente_id: senderId, mensaje: ticketMsg, es_sistema: true }]
       
-      // Intentar insertar con es_sistema
-      let { error } = await supabase.from('soporte_mensajes').insert([
-        { cliente_id: currentClienteId, remitente_id: senderId, mensaje: ticketMsg, es_sistema: true },
-        { cliente_id: currentClienteId, remitente_id: senderId, mensaje: infoMsg, es_sistema: true }
-      ])
-
-      // Fallback si no hay columna es_sistema
-      if (error && (error.code === '42703' || error.message?.includes('es_sistema'))) {
-        await supabase.from('soporte_mensajes').insert([
-          { cliente_id: currentClienteId, remitente_id: senderId, mensaje: ticketMsg },
-          { cliente_id: currentClienteId, remitente_id: senderId, mensaje: infoMsg }
-        ])
+      if (isChatbotActiveGlobal && chatbotNodes.length > 0) {
+        const rootNode = chatbotNodes.find(n => n.id === 'root') || chatbotNodes[0]
+        insertData.push({ cliente_id: currentClienteId, remitente_id: senderId, mensaje: rootNode.mensaje, es_sistema: true })
+      } else {
+        const infoMsg = "Explica tu caso; sé detallado y explica en un sólo mensaje para ser atendida tu solicitud. Una vez que envíes el mensaje sólo podrás escribir nuevamente cuando la administración responda a tu chat, para evitar la saturación del chat."
+        insertData.push({ cliente_id: currentClienteId, remitente_id: senderId, mensaje: infoMsg, es_sistema: true })
       }
       
-      // 2. Actualizar estado del cliente a 'pendiente' para persistencia en BD
+      let { error } = await supabase.from('soporte_mensajes').insert(insertData)
+      if (error && (error.code === '42703' || error.message?.includes('es_sistema'))) {
+        insertData.forEach(d => delete d.es_sistema)
+        await supabase.from('soporte_mensajes').insert(insertData)
+      }
+      
       await supabase.from('clientes').update({ soporte_status: 'pendiente' }).eq('id', currentClienteId)
     }
   }
@@ -619,8 +631,14 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
     });
 
     if (option.siguiente_nodo_id === 'humano') {
-      setCurrentBotNodeId(null);
-      await openTicket('Atención de un Agente');
+      // The user wants to talk to a human.
+      // We don't call openTicket again, we just insert a system message saying "Transferring to human".
+      await supabase.from('soporte_mensajes').insert({
+        cliente_id: activeChatId,
+        remitente_id: currentClienteId,
+        mensaje: "Serás atendido por un agente en breve. Por favor, explica tu caso detalladamente a continuación.",
+        es_sistema: true
+      });
     } else {
       const nextNode = chatbotNodes.find(n => n.id === option.siguiente_nodo_id);
       if (nextNode) {
@@ -630,7 +648,6 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
           mensaje: nextNode.mensaje,
           es_sistema: true
         });
-        setCurrentBotNodeId(nextNode.id);
       }
     }
   };
@@ -1097,35 +1114,6 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                     </div>
                   )}
                 </div>
-              ) : (!hasActiveTicket && !isAdmin && isChatbotActiveGlobal && currentBotNodeId && chatbotNodes.find(n => n.id === currentBotNodeId)) ? (
-                <div style={{ backgroundColor: 'var(--bg-panel)', padding: '20px', textAlign: 'center' }}>
-                  {(() => {
-                    const activeNode = chatbotNodes.find(n => n.id === currentBotNodeId)
-                    return (
-                      <>
-                        <div style={{ marginBottom: '16px', fontWeight: 'bold', fontSize: '15px', color: '#fff' }}>
-                          🤖 {activeNode.mensaje}
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
-                          {activeNode.opciones.map((opt, i) => (
-                            <button
-                              key={i}
-                              onClick={() => handleChatbotOption(opt)}
-                              style={{ 
-                                padding: '10px 20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px', width: '100%', maxWidth: '300px',
-                                background: 'rgba(255,255,255,0.05)', transition: 'background 0.2s'
-                              }}
-                              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                            >
-                              {opt.texto}
-                            </button>
-                          ))}
-                        </div>
-                      </>
-                    )
-                  })()}
-                </div>
               ) : (!hasActiveTicket && !isAdmin) ? (
                 <div style={{ backgroundColor: 'var(--bg-panel)', padding: '16px', textAlign: 'center' }}>
                   <div style={{ marginBottom: '12px', fontWeight: 'bold', fontSize: '14px' }}>
@@ -1224,56 +1212,81 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                   </div>
                 )}
 
-                <form onSubmit={handleSendMessage} style={{ padding: '10px 12px', backgroundColor: 'rgba(13,15,28,0.98)', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', gap: '10px', alignItems: 'center', backdropFilter: 'blur(12px)' }}>
-                  <label style={{ cursor: 'pointer', opacity: isUploading ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', transition: 'all 0.2s', flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'}>
-                    <span style={{ fontSize: '16px' }}>📎</span>
-                    <input type="file" hidden onChange={handleFileSelect} accept="image/*,video/*" disabled={isUploading} />
-                  </label>
+                {isChatbotActiveGlobal && currentBotNodeId && !isAdmin ? (
+                  (() => {
+                    const activeNode = chatbotNodes.find(n => n.id === currentBotNodeId)
+                    if (!activeNode) return null;
+                    return (
+                      <div style={{ padding: '16px', backgroundColor: 'rgba(13,15,28,0.98)', borderTop: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(12px)', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+                        {activeNode.opciones.map((opt, i) => (
+                          <button
+                            key={i}
+                            onClick={() => handleChatbotOption(opt)}
+                            style={{ 
+                              padding: '10px 16px', borderRadius: '16px', border: '1px solid rgba(0, 210, 255, 0.3)', color: '#00d2ff', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px',
+                              background: 'rgba(0, 210, 255, 0.05)', transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0, 210, 255, 0.1)'; e.currentTarget.style.transform = 'scale(1.02)' }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0, 210, 255, 0.05)'; e.currentTarget.style.transform = 'scale(1)' }}
+                          >
+                            {opt.texto}
+                          </button>
+                        ))}
+                      </div>
+                    )
+                  })()
+                ) : (
+                  <form onSubmit={handleSendMessage} style={{ padding: '10px 12px', backgroundColor: 'rgba(13,15,28,0.98)', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', gap: '10px', alignItems: 'center', backdropFilter: 'blur(12px)' }}>
+                    <label style={{ cursor: 'pointer', opacity: isUploading ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', transition: 'all 0.2s', flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'}>
+                      <span style={{ fontSize: '16px' }}>📎</span>
+                      <input type="file" hidden onChange={handleFileSelect} accept="image/*,video/*" disabled={isUploading} />
+                    </label>
 
-                  {isRecording ? (
-                    <div style={{ flex: 1, color: '#f87171', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(248,113,113,0.1)', borderRadius: '20px', padding: '10px 16px' }} onClick={stopRecording}>
-                      <div className="recording-dot"></div>
-                      <span>{recordingTime}s — Toca para parar</span>
-                    </div>
-                  ) : (
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      style={{ 
-                        flex: 1, 
-                        fontSize: '14px', 
-                        borderRadius: '22px', 
-                        padding: '10px 18px', 
-                        backgroundColor: 'rgba(255,255,255,0.06)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        color: '#fff',
-                        outline: 'none',
-                        transition: 'border-color 0.2s',
-                        opacity: (isThrottled && !isAdmin) || isResolved ? 0.5 : 1 
-                      }}
-                      placeholder={isResolved ? "Ticket resuelto" : ((isThrottled && !isAdmin) ? "Esperando respuesta..." : "Escribe tu mensaje...")}
-                      value={newMessage}
-                      onChange={e => setNewMessage(e.target.value)}
-                      disabled={(isThrottled && !isAdmin) || isResolved || loadingThrottle || isUploading || !!audioBlob}
-                    />
-                  )}
+                    {isRecording ? (
+                      <div style={{ flex: 1, color: '#f87171', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(248,113,113,0.1)', borderRadius: '20px', padding: '10px 16px' }} onClick={stopRecording}>
+                        <div className="recording-dot"></div>
+                        <span>{recordingTime}s — Toca para parar</span>
+                      </div>
+                    ) : (
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        style={{ 
+                          flex: 1, 
+                          fontSize: '14px', 
+                          borderRadius: '22px', 
+                          padding: '10px 18px', 
+                          backgroundColor: 'rgba(255,255,255,0.06)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          color: '#fff',
+                          outline: 'none',
+                          transition: 'border-color 0.2s',
+                          opacity: (isThrottled && !isAdmin) || isResolved ? 0.5 : 1 
+                        }}
+                        placeholder={isResolved ? "Ticket resuelto" : ((isThrottled && !isAdmin) ? "Esperando respuesta..." : "Escribe tu mensaje...")}
+                        value={newMessage}
+                        onChange={e => setNewMessage(e.target.value)}
+                        disabled={(isThrottled && !isAdmin) || isResolved || loadingThrottle || isUploading || !!audioBlob}
+                      />
+                    )}
 
-                  {!isRecording && !audioBlob && isAdmin && (
-                    <button type="button" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '50%', width: '38px', height: '38px', cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'} onClick={startRecording}>
-                       🎙️
+                    {!isRecording && !audioBlob && isAdmin && (
+                      <button type="button" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '50%', width: '38px', height: '38px', cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'} onClick={startRecording}>
+                        🎙️
+                      </button>
+                    )}
+
+                    <button 
+                      type="submit" 
+                      style={{ borderRadius: '50%', width: '42px', height: '42px', flexShrink: 0, padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'linear-gradient(135deg, #7c6af7 0%, #4f46e5 100%)', border: 'none', color: '#fff', fontSize: '17px', cursor: 'pointer', boxShadow: '0 4px 16px rgba(124,106,247,0.5)', transition: 'all 0.2s' }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(124,106,247,0.7)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(124,106,247,0.5)'; }}
+                      disabled={(!newMessage.trim() && !pendingFile && !isAdmin) || (!isAdmin && mensajes.length === 0 && !ticketSubject) || (isThrottled && !isAdmin) || loadingThrottle || isUploading || !!audioBlob}
+                    >
+                      {isUploading ? '⌛' : (pendingFile ? '📤' : '➤')}
                     </button>
-                  )}
-
-                  <button 
-                    type="submit" 
-                    style={{ borderRadius: '50%', width: '42px', height: '42px', flexShrink: 0, padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'linear-gradient(135deg, #7c6af7 0%, #4f46e5 100%)', border: 'none', color: '#fff', fontSize: '17px', cursor: 'pointer', boxShadow: '0 4px 16px rgba(124,106,247,0.5)', transition: 'all 0.2s' }}
-                    onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(124,106,247,0.7)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(124,106,247,0.5)'; }}
-                    disabled={(!newMessage.trim() && !pendingFile && !isAdmin) || (!isAdmin && mensajes.length === 0 && !ticketSubject) || (isThrottled && !isAdmin) || loadingThrottle || isUploading || !!audioBlob}
-                  >
-                    {isUploading ? '⌛' : (pendingFile ? '📤' : '➤')}
-                  </button>
-                </form>
+                  </form>
+                )}
                 </>
               )}
               </div>
