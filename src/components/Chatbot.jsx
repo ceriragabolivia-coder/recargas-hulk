@@ -152,6 +152,7 @@ const Chatbot = () => {
                 sourceHandle: `${optIdx}`,
                 target: opt.siguiente_nodo_id,
                 animated: true,
+                interactionWidth: 25,
                 style: { stroke: '#00d2ff', strokeWidth: 2 },
                 markerEnd: { type: MarkerType.ArrowClosed, color: '#00d2ff' },
               });
@@ -170,10 +171,19 @@ const Chatbot = () => {
     (params) => setEdges((eds) => addEdge({ 
       ...params, 
       animated: true, 
+      interactionWidth: 25,
       style: { stroke: '#00d2ff', strokeWidth: 2 },
       markerEnd: { type: MarkerType.ArrowClosed, color: '#00d2ff' }
     }, eds)),
     [setEdges],
+  );
+
+  const onEdgeClick = useCallback(
+    (event, edge) => {
+      // Borrar la línea al hacer clic en ella
+      setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+    },
+    [setEdges]
   );
 
   const isChatbotActive = config?.chatbot_activo === 'true';
@@ -363,6 +373,7 @@ const Chatbot = () => {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onEdgeClick={onEdgeClick}
           nodeTypes={nodeTypes}
           fitView
           colorMode="dark"
