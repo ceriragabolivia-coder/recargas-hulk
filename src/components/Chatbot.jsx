@@ -1,4 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import {
+  ReactFlow,
+  MiniMap,
+  Controls,
+  Background,
+  useNodesState,
+  useEdgesState,
+  addEdge,
+  Handle,
+  Position,
+  Panel,
+  MarkerType
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 import { useConfiguracion } from '../hooks/useData';
 
 const DEFAULT_FLOW = [
@@ -9,28 +23,158 @@ const DEFAULT_FLOW = [
   }
 ];
 
+const CustomBotNode = ({ data, id }) => {
+  return (
+    <div style={{
+      background: 'rgba(20,20,30,0.95)',
+      border: `2px solid ${id === 'root' ? '#00d2ff' : 'rgba(255,255,255,0.2)'}`,
+      borderRadius: '12px',
+      padding: '16px',
+      width: '300px',
+      color: 'white',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+    }}>
+      <Handle type="target" position={Position.Top} style={{ background: '#555' }} />
+      
+      <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '14px', color: id==='root' ? '#00d2ff' : '#aaa' }}>
+        {id === 'root' ? 'RESPUESTA INICIAL' : (data.titulo || 'Nueva Respuesta').toUpperCase()}
+      </div>
+
+      {id !== 'root' && (
+        <input 
+          value={data.titulo || ''}
+          onChange={(e) => data.onUpdateNode(id, { titulo: e.target.value })}
+          placeholder="Título interno"
+          className="nodrag"
+          style={{ width: '100%', padding: '6px', marginBottom: '8px', borderRadius: '4px', border: '1px solid #444', background: '#1a1a2e', color: '#fff' }}
+        />
+      )}
+
+      <textarea
+        value={data.mensaje}
+        onChange={(e) => data.onUpdateNode(id, { mensaje: e.target.value })}
+        placeholder="Mensaje del bot..."
+        className="nodrag"
+        style={{ width: '100%', padding: '6px', marginBottom: '8px', borderRadius: '4px', border: '1px solid #444', background: '#1a1a2e', color: '#fff', resize: 'vertical', minHeight: '60px' }}
+      />
+
+      <div style={{ borderTop: '1px solid #333', marginTop: '12px', paddingTop: '12px' }}>
+        <div style={{ fontSize: '12px', color: '#aaa', marginBottom: '8px' }}>Botones de respuesta:</div>
+        <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '8px', fontStyle: 'italic' }}>
+          * Conecta el punto azul de un botón a otro nodo para dirigir la conversación. Si no lo conectas, la opción redirigirá al Agente Humano automáticamente.
+        </div>
+        {data.opciones && data.opciones.map((opt, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', marginBottom: '6px', position: 'relative' }}>
+            <input 
+              value={opt.texto}
+              onChange={(e) => data.onUpdateOption(id, i, e.target.value)}
+              className="nodrag"
+              placeholder="Texto del botón"
+              style={{ flex: 1, padding: '4px 8px', borderRadius: '4px', border: '1px solid #444', background: '#1a1a2e', color: '#fff', fontSize: '12px' }}
+            />
+            <button onClick={() => data.onDeleteOption(id, i)} style={{ marginLeft: '4px', background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer' }}>×</button>
+            <Handle 
+              type="source" 
+              position={Position.Right} 
+              id={`${i}`}
+              style={{ top: '50%', right: '-24px', background: '#00d2ff', width: '12px', height: '12px' }}
+            />
+          </div>
+        ))}
+        <button 
+          onClick={() => data.onAddOption(id)}
+          style={{ width: '100%', padding: '4px', borderRadius: '4px', background: 'rgba(255,255,255,0.05)', border: '1px dashed #555', color: '#fff', fontSize: '11px', marginTop: '4px', cursor: 'pointer' }}
+        >
+          + Agregar Botón
+        </button>
+      </div>
+      
+      {id !== 'root' && (
+        <button onClick={() => data.onDeleteNode(id)} style={{ width: '100%', padding: '4px', background: 'none', border: 'none', color: '#ff4444', fontSize: '11px', marginTop: '12px', cursor: 'pointer' }}>
+          🗑️ Eliminar Respuesta
+        </button>
+      )}
+    </div>
+  );
+};
+
 const Chatbot = () => {
   const { config, updateConfig, loading } = useConfiguracion();
   
-  const [nodes, setNodes] = useState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isSaving, setIsSaving] = useState(false);
-  const [editingNodeId, setEditingNodeId] = useState(null);
+  const [initialized, setInitialized] = useState(false);
 
-  // Inicializar el flujo desde config
+  const nodeTypes = useMemo(() => ({ customBotNode: CustomBotNode }), []);
+
+  // Initialize from config
   useEffect(() => {
-    if (!loading && config) {
+    if (!loading && config && !initialized) {
+      let parsedNodes = DEFAULT_FLOW;
       if (config.chatbot_flujo) {
         try {
-          setNodes(JSON.parse(config.chatbot_flujo));
+          parsedNodes = JSON.parse(config.chatbot_flujo);
         } catch (e) {
           console.error("Error parsing chatbot flow", e);
-          setNodes(DEFAULT_FLOW);
         }
-      } else {
-        setNodes(DEFAULT_FLOW);
       }
+
+      let layoutObj = {};
+      if (config.chatbot_layout) {
+        try {
+          const l = JSON.parse(config.chatbot_layout);
+          l.forEach(item => { layoutObj[item.id] = item.position; });
+        } catch(e) {}
+      }
+
+      let initialNodes = [];
+      let initialEdges = [];
+
+      parsedNodes.forEach((n, idx) => {
+        initialNodes.push({
+          id: n.id,
+          type: 'customBotNode',
+          position: layoutObj[n.id] || { x: 250, y: idx * 300 },
+          data: { 
+            titulo: n.titulo, 
+            mensaje: n.mensaje, 
+            opciones: n.opciones || []
+          }
+        });
+
+        if (n.opciones) {
+          n.opciones.forEach((opt, optIdx) => {
+            if (opt.siguiente_nodo_id && opt.siguiente_nodo_id !== 'humano') {
+              initialEdges.push({
+                id: `e_${n.id}_${optIdx}_${opt.siguiente_nodo_id}`,
+                source: n.id,
+                sourceHandle: `${optIdx}`,
+                target: opt.siguiente_nodo_id,
+                animated: true,
+                style: { stroke: '#00d2ff', strokeWidth: 2 },
+                markerEnd: { type: MarkerType.ArrowClosed, color: '#00d2ff' },
+              });
+            }
+          });
+        }
+      });
+
+      setNodes(initialNodes);
+      setEdges(initialEdges);
+      setInitialized(true);
     }
-  }, [loading, config]);
+  }, [loading, config, initialized, setNodes, setEdges]);
+
+  const onConnect = useCallback(
+    (params) => setEdges((eds) => addEdge({ 
+      ...params, 
+      animated: true, 
+      style: { stroke: '#00d2ff', strokeWidth: 2 },
+      markerEnd: { type: MarkerType.ArrowClosed, color: '#00d2ff' }
+    }, eds)),
+    [setEdges],
+  );
 
   const isChatbotActive = config?.chatbot_activo === 'true';
 
@@ -41,73 +185,118 @@ const Chatbot = () => {
 
   const saveFlow = async () => {
     setIsSaving(true);
-    await updateConfig('chatbot_flujo', JSON.stringify(nodes), true);
+    
+    // Convert React Flow to JSON
+    const finalNodes = nodes.map(n => {
+      const outEdges = edges.filter(e => e.source === n.id);
+      
+      const newOpciones = n.data.opciones.map((opt, optIdx) => {
+        const edge = outEdges.find(e => e.sourceHandle === `${optIdx}`);
+        return {
+          texto: opt.texto,
+          siguiente_nodo_id: edge ? edge.target : 'humano'
+        };
+      });
+      
+      return {
+        id: n.id,
+        titulo: n.data.titulo,
+        mensaje: n.data.mensaje,
+        opciones: newOpciones
+      };
+    });
+
+    await updateConfig('chatbot_flujo', JSON.stringify(finalNodes), true);
+    
+    const layout = nodes.map(n => ({ id: n.id, position: n.position }));
+    await updateConfig('chatbot_layout', JSON.stringify(layout), true);
+    
     setIsSaving(false);
   };
 
   const addNode = () => {
     const newNode = {
       id: `nodo_${Date.now()}`,
-      titulo: 'Nueva Respuesta',
-      mensaje: 'Nuevo mensaje del bot...',
-      opciones: []
+      type: 'customBotNode',
+      position: { x: 400, y: 100 },
+      data: {
+        titulo: 'Nueva Respuesta',
+        mensaje: 'Nuevo mensaje del bot...',
+        opciones: []
+      }
     };
-    setNodes([...nodes, newNode]);
-    setEditingNodeId(newNode.id);
+    setNodes((nds) => [...nds, newNode]);
   };
 
-  const deleteNode = (id) => {
-    if (id === 'root') return; // Cannot delete root
-    // Remove node and any options pointing to it
-    const updated = nodes.filter(n => n.id !== id).map(n => ({
+  const onUpdateNode = useCallback((id, changes) => {
+    setNodes((nds) =>
+      nds.map((n) => {
+        if (n.id === id) {
+          return { ...n, data: { ...n.data, ...changes } };
+        }
+        return n;
+      })
+    );
+  }, [setNodes]);
+
+  const onUpdateOption = useCallback((nodeId, optionIndex, newText) => {
+    setNodes((nds) =>
+      nds.map((n) => {
+        if (n.id === nodeId) {
+          const newOpciones = [...n.data.opciones];
+          newOpciones[optionIndex] = { ...newOpciones[optionIndex], texto: newText };
+          return { ...n, data: { ...n.data, opciones: newOpciones } };
+        }
+        return n;
+      })
+    );
+  }, [setNodes]);
+
+  const onAddOption = useCallback((nodeId) => {
+    setNodes((nds) =>
+      nds.map((n) => {
+        if (n.id === nodeId) {
+          return { ...n, data: { ...n.data, opciones: [...n.data.opciones, { texto: 'Nueva Opción', siguiente_nodo_id: 'humano' }] } };
+        }
+        return n;
+      })
+    );
+  }, [setNodes]);
+
+  const onDeleteOption = useCallback((nodeId, optionIndex) => {
+    setNodes((nds) =>
+      nds.map((n) => {
+        if (n.id === nodeId) {
+          const newOpciones = [...n.data.opciones];
+          newOpciones.splice(optionIndex, 1);
+          return { ...n, data: { ...n.data, opciones: newOpciones } };
+        }
+        return n;
+      })
+    );
+    setEdges((eds) => eds.filter(e => !(e.source === nodeId && e.sourceHandle === `${optionIndex}`)));
+  }, [setNodes, setEdges]);
+  
+  const onDeleteNode = useCallback((id) => {
+    if (id === 'root') return;
+    setNodes((nds) => nds.filter((n) => n.id !== id));
+    setEdges((eds) => eds.filter((e) => e.source !== id && e.target !== id));
+  }, [setNodes, setEdges]);
+
+  // Inject callbacks into nodes
+  const nodesWithHandlers = useMemo(() => {
+    return nodes.map(n => ({
       ...n,
-      opciones: n.opciones.map(opt => 
-        opt.siguiente_nodo_id === id ? { ...opt, siguiente_nodo_id: 'humano' } : opt
-      )
+      data: {
+        ...n.data,
+        onUpdateNode,
+        onUpdateOption,
+        onAddOption,
+        onDeleteOption,
+        onDeleteNode
+      }
     }));
-    setNodes(updated);
-  };
-
-  const updateNode = (id, changes) => {
-    setNodes(nodes.map(n => n.id === id ? { ...n, ...changes } : n));
-  };
-
-  const addOption = (nodeId) => {
-    const updated = nodes.map(n => {
-      if (n.id === nodeId) {
-        return {
-          ...n,
-          opciones: [...n.opciones, { texto: 'Nueva Opción', siguiente_nodo_id: 'humano' }]
-        };
-      }
-      return n;
-    });
-    setNodes(updated);
-  };
-
-  const updateOption = (nodeId, optionIndex, changes) => {
-    const updated = nodes.map(n => {
-      if (n.id === nodeId) {
-        const newOptions = [...n.opciones];
-        newOptions[optionIndex] = { ...newOptions[optionIndex], ...changes };
-        return { ...n, opciones: newOptions };
-      }
-      return n;
-    });
-    setNodes(updated);
-  };
-
-  const deleteOption = (nodeId, optionIndex) => {
-    const updated = nodes.map(n => {
-      if (n.id === nodeId) {
-        const newOptions = [...n.opciones];
-        newOptions.splice(optionIndex, 1);
-        return { ...n, opciones: newOptions };
-      }
-      return n;
-    });
-    setNodes(updated);
-  };
+  }, [nodes, onUpdateNode, onUpdateOption, onAddOption, onDeleteOption, onDeleteNode]);
 
   if (loading) {
     return (
@@ -118,16 +307,16 @@ const Chatbot = () => {
   }
 
   return (
-    <div className="page-content" style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div className="page-content" style={{ padding: '24px', height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Header and Toggle Card */}
       <div className="card glass-morphism" style={{ 
-        padding: '32px', 
+        padding: '24px', 
         borderRadius: '24px', 
         border: '1px solid rgba(255, 255, 255, 0.1)',
-        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
-        marginBottom: '24px'
+        marginBottom: '20px',
+        flexShrink: 0
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
           <div>
             <h2 style={{ 
               fontSize: '28px', 
@@ -137,53 +326,19 @@ const Chatbot = () => {
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent'
             }}>
-              Módulo Chatbot
+              Constructor Visual de Chatbot
             </h2>
             <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '15px' }}>
-              Controla la atención automatizada al cliente.
+              Controla la atención automatizada al cliente uniendo botones con respuestas mediante flechas.
             </p>
           </div>
-          <div style={{ 
-            width: '64px', 
-            height: '64px', 
-            background: isChatbotActive ? 'rgba(0, 210, 255, 0.1)' : 'rgba(255, 255, 255, 0.05)',
-            borderRadius: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '32px',
-            border: `1px solid ${isChatbotActive ? 'rgba(0, 210, 255, 0.3)' : 'rgba(255, 255, 255, 0.1)'}`,
-            transition: 'all 0.3s ease'
-          }}>
-            🤖
-          </div>
-        </div>
-
-        <div style={{ 
-          background: 'rgba(0,0,0,0.2)', 
-          borderRadius: '16px', 
-          padding: '24px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          border: '1px solid rgba(255,255,255,0.05)'
-        }}>
-          <div>
-            <h3 style={{ margin: '0 0 8px 0', color: '#fff', fontSize: '18px' }}>Estado del Chatbot</h3>
-            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px', maxWidth: '400px', lineHeight: '1.5' }}>
-              {isChatbotActive 
-                ? 'El Chatbot está interceptando los mensajes de soporte y respondiendo de forma automática.'
-                : 'El Chatbot está desactivado. Los mensajes de soporte requerirán atención humana.'}
-            </p>
-          </div>
-          
           <button 
             onClick={handleToggle}
             style={{
-              padding: '12px 24px',
+              padding: '10px 20px',
               borderRadius: '12px',
               border: 'none',
-              fontSize: '16px',
+              fontSize: '14px',
               fontWeight: 'bold',
               cursor: 'pointer',
               display: 'flex',
@@ -195,45 +350,28 @@ const Chatbot = () => {
               boxShadow: isChatbotActive ? '0 0 20px rgba(0, 210, 255, 0.4)' : 'none'
             }}
           >
-            {isChatbotActive ? 'ENCENDIDO' : 'APAGADO'}
-            <div style={{
-              width: '40px',
-              height: '24px',
-              background: isChatbotActive ? '#000' : 'rgba(0,0,0,0.5)',
-              borderRadius: '12px',
-              position: 'relative',
-              padding: '2px'
-            }}>
-              <div style={{
-                width: '20px',
-                height: '20px',
-                background: isChatbotActive ? 'var(--accent-primary)' : '#fff',
-                borderRadius: '50%',
-                position: 'absolute',
-                top: '2px',
-                left: isChatbotActive ? '18px' : '2px',
-                transition: 'all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-              }} />
-            </div>
+            {isChatbotActive ? '🤖 ENCENDIDO' : 'APAGADO'}
           </button>
         </div>
       </div>
 
       {/* Builder Section */}
-      <div className="card glass-morphism" style={{ padding: '32px', borderRadius: '24px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <div>
-            <h3 style={{ fontSize: '22px', margin: '0 0 8px 0', color: '#fff' }}>Flujo de Respuestas</h3>
-            <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '14px' }}>
-              Construye el árbol de decisiones. La "Respuesta Inicial" es el primer mensaje que verá el cliente.
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '12px' }}>
+      <div className="card glass-morphism" style={{ flex: 1, borderRadius: '24px', border: '1px solid rgba(255, 255, 255, 0.1)', overflow: 'hidden', position: 'relative' }}>
+        <ReactFlow
+          nodes={nodesWithHandlers}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          nodeTypes={nodeTypes}
+          fitView
+          colorMode="dark"
+        >
+          <Panel position="top-right" style={{ display: 'flex', gap: '10px' }}>
             <button 
               onClick={addNode}
               className="btn btn-secondary"
-              style={{ borderRadius: '12px', fontWeight: 'bold', border: '1px solid rgba(255,255,255,0.2)', background: 'transparent' }}
+              style={{ borderRadius: '12px', fontWeight: 'bold', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.5)' }}
               disabled={isSaving}
             >
               + Nueva Respuesta
@@ -246,116 +384,11 @@ const Chatbot = () => {
             >
               {isSaving ? 'Guardando...' : '💾 Guardar Cambios'}
             </button>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {nodes.map((node) => (
-            <div key={node.id} style={{
-              background: 'rgba(0,0,0,0.2)',
-              border: `1px solid ${node.id === 'root' ? 'rgba(0, 210, 255, 0.3)' : 'rgba(255,255,255,0.05)'}`,
-              borderRadius: '16px',
-              padding: '24px'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                <span style={{ 
-                  background: node.id === 'root' ? 'rgba(0, 210, 255, 0.1)' : 'rgba(255,255,255,0.1)',
-                  color: node.id === 'root' ? '#00d2ff' : '#fff',
-                  padding: '4px 12px',
-                  borderRadius: '20px',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                  letterSpacing: '1px'
-                }}>
-                  {node.id === 'root' ? 'RESPUESTA INICIAL' : (node.titulo ? `RESPUESTA: ${node.titulo.toUpperCase()}` : `RESPUESTA: ${node.id.replace('nodo_', '')}`)}
-                </span>
-                
-                {node.id !== 'root' && (
-                  <button onClick={() => deleteNode(node.id)} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer' }}>
-                    🗑️ Eliminar Respuesta
-                  </button>
-                )}
-              </div>
-
-              {node.id !== 'root' && (
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '8px' }}>Título interno (Para que puedas identificarla):</label>
-                  <input 
-                    type="text"
-                    value={node.titulo || ''}
-                    onChange={(e) => updateNode(node.id, { titulo: e.target.value })}
-                    style={{
-                      width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '8px', padding: '10px 12px', color: '#00d2ff', fontSize: '14px', fontWeight: 'bold'
-                    }}
-                    placeholder="Ej. Instrucciones de Pago..."
-                  />
-                </div>
-              )}
-
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '8px' }}>Mensaje del Bot:</label>
-                <textarea 
-                  value={node.mensaje}
-                  onChange={(e) => updateNode(node.id, { mensaje: e.target.value })}
-                  style={{
-                    width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '12px', padding: '12px', color: '#fff', fontSize: '14px', resize: 'vertical', minHeight: '80px'
-                  }}
-                  placeholder="Escribe el mensaje que enviará el bot..."
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '12px' }}>Botones de Respuesta (Opciones):</label>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '12px' }}>
-                  {node.opciones.map((opt, i) => (
-                    <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '12px' }}>
-                      <input 
-                        type="text"
-                        value={opt.texto}
-                        onChange={(e) => updateOption(node.id, i, { texto: e.target.value })}
-                        style={{
-                          flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
-                          borderRadius: '8px', padding: '8px 12px', color: '#fff', fontSize: '14px'
-                        }}
-                        placeholder="Texto del botón"
-                      />
-                      <span style={{ color: 'var(--text-muted)' }}>➔</span>
-                      <select
-                        value={opt.siguiente_nodo_id}
-                        onChange={(e) => updateOption(node.id, i, { siguiente_nodo_id: e.target.value })}
-                        style={{
-                          background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
-                          borderRadius: '8px', padding: '8px 12px', color: '#fff', fontSize: '14px'
-                        }}
-                      >
-                        <option value="humano">🧑‍💻 Hablar con un humano</option>
-                        {nodes.map(n => (
-                          <option key={n.id} value={n.id}>Respuesta: {n.id === 'root' ? 'Inicial' : (n.titulo || n.id.replace('nodo_', ''))}</option>
-                        ))}
-                      </select>
-                      <button onClick={() => deleteOption(node.id, i)} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', padding: '4px' }}>
-                        ❌
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                
-                <button 
-                  onClick={() => addOption(node.id)}
-                  style={{
-                    background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.2)',
-                    borderRadius: '8px', padding: '8px 16px', color: '#fff', fontSize: '13px', cursor: 'pointer'
-                  }}
-                >
-                  + Agregar Botón
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+          </Panel>
+          <Controls />
+          <MiniMap nodeColor="#00d2ff" maskColor="rgba(0,0,0,0.7)" style={{ background: '#1a1a2e' }} />
+          <Background variant="dots" gap={12} size={1} color="#444" />
+        </ReactFlow>
       </div>
     </div>
   );
