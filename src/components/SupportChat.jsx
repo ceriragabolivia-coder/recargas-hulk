@@ -1002,7 +1002,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                           >
                             {(!m.es_sistema || isInfoMsg) && (
                               <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginBottom: '3px', marginLeft: '6px', marginRight: '6px', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-                                {isMine ? 'Tú' : (m.remitente?.nombres || 'Soporte')}
+                                {isMine ? 'Tú' : (m.es_sistema ? 'Soporte' : (m.remitente?.nombres || 'Soporte'))}
                               </div>
                             )}
 
