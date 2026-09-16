@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { key: 'usuarios', icon: '👥', label: 'Usuarios', path: '/Usuarios' },
   { key: 'revendedores', icon: '⭐', label: 'Revendedores', path: '/Revendedores' },
   { key: 'chats', icon: '💬', label: 'Sala de Chat', path: '/Soporte' },
+  { key: 'chatbot', icon: '🤖', label: 'Chatbot', path: '/Chatbot' },
   { key: 'proveedor_tgv', icon: '📦', label: 'Proveedor API', path: '/Proveedor-TiendaGiftVen' },
   { key: 'config', icon: '⚙️', label: 'Configuración', path: '/Configuracion' },
   { key: 'reportes', icon: '📈', label: 'Reportes', path: '/Reportes' },
@@ -1073,7 +1074,7 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
               <div className="nav-section-label">Principal</div>
               {NAV_ITEMS.filter(i => ['dashboard', 'billetera', 'catalogo', 'ventas'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Gestión</div>
-              {NAV_ITEMS.filter(i => ['productos', 'pedidos', 'usuarios', 'revendedores', 'chats', 'proveedor_tgv', 'pagos_admins', 'pagos_apk', 'gestion_socios', 'config', 'gestion_landing', 'gestion_paginas', 'gestion_cupones', 'gestion_pines', 'gestion_creadores', 'gestion_referidos', 'interfaces_admin', 'sorteos'].includes(i.key)).map(renderNavItem)}
+              {NAV_ITEMS.filter(i => ['productos', 'pedidos', 'usuarios', 'revendedores', 'chats', 'chatbot', 'proveedor_tgv', 'pagos_admins', 'pagos_apk', 'gestion_socios', 'config', 'gestion_landing', 'gestion_paginas', 'gestion_cupones', 'gestion_pines', 'gestion_creadores', 'gestion_referidos', 'interfaces_admin', 'sorteos'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Análisis</div>
               {NAV_ITEMS.filter(i => ['reportes', 'estadisticas', 'gestion_ruleta'].includes(i.key)).map(renderNavItem)}
               <div className="nav-section-label">Cuenta</div>

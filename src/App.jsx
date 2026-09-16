@@ -47,6 +47,7 @@ const GestionSocios = lazy(() => import('./components/GestionSocios'))
 const MiParticipacion = lazy(() => import('./components/MiParticipacion'))
 const GestionInterfaces = lazy(() => import('./components/GestionInterfaces'))
 const Sorteos = lazy(() => import('./components/Sorteos'))
+const Chatbot = lazy(() => import('./components/Chatbot'))
 
 const Placeholder = ({ title }) => (
   <div className="page-content">
@@ -495,6 +496,7 @@ const AppRoutes = ({ isAdmin, perfil, currentParams, handleNavigate }) => {
         <Route path="/Gestion-Socios" element={isAdmin ? <GestionSocios /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Interfaces-Admin" element={isAdmin ? <GestionInterfaces /> : <Navigate to="/Lista-De-Precios" replace />} />
         <Route path="/Sorteos" element={isAdmin ? <Sorteos /> : <Navigate to="/Lista-De-Precios" replace />} />
+        <Route path="/Chatbot" element={isAdmin ? <Chatbot /> : <Navigate to="/Lista-De-Precios" replace />} />
 
         {/* Ruta del socio (solo lectura de su propia participación) */}
         <Route path="/Mi-Participacion" element={isSocio ? <MiParticipacion /> : <Navigate to="/Lista-De-Precios" replace />} />
@@ -585,6 +587,7 @@ export default function App() {
       'gestion_creadores': '/Gestion-Creadores',
       'interfaces_admin': '/Interfaces-Admin',
       'sorteos': '/Sorteos',
+      'chatbot': '/Chatbot',
       'pagina_estatica': '/p/',
       'checkout': '/Checkout'
     }
@@ -789,8 +792,19 @@ export default function App() {
       sendHeartbeat('login');
 
       // Latido cada 60s
-      const interval = setInterval(() => sendHeartbeat('heartbeat'), 60000);
-      return () => clearInterval(interval);
+      const heartbeatInterval = setInterval(() => {
+        sendHeartbeat('heartbeat');
+      }, 60000);
+
+      // Limpieza de pagos APK expirados cada 10s (para el límite de 20s)
+      const cleanupInterval = setInterval(() => {
+        supabase.rpc('rechazar_pagos_apk_expirados_rpc').catch(e => console.debug('APK cleanup error:', e));
+      }, 10000);
+
+      return () => {
+        clearInterval(heartbeatInterval);
+        clearInterval(cleanupInterval);
+      };
     }
   }, [user?.id]);
  

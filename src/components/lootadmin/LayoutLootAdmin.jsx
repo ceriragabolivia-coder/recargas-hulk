@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { key: 'proveedor_tgv', label: 'Integración API', path: '/Proveedor-TiendaGiftVen', icon: '🔌' },
   { key: 'gestion_landing', label: 'Media', path: '/Gestion-Landing', icon: '🖼️' },
   { key: 'chats', label: 'Soporte Chat', path: '/Soporte', icon: '💬' },
+  { key: 'chatbot', label: 'Chatbot', path: '/Chatbot', icon: '🤖' },
   { key: 'interfaces_admin', label: 'Interfaces', path: '/Interfaces-Admin', icon: '🎨' },
 ];
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import AlertModal from './AlertModal'
 import { getOptimizedImageUrl } from '../utils/helpers'
+import { useConfiguracion } from '../hooks/useData'
 
 export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, isPage = false, isEmbedded = false }) {
   const [isOpen, setIsOpen] = useState(isPage || isEmbedded)
@@ -40,6 +41,14 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   const currentUserId = perfil?.id
   const [currentClienteId, setCurrentClienteId] = useState(perfil?.cliente_uuid)
   const isAdmin = perfil?.rol?.toLowerCase() === 'admin'
+  const { config } = useConfiguracion() || { config: null }
+  const [currentBotNodeId, setCurrentBotNodeId] = useState('root')
+  
+  let chatbotNodes = []
+  try {
+    if (config?.chatbot_flujo) chatbotNodes = JSON.parse(config.chatbot_flujo)
+  } catch(e) {}
+  const isChatbotActiveGlobal = config?.chatbot_activo === 'true'
 
   // Sincronizar y buscar cliente_uuid si falta
   useEffect(() => {
@@ -598,6 +607,34 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
     }
   }
 
+  const handleChatbotOption = async (option) => {
+    if (!currentClienteId) return;
+    
+    // 1. Insert user's choice
+    await supabase.from('soporte_mensajes').insert({
+      cliente_id: activeChatId,
+      remitente_id: currentClienteId,
+      mensaje: option.texto,
+      es_sistema: false
+    });
+
+    if (option.siguiente_nodo_id === 'humano') {
+      setCurrentBotNodeId(null);
+      await openTicket('Atención de un Agente');
+    } else {
+      const nextNode = chatbotNodes.find(n => n.id === option.siguiente_nodo_id);
+      if (nextNode) {
+        await supabase.from('soporte_mensajes').insert({
+          cliente_id: activeChatId,
+          remitente_id: currentClienteId,
+          mensaje: nextNode.mensaje,
+          es_sistema: true
+        });
+        setCurrentBotNodeId(nextNode.id);
+      }
+    }
+  };
+
   const handleDeleteMessage = (id) => {
     setDeleteData({ isOpen: true, messageId: id })
   }
@@ -726,12 +763,10 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
           boxShadow: isPage ? 'none' : '0 30px 60px rgba(0,0,0,0.8), 0 0 40px rgba(17, 153, 142, 0.15)',
           border: isPage ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 9998,
-          position: isPage || isEmbedded ? 'relative' : 'fixed',
-          bottom: isPage || isEmbedded ? 'auto' : '100px',
-          right: isPage || isEmbedded ? 'auto' : '30px',
-          width: isPage || isEmbedded ? '100%' : '380px',
-          height: isPage || isEmbedded ? '100%' : '600px',
-          maxHeight: isPage || isEmbedded ? 'none' : 'calc(100vh - 120px)',
+          position: isPage || isEmbedded ? 'relative' : undefined,
+          width: isPage || isEmbedded ? '100%' : undefined,
+          height: isPage || isEmbedded ? '100%' : undefined,
+          maxHeight: isPage || isEmbedded ? 'none' : undefined,
           paddingBottom: isPage ? '64px' : '0'
         }}>
           
@@ -1062,6 +1097,35 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                     </div>
                   )}
                 </div>
+              ) : (!hasActiveTicket && !isAdmin && isChatbotActiveGlobal && currentBotNodeId && chatbotNodes.find(n => n.id === currentBotNodeId)) ? (
+                <div style={{ backgroundColor: 'var(--bg-panel)', padding: '20px', textAlign: 'center' }}>
+                  {(() => {
+                    const activeNode = chatbotNodes.find(n => n.id === currentBotNodeId)
+                    return (
+                      <>
+                        <div style={{ marginBottom: '16px', fontWeight: 'bold', fontSize: '15px', color: '#fff' }}>
+                          🤖 {activeNode.mensaje}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
+                          {activeNode.opciones.map((opt, i) => (
+                            <button
+                              key={i}
+                              onClick={() => handleChatbotOption(opt)}
+                              style={{ 
+                                padding: '10px 20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px', width: '100%', maxWidth: '300px',
+                                background: 'rgba(255,255,255,0.05)', transition: 'background 0.2s'
+                              }}
+                              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                            >
+                              {opt.texto}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )
+                  })()}
+                </div>
               ) : (!hasActiveTicket && !isAdmin) ? (
                 <div style={{ backgroundColor: 'var(--bg-panel)', padding: '16px', textAlign: 'center' }}>
                   <div style={{ marginBottom: '12px', fontWeight: 'bold', fontSize: '14px' }}>
@@ -1218,10 +1282,10 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
         </div>
       )}
 
-      {/* Burbuja Flotante Interactiva (Sola si NO es modo página y NO es embebido) */}
-      {!isPage && !isEmbedded && (
+      {/* Botón flotante para abrir/cerrar */}
+      {!isOpen && !isPage && !isEmbedded && (
         <button 
-          className="floating-chat-btn"
+          className="support-chat-toggle"
           style={{ 
             position: 'fixed', bottom: '30px', right: '30px',
             padding: isOpen ? '0' : '12px 24px',
