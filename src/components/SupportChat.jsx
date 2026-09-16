@@ -978,6 +978,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                                 <span style={{ fontSize: '18px' }}>✅</span>
                                 <div style={{ fontSize: '13px', fontWeight: '600', color: '#6ee7b7' }}>{m.mensaje}</div>
                               </div>
+                            ) : (
                             <div className={`message-bubble ${m.es_sistema ? 'system' : ''}`} style={{ 
                               background: isMine 
                                 ? 'linear-gradient(135deg, #7c6af7 0%, #4f46e5 100%)' 
