@@ -48,6 +48,7 @@ const Chatbot = () => {
   const addNode = () => {
     const newNode = {
       id: `nodo_${Date.now()}`,
+      titulo: 'Nueva Respuesta',
       mensaje: 'Nuevo mensaje del bot...',
       opciones: []
     };
@@ -266,7 +267,7 @@ const Chatbot = () => {
                   fontWeight: 'bold',
                   letterSpacing: '1px'
                 }}>
-                  {node.id === 'root' ? 'RESPUESTA INICIAL' : `RESPUESTA: ${node.id.replace('nodo_', '')}`}
+                  {node.id === 'root' ? 'RESPUESTA INICIAL' : (node.titulo ? `RESPUESTA: ${node.titulo.toUpperCase()}` : `RESPUESTA: ${node.id.replace('nodo_', '')}`)}
                 </span>
                 
                 {node.id !== 'root' && (
@@ -275,6 +276,22 @@ const Chatbot = () => {
                   </button>
                 )}
               </div>
+
+              {node.id !== 'root' && (
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '8px' }}>Título interno (Para que puedas identificarla):</label>
+                  <input 
+                    type="text"
+                    value={node.titulo || ''}
+                    onChange={(e) => updateNode(node.id, { titulo: e.target.value })}
+                    style={{
+                      width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '8px', padding: '10px 12px', color: '#00d2ff', fontSize: '14px', fontWeight: 'bold'
+                    }}
+                    placeholder="Ej. Instrucciones de Pago..."
+                  />
+                </div>
+              )}
 
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '8px' }}>Mensaje del Bot:</label>
@@ -316,7 +333,7 @@ const Chatbot = () => {
                       >
                         <option value="humano">🧑‍💻 Hablar con un humano</option>
                         {nodes.map(n => (
-                          <option key={n.id} value={n.id}>Respuesta: {n.id === 'root' ? 'Inicial' : n.id.replace('nodo_', '')}</option>
+                          <option key={n.id} value={n.id}>Respuesta: {n.id === 'root' ? 'Inicial' : (n.titulo || n.id.replace('nodo_', ''))}</option>
                         ))}
                       </select>
                       <button onClick={() => deleteOption(node.id, i)} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', padding: '4px' }}>
