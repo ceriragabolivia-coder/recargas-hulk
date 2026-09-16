@@ -14,6 +14,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useConfiguracion } from '../hooks/useData';
+import { supabase } from '../lib/supabase';
 
 const DEFAULT_FLOW = [
   {
@@ -91,6 +92,30 @@ const CustomBotNode = ({ data, id }) => {
           className="nodrag"
           style={{ cursor: 'pointer', accentColor: '#00d2ff' }}
         />
+      </div>
+
+      <div style={{ borderTop: '1px solid #333', marginTop: '12px', paddingTop: '12px' }}>
+        <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '8px' }}>Archivo adjunto (Opcional):</div>
+        {data.archivo_url ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.05)', padding: '6px', borderRadius: '4px' }}>
+            <a href={data.archivo_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '11px', color: '#00d2ff', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '200px' }}>
+              {data.archivo_url.split('/').pop()}
+            </a>
+            <button onClick={() => data.onUpdateNode(id, { archivo_url: null, tipo_archivo: null })} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer' }}>×</button>
+          </div>
+        ) : (
+          <input 
+            type="file" 
+            accept="image/*,video/*"
+            onChange={(e) => {
+              if (e.target.files && e.target.files[0]) {
+                data.onUploadFile(id, e.target.files[0]);
+              }
+            }}
+            className="nodrag"
+            style={{ fontSize: '11px', color: '#fff', width: '100%' }}
+          />
+        )}
       </div>
 
       <div style={{ borderTop: '1px solid #333', marginTop: '12px', paddingTop: '12px' }}>
@@ -178,7 +203,9 @@ const Chatbot = () => {
             opciones: n.opciones || [],
             retraso: n.retraso || 0,
             cerrar_ticket: !!n.cerrar_ticket,
-            contactar_humano: !!n.contactar_humano
+            contactar_humano: !!n.contactar_humano,
+            archivo_url: n.archivo_url || null,
+            tipo_archivo: n.tipo_archivo || null
           }
         });
 
@@ -254,7 +281,9 @@ const Chatbot = () => {
         opciones: newOpciones,
         retraso: n.data.retraso || 0,
         cerrar_ticket: !!n.data.cerrar_ticket,
-        contactar_humano: !!n.data.contactar_humano
+        contactar_humano: !!n.data.contactar_humano,
+        archivo_url: n.data.archivo_url || null,
+        tipo_archivo: n.data.tipo_archivo || null
       };
     });
 
@@ -345,6 +374,35 @@ const Chatbot = () => {
     setEdges((eds) => eds.filter((e) => e.source !== id && e.target !== id));
   }, [setNodes, setEdges]);
 
+  const onUploadFile = useCallback(async (nodeId, file) => {
+    if (!file) return;
+    
+    // Optional loading indicator could go here (for example, setting a temporary text)
+    const fileExt = file.name.split('.').pop();
+    const fileName = `chatbot_${Date.now()}_${Math.floor(Math.random()*1000)}.${fileExt}`;
+    const filePath = `chatbot_media/${fileName}`;
+    const fileType = file.type.startsWith('image/') ? 'imagen' : 
+                     file.type.startsWith('video/') ? 'video' : 'archivo';
+
+    const { error } = await supabase.storage.from('soporte_archivos').upload(filePath, file);
+    
+    if (error) {
+      alert("Error al subir el archivo: " + error.message);
+      return;
+    }
+    
+    const { data: { publicUrl } } = supabase.storage.from('soporte_archivos').getPublicUrl(filePath);
+    
+    setNodes((nds) =>
+      nds.map((n) => {
+        if (n.id === nodeId) {
+          return { ...n, data: { ...n.data, archivo_url: publicUrl, tipo_archivo: fileType } };
+        }
+        return n;
+      })
+    );
+  }, [setNodes]);
+
   // Inject callbacks into nodes
   const nodesWithHandlers = useMemo(() => {
     return nodes.map(n => ({
@@ -355,10 +413,11 @@ const Chatbot = () => {
         onUpdateOption,
         onAddOption,
         onDeleteOption,
-        onDeleteNode
+        onDeleteNode,
+        onUploadFile
       }
     }));
-  }, [nodes, onUpdateNode, onUpdateOption, onAddOption, onDeleteOption, onDeleteNode]);
+  }, [nodes, onUpdateNode, onUpdateOption, onAddOption, onDeleteOption, onDeleteNode, onUploadFile]);
 
   if (loading) {
     return (

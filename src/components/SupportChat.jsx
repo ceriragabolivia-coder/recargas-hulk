@@ -523,7 +523,14 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
         const delay = (rootNode.retraso || 0) * 1000;
         
         const processNode = async () => {
-          await supabase.from('soporte_mensajes').insert([{ cliente_id: currentClienteId, remitente_id: senderId, mensaje: rootNode.mensaje, es_sistema: true }]);
+          await supabase.from('soporte_mensajes').insert([{ 
+            cliente_id: currentClienteId, 
+            remitente_id: senderId, 
+            mensaje: rootNode.mensaje || (rootNode.tipo_archivo === 'imagen' ? '📷 Foto' : (rootNode.tipo_archivo === 'video' ? '🎥 Video' : '📎 Archivo')), 
+            es_sistema: true,
+            archivo_url: rootNode.archivo_url || null,
+            tipo_archivo: rootNode.tipo_archivo || null
+          }]);
           if (rootNode.contactar_humano) {
             await supabase.from('soporte_mensajes').insert({
               cliente_id: currentClienteId,
@@ -689,8 +696,10 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
           await supabase.from('soporte_mensajes').insert({
             cliente_id: activeChatId,
             remitente_id: currentClienteId,
-            mensaje: nextNode.mensaje,
-            es_sistema: true
+            mensaje: nextNode.mensaje || (nextNode.tipo_archivo === 'imagen' ? '📷 Foto' : (nextNode.tipo_archivo === 'video' ? '🎥 Video' : '📎 Archivo')),
+            es_sistema: true,
+            archivo_url: nextNode.archivo_url || null,
+            tipo_archivo: nextNode.tipo_archivo || null
           });
           if (nextNode.contactar_humano) {
             await supabase.from('soporte_mensajes').insert({
