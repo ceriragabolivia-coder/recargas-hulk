@@ -39,10 +39,9 @@ const Chatbot = () => {
     await updateConfig('chatbot_activo', newState, true);
   };
 
-  const saveFlow = async (updatedNodes) => {
+  const saveFlow = async () => {
     setIsSaving(true);
-    setNodes(updatedNodes);
-    await updateConfig('chatbot_flujo', JSON.stringify(updatedNodes), true);
+    await updateConfig('chatbot_flujo', JSON.stringify(nodes), true);
     setIsSaving(false);
   };
 
@@ -52,7 +51,7 @@ const Chatbot = () => {
       mensaje: 'Nuevo mensaje del bot...',
       opciones: []
     };
-    saveFlow([...nodes, newNode]);
+    setNodes([...nodes, newNode]);
     setEditingNodeId(newNode.id);
   };
 
@@ -65,12 +64,11 @@ const Chatbot = () => {
         opt.siguiente_nodo_id === id ? { ...opt, siguiente_nodo_id: 'humano' } : opt
       )
     }));
-    saveFlow(updated);
+    setNodes(updated);
   };
 
   const updateNode = (id, changes) => {
-    const updated = nodes.map(n => n.id === id ? { ...n, ...changes } : n);
-    saveFlow(updated);
+    setNodes(nodes.map(n => n.id === id ? { ...n, ...changes } : n));
   };
 
   const addOption = (nodeId) => {
@@ -83,7 +81,7 @@ const Chatbot = () => {
       }
       return n;
     });
-    saveFlow(updated);
+    setNodes(updated);
   };
 
   const updateOption = (nodeId, optionIndex, changes) => {
@@ -95,7 +93,7 @@ const Chatbot = () => {
       }
       return n;
     });
-    saveFlow(updated);
+    setNodes(updated);
   };
 
   const deleteOption = (nodeId, optionIndex) => {
@@ -107,7 +105,7 @@ const Chatbot = () => {
       }
       return n;
     });
-    saveFlow(updated);
+    setNodes(updated);
   };
 
   if (loading) {
@@ -230,14 +228,24 @@ const Chatbot = () => {
               Construye el árbol de decisiones. El "Nodo Inicial" es el primer mensaje que verá el cliente.
             </p>
           </div>
-          <button 
-            onClick={addNode}
-            className="btn btn-primary"
-            style={{ borderRadius: '12px', fontWeight: 'bold' }}
-            disabled={isSaving}
-          >
-            + Nuevo Nodo
-          </button>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button 
+              onClick={addNode}
+              className="btn btn-secondary"
+              style={{ borderRadius: '12px', fontWeight: 'bold', border: '1px solid rgba(255,255,255,0.2)', background: 'transparent' }}
+              disabled={isSaving}
+            >
+              + Nuevo Nodo
+            </button>
+            <button 
+              onClick={saveFlow}
+              className="btn btn-primary"
+              style={{ borderRadius: '12px', fontWeight: 'bold' }}
+              disabled={isSaving}
+            >
+              {isSaving ? 'Guardando...' : '💾 Guardar Cambios'}
+            </button>
+          </div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
