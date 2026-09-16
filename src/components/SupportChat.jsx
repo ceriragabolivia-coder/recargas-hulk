@@ -923,11 +923,11 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                 ) : (mensajes.length === 0 && !isAdmin && !hasActiveTicket) ? (
                   <div style={{ padding: '20px', textAlign: 'center' }}>
                     <div style={{ marginBottom: '20px', fontWeight: 'bold', fontSize: '15px' }}>
-                      Selecciona el motivo de tu ticket:
+                      Inicia una conversación de soporte:
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       <button 
-                        onClick={() => handleSelectTicket('Pedido no completado')}
+                        onClick={() => handleSelectTicket('Soporte')}
                         style={{ 
                           height: '45px', borderRadius: '25px', border: 'none', color: '#fff', fontWeight: 'bold', cursor: 'pointer',
                           background: 'linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)',
@@ -936,31 +936,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                         onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
                         onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                       >
-                        📦 Pedido no completado
-                      </button>
-                      <button 
-                        onClick={() => handleSelectTicket('Problema con un pago')}
-                        style={{ 
-                          height: '45px', borderRadius: '25px', border: 'none', color: '#fff', fontWeight: 'bold', cursor: 'pointer',
-                          background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
-                          boxShadow: '0 4px 10px rgba(56, 239, 125, 0.3)', transition: 'transform 0.2s'
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
-                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                      >
-                        💳 Problema con un pago
-                      </button>
-                      <button 
-                        onClick={() => handleSelectTicket('Otro motivo')}
-                        style={{ 
-                          height: '45px', borderRadius: '25px', border: 'none', color: '#fff', fontWeight: 'bold', cursor: 'pointer',
-                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                          boxShadow: '0 4px 10px rgba(118, 75, 162, 0.3)', transition: 'transform 0.2s'
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
-                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                      >
-                        ❓ Otro motivo
+                        💬 Crear ticket
                       </button>
                     </div>
                   </div>
