@@ -225,7 +225,7 @@ const Chatbot = () => {
           <div>
             <h3 style={{ fontSize: '22px', margin: '0 0 8px 0', color: '#fff' }}>Flujo de Respuestas</h3>
             <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '14px' }}>
-              Construye el árbol de decisiones. El "Nodo Inicial" es el primer mensaje que verá el cliente.
+              Construye el árbol de decisiones. La "Respuesta Inicial" es el primer mensaje que verá el cliente.
             </p>
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
@@ -235,7 +235,7 @@ const Chatbot = () => {
               style={{ borderRadius: '12px', fontWeight: 'bold', border: '1px solid rgba(255,255,255,0.2)', background: 'transparent' }}
               disabled={isSaving}
             >
-              + Nuevo Nodo
+              + Nueva Respuesta
             </button>
             <button 
               onClick={saveFlow}
@@ -266,12 +266,12 @@ const Chatbot = () => {
                   fontWeight: 'bold',
                   letterSpacing: '1px'
                 }}>
-                  {node.id === 'root' ? 'NODO INICIAL' : `NODO: ${node.id}`}
+                  {node.id === 'root' ? 'RESPUESTA INICIAL' : `RESPUESTA: ${node.id.replace('nodo_', '')}`}
                 </span>
                 
                 {node.id !== 'root' && (
                   <button onClick={() => deleteNode(node.id)} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer' }}>
-                    🗑️ Eliminar Nodo
+                    🗑️ Eliminar Respuesta
                   </button>
                 )}
               </div>
@@ -316,7 +316,7 @@ const Chatbot = () => {
                       >
                         <option value="humano">🧑‍💻 Hablar con un humano</option>
                         {nodes.map(n => (
-                          <option key={n.id} value={n.id}>Nodo: {n.id === 'root' ? 'Inicial' : n.id}</option>
+                          <option key={n.id} value={n.id}>Respuesta: {n.id === 'root' ? 'Inicial' : n.id.replace('nodo_', '')}</option>
                         ))}
                       </select>
                       <button onClick={() => deleteOption(node.id, i)} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', padding: '4px' }}>
