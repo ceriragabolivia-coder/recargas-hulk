@@ -503,14 +503,23 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       if (data) {
         orderContext = data;
         
+        // Obtener SIEMPRE la configuración más fresca para evitar problemas si el usuario no recargó la página
+        let currentNodes = chatbotNodes;
+        try {
+          const { data: configData } = await supabase.from('configuracion').select('valor_texto').eq('clave', 'chatbot_flujo').single();
+          if (configData && configData.valor_texto) {
+            currentNodes = JSON.parse(configData.valor_texto);
+          }
+        } catch(e) { console.error(e) }
+
         let activeNodeId = currentBotNodeId;
 
         // Fallback: si currentBotNodeId se perdió (por recarga o race condition), buscamos el último nodo del sistema que solicita pedido.
-        if (!activeNodeId && chatbotNodes.length > 0 && mensajes.length > 0) {
+        if (!activeNodeId && currentNodes.length > 0 && mensajes.length > 0) {
           // buscar el último mensaje del bot que corresponda a un nodo que solicite pedido
           for (let i = mensajes.length - 1; i >= 0; i--) {
             if (mensajes[i].es_sistema) {
-              const possibleNode = chatbotNodes.find(n => n.mensaje === mensajes[i].mensaje && n.solicitar_pedido);
+              const possibleNode = currentNodes.find(n => n.mensaje?.trim() === mensajes[i].mensaje?.trim() && n.solicitar_pedido);
               if (possibleNode) {
                 activeNodeId = possibleNode.id;
                 break;
@@ -520,8 +529,8 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
         }
 
         // Determinar siguiente nodo según el estatus
-        if (activeNodeId && chatbotNodes.length > 0) {
-          const activeNode = chatbotNodes.find(n => n.id === activeNodeId);
+        if (activeNodeId && currentNodes.length > 0) {
+          const activeNode = currentNodes.find(n => n.id === activeNodeId);
           if (activeNode) {
             let nextNodeId = null;
             if (data.estado === 'completado') {
@@ -533,7 +542,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
               nextNodeId = activeNode.cond_en_proceso;
             }
             if (nextNodeId) {
-              nextNode = chatbotNodes.find(n => n.id === nextNodeId);
+              nextNode = currentNodes.find(n => n.id === nextNodeId);
             }
           }
         }
