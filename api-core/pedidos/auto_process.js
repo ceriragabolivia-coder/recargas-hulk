@@ -103,10 +103,12 @@ async function procesarPedidoConApi(pedidoId, apiKey) {
             codigoTGV = data.mensaje;
           }
 
+          const tgvPedidoId = data.pedido_id || data.id_pedido || (data.pedido && data.pedido.id) || data.id || null;
+
           await supabase.rpc("webhook_update_pedido_item", {
             p_item_id: item.id,
             p_estado_proveedor: data.estado || "procesando",
-            p_proveedor_pedido_id: data.pedido_id,
+            p_proveedor_pedido_id: tgvPedidoId,
             p_mensaje_proveedor: codigoTGV,
             p_estado: isCompleted ? "completado" : "procesando",
             p_codigo_entregado: codigoTGV || null, // ✅ Ahora visible al cliente
