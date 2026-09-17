@@ -499,7 +499,9 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
         .from('pedidos')
         .select('estado, razon_rechazo')
         .eq('numero_pedido', parseInt(orderNumber))
-        .single();
+        .eq('cliente_id', currentClienteId)
+        .limit(1)
+        .maybeSingle();
       if (data) {
         orderContext = data;
         
