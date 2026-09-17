@@ -259,7 +259,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
     try {
       let query = supabase
         .from('pedidos')
-        .select('id, numero_pedido, created_at, total_bs, estado')
+        .select('id, numero_pedido, created_at, estado, total_bs, total_usd')
       
       // Intentar buscar por ambos IDs para máxima compatibilidad
       if (authId && clienteUuid && authId !== clienteUuid) {
@@ -488,7 +488,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
     await openTicket(category)
   }
 
-  const handleSelectOrder = async (orderNumber) => {
+  const handleSelectOrder = async (pedidoId, orderNumber) => {
     setShowOrderSelector(false)
     
     let orderContext = null;
@@ -498,9 +498,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       const { data, error } = await supabase
         .from('pedidos')
         .select('estado, observaciones')
-        .eq('numero_pedido', orderNumber)
-        .eq('cliente_id', currentClienteId)
-        .limit(1)
+        .eq('id', pedidoId)
         .maybeSingle();
 
       if (error) {
@@ -1250,7 +1248,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
                         return (
                           <div 
                             key={p.id}
-                            onClick={() => handleSelectOrder(orderNum)}
+                            onClick={() => handleSelectOrder(p.id, orderNum)}
                             style={{
                               padding: '10px', borderRadius: '8px', backgroundColor: 'var(--bg-card)',
                               cursor: 'pointer', border: '1px solid var(--border-color)',
