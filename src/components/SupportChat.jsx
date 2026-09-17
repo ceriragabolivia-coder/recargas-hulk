@@ -549,6 +549,8 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
               nextNodeId = activeNode.cond_completado;
             } else if (data.estado === 'rechazado') {
               nextNodeId = activeNode.cond_rechazado;
+            } else if (data.estado === 'cancelado') {
+              nextNodeId = activeNode.cond_cancelado;
             } else {
               // pendiente, procesando, en proceso
               nextNodeId = activeNode.cond_en_proceso;

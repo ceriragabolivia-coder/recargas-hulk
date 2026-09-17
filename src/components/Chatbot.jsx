@@ -94,6 +94,17 @@ const CustomBotNode = ({ data, id }) => {
         />
       </div>
 
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', background: 'rgba(255,255,255,0.05)', padding: '6px 8px', borderRadius: '4px' }}>
+        <span style={{ fontSize: '11px', color: '#aaa' }}>Solicitar selección de pedido:</span>
+        <input 
+          type="checkbox" 
+          checked={!!data.solicitar_pedido}
+          onChange={(e) => data.onUpdateNode(id, { solicitar_pedido: e.target.checked })}
+          className="nodrag"
+          style={{ cursor: 'pointer', accentColor: '#00f5d4' }}
+        />
+      </div>
+
       <div style={{ borderTop: '1px solid #333', marginTop: '12px', paddingTop: '12px' }}>
         <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '8px' }}>Archivo adjunto (Opcional):</div>
         {data.archivo_url ? (
@@ -148,6 +159,53 @@ const CustomBotNode = ({ data, id }) => {
           + Agregar Botón
         </button>
       </div>
+
+      {data.solicitar_pedido && (
+        <div style={{ borderTop: '1px solid #333', marginTop: '12px', paddingTop: '12px' }}>
+          <div style={{ fontSize: '12px', color: '#aaa', marginBottom: '8px' }}>Condiciones de Pedido:</div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '6px', position: 'relative', background: 'rgba(0,0,0,0.2)', padding: '6px', borderRadius: '4px', border: '1px solid rgba(0, 210, 255, 0.2)' }}>
+            <span style={{ fontSize: '11px', color: '#fff' }}>🔵 Si está En Proceso</span>
+            <Handle 
+              type="source" 
+              position={Position.Right} 
+              id="cond_en_proceso"
+              style={{ top: '50%', right: '-24px', background: '#00d2ff', width: '12px', height: '12px' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '6px', position: 'relative', background: 'rgba(0,0,0,0.2)', padding: '6px', borderRadius: '4px', border: '1px solid rgba(255, 68, 68, 0.2)' }}>
+            <span style={{ fontSize: '11px', color: '#fff' }}>🔴 Si está Rechazado</span>
+            <Handle 
+              type="source" 
+              position={Position.Right} 
+              id="cond_rechazado"
+              style={{ top: '50%', right: '-24px', background: '#ff4444', width: '12px', height: '12px' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '6px', position: 'relative', background: 'rgba(0,0,0,0.2)', padding: '6px', borderRadius: '4px', border: '1px solid rgba(0, 245, 212, 0.2)' }}>
+            <span style={{ fontSize: '11px', color: '#fff' }}>🟢 Si está Completado</span>
+            <Handle 
+              type="source" 
+              position={Position.Right} 
+              id="cond_completado"
+              style={{ top: '50%', right: '-24px', background: '#00f5d4', width: '12px', height: '12px' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '6px', position: 'relative', background: 'rgba(0,0,0,0.2)', padding: '6px', borderRadius: '4px', border: '1px solid rgba(136, 136, 136, 0.2)' }}>
+            <span style={{ fontSize: '11px', color: '#fff' }}>⚪ Si está Cancelado</span>
+            <Handle 
+              type="source" 
+              position={Position.Right} 
+              id="cond_cancelado"
+              style={{ top: '50%', right: '-24px', background: '#888888', width: '12px', height: '12px' }}
+            />
+          </div>
+        </div>
+      )}
+      
       
       {id !== 'root' && (
         <button onClick={() => data.onDeleteNode(id)} style={{ width: '100%', padding: '4px', background: 'none', border: 'none', color: '#ff4444', fontSize: '11px', marginTop: '12px', cursor: 'pointer' }}>
@@ -204,6 +262,10 @@ const Chatbot = () => {
             retraso: n.retraso || 0,
             cerrar_ticket: !!n.cerrar_ticket,
             contactar_humano: !!n.contactar_humano,
+            solicitar_pedido: !!n.solicitar_pedido,
+            cond_en_proceso: n.cond_en_proceso,
+            cond_rechazado: n.cond_rechazado,
+            cond_completado: n.cond_completado,
             archivo_url: n.archivo_url || null,
             tipo_archivo: n.tipo_archivo || null
           }
@@ -224,6 +286,24 @@ const Chatbot = () => {
               });
             }
           });
+        }
+
+        if (n.solicitar_pedido) {
+          if (n.cond_en_proceso) {
+            initialEdges.push({
+              id: `e_${n.id}_proceso_${n.cond_en_proceso}`, source: n.id, sourceHandle: 'cond_en_proceso', target: n.cond_en_proceso, animated: true, interactionWidth: 25, style: { stroke: '#00d2ff', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#00d2ff' }
+            });
+          }
+          if (n.cond_rechazado) {
+            initialEdges.push({
+              id: `e_${n.id}_rechazado_${n.cond_rechazado}`, source: n.id, sourceHandle: 'cond_rechazado', target: n.cond_rechazado, animated: true, interactionWidth: 25, style: { stroke: '#00d2ff', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#00d2ff' }
+            });
+          }
+          if (n.cond_completado) {
+            initialEdges.push({
+              id: `e_${n.id}_completado_${n.cond_completado}`, source: n.id, sourceHandle: 'cond_completado', target: n.cond_completado, animated: true, interactionWidth: 25, style: { stroke: '#00d2ff', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#00d2ff' }
+            });
+          }
         }
       });
 
@@ -274,6 +354,21 @@ const Chatbot = () => {
         };
       });
       
+      let cond_en_proceso = null;
+      let cond_rechazado = null;
+      let cond_completado = null;
+
+      if (n.data.solicitar_pedido) {
+        const edgeProceso = outEdges.find(e => e.sourceHandle === 'cond_en_proceso');
+        if (edgeProceso) cond_en_proceso = edgeProceso.target;
+
+        const edgeRechazado = outEdges.find(e => e.sourceHandle === 'cond_rechazado');
+        if (edgeRechazado) cond_rechazado = edgeRechazado.target;
+
+        const edgeCompletado = outEdges.find(e => e.sourceHandle === 'cond_completado');
+        if (edgeCompletado) cond_completado = edgeCompletado.target;
+      }
+      
       return {
         id: n.id,
         titulo: n.data.titulo,
@@ -282,6 +377,10 @@ const Chatbot = () => {
         retraso: n.data.retraso || 0,
         cerrar_ticket: !!n.data.cerrar_ticket,
         contactar_humano: !!n.data.contactar_humano,
+        solicitar_pedido: !!n.data.solicitar_pedido,
+        cond_en_proceso,
+        cond_rechazado,
+        cond_completado,
         archivo_url: n.data.archivo_url || null,
         tipo_archivo: n.data.tipo_archivo || null
       };
