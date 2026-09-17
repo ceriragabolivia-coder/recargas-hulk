@@ -495,13 +495,21 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
     let nextNode = null;
 
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('pedidos')
         .select('estado, observaciones')
         .eq('numero_pedido', orderNumber)
         .eq('cliente_id', currentClienteId)
         .limit(1)
         .maybeSingle();
+
+      if (error) {
+        alert("DEBUG ERROR: " + error.message + " - Details: " + JSON.stringify(error));
+      }
+      if (!data) {
+        alert("DEBUG: Data de pedido vacía.");
+      }
+
       if (data) {
         orderContext = data;
         
