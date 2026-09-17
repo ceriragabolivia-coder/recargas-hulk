@@ -528,6 +528,10 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
           }
         }
 
+        if (!activeNodeId) {
+          toast.error("DEBUG: No se pudo identificar el nodo origen.");
+        }
+
         // Determinar siguiente nodo según el estatus
         if (activeNodeId && currentNodes.length > 0) {
           const activeNode = currentNodes.find(n => n.id === activeNodeId);
@@ -541,13 +545,26 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
               // pendiente, procesando, en proceso
               nextNodeId = activeNode.cond_en_proceso;
             }
+            if (!nextNodeId) {
+              toast.error("DEBUG: La condición no está conectada para el estado: " + data.estado);
+            }
             if (nextNodeId) {
               nextNode = currentNodes.find(n => n.id === nextNodeId);
+              if (!nextNode) {
+                toast.error("DEBUG: El nodo destino no existe.");
+              }
             }
+          } else {
+             toast.error("DEBUG: Nodo activo no encontrado en currentNodes.");
           }
         }
+      } else {
+        toast.error("DEBUG: Data de pedido vacía.");
       }
-    } catch(e) { console.error("Error al consultar pedido:", e); }
+    } catch(e) { 
+      console.error("Error al consultar pedido:", e);
+      toast.error("DEBUG ERROR: " + e.message);
+    }
 
     if (clientStatus === 'pendiente' || clientStatus === 'resuelto' || mensajes.length > 0) {
       // Si ya hay un ticket activo o estamos en el flujo del chatbot
