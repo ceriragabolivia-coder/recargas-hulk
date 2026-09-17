@@ -497,7 +497,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
     try {
       const { data } = await supabase
         .from('pedidos')
-        .select('estado, razon_rechazo')
+        .select('estado, notas_admin')
         .eq('numero_pedido', parseInt(orderNumber))
         .eq('cliente_id', currentClienteId)
         .limit(1)
@@ -729,7 +729,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
       
       // Reemplazo de variables de contexto
       if (orderContext && finalMessage) {
-        finalMessage = finalMessage.replace(/{motivo}/g, orderContext.razon_rechazo || 'No especificado');
+        finalMessage = finalMessage.replace(/{motivo}/g, orderContext.notas_admin || 'No especificado');
       }
 
       setCurrentBotNodeId(node.id);
