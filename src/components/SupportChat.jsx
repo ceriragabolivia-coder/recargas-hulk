@@ -489,9 +489,78 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
   }
 
   const handleSelectOrder = async (orderNumber) => {
-    const categoryWithOrder = `Pedido no completado (#${orderNumber})`
     setShowOrderSelector(false)
-    await openTicket(categoryWithOrder)
+    
+    let orderContext = null;
+    let nextNode = null;
+
+    try {
+      const { data } = await supabase
+        .from('pedidos')
+        .select('estado, razon_rechazo')
+        .eq('numero_pedido', parseInt(orderNumber))
+        .single();
+      if (data) {
+        orderContext = data;
+        
+        let activeNodeId = currentBotNodeId;
+
+        // Fallback: si currentBotNodeId se perdió (por recarga o race condition), buscamos el último nodo del sistema que solicita pedido.
+        if (!activeNodeId && chatbotNodes.length > 0 && mensajes.length > 0) {
+          // buscar el último mensaje del bot que corresponda a un nodo que solicite pedido
+          for (let i = mensajes.length - 1; i >= 0; i--) {
+            if (mensajes[i].es_sistema) {
+              const possibleNode = chatbotNodes.find(n => n.mensaje === mensajes[i].mensaje && n.solicitar_pedido);
+              if (possibleNode) {
+                activeNodeId = possibleNode.id;
+                break;
+              }
+            }
+          }
+        }
+
+        // Determinar siguiente nodo según el estatus
+        if (activeNodeId && chatbotNodes.length > 0) {
+          const activeNode = chatbotNodes.find(n => n.id === activeNodeId);
+          if (activeNode) {
+            let nextNodeId = null;
+            if (data.estado === 'completado') {
+              nextNodeId = activeNode.cond_completado;
+            } else if (data.estado === 'rechazado') {
+              nextNodeId = activeNode.cond_rechazado;
+            } else {
+              // pendiente, procesando, en proceso
+              nextNodeId = activeNode.cond_en_proceso;
+            }
+            if (nextNodeId) {
+              nextNode = chatbotNodes.find(n => n.id === nextNodeId);
+            }
+          }
+        }
+      }
+    } catch(e) { console.error("Error al consultar pedido:", e); }
+
+    if (clientStatus === 'pendiente' || clientStatus === 'resuelto' || mensajes.length > 0) {
+      // Si ya hay un ticket activo o estamos en el flujo del chatbot
+      await supabase.from('soporte_mensajes').insert({
+        cliente_id: activeChatId,
+        remitente_id: currentClienteId,
+        mensaje: `Pedido #${orderNumber}`,
+        es_sistema: false
+      });
+      // Si el ticket estaba resuelto por el bot, lo reactivamos para que el admin pueda verlo
+      if (clientStatus === 'resuelto') {
+        await supabase.from('clientes').update({ soporte_status: null }).eq('id', activeChatId);
+      }
+      
+      // Ejecutar la rama de condición si existe
+      if (nextNode) {
+        await executeBotNode(nextNode, currentClienteId, (nextNode.retraso || 0) * 1000, orderContext);
+      }
+    } else {
+      const categoryWithOrder = `Pedido no completado (#${orderNumber})`
+      await openTicket(categoryWithOrder)
+    }
   }
 
   const openTicket = async (category) => {
@@ -520,46 +589,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
           await supabase.from('soporte_mensajes').insert(insertData)
         }
 
-        const delay = (rootNode.retraso || 0) * 1000;
-        
-        const processNode = async () => {
-          await supabase.from('soporte_mensajes').insert([{ 
-            cliente_id: currentClienteId, 
-            remitente_id: senderId, 
-            mensaje: rootNode.mensaje || (rootNode.tipo_archivo === 'imagen' ? '📷 Foto' : (rootNode.tipo_archivo === 'video' ? '🎥 Video' : '📎 Archivo')), 
-            es_sistema: true,
-            archivo_url: rootNode.archivo_url || null,
-            tipo_archivo: rootNode.tipo_archivo || null
-          }]);
-          if (rootNode.contactar_humano) {
-            await supabase.from('soporte_mensajes').insert({
-              cliente_id: currentClienteId,
-              remitente_id: senderId,
-              mensaje: "Serás atendido por un agente en breve. Por favor, explica tu caso detalladamente a continuación.",
-              es_sistema: true
-            });
-          }
-          if (rootNode.cerrar_ticket) {
-            await supabase.from('clientes').update({ soporte_status: 'resuelto' }).eq('id', currentClienteId);
-            await supabase.from('soporte_mensajes').insert({
-              cliente_id: currentClienteId, // Wait, it's activeChatId in this context? No, openTicket uses currentClienteId as chat ID for users. activeChatId works too.
-              remitente_id: senderId,
-              mensaje: "✅ TICKET CERRADO AUTOMÁTICAMENTE",
-              es_sistema: true
-            });
-            setClientStatus('resuelto');
-          }
-        };
-
-        if (delay > 0) {
-          setIsBotTyping(true);
-          setTimeout(async () => {
-            await processNode();
-            setIsBotTyping(false);
-          }, delay);
-        } else {
-          await processNode();
-        }
+        await executeBotNode(rootNode, senderId, (rootNode.retraso || 0) * 1000);
       } else {
         const infoMsg = "Explica tu caso; sé detallado y explica en un sólo mensaje para ser atendida tu solicitud. Una vez que envíes el mensaje sólo podrás escribir nuevamente cuando la administración responda a tu chat, para evitar la saturación del chat."
         insertData.push({ cliente_id: currentClienteId, remitente_id: senderId, mensaje: infoMsg, es_sistema: true })
@@ -665,6 +695,66 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
     }
   }
 
+  const executeBotNode = async (node, senderId, delayMs = 0, orderContext = null) => {
+    const processNode = async () => {
+      let finalMessage = node.mensaje || (node.tipo_archivo === 'imagen' ? '📷 Foto' : (node.tipo_archivo === 'video' ? '🎥 Video' : '📎 Archivo'));
+      
+      // Reemplazo de variables de contexto
+      if (orderContext && finalMessage) {
+        finalMessage = finalMessage.replace(/{motivo}/g, orderContext.razon_rechazo || 'No especificado');
+      }
+
+      setCurrentBotNodeId(node.id);
+
+      await supabase.from('soporte_mensajes').insert({
+        cliente_id: activeChatId,
+        remitente_id: senderId,
+        mensaje: finalMessage,
+        es_sistema: true,
+        archivo_url: node.archivo_url || null,
+        tipo_archivo: node.tipo_archivo || null
+      });
+
+      if (node.contactar_humano) {
+        await supabase.from('soporte_mensajes').insert({
+          cliente_id: activeChatId,
+          remitente_id: senderId,
+          mensaje: "Serás atendido por un agente en breve. Por favor, explica tu caso detalladamente a continuación.",
+          es_sistema: true
+        });
+      }
+
+      if (node.solicitar_pedido) {
+        const orders = await loadRecentPedidos();
+        if (orders && orders.length > 0) {
+          setRecentPedidos(orders);
+          setShowOrderSelector(true);
+        }
+      }
+
+      if (node.cerrar_ticket) {
+        await supabase.from('clientes').update({ soporte_status: 'resuelto' }).eq('id', activeChatId);
+        await supabase.from('soporte_mensajes').insert({
+          cliente_id: activeChatId,
+          remitente_id: senderId,
+          mensaje: "✅ TICKET CERRADO AUTOMÁTICAMENTE",
+          es_sistema: true
+        });
+        setClientStatus('resuelto');
+      }
+    };
+
+    if (delayMs > 0) {
+      setIsBotTyping(true);
+      setTimeout(async () => {
+        await processNode();
+        setIsBotTyping(false);
+      }, delayMs);
+    } else {
+      await processNode();
+    }
+  };
+
   const handleChatbotOption = async (option) => {
     if (!currentClienteId) return;
     
@@ -690,46 +780,7 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
     } else {
       const nextNode = chatbotNodes.find(n => n.id === option.siguiente_nodo_id);
       if (nextNode) {
-        const delay = (nextNode.retraso || 0) * 1000;
-        
-        const processNextNode = async () => {
-          await supabase.from('soporte_mensajes').insert({
-            cliente_id: activeChatId,
-            remitente_id: currentClienteId,
-            mensaje: nextNode.mensaje || (nextNode.tipo_archivo === 'imagen' ? '📷 Foto' : (nextNode.tipo_archivo === 'video' ? '🎥 Video' : '📎 Archivo')),
-            es_sistema: true,
-            archivo_url: nextNode.archivo_url || null,
-            tipo_archivo: nextNode.tipo_archivo || null
-          });
-          if (nextNode.contactar_humano) {
-            await supabase.from('soporte_mensajes').insert({
-              cliente_id: activeChatId,
-              remitente_id: currentClienteId,
-              mensaje: "Serás atendido por un agente en breve. Por favor, explica tu caso detalladamente a continuación.",
-              es_sistema: true
-            });
-          }
-          if (nextNode.cerrar_ticket) {
-            await supabase.from('clientes').update({ soporte_status: 'resuelto' }).eq('id', activeChatId);
-            await supabase.from('soporte_mensajes').insert({
-              cliente_id: activeChatId,
-              remitente_id: currentClienteId,
-              mensaje: "✅ TICKET CERRADO AUTOMÁTICAMENTE",
-              es_sistema: true
-            });
-            setClientStatus('resuelto');
-          }
-        };
-
-        if (delay > 0) {
-          setIsBotTyping(true);
-          setTimeout(async () => {
-            await processNextNode();
-            setIsBotTyping(false);
-          }, delay);
-        } else {
-          await processNextNode();
-        }
+        await executeBotNode(nextNode, currentClienteId, (nextNode.retraso || 0) * 1000);
       }
     }
   };
@@ -891,8 +942,16 @@ export default function SupportChat({ perfil, forceOpen, onClose, onNavigate, is
               )}
             </div>
             <button 
-              style={{ display: isPage ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.2)', border: 'none', color: '#fff', cursor: 'pointer', transition: 'background 0.2s' }}
-              onClick={() => { setIsOpen(false); if(onClose) onClose(); }} 
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.2)', border: 'none', color: '#fff', cursor: 'pointer', transition: 'background 0.2s' }}
+              onClick={() => { 
+                if (isPage) {
+                  if (onNavigate) onNavigate('dashboard');
+                  else window.history.back();
+                } else {
+                  setIsOpen(false); 
+                  if(onClose) onClose(); 
+                }
+              }} 
               onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.4)'}
               onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.2)'}
             >
