@@ -195,6 +195,9 @@ export default function GestionProductos() {
     tutorial_video_url: '',
     tutorial_banner_texto: '',
     tutorial_banner_img: '',
+    tutorial_video: '',
+    tutorial_titulo: '',
+    tutorial_activo: false,
     icono_url: null,
     imagen_pedido_completado_url: null,
     popup_activo: false,
@@ -231,6 +234,9 @@ export default function GestionProductos() {
       tutorial_video_url: '',
       tutorial_banner_texto: '',
       tutorial_banner_img: '',
+      tutorial_video: '',
+      tutorial_titulo: '',
+      tutorial_activo: false,
       icono_url: null,
       imagen_pedido_completado_url: null,
       verificacion_api_activa: false,
@@ -264,6 +270,9 @@ export default function GestionProductos() {
       tutorial_video_url: selectedJuego.tutorial_video_url || '',
       tutorial_banner_texto: selectedJuego.tutorial_banner_texto || '',
       tutorial_banner_img: selectedJuego.tutorial_banner_img || '',
+      tutorial_video: selectedJuego.tutorial_video || '',
+      tutorial_titulo: selectedJuego.tutorial_titulo || '',
+      tutorial_activo: !!selectedJuego.tutorial_activo,
       icono_url: selectedJuego.icono_url || null,
       imagen_pedido_completado_url: selectedJuego.imagen_pedido_completado_url || null,
       verificacion_api_activa: selectedJuego.verificacion_api_activa === undefined 
@@ -284,6 +293,11 @@ export default function GestionProductos() {
   const handleToggleProcesamientoApi = async (nuevoValor) => {
     if (!selectedJuego) return
     await updateJuego(selectedJuego.id, { procesamiento_automatico_api: nuevoValor })
+  }
+
+  const handleToggleCashback = async (nuevoValor) => {
+    if (!selectedJuego) return
+    await updateJuego(selectedJuego.id, { cashback_activo: nuevoValor })
   }
 
   const handleApiProviderChange = async (e) => {
@@ -312,6 +326,9 @@ export default function GestionProductos() {
         tutorial_video_url: formGame.tutorial_video_url,
         tutorial_banner_texto: formGame.tutorial_banner_texto,
         tutorial_banner_img: formGame.tutorial_banner_img,
+        tutorial_video: formGame.tutorial_video,
+        tutorial_titulo: formGame.tutorial_titulo,
+        tutorial_activo: formGame.tutorial_activo,
         icono_url: formGame.icono_url,
         imagen_pedido_completado_url: formGame.imagen_pedido_completado_url,
         verificacion_api_activa: formGame.verificacion_api_activa,
@@ -2255,6 +2272,94 @@ export default function GestionProductos() {
             <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
               Puedes pegar un link de YouTube o subir un video propio (MP4, WebM, etc).
             </p>
+          </div>
+
+          <hr style={{ margin: '24px 0', borderColor: 'var(--border-color)' }} />
+          <h3 style={{ fontSize: 13, textTransform: 'uppercase', color: 'var(--accent-primary)', marginBottom: 12 }}>Configuración de Tutorial Obligatorio</h3>
+
+          <div style={{ background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '16px' }}>
+            <div className="form-group" style={{ marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <input
+                  type="checkbox"
+                  id="tutorial_activo"
+                  checked={!!formGame.tutorial_activo}
+                  onChange={e => setFormGame({ ...formGame, tutorial_activo: e.target.checked })}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--accent-primary)' }}
+                />
+                <label htmlFor="tutorial_activo" className="form-label" style={{ margin: 0, cursor: 'pointer', fontWeight: 700 }}>
+                  Activar Tutorial Obligatorio (Pop-up) para este juego
+                </label>
+              </div>
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                Si se activa, el usuario estará obligado a ver el video completo la primera vez que ingrese a esta lista de precios.
+              </p>
+            </div>
+
+            {formGame.tutorial_activo && (
+              <>
+                <div className="form-group">
+                  <label className="form-label">Título de la Ventana Emergente</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Ej: NUEVA MANERA DE RECARGAR"
+                    value={formGame.tutorial_titulo || ''}
+                    onChange={e => setFormGame({ ...formGame, tutorial_titulo: e.target.value })}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Subir Video MP4</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <input
+                      type="file"
+                      id="tutorial-obligatorio-upload"
+                      accept="video/mp4"
+                      style={{ display: 'none' }}
+                      onChange={async (e) => {
+                        const file = e.target.files[0]
+                        if (!file) return
+                        if (file.size > 50 * 1024 * 1024) {
+                          setAlertModal({ type: 'error', message: 'El video no debe superar los 50MB' })
+                          return
+                        }
+                        setSaving(true)
+                        try {
+                          const fileName = `tutorial-${Date.now()}-${file.name}`
+                          const { error: uploadError } = await supabase.storage.from('logos').upload(fileName, file, { cacheControl: '31536000', upsert: true })
+                          if (uploadError) throw uploadError
+                          const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(fileName)
+                          setFormGame(prev => ({ ...prev, tutorial_video: publicUrl }))
+                        } catch (err) {
+                          setAlertModal({ type: 'error', message: 'Error subiendo video: ' + err.message })
+                        } finally {
+                          setSaving(false)
+                        }
+                      }}
+                    />
+                    <label htmlFor="tutorial-obligatorio-upload" className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}>
+                      {saving ? 'Subiendo...' : '📤 Subir Video (MP4)'}
+                    </label>
+                    {formGame.tutorial_video && (
+                      <button 
+                        type="button"
+                        className="btn btn-ghost btn-sm" 
+                        style={{ color: 'var(--accent-error)', flexShrink: 0 }}
+                        onClick={() => setFormGame(prev => ({ ...prev, tutorial_video: '' }))}
+                      >
+                        🗑️ Remover Video
+                      </button>
+                    )}
+                    {formGame.tutorial_video && (
+                      <div style={{ fontSize: '11px', color: 'var(--accent-success)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        ✅ Video activo: {formGame.tutorial_video.split('/').pop().slice(0, 20)}...
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="form-group">
