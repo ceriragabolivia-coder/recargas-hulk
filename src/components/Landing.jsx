@@ -13,6 +13,7 @@ import LandingPerfil from './LandingPerfil'
 import Ruleta from './Ruleta'
 import DOMPurify from 'dompurify'
 import TutorialVideoModal from './TutorialVideoModal'
+import MandatoryTutorialModal from './MandatoryTutorialModal'
 import FloatingBackground from './FloatingBackground'
 import './Landing.css'
 export default function Landing({ onNavigate }) {
@@ -107,6 +108,7 @@ export default function Landing({ onNavigate }) {
   const [showNotiDropdown, setShowNotiDropdown] = useState(false)
   const [activeToast, setActiveToast] = useState(null)
   const [showTutorialModal, setShowTutorialModal] = useState(false)
+  const [showMandatoryTutorial, setShowMandatoryTutorial] = useState(false)
   const [paginasFooter, setPaginasFooter] = useState([])
   
   // Modo Nocturno
@@ -566,9 +568,20 @@ export default function Landing({ onNavigate }) {
 
   useEffect(() => {
     if (selectedJuego && selectedJuego.popup_activo) {
-      setShowGamePopup(true)
+      const shown = sessionStorage.getItem(`popup_shown_${selectedJuego.id}`)
+      if (!shown) {
+        setShowGamePopup(true)
+        sessionStorage.setItem(`popup_shown_${selectedJuego.id}`, 'true')
+      }
     } else {
       setShowGamePopup(false)
+    }
+
+    if (selectedJuego && selectedJuego.tutorial_activo && selectedJuego.tutorial_video) {
+      const hasWatched = localStorage.getItem(`hulk_tutorial_visto_${selectedJuego.id}`) === 'true'
+      if (!hasWatched) {
+        setShowMandatoryTutorial(true)
+      }
     }
   }, [selectedJuego])
 
@@ -2227,6 +2240,21 @@ export default function Landing({ onNavigate }) {
           title={`¿Cómo recargar ${selectedJuego.nombre}?`} 
         />
       )}
+
+      {selectedJuego && (
+        <MandatoryTutorialModal
+          isOpen={showMandatoryTutorial}
+          videoUrl={selectedJuego.tutorial_video}
+          title={selectedJuego.tutorial_titulo || 'Tutorial Importante'}
+          onComplete={() => {
+            if (selectedJuego) {
+              localStorage.setItem(`hulk_tutorial_visto_${selectedJuego.id}`, 'true')
+            }
+            setShowMandatoryTutorial(false)
+          }}
+        />
+      )}
+
 
       {/* MODAL DE INFO ADICIONAL */}
       {infoProductModal && (
