@@ -11,6 +11,7 @@ const supabaseKey =
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 import { fetchPinCentral } from '../pincentral/client.js';
+import { createOrder as centralOneCreateOrder, getOrderCodes as centralOneGetOrderCodes } from '../centralone/client.js';
 
 // --- HELPER: Procesar pedido con TiendaGiftVen API ---
 async function procesarPedidoConApi(pedidoId, apiKey) {
@@ -64,28 +65,47 @@ async function procesarPedidoConApi(pedidoId, apiKey) {
           payload.cantidad = item.cantidad || 1;
         }
 
-        const res = await fetch(`https://tiendagiftven.tech/api/v1/comprar`, {
-          method: "POST",
-          headers: {
-            "X-API-Key": apiKey,
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
+        let maxRetriesTgv = 2;
+        let successTgv = false;
+        let data;
+        let res;
 
-        if (!res.ok) {
-          const text = await res.text();
-          let errData = {};
-          try {
-            errData = JSON.parse(text);
-          } catch (e) {}
-          throw new Error(
-            errData.error || errData.message || "Error HTTP " + res.status
-          );
+        while (maxRetriesTgv > 0 && !successTgv) {
+          res = await fetch(`https://tiendagiftven.tech/api/v1/comprar`, {
+            method: "POST",
+            headers: {
+              "X-API-Key": apiKey,
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!res.ok) {
+            const text = await res.text();
+            let errData = {};
+            try {
+              errData = JSON.parse(text);
+            } catch (e) {}
+            
+            const errMsg = errData.error || errData.message || "Error HTTP " + res.status;
+
+            // Check if TiendaGiftVen requires a specific field
+            const requiredMatch = errMsg.match(/Field "([^"]+)" is required/i) || errMsg.match(/El campo ([^\s]+) es requerido/i);
+            if (res.status === 400 && requiredMatch && item.player_id) {
+              const reqField = requiredMatch[1].replace(/['"]/g, '');
+              console.log(`[AutoProcess] TiendaGiftVen requiere campo '${reqField}', agregando y reintentando...`);
+              payload[reqField] = String(item.player_id).trim();
+              maxRetriesTgv--;
+              continue; // Retry with the missing field
+            }
+
+            throw new Error(errMsg);
+          }
+
+          data = await res.json();
+          successTgv = true;
         }
-
-        const data = await res.json();
 
         if (data.ok) {
           const respEstado = data.estado ? data.estado.toLowerCase() : "";
@@ -277,6 +297,17 @@ async function procesarPedidoConFazerCards(pedidoId, apiKey) {
                 } catch (e) {}
                 
                 const errMsg = errData.error || errData.message || "Error HTTP " + res.status;
+                
+                // Check if FazerCards requires a specific field
+                const requiredMatch = errMsg.match(/Field "([^"]+)" is required/i);
+                if (res.status === 400 && requiredMatch && item.player_id) {
+                  const reqField = requiredMatch[1].replace(/['"]/g, '');
+                  console.log(`[AutoProcess] FazerCards requiere campo '${reqField}', agregando y reintentando...`);
+                  if (!payload.fields) payload.fields = {};
+                  payload.fields[reqField] = String(item.player_id).trim();
+                  maxRetries--;
+                  continue; // Retry with the missing field
+                }
                 
                 // Check if FazerCards rejected an extra field we sent
                 const notExpectedMatch = errMsg.match(/Field "([^"]+)" is not expected/);
@@ -513,6 +544,123 @@ async function procesarPedidoConPinCentral(pedidoId, apiKey, apiSecret) {
   return { anySent, allCompleted };
 }
 
+// --- HELPER: Procesar pedido con Central One API ---
+async function procesarPedidoConCentralOne(pedidoId) {
+  let anySent = false;
+  let allCompleted = true;
+
+  const { data: pedidoActual } = await supabase
+    .from("pedidos")
+    .select(
+      "*, pedido_items(*, productos(*, juegos(procesamiento_automatico_api, api_provider, api_provider_category_id)))"
+    )
+    .eq("id", pedidoId)
+    .single();
+
+  if (!pedidoActual?.pedido_items)
+    return { anySent: false, allCompleted: false };
+
+  for (const item of pedidoActual.pedido_items) {
+    const prod = Array.isArray(item.productos) ? item.productos[0] : item.productos;
+    const j = Array.isArray(prod?.juegos) ? prod.juegos[0] : prod?.juegos;
+    const isPendingOrFailed =
+      !item.estado_proveedor ||
+      item.estado_proveedor === "error" ||
+      item.estado_proveedor === "fallido" ||
+      item.estado_proveedor === "created";
+    const effectiveProvider = prod?.api_provider || j?.api_provider;
+    const isCentralOne = effectiveProvider === "centralone";
+
+    if (
+      prod?.proveedor_api_id &&
+      (j?.procesamiento_automatico_api || prod?.api_provider) &&
+      isCentralOne &&
+      isPendingOrFailed
+    ) {
+      anySent = true;
+      try {
+        console.log(`🚀 [AutoProcess] Enviando item ${item.id} a Central One...`);
+        const category_id = prod?.api_provider_category_id || j?.api_provider_category_id || "";
+        const idempotencyKey = `HULK-ITEM-${item.id}`;
+        
+        // Construcción estática del target_payload basado en la categoría
+        let target_payload = undefined;
+        if (item.player_id) {
+           target_payload = {};
+           if (category_id === 'free-fire' || category_id === 'freefire') {
+              target_payload.player_id = String(item.player_id).trim();
+           } else if (category_id === 'mobile-legends' || category_id === 'mobilelegends') {
+              target_payload.player_id = String(item.player_id).trim();
+              if (item.zone_id) target_payload.server = String(item.zone_id).trim();
+           } else if (category_id.includes('gift') || category_id.includes('pin') || category_id === 'steam') {
+              target_payload = undefined;
+           } else {
+              target_payload.player_id = String(item.player_id).trim();
+           }
+        }
+
+        const orderItem = {
+          catalog_item_id: prod.proveedor_api_id,
+          quantity: item.cantidad || 1
+        };
+
+        if (target_payload) {
+          orderItem.target_payload = target_payload;
+        }
+
+        const data = await centralOneCreateOrder([orderItem], idempotencyKey, `Pedido ${pedidoActual.numero_pedido} - Item ${item.id}`);
+
+        if (data && data.order) {
+          const respEstado = data.order.status ? data.order.status.toLowerCase() : "";
+          const isCompleted = respEstado === "completed" || respEstado === "partially_completed";
+          if (!isCompleted) allCompleted = false;
+
+          let extractedCodes = '';
+
+          if (isCompleted && data.order.items && data.order.items[0]?.delivered_count > 0) {
+            try {
+               const codesData = await centralOneGetOrderCodes(data.order.id);
+               if (codesData && codesData.order && codesData.order.items) {
+                 const codeItem = codesData.order.items.find(i => i.id === data.order.items[0].id);
+                 if (codeItem && codeItem.codes) {
+                   extractedCodes = codeItem.codes.join('\n');
+                 }
+               }
+            } catch (err) {
+               console.error(`❌ [AutoProcess] Error obteniendo códigos de Central One para item ${item.id}:`, err.message);
+            }
+          }
+
+          await supabase.rpc("webhook_update_pedido_item", {
+            p_item_id: item.id,
+            p_estado_proveedor: data.order.status || "processing",
+            p_proveedor_pedido_id: data.order.id,
+            p_mensaje_proveedor: extractedCodes,
+            p_estado: isCompleted ? "completado" : "procesando",
+            p_codigo_entregado: extractedCodes || null,
+          });
+        } else {
+          throw new Error("Respuesta inválida de Central One");
+        }
+      } catch (e) {
+        console.error(`❌ [AutoProcess] Error en item ${item.id} con Central One:`, e.message);
+        allCompleted = false;
+        await supabase.rpc("webhook_update_pedido_item", {
+          p_item_id: item.id,
+          p_estado_proveedor: "error",
+          p_mensaje_proveedor: e.message,
+        });
+      }
+    } else if (isCentralOne) {
+      if (item.estado !== "completado") {
+        allCompleted = false;
+      }
+    }
+  }
+
+  return { anySent, allCompleted };
+}
+
 // --- HELPER: Aplicar Cashback ---
 async function applyCashback(pedido, supabaseClient, adminId) {
   if (pedido.cashback_aplicado) return;
@@ -692,19 +840,25 @@ export default async function handler(req, res) {
       }
 
       // Obtener API key respectiva
-        const configKey = providerName === "fazercards" ? "fazercards_api_key" : (providerName === "pincentral" ? "pincentral_api_key" : "tiendagiftven_api_key");
-      const { data: configRows } = await supabase
-        .from("configuracion")
-        .select("clave, valor, valor_texto")
-        .in("clave", ["fazercards_api_key", "tiendagiftven_api_key", "pincentral_api_key", "pincentral_api_secret"]);
-
       let apiKey = "";
       let apiSecret = "";
 
-      if (providerName === "pincentral") {
+      if (providerName === "centralone") {
+        // Central One lee la llave directamente desde las variables de entorno dentro de su cliente.
+        apiKey = process.env.CENTRAL_ONE_API_KEY || "configurado-en-env"; 
+      } else if (providerName === "pincentral") {
+        const { data: configRows } = await supabase
+          .from("configuracion")
+          .select("clave, valor, valor_texto")
+          .in("clave", ["pincentral_api_key", "pincentral_api_secret"]);
         apiKey = configRows?.find(r => r.clave === 'pincentral_api_key')?.valor_texto;
         apiSecret = configRows?.find(r => r.clave === 'pincentral_api_secret')?.valor_texto;
       } else {
+        const configKey = providerName === "fazercards" ? "fazercards_api_key" : "tiendagiftven_api_key";
+        const { data: configRows } = await supabase
+          .from("configuracion")
+          .select("clave, valor, valor_texto")
+          .in("clave", ["fazercards_api_key", "tiendagiftven_api_key"]);
         const row = configRows?.find(r => r.clave === configKey);
         apiKey = row?.valor_texto || row?.valor;
       }
@@ -724,6 +878,10 @@ export default async function handler(req, res) {
           allCompleted = resProvider.allCompleted;
         } else if (providerName === "pincentral") {
           const resProvider = await procesarPedidoConPinCentral(pedido.id, apiKey, apiSecret);
+          anySent = resProvider.anySent;
+          allCompleted = resProvider.allCompleted;
+        } else if (providerName === "centralone") {
+          const resProvider = await procesarPedidoConCentralOne(pedido.id);
           anySent = resProvider.anySent;
           allCompleted = resProvider.allCompleted;
         } else {
