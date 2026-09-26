@@ -16,6 +16,7 @@ export default function Configuracion() {
   
   // Estado para el formulario de edición/creación
   const [isEditing, setIsEditing] = useState(false)
+  const [videoTutorialActivo, setVideoTutorialActivo] = useState(false)
   const [currentMetodo, setCurrentMetodo] = useState({ nombre: '', datos: '', activo: true, icono_url: null, qr_url: null, beneficios_extra: {} })
   const [showForm, setShowForm] = useState(false)
 
@@ -98,6 +99,18 @@ export default function Configuracion() {
   const [cashbackPorcentaje, setCashbackPorcentaje] = useState('0')
   const [cashbackActivo, setCashbackActivo] = useState(false)
   
+  // Estados para Tutorial Obligatorio
+  const [tutorialObligatorioActivo, setTutorialObligatorioActivo] = useState(false)
+  const [tutorialObligatorioUrl, setTutorialObligatorioUrl] = useState('')
+  const [tutorialObligatorioTitulo, setTutorialObligatorioTitulo] = useState('Tutorial Importante')
+  
+  // Estados para Flyer Obligatorio
+  const [flyerObligatorioActivo, setFlyerObligatorioActivo] = useState(false)
+  const [flyerActivo, setFlyerActivo] = useState(false)
+  const [flyerObligatorioUrl, setFlyerObligatorioUrl] = useState('')
+  const [flyerObligatorioVersion, setFlyerObligatorioVersion] = useState(0)
+  const [flyerObligatorioDuracion, setFlyerObligatorioDuracion] = useState(5)
+  
   // Estados para Fondo Flotante
   const [bgFloatingEnabled, setBgFloatingEnabled] = useState(false)
   const [bgFloatingSpeed, setBgFloatingSpeed] = useState('10')
@@ -152,6 +165,18 @@ export default function Configuracion() {
       setPromoBannerIconoUrl(config.promo_banner_icono_url || '')
       setTutorialBannerTexto(config.tutorial_banner_texto || '')
       setTutorialBannerLink(config.tutorial_banner_link || '')
+
+      // Tutorial Obligatorio
+      setTutorialObligatorioActivo(config.tutorial_obligatorio_activo === 'true')
+      setTutorialObligatorioUrl(config.tutorial_obligatorio_url || '')
+      setTutorialObligatorioTitulo(config.tutorial_obligatorio_titulo || 'Tutorial Importante')
+
+      // Flyer Obligatorio
+      setFlyerObligatorioActivo(config.flyer_obligatorio_activo === 'true')
+      setFlyerObligatorioUrl(config.flyer_obligatorio_url || '')
+      setFlyerObligatorioVersion(Number(config.flyer_obligatorio_version) || 0)
+      setFlyerObligatorioDuracion(Number(config.flyer_obligatorio_duracion) || 5)
+      setFlyerActivo(config.flyer_obligatorio_activo === 'true')
 
       // Fondo Flotante
       setBgFloatingEnabled(config.bg_floating_enabled === 'true')
@@ -308,6 +333,86 @@ export default function Configuracion() {
     setBgFloatingImages(newImages)
     const res = await updateConfig('bg_floating_images', JSON.stringify(newImages), true)
     if (res && res.error) alert('Error: ' + res.error.message)
+  }
+
+  const handleTutorialVideoUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    if (!file.type.includes('video/')) {
+      setAlertModal({ type: 'error', message: 'Por favor, sube un archivo de video válido (MP4 recomendado).' })
+      return
+    }
+    
+    setUploadingImage(true)
+    try {
+      const fileName = `tutorial-obligatorio-${Date.now()}.${file.name.split('.').pop()}`
+      const filePath = `system/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('logos') // Reutilizamos el bucket logos que es público
+        .upload(filePath, file, { cacheControl: '31536000', upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('logos')
+        .getPublicUrl(filePath)
+
+      await updateConfig('tutorial_obligatorio_url', publicUrl, true)
+      setTutorialObligatorioUrl(publicUrl)
+      refetchConfig()
+      setAlertModal({ type: 'success', message: 'Video tutorial actualizado correctamente' })
+    } catch (err) {
+      console.error('Error subiendo video tutorial:', err)
+      setAlertModal({ type: 'error', message: 'Error subiendo el video: ' + err.message })
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
+  const handleFileUpload = async (file, tipo) => {
+    if (!file) return
+    setUploadingImage(true)
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${tipo}-${Date.now()}.${fileExt}`
+      const filePath = `system/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('logos')
+        .upload(filePath, await compressImage(file), { cacheControl: '31536000', upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('logos')
+        .getPublicUrl(filePath)
+
+      const configKey = tipo === 'horario' ? 'horario_flyer_url' : 
+                        tipo === 'tutorial' ? 'tutorial_obligatorio_url' :
+                        'flyer_obligatorio_url';
+
+      await updateConfig(configKey, publicUrl, true)
+
+      if (tipo === 'horario') {
+        setHorarioFlyerUrl(publicUrl)
+        setAlertModal({ type: 'success', message: 'Flyer de horario subido correctamente' })
+      } else if (tipo === 'tutorial') {
+        setTutorialObligatorioUrl(publicUrl)
+        setAlertModal({ type: 'success', message: 'Video tutorial subido correctamente' })
+      } else if (tipo === 'flyer_obligatorio') {
+        setFlyerObligatorioUrl(publicUrl)
+        const newVersion = flyerObligatorioVersion + 1;
+        await updateConfig('flyer_obligatorio_version', newVersion.toString(), true);
+        setFlyerObligatorioVersion(newVersion);
+        setAlertModal({ type: 'success', message: 'Flyer obligatorio subido correctamente. La versión ha aumentado a ' + newVersion })
+      }
+    } catch (err) {
+      console.error('Error subiendo archivo:', err)
+      setAlertModal({ type: 'error', message: 'Error subiendo archivo: ' + err.message })
+    } finally {
+      setUploadingImage(false)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -1123,7 +1228,172 @@ export default function Configuracion() {
               <div style={{ padding: '24px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', maxWidth: '600px' }}>
                   
-                  <div style={{ padding: '24px', backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ padding: '24px', backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)', borderLeft: '4px solid var(--accent-primary)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: '300px' }}>
+                        <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>🎥 Tutorial Obligatorio (Pop-up)</h3>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px' }}>
+                          Sube un video MP4. Si está activo, este video se mostrará obligatoriamente a los clientes y revendedores 3 segundos después de iniciar sesión. No podrán cerrarlo ni saltarlo hasta que termine.
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <label className="toggle-switch">
+                          <input 
+                            type="checkbox" 
+                            checked={tutorialObligatorioActivo}
+                            onChange={(e) => {
+                              const newVal = e.target.checked
+                              setTutorialObligatorioActivo(newVal)
+                              updateConfig('tutorial_obligatorio_activo', newVal.toString(), true).then(() => 
+                                setAlertModal({ type: 'success', message: 'Estado del tutorial actualizado' })
+                              )
+                            }}
+                          />
+                          <span className="toggle-slider"></span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="form-group" style={{ marginTop: '15px' }}>
+                      <label className="form-label">Título de la Ventana Emergente</label>
+                      <input 
+                        type="text"
+                        className="form-input"
+                        value={tutorialObligatorioTitulo}
+                        onChange={(e) => setTutorialObligatorioTitulo(e.target.value)}
+                        onBlur={(e) => {
+                          updateConfig('tutorial_obligatorio_titulo', e.target.value, true)
+                        }}
+                        placeholder="Ej: Tutorial Importante"
+                      />
+                      <small style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>Este título aparecerá en la parte superior del video.</small>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginTop: '16px' }}>
+                       <div style={{ 
+                         width: '120px', height: '80px', borderRadius: '12px', backgroundColor: '#000', 
+                         border: '2px solid rgba(255,255,255,0.1)', overflow: 'hidden', display: 'flex', 
+                         alignItems: 'center', justifyContent: 'center' 
+                       }}>
+                         {tutorialObligatorioUrl ? (
+                           <video src={tutorialObligatorioUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
+                         ) : (
+                           <span style={{ fontSize: '24px', opacity: 0.3 }}>🎬</span>
+                         )}
+                       </div>
+                       
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                         <input 
+                           type="file" 
+                           id="tutorialUpload"
+                           style={{ display: 'none' }} 
+                           accept="video/mp4,video/webm"
+                           onChange={handleTutorialVideoUpload}
+                         />
+                         <button 
+                           className="btn btn-primary" 
+                           onClick={() => document.getElementById('tutorialUpload').click()}
+                           disabled={uploadingImage}
+                         >
+                           {uploadingImage ? 'Subiendo...' : '📤 Subir Video (MP4)'}
+                         </button>
+                         {tutorialObligatorioUrl && (
+                           <span style={{ fontSize: '12px', color: 'var(--accent-success)' }}>
+                             ✓ Video activo: {tutorialObligatorioUrl.split('/').pop().substring(0, 20)}...
+                           </span>
+                         )}
+                       </div>
+                    </div>
+                  </div>
+
+                  {/* SECCIÓN FLYER OBLIGATORIO */}
+                  <div className="admin-card" style={{ backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)', padding: '24px' }}>
+                    <div className="card-header border-bottom border-secondary pb-3 mb-3 d-flex justify-content-between align-items-center" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '16px' }}>
+                      <div>
+                        <h4 className="card-title text-white m-0 d-flex align-items-center gap-2" style={{ fontSize: '18px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                          <span className="text-warning">🖼️</span> Aviso / Flyer Obligatorio
+                        </h4>
+                        <p className="text-muted small m-0 mt-1" style={{ color: 'var(--text-muted)', fontSize: '13px', margin: '4px 0 0 0' }}>Configura un flyer obligatorio que aparecerá después del video tutorial.</p>
+                      </div>
+                      
+                      <div className="form-check form-switch custom-switch" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <input 
+                          className="form-check-input" 
+                          type="checkbox" 
+                          role="switch"
+                          id="flyer_obligatorio_activo"
+                          checked={flyerObligatorioActivo}
+                          onChange={(e) => {
+                            const val = e.target.checked;
+                            setFlyerActivo(val);
+                            setFlyerObligatorioActivo(val);
+                            updateConfig('flyer_obligatorio_activo', val.toString(), true);
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        />
+                        <label className="form-check-label text-white" htmlFor="flyer_obligatorio_activo" style={{ cursor: 'pointer', fontWeight: 600 }}>
+                          {flyerObligatorioActivo ? 'Activado' : 'Desactivado'}
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="card-body">
+                      {flyerObligatorioActivo && (
+                        <div className="settings-panel animate-fade-in" style={{ backgroundColor: 'var(--bg-secondary)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                          
+                          <div className="form-group mb-4" style={{ marginBottom: '16px' }}>
+                            <label className="form-label text-warning" style={{ fontWeight: 600, display: 'block', marginBottom: '8px' }}>Duración Obligatoria (Segundos)</label>
+                            <input 
+                              type="number"
+                              className="form-input"
+                              value={flyerObligatorioDuracion}
+                              min="0"
+                              max="60"
+                              onChange={(e) => setFlyerObligatorioDuracion(Number(e.target.value))}
+                              onBlur={(e) => {
+                                updateConfig('flyer_obligatorio_duracion', Number(e.target.value).toString(), false)
+                              }}
+                            />
+                            <small style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>Tiempo que el usuario debe esperar antes de poder cerrar el flyer.</small>
+                          </div>
+
+                          <div className="upload-section">
+                            <label className="form-label d-flex justify-content-between align-items-center" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                              <span>Imagen del Flyer</span>
+                              <span className="badge bg-primary" style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'var(--accent-primary)', color: '#000', fontWeight: 'bold' }}>Versión Actual: {flyerObligatorioVersion}</span>
+                            </label>
+                            <div className="custom-file-upload mt-2">
+                              <input 
+                                type="file" 
+                                id="flyer-obligatorio-upload" 
+                                accept="image/*"
+                                onChange={(e) => {
+                                  if (e.target.files && e.target.files[0]) {
+                                    handleFileUpload(e.target.files[0], 'flyer_obligatorio')
+                                  }
+                                }}
+                                style={{ display: 'none' }}
+                              />
+                              <label htmlFor="flyer-obligatorio-upload" className="btn btn-outline-primary w-100 py-3 d-flex flex-column align-items-center gap-2" style={{ borderStyle: 'dashed', borderWidth: '2px', backgroundColor: 'rgba(0, 210, 255, 0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center' }}>
+                                <span style={{ fontSize: '24px' }}>🖼️</span>
+                                <span style={{ fontWeight: '500' }}>Subir Nueva Imagen</span>
+                                <small style={{ color: 'rgba(255,255,255,0.5)', textAlign: 'center', maxWidth: '80%' }}>¡Atención! Al subir una imagen nueva, se forzará automáticamente a que todos los clientes vuelvan a verla.</small>
+                              </label>
+                            </div>
+                          </div>
+
+                          {flyerObligatorioUrl && (
+                            <div className="preview-container mt-4 p-3" style={{ backgroundColor: '#000', borderRadius: '12px', textAlign: 'center', marginTop: '20px' }}>
+                              <p style={{ margin: '0 0 10px', fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>Vista previa actual:</p>
+                              <img src={flyerObligatorioUrl} alt="Flyer" style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '8px', objectFit: 'contain' }} />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '24px', backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)', marginTop: '24px' }}>
                     <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>Identidad Visual (Favicon)</h3>
                     <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px' }}>
                       Sube una imagen para cambiar el icono que aparece en la pestaña del navegador.

@@ -599,11 +599,11 @@ export function useTodosLosProductos() {
 
   async function fetchProductos() {
     try {
-      let query = supabase
-        .from('productos')
-        .select('*, juegos!inner(id, nombre, activo, categorias(id, nombre, activa))')
-        .eq('activo', true)
-        .eq('juegos.activo', true)
+        let query = supabase
+          .from('productos')
+          .select('*, juegos!inner(id, nombre, activo, tutorial_activo, tutorial_video, tutorial_titulo, categorias(id, nombre, activa))')
+          .eq('activo', true)
+          .eq('juegos.activo', true)
 
       if (isNegocio) {
         query = query.eq('owner_id', user.id)

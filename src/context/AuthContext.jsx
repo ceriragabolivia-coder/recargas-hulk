@@ -49,7 +49,8 @@ export function AuthProvider({ children }) {
                 porcentaje_descuento: rpcData.porcentaje_descuento,
                 config_modulos: rpcData.config_modulos,
                 motivo_estado: rpcData.motivo_estado,
-                juegos_deshabilitados: rpcData.juegos_deshabilitados
+                juegos_deshabilitados: rpcData.juegos_deshabilitados,
+                tutorial_obligatorio_visto: rpcData.tutorial_obligatorio_visto
             };
             clienteData = {
                 id: rpcData.cliente_id,
@@ -134,7 +135,8 @@ export function AuthProvider({ children }) {
                 porcentaje_descuento: rpcData.porcentaje_descuento,
                 config_modulos: rpcData.config_modulos,
                 motivo_estado: rpcData.motivo_estado,
-                juegos_deshabilitados: rpcData.juegos_deshabilitados
+                juegos_deshabilitados: rpcData.juegos_deshabilitados,
+                tutorial_obligatorio_visto: rpcData.tutorial_obligatorio_visto
             };
             clienteData = {
                 id: rpcData.cliente_id,

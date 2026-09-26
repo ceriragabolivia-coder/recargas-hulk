@@ -38,6 +38,13 @@ export default function ProveedorCatalogo() {
   const [pcProductos, setPcProductos] = useState([]);
   const [loadingPcProductos, setLoadingPcProductos] = useState(false);
 
+  // Central One state
+  const [coSaldo, setCoSaldo] = useState(null);
+  const [loadingCoSaldo, setLoadingCoSaldo] = useState(false);
+  const [coProductos, setCoProductos] = useState([]);
+  const [loadingCoProductos, setLoadingCoProductos] = useState(false);
+  const [searchTermCO, setSearchTermCO] = useState('');
+
   // Cargar API Key inicial
   useEffect(() => {
     if (config?.tiendagiftven_api_key) {
@@ -285,6 +292,40 @@ export default function ProveedorCatalogo() {
     setLoadingPcProductos(false);
   };
 
+  // Consultar Saldo Central One
+  const fetchCoSaldo = async () => {
+    setLoadingCoSaldo(true);
+    try {
+      const res = await fetch('/api/centralone/proxy?endpoint=saldo');
+      const data = await res.json();
+      if (data.ok && data.saldo !== undefined) {
+        setCoSaldo(data.saldo);
+      } else {
+        setCoSaldo(null);
+      }
+    } catch (e) {
+      setCoSaldo(null);
+    }
+    setLoadingCoSaldo(false);
+  };
+
+  // Consultar Productos Central One
+  const fetchCoProductos = async () => {
+    setLoadingCoProductos(true);
+    try {
+      const res = await fetch('/api/centralone/proxy?endpoint=productos');
+      const data = await res.json();
+      if (data.ok && data.productos) {
+        setCoProductos(data.productos);
+      } else {
+        setAlertModal({ type: 'error', message: data.error || 'Error obteniendo productos de Central One' });
+      }
+    } catch (e) {
+      setAlertModal({ type: 'error', message: 'Error de red al consultar productos Central One' });
+    }
+    setLoadingCoProductos(false);
+  };
+
   useEffect(() => {
     if (config?.tiendagiftven_api_key) {
       fetchSaldo(config.tiendagiftven_api_key);
@@ -298,6 +339,10 @@ export default function ProveedorCatalogo() {
       fetchPcSaldo();
       fetchPcProductos();
     }
+    
+    // Central One no necesita key manual
+    fetchCoSaldo();
+    fetchCoProductos();
   }, [config?.tiendagiftven_api_key, config?.fazercards_api_key, config?.pincentral_api_key, config?.pincentral_api_secret]);
 
   const handleSaveApi = async () => {
@@ -404,6 +449,16 @@ export default function ProveedorCatalogo() {
           }}
         >
           PinCentral
+        </button>
+        <button 
+          onClick={() => setActiveTab('centralone')}
+          style={{ 
+            background: 'none', border: 'none', color: activeTab === 'centralone' ? '#00d2ff' : 'var(--text-muted)', 
+            fontSize: '18px', fontWeight: activeTab === 'centralone' ? 800 : 500, cursor: 'pointer', padding: '8px 16px',
+            borderBottom: activeTab === 'centralone' ? '2px solid #00d2ff' : '2px solid transparent'
+          }}
+        >
+          Central One
         </button>
       </div>
 
@@ -726,6 +781,81 @@ export default function ProveedorCatalogo() {
                     {prod.required_fields && prod.required_fields.length > 0 && (
                       <span>Campos extra: {prod.required_fields.join(', ')}</span>
                     )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'centralone' && (
+        <div className="fade-in">
+          <div style={{ marginBottom: '24px' }}>
+            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800 }}>📦 Proveedor: Central One</h1>
+            <p style={{ margin: '4px 0 0', color: 'var(--text-muted)' }}>
+              La API Key está protegida en tu servidor (Vercel). Puedes ver el saldo y catálogo aquí de forma segura.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', backgroundColor: 'rgba(0, 210, 255, 0.05)', border: '1px solid rgba(0, 210, 255, 0.1)' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px' }}>Saldo Disponible (Central One)</h3>
+              {loadingCoSaldo ? (
+                <div style={{ fontSize: '32px', fontWeight: 800 }}>Cargando...</div>
+              ) : coSaldo !== null ? (
+                <div style={{ fontSize: '42px', fontWeight: 900, color: '#fff', textShadow: '0 0 20px rgba(0, 210, 255, 0.4)' }}>
+                  ${parseFloat(coSaldo).toFixed(2)}
+                </div>
+              ) : (
+                <div style={{ fontSize: '18px', fontWeight: 600, color: 'var(--accent-error)' }}>No conectado o Error</div>
+              )}
+              <button className="btn btn-ghost btn-sm" style={{ marginTop: '12px' }} onClick={() => fetchCoSaldo()}>
+                🔄 Actualizar Saldo
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: 800, margin: 0 }}>📚 Catálogo de Central One</h2>
+              <button className="btn btn-ghost btn-sm" onClick={() => fetchCoProductos()} disabled={loadingCoProductos}>
+                🔄 Recargar Catálogo
+              </button>
+            </div>
+            <input 
+              type="text" 
+              placeholder="🔍 Buscar juego o servicio..." 
+              className="form-input" 
+              style={{ maxWidth: '300px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+              value={searchTermCO}
+              onChange={(e) => setSearchTermCO(e.target.value)}
+            />
+          </div>
+
+          {loadingCoProductos ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              Cargando catálogo de Central One...
+            </div>
+          ) : coProductos.length === 0 ? (
+            <div style={{ padding: '40px', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed var(--border-color)', color: 'var(--text-muted)' }}>
+              No se pudieron cargar los productos. Asegúrate de tener la variable CENTRAL_ONE_API_KEY en Vercel.
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+              {coProductos.filter(p => (p.name || '').toLowerCase().includes(searchTermCO.toLowerCase()) || (p.product_id || '').toLowerCase().includes(searchTermCO.toLowerCase()) || (p.product_family_name || '').toLowerCase().includes(searchTermCO.toLowerCase())).map(prod => (
+                <div key={prod.product_id} className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                    <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>{prod.name}</h4>
+                    <div style={{ backgroundColor: 'rgba(0, 210, 255, 0.1)', color: 'var(--accent-primary)', padding: '4px 8px', borderRadius: '8px', fontSize: '14px', fontWeight: 800 }}>
+                      ${parseFloat(prod.reseller_price).toFixed(2)}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                    ID Proveedor (product_id): <strong>{prod.product_id}</strong> | Categoría: {prod.product_family_name || 'Desconocida'}
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#c8d6e8', flex: 1, whiteSpace: 'pre-wrap' }}>
+                    Requiere campos extra: {prod.requires_target ? `Sí (${(prod.target_fields || []).join(', ')})` : 'No'}
                   </div>
                 </div>
               ))}

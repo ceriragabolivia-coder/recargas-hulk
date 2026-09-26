@@ -3982,6 +3982,25 @@ export default function Pedidos({
                   </div>
                 )}
 
+                {/* MENSAJE DE PAGO RECHAZADO */}
+                {selectedPedido.estado === 'rechazado' && selectedPedido.pago_verificado === false && (
+                  <div style={{
+                    marginTop: '16px',
+                    padding: '16px',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    borderRadius: '12px',
+                    textAlign: 'left'
+                  }}>
+                    <h4 style={{ margin: '0 0 8px 0', color: '#ef4444', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      ⛔ Pago No Encontrado
+                    </h4>
+                    <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '13px', lineHeight: '1.5' }}>
+                      El pago fue rechazado automáticamente porque <strong>no se encontró la referencia</strong> en nuestro sistema bancario. 
+                      Por favor, verifica que la referencia ingresada sea la correcta y crea un nuevo pedido.
+                    </p>
+                  </div>
+                )}
                 {/* Administrador que procesa */}
                 {selectedPedido.atendido_por_id && (
                   <div
@@ -6237,7 +6256,11 @@ export default function Pedidos({
                                   color = "#ffb74d";
                                   bg = "rgba(255, 183, 77, 0.1)";
                                   border = "rgba(255, 183, 77, 0.2)";
-                                } else if (pedido.pago_verificado === false) {
+                                } else if (
+                                  pedido.pago_verificado === false ||
+                                  pedido.estado === "rechazado" ||
+                                  pedido.estado === "cancelado"
+                                ) {
                                   text = "RECHAZADO";
                                   color = "#ef4444";
                                   bg = "rgba(239, 68, 68, 0.1)";

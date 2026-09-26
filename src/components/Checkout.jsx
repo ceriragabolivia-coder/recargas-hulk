@@ -469,10 +469,10 @@ export default function Checkout({ onFinish, embedded = false }) {
       file = await compressImage(file)
       
       const excludedNumbers = [perfil?.identificacion || user?.identificacion, perfil?.telefono || user?.telefono, perfil?.whatsapp || user?.whatsapp];
-      const extractedRef = await extractReferenceFromImage(file, excludedNumbers, isBinanceSelected)
+      const extractedRef = await extractReferenceFromImage(file, excludedNumbers, true)
       if (extractedRef && extractedRef.length >= 6) {
         setOcrReferencia(extractedRef)
-        setReferencia(extractedRef)
+        setReferencia(extractedRef.slice(isBinanceSelected ? 0 : -18))
         setAlertModal({ type: 'success', message: `Referencia detectada y autocompletada: ${extractedRef}` })
       }
 
@@ -500,8 +500,8 @@ export default function Checkout({ onFinish, embedded = false }) {
         setAlertModal({ type: 'warning', message: 'Por favor ingresa el número de referencia de tu pago.' })
         return
       }
-      if (!isManualBinance && referencia.trim().length !== 6) {
-        setAlertModal({ type: 'warning', message: 'La referencia debe contener exactamente los últimos 6 dígitos del comprobante.' })
+      if (!isManualBinance && referencia.trim().length < 6) {
+        setAlertModal({ type: 'warning', message: 'La referencia debe contener al menos los últimos 6 dígitos del comprobante.' })
         return
       }
       if (isManualBinance && referencia.trim().length < 6) {
@@ -554,7 +554,7 @@ export default function Checkout({ onFinish, embedded = false }) {
         }
       }
       let finalMetodoId = selectedMetodoId
-      let finalReferencia = referencia
+      let finalReferencia = isManualBinance ? referencia.trim() : referencia.trim().slice(-6)
 
       // SI ES PAGO TOTAL CON BILLETERA, GENERAR REFERENCIA AUTOMÁTICA
       if (currentIsWalletOnly) {
@@ -1421,52 +1421,76 @@ export default function Checkout({ onFinish, embedded = false }) {
                             <div className="form-group mb-16 fade-in">
                               <label className="form-label" style={{ color: '#00d2ff', fontWeight: 900, fontSize: '13px', marginBottom: '12px', display: 'block', textTransform: 'uppercase', letterSpacing: '1px' }}>
                                 {isBinanceSelected ? 'ID de Binance (Pay ID o Order ID)' : (
-                                  <>Número de Referencia <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: 600 }}>(Últimos 6 dígitos)</span></>
+                                  <>Número de Referencia <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: 600 }}>(Hasta 18 dígitos, usaremos los últimos 6)</span></>
                                 )}
                               </label>
-                              <input 
-                                type="text" 
-                                className="form-input" 
-                                placeholder={isBinanceSelected ? "Escribe todo el ID de tu pago a través de Binance aquí..." : "Escribe los 6 últimos dígitos aquí..."}
-                                value={referencia} 
-                                onChange={e => {
-                                  if (isBinanceSelected) {
-                                    setReferencia(e.target.value.replace(/\D/g, ''));
-                                  } else {
-                                    // Detener en 6 dígitos y no desplazar
-                                    const val = e.target.value.replace(/\D/g, '').slice(-6);
-                                    setReferencia(val);
-                                  }
-                                }}
-                                onPaste={e => {
-                                  e.preventDefault();
-                                  if (isBinanceSelected) {
-                                    setReferencia((e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, ''));
-                                  } else {
-                                    const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(-6);
-                                    setReferencia(pasteData);
-                                  }
-                                }}
-                                style={{ 
-                                  border: '2px solid rgba(0, 210, 255, 0.3)', 
-                                  backgroundColor: 'rgba(0,0,0,0.2)',
-                                  color: '#fff',
-                                  borderRadius: '16px', 
-                                  height: '56px', 
-                                  padding: '0 20px', 
-                                  letterSpacing: isBinanceSelected ? '1px' : '3px', 
-                                  fontSize: '18px', 
-                                  fontWeight: 800,
-                                  outline: 'none',
-                                  transition: 'all 0.3s',
-                                  width: '100%',
-                                  boxSizing: 'border-box'
-                                }}
-                                onFocus={e => e.target.style.borderColor = '#00d2ff'}
-                                onBlur={e => e.target.style.borderColor = 'rgba(0, 210, 255, 0.3)'}
-                              />
-                              <div style={{ fontSize: '12px', color: '#f5af19', marginTop: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                {isBinanceSelected ? '⚠️ Recuerda que debes colocar todo el ID de pago de Binance.' : '⚠️ Recuerda que debes colocar exactamente los 6 últimos números de la referencia.'}
+                              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                <input 
+                                  type="text" 
+                                  className="form-input" 
+                                  placeholder={isBinanceSelected ? "Escribe todo el ID de tu pago a través de Binance aquí..." : "Escribe o pega la referencia aquí..."}
+                                  value={referencia} 
+                                  maxLength={isBinanceSelected ? undefined : 18}
+                                  onChange={e => {
+                                    if (isBinanceSelected) {
+                                      setReferencia(e.target.value.replace(/\D/g, ''));
+                                    } else {
+                                      // Detener en 18 dígitos y no desplazar
+                                      const val = e.target.value.replace(/\D/g, '').slice(-18);
+                                      setReferencia(val);
+                                    }
+                                  }}
+                                  onPaste={e => {
+                                    e.preventDefault();
+                                    if (isBinanceSelected) {
+                                      setReferencia((e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, ''));
+                                    } else {
+                                      const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(-18);
+                                      setReferencia(pasteData);
+                                    }
+                                  }}
+                                  style={{ 
+                                    border: '2px solid rgba(0, 210, 255, 0.3)', 
+                                    backgroundColor: 'rgba(0,0,0,0.2)',
+                                    color: '#fff',
+                                    borderRadius: '16px', 
+                                    height: '56px', 
+                                    padding: '0 50px 0 20px', 
+                                    letterSpacing: isBinanceSelected ? '1px' : '3px', 
+                                    fontSize: '18px', 
+                                    fontWeight: 800,
+                                    outline: 'none',
+                                    boxShadow: 'inset 0 0 10px rgba(0,0,0,0.5)',
+                                    transition: 'all 0.3s ease',
+                                    width: '100%'
+                                  }}
+                                  onFocus={e => { e.currentTarget.style.borderColor = '#00d2ff'; e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 210, 255, 0.3), inset 0 0 10px rgba(0,0,0,0.5)'; }}
+                                  onBlur={e => { e.currentTarget.style.borderColor = 'rgba(0, 210, 255, 0.3)'; e.currentTarget.style.boxShadow = 'inset 0 0 10px rgba(0,0,0,0.5)'; }}
+                                />
+                                <button 
+                                  type="button" 
+                                  onClick={async () => {
+                                    try {
+                                      const text = await navigator.clipboard.readText();
+                                      if (isBinanceSelected) {
+                                        setReferencia(text.replace(/\D/g, ''));
+                                      } else {
+                                        const val = text.replace(/\D/g, '').slice(-18);
+                                        if(val) setReferencia(val);
+                                      }
+                                    } catch (err) {
+                                      console.error('Error al pegar: ', err);
+                                    }
+                                  }}
+                                  style={{
+                                    position: 'absolute', right: '15px', background: 'none', border: 'none', cursor: 'pointer',
+                                    fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px'
+                                  }}
+                                  title="Pegar del portapapeles"
+                                >📋</button>
+                              </div>
+                              <div style={{ fontSize: '11px', color: 'var(--accent-warning)', marginTop: '8px', fontWeight: 600, paddingLeft: '8px' }}>
+                                {isBinanceSelected ? '⚠️ Verifica que el ID de pago de Binance sea correcto.' : '⚠️ Recuerda que tomaremos los 6 últimos números de la referencia de tu pago.'}
                               </div>
                             </div>
                           )}
@@ -1480,7 +1504,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                               boxShadow: '0 10px 30px rgba(56, 239, 125, 0.4)', border: 'none', color: '#000',
                               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: isProcessing ? 'default' : 'pointer'
                             }}
-                            disabled={isProcessing || (!isGratis && !isWalletOnly && !isWalletBsOnly && selectedMetodoId !== 'binance_pay_auto' && selectedMetodoId && (isBinanceSelected ? referencia.trim().length < 6 : referencia.trim().length !== 6))}
+                            disabled={isProcessing || (!isGratis && !isWalletOnly && !isWalletBsOnly && selectedMetodoId !== 'binance_pay_auto' && selectedMetodoId && referencia.trim().length < 6)}
                             onClick={handleFinalizar}
                             onMouseEnter={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(-3px)')}
                             onMouseLeave={(e) => !isProcessing && (e.currentTarget.style.transform = 'translateY(0)')}
@@ -1655,6 +1679,7 @@ function OrderTracking({ pedidoInitial, onBack }) {
       case 'fallido': return { label: 'Fallido', icon: '❌', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' }
       case 'reembolsado': return { label: 'Reembolsado', icon: '🔄', color: '#e040fb', bg: 'rgba(224, 64, 251, 0.1)' }
       case 'cancelado': return { label: 'Cancelado', icon: '❌', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' }
+      case 'rechazado': return { label: 'Pago Rechazado', icon: '⛔', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' }
       default: return { label: 'Recibido', icon: '⏳', color: '#ffab00', bg: 'rgba(255, 171, 0, 0.1)' }
     }
   }
@@ -1726,8 +1751,8 @@ function OrderTracking({ pedidoInitial, onBack }) {
                 </div>
                 
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ color: item.estado === 'completado' ? '#22c55e' : item.estado === 'fallido' ? '#ef4444' : 'var(--text-muted)', fontSize: '12px', fontWeight: 800, padding: '4px 8px', backgroundColor: item.estado === 'completado' ? 'rgba(34, 197, 94, 0.1)' : item.estado === 'fallido' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.05)', borderRadius: '6px' }}>
-                    {item.estado === 'completado' ? '✅ RECARGADO' : item.estado === 'fallido' ? '❌ FALLIDO' : '⏳ PENDIENTE'}
+                  <div style={{ color: item.estado === 'completado' ? '#22c55e' : (item.estado === 'fallido' || pedido.estado === 'rechazado') ? '#ef4444' : 'var(--text-muted)', fontSize: '12px', fontWeight: 800, padding: '4px 8px', backgroundColor: item.estado === 'completado' ? 'rgba(34, 197, 94, 0.1)' : (item.estado === 'fallido' || pedido.estado === 'rechazado') ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.05)', borderRadius: '6px' }}>
+                    {item.estado === 'completado' ? '✅ RECARGADO' : (item.estado === 'fallido' || pedido.estado === 'rechazado') ? '❌ RECHAZADO' : '⏳ PENDIENTE'}
                   </div>
                 </div>
               </div>
@@ -1879,6 +1904,26 @@ function OrderTracking({ pedidoInitial, onBack }) {
           </div>
         </div>
       </div>
+
+      {/* MENSAJE DE PAGO RECHAZADO */}
+      {pedido.estado === 'rechazado' && pedido.pago_verificado === false && (
+        <div style={{
+          marginBottom: '24px',
+          padding: '16px',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          border: '1px solid rgba(239, 68, 68, 0.3)',
+          borderRadius: '16px',
+          textAlign: 'left'
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', color: '#ef4444', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            ⛔ Pago No Encontrado
+          </h4>
+          <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '14px', lineHeight: '1.5' }}>
+            Tu pago fue rechazado automáticamente porque <strong>no se encontró la referencia</strong> en nuestro sistema bancario. 
+            Por favor, verifica que la referencia ingresada sea la correcta y crea un nuevo pedido.
+          </p>
+        </div>
+      )}
 
       <button className="btn btn-primary" onClick={onBack} style={{ width: '100%', height: '56px', borderRadius: '16px', fontSize: '16px', fontWeight: 800, background: 'linear-gradient(135deg, var(--accent-primary) 0%, #0088ff 100%)' }}>
         Cerrar Seguimiento

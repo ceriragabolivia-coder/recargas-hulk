@@ -14,6 +14,9 @@ export default async function handler(req, res) {
     if (url === '/api/binance/debug-env') return (await import('../api-core/binance/debug-env.js')).default(req, res);
 
     
+    // Central One
+    if (url === '/api/centralone/proxy') return (await import('../api-core/centralone/proxy.js')).default(req, res);
+
     // Debug
     if (url === '/api/debug/negatives') return (await import('../api-core/debug/negatives.js')).default(req, res);
     

@@ -134,7 +134,20 @@ export default function GestionPines() {
     if (error) {
       setAlertModal({ type: 'error', message: 'Error al generar los pines: ' + error.message })
     } else {
-      setAlertModal({ type: 'success', message: `${cant} pin(es) generado(s) exitosamente` })
+      // Descargar los códigos en un archivo txt
+      const codesText = newPines.map(p => p.codigo).join('\n')
+      const blob = new Blob([codesText], { type: 'text/plain' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const dateStr = new Date().toISOString().replace(/[:.]/g, '-')
+      a.download = `pines_${cant}_${dateStr}.txt`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+
+      setAlertModal({ type: 'success', message: `${cant} pin(es) generado(s) exitosamente. Se ha descargado un archivo de texto con los códigos.` })
       setShowModal(false)
       fetchPines()
     }

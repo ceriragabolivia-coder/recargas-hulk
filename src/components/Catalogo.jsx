@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useConfiguracion, useTodosLosProductos, useCart, useAuth, useCuentasGuardadas } from '../hooks/useData'
 import { calcularPrecioVenta, formatBs, formatUSD, getOptimizedImageUrl } from '../utils/helpers'
 import TutorialVideoModal from './TutorialVideoModal'
+import MandatoryTutorialModal from './MandatoryTutorialModal'
 
 export default function Catalogo() {
   const { productos, loading } = useTodosLosProductos()
@@ -12,6 +13,7 @@ export default function Catalogo() {
   const navigate = useNavigate()
   
   const [selectedJuegoId, setSelectedJuegoId] = useState(() => localStorage.getItem('selectedJuegoId'))
+  const [showMandatoryTutorial, setShowMandatoryTutorial] = useState(false)
   
   // Escuchar el evento de reset desde el sidebar
   useEffect(() => {
@@ -58,9 +60,23 @@ export default function Catalogo() {
     const id = juego?.id || null
     setSelectedJuegoId(id)
     setActiveProductType('recarga') // Reset tab
-    if (id) localStorage.setItem('selectedJuegoId', id)
-    else localStorage.removeItem('selectedJuegoId')
+    if (id) {
+      localStorage.setItem('selectedJuegoId', id)
+    } else {
+      localStorage.removeItem('selectedJuegoId')
+    }
   }
+
+  // Verificar tutorial obligatorio al cargar un juego
+  useEffect(() => {
+    if (selectedJuego && selectedJuego.tutorial_activo && selectedJuego.tutorial_video) {
+      const hasWatched = perfil?.tutoriales_juegos_vistos?.includes(selectedJuego.id) || localStorage.getItem(`hulk_tutorial_visto_${selectedJuego.id}`) === 'true'
+      if (!hasWatched) {
+        setShowMandatoryTutorial(true)
+      }
+    }
+  }, [selectedJuego, perfil])
+
   const [addedItem, setAddedItem] = useState(null) 
   const [buyMode, setBuyMode] = useState('single') // 'single' o 'multiple'
 
@@ -1324,6 +1340,24 @@ export default function Catalogo() {
           onClose={() => setShowTutorialModal(false)} 
           videoUrl={selectedJuego.tutorial_video_url} 
           title={`¿Cómo recargar ${selectedJuego.nombre}?`} 
+        />
+      )}
+
+      {selectedJuego && (
+        <MandatoryTutorialModal
+          isOpen={showMandatoryTutorial}
+          videoUrl={selectedJuego.tutorial_video}
+          title={selectedJuego.tutorial_titulo || 'Tutorial Importante'}
+          onComplete={() => {
+            if (selectedJuego) {
+              localStorage.setItem(`hulk_tutorial_visto_${selectedJuego.id}`, 'true')
+              if (perfil) {
+                supabase.rpc('marcar_juego_tutorial_visto_rpc', { p_user_id: perfil.id, p_juego_id: selectedJuego.id })
+                perfil.tutoriales_juegos_vistos = [...(perfil.tutoriales_juegos_vistos || []), selectedJuego.id]
+              }
+            }
+            setShowMandatoryTutorial(false)
+          }}
         />
       )}
     </div>

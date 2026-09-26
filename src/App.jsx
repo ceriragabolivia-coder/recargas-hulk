@@ -15,6 +15,7 @@ import FloatingBackground from './components/FloatingBackground'
 import Landing from './components/Landing'
 import kidsGamingImg from './assets/venezuelan_kids_loading.png'
 import SystemPopup from './components/SystemPopup'
+import GlobalTutorial from './components/GlobalTutorial'
 
 // Componentes cargados dinámicamente (Lazy Load) para optimizar la velocidad inicial
 const Dashboard = lazy(() => import('./components/Dashboard'))
@@ -1035,6 +1036,7 @@ export default function App() {
       {mainContent()}
       {!isRestricted && <SystemPopup />}
       {!isRestricted && <ScheduleModal show={showScheduleModal} onClose={handleScheduleModalClose} config={config} />}
+      {!isRestricted && <GlobalTutorial />}
     </>
   )
 }

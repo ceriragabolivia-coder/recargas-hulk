@@ -107,10 +107,10 @@ export default function LandingWallet({ onClose }) {
     try {
       file = await compressImage(file)
       const excludedNumbers = [perfil?.identificacion || user?.identificacion, perfil?.telefono || user?.telefono, perfil?.whatsapp || user?.whatsapp];
-      const extractedRef = await extractReferenceFromImage(file, excludedNumbers)
-      if (extractedRef && extractedRef.length === 6) {
+      const extractedRef = await extractReferenceFromImage(file, excludedNumbers, true)
+      if (extractedRef && extractedRef.length >= 6) {
         setOcrReferencia(extractedRef)
-        setReferencia(extractedRef)
+        setReferencia(extractedRef.slice(-18))
         setAlert({ type: 'success', message: `Referencia detectada y autocompletada: ${extractedRef}` })
       }
 
@@ -207,8 +207,8 @@ export default function LandingWallet({ onClose }) {
       return
     }
 
-    if (referencia.trim().length !== 6) {
-      setAlert({ type: 'warning', message: 'La referencia debe contener exactamente los últimos 6 dígitos del comprobante.' })
+    if (referencia.trim().length < 6) {
+      setAlert({ type: 'warning', message: 'La referencia debe contener al menos los últimos 6 dígitos del comprobante.' })
       return
     }
 
@@ -228,7 +228,8 @@ export default function LandingWallet({ onClose }) {
         throw err
       }
 
-      const { error } = await solicitarRecarga(Number(monto), metodoId, referencia, comprobanteUrl, monedaRecarga, ocrReferencia)
+      const refFinal = referencia.trim().slice(-6);
+      const { error } = await solicitarRecarga(Number(monto), metodoId, refFinal, comprobanteUrl, monedaRecarga, ocrReferencia)
       if (error) throw error
 
       setAlert({ type: 'success', message: 'Solicitud enviada con éxito. Se actualizará al ser verificada.' })
@@ -440,7 +441,7 @@ export default function LandingWallet({ onClose }) {
                         {item.monto > 0 ? '+' : ''}
                         {item.moneda === 'usd'
                           ? formatUSD(item.monto)
-                          : (isAdmin ? formatBs(item.monto) : formatBs(Math.round(item.monto * (Number(config?.tasa_dolar) || 1))))}
+                          : formatBs(item.monto)}
                       </td>
                       <td data-label="Estado">
                         <span className={`status-badge ${item.estado}`}>
@@ -723,22 +724,42 @@ export default function LandingWallet({ onClose }) {
 
                   {showManualRef && (
                     <div className="form-group fade-in">
-                      <label>Número de Referencia <span style={{ fontSize: '10px', opacity: 0.8 }}>(Últimos 6 dígitos)</span></label>
-                      <input
-                        type="text"
-                        placeholder="Escribe los 6 últimos dígitos aquí..."
-                        value={referencia}
-                        onChange={e => setReferencia(e.target.value.replace(/\D/g, '').slice(-6))}
-                        onPaste={e => {
-                          e.preventDefault();
-                          const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(-6);
-                          setReferencia(pasteData);
-                        }}
-                        style={{ letterSpacing: '2px', fontSize: '16px', fontWeight: 600 }}
-                        required={showManualRef}
-                      />
+                      <label>Número de Referencia <span style={{ fontSize: '10px', opacity: 0.8 }}>(Hasta 18 dígitos, usaremos los últimos 6)</span></label>
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          placeholder="Escribe o pega la referencia aquí..."
+                          value={referencia}
+                          maxLength={18}
+                          onChange={e => setReferencia(e.target.value.replace(/\D/g, '').slice(-18))}
+                          onPaste={e => {
+                            e.preventDefault();
+                            const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(-18);
+                            setReferencia(pasteData);
+                          }}
+                          style={{ letterSpacing: '2px', fontSize: '16px', fontWeight: 600, paddingRight: '40px', width: '100%' }}
+                          required={showManualRef}
+                        />
+                        <button 
+                          type="button" 
+                          onClick={async () => {
+                            try {
+                              const text = await navigator.clipboard.readText();
+                              const val = text.replace(/\D/g, '').slice(-18);
+                              if(val) setReferencia(val);
+                            } catch (err) {
+                              console.error('Error al pegar: ', err);
+                            }
+                          }}
+                          style={{
+                            position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer',
+                            fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px'
+                          }}
+                          title="Pegar del portapapeles"
+                        >📋</button>
+                      </div>
                       <div style={{ fontSize: '11px', color: 'var(--accent-warning)', marginTop: '6px', fontWeight: 600 }}>
-                        ⚠️ Recuerda que debes colocar exactamente los 6 últimos números de la referencia del pago.
+                        ⚠️ Recuerda que tomaremos los 6 últimos números de la referencia de tu pago.
                       </div>
                     </div>
                   )}
@@ -752,7 +773,7 @@ export default function LandingWallet({ onClose }) {
                   <button
                     type="submit"
                     className="btn-submit-recharge"
-                    disabled={isProcessing || uploading || (referencia.trim().length !== 6)}
+                    disabled={isProcessing || uploading || (referencia.trim().length < 6)}
                   >
                     {isProcessing ? 'Procesando...' : 'Enviar Reporte'}
                   </button>

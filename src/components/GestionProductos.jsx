@@ -459,7 +459,8 @@ export default function GestionProductos() {
     if (!id) return;
     if (lastProveedorIdSincronizado.current === id) return;
     
-    const isFazerCards = selectedJuego?.api_provider === 'fazercards';
+    const activeProvider = formData.api_provider || selectedJuego?.api_provider;
+    const isFazerCards = activeProvider === 'fazercards';
 
     setSincronizandoCosto(true)
     try {
@@ -469,7 +470,7 @@ export default function GestionProductos() {
           setAlertModal({ type: 'error', message: 'No has configurado la API Key de FazerCards.' })
           return;
         }
-        const categoryId = selectedJuego.api_provider_category_id;
+        const categoryId = formData.api_provider_category_id || selectedJuego?.api_provider_category_id;
         if (!categoryId) {
           setAlertModal({ type: 'error', message: 'Falta el Category ID en la configuración del juego para sincronizar con FazerCards.' })
           return;

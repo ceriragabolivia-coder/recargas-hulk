@@ -445,6 +445,8 @@ export default function Layout({ currentPage, onNavigate, onOpenChat, children, 
   })
 
 
+
+
   // Notificaciones en Vivo (Toasts)
   const { fetchNotificacionesActivas } = useNotificacionesPush()
   const [toasts, setToasts] = useState([])

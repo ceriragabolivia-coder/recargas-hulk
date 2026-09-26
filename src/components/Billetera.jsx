@@ -185,10 +185,10 @@ export default function Billetera({ onNavigate }) {
       file = await compressImage(file)
 
       const excludedNumbers = [perfil?.identificacion, perfil?.telefono, perfil?.whatsapp];
-      const extractedRef = await extractReferenceFromImage(file, excludedNumbers)
-      if (extractedRef && extractedRef.length === 6) {
+      const extractedRef = await extractReferenceFromImage(file, excludedNumbers, true)
+      if (extractedRef && extractedRef.length >= 6) {
         setOcrReferencia(extractedRef)
-        setReferencia(extractedRef)
+        setReferencia(extractedRef.slice(-18))
         setAlertModal({ type: 'success', message: `Referencia detectada y autocompletada: ${extractedRef}` })
       }
 
@@ -248,8 +248,8 @@ export default function Billetera({ onNavigate }) {
       return
     }
 
-    if (referencia.trim().length !== 6) {
-      setAlertModal({ type: 'warning', message: 'La referencia debe contener exactamente los últimos 6 dígitos del comprobante.' })
+    if (referencia.trim().length < 6) {
+      setAlertModal({ type: 'warning', message: 'La referencia debe contener al menos los últimos 6 dígitos del comprobante.' })
       return
     }
 
@@ -282,7 +282,9 @@ export default function Billetera({ onNavigate }) {
         throw err
       }
 
-      const { error } = await solicitarRecarga(Number(monto), metodoId, referencia, comprobanteUrl, monedaRecarga, ocrReferencia)
+      const refFinal = referencia.trim().slice(-6);
+
+      const { error } = await solicitarRecarga(Number(monto), metodoId, refFinal, comprobanteUrl, monedaRecarga, ocrReferencia)
       if (error) throw error
 
       setAlertModal({ type: 'success', message: `Solicitud de recarga en ${monedaRecarga === 'bs' ? 'Bolívares' : 'Dólares'} enviada con éxito. Tu saldo se actualizará una vez sea verificado por administración.` })
@@ -602,8 +604,25 @@ export default function Billetera({ onNavigate }) {
                                 <div style={{ fontSize: '10px', opacity: 0.6 }}>Ref: {r.referencia_pago}</div>
                               </div>
                             </td>
-                            <td data-label="Fecha" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                              {new Date(r.updated_at || r.created_at).toLocaleDateString()}
+                            <td data-label="Fechas" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                              <div style={{ marginBottom: '4px' }}>
+                                <span style={{ opacity: 0.7 }}>Creada:</span><br/>
+                                <span style={{ fontWeight: 500, color: '#fff' }}>
+                                  {new Date(r.created_at).toLocaleString('es-VE', { 
+                                    day: '2-digit', month: '2-digit', year: 'numeric', 
+                                    hour: '2-digit', minute: '2-digit', second: '2-digit' 
+                                  })}
+                                </span>
+                              </div>
+                              <div>
+                                <span style={{ opacity: 0.7 }}>Aprobada {r.atendido_por_id ? '(Admin)' : '(Auto)'}:</span><br/>
+                                <span style={{ fontWeight: 500, color: 'var(--accent-success)' }}>
+                                  {new Date(r.updated_at).toLocaleString('es-VE', { 
+                                    day: '2-digit', month: '2-digit', year: 'numeric', 
+                                    hour: '2-digit', minute: '2-digit', second: '2-digit' 
+                                  })}
+                                </span>
+                              </div>
                             </td>
                             <td data-label="Acción">
                               <button 
@@ -665,8 +684,25 @@ export default function Billetera({ onNavigate }) {
                                 <div style={{ fontSize: '10px', opacity: 0.6 }}>Ref: {r.referencia_pago}</div>
                               </div>
                             </td>
-                            <td data-label="Fecha" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                              {new Date(r.updated_at || r.created_at).toLocaleDateString()}
+                            <td data-label="Fechas" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                              <div style={{ marginBottom: '4px' }}>
+                                <span style={{ opacity: 0.7 }}>Creada:</span><br/>
+                                <span style={{ fontWeight: 500, color: '#fff' }}>
+                                  {new Date(r.created_at).toLocaleString('es-VE', { 
+                                    day: '2-digit', month: '2-digit', year: 'numeric', 
+                                    hour: '2-digit', minute: '2-digit', second: '2-digit' 
+                                  })}
+                                </span>
+                              </div>
+                              <div>
+                                <span style={{ opacity: 0.7 }}>Rechazada {r.atendido_por_id ? '(Admin)' : '(Auto)'}:</span><br/>
+                                <span style={{ fontWeight: 500, color: 'var(--accent-error)' }}>
+                                  {new Date(r.updated_at).toLocaleString('es-VE', { 
+                                    day: '2-digit', month: '2-digit', year: 'numeric', 
+                                    hour: '2-digit', minute: '2-digit', second: '2-digit' 
+                                  })}
+                                </span>
+                              </div>
                             </td>
                             <td data-label="Estado">
                               <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '8px', backgroundColor: 'rgba(239,68,68,0.15)', color: '#ef4444', fontWeight: 700 }}>
@@ -1112,26 +1148,46 @@ export default function Billetera({ onNavigate }) {
 
               {showManualRef && (
                 <div className="form-group fade-in">
-                  <label className="form-label">Número de Referencia <span style={{ fontSize: '10px', opacity: 0.7 }}>(Últimos 6 dígitos)</span></label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="Escribe los 6 últimos dígitos aquí..."
-                    value={referencia}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '').slice(-6);
-                      setReferencia(val);
-                    }}
-                    onPaste={e => {
-                      e.preventDefault();
-                      const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(-6);
-                      setReferencia(pasteData);
-                    }}
-                    style={{ letterSpacing: '2px', fontSize: '16px', fontWeight: 600 }}
-                    required={showManualRef}
-                  />
+                  <label className="form-label">Número de Referencia <span style={{ fontSize: '10px', opacity: 0.7 }}>(Hasta 18 dígitos, usaremos los últimos 6)</span></label>
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      placeholder="Escribe o pega la referencia..."
+                      value={referencia}
+                      maxLength={18}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(-18);
+                        setReferencia(val);
+                      }}
+                      onPaste={e => {
+                        e.preventDefault();
+                        const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(-18);
+                        setReferencia(pasteData);
+                      }}
+                      style={{ letterSpacing: '2px', fontSize: '16px', fontWeight: 600, paddingRight: '40px', width: '100%' }}
+                      required={showManualRef}
+                    />
+                    <button 
+                      type="button" 
+                      onClick={async () => {
+                        try {
+                          const text = await navigator.clipboard.readText();
+                          const val = text.replace(/\D/g, '').slice(-18);
+                          if(val) setReferencia(val);
+                        } catch (err) {
+                          console.error('Error al pegar: ', err);
+                        }
+                      }}
+                      style={{
+                        position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer',
+                        fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px'
+                      }}
+                      title="Pegar del portapapeles"
+                    >📋</button>
+                  </div>
                   <div style={{ fontSize: '11px', color: 'var(--accent-warning)', marginTop: '6px', fontWeight: 600 }}>
-                    ⚠️ Recuerda que debes colocar exactamente los 6 últimos números de la referencia del pago.
+                    ⚠️ Recuerda que tomaremos los 6 últimos números de la referencia de tu pago.
                   </div>
                 </div>
               )}
@@ -1139,7 +1195,7 @@ export default function Billetera({ onNavigate }) {
               <button 
                 type="submit" 
                 className="btn btn-primary btn-lg" 
-                disabled={isProcessing || uploading || (referencia.trim().length !== 6)}
+                disabled={isProcessing || uploading || (referencia.trim().length < 6)}
                 style={{ height: '60px', marginTop: '16px', fontSize: '18px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', borderRadius: '16px', width: '100%' }}
               >
                 {isProcessing ? 'Enviando...' : 'Solicitar Recarga'}
