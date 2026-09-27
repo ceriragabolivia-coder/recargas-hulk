@@ -78,6 +78,7 @@ export default function Landing({ onNavigate }) {
   })
   const [shouldSaveData, setShouldSaveData] = useState(false)
   const [pendingItem, setPendingItem] = useState(null)
+  const [quantities, setQuantities] = useState({})
   const [isVerificando, setIsVerificando] = useState(false)
   const [verificacionResultado, setVerificacionResultado] = useState(null)
   
@@ -1602,11 +1603,14 @@ export default function Landing({ onNavigate }) {
                                       resolvedJuego.metodo_recarga = localRechargeData.cuentaOpcion === 'nueva' ? 'cuenta_nueva' : 'cuenta_completa'
                                     }
 
+                                    const qty = quantities[prod.id] || 1;
+
                                     clearCart()
                                     addToCart(prod, resolvedJuego, finalPrice, {
                                       ...localRechargeData,
                                       nickname: (verificacionResultado?.success && verificacionResultado.verified_id === localRechargeData.player_id) 
-                                                ? verificacionResultado.nickname : null
+                                                ? verificacionResultado.nickname : null,
+                                      quantity: qty
                                     })
 
                                     if (shouldSaveData && localRechargeData.cuentaOpcion !== 'nueva') {
@@ -1671,6 +1675,50 @@ export default function Landing({ onNavigate }) {
                                       title="Haz clic para saber más sobre el Cashback"
                                     >
                                       💰 CASHBACK +{config?.cashback_porcentaje || '0'}%
+                                    </div>
+                                  )}
+
+                                  {prod.permitir_cantidades && !prod.en_mantenimiento && (
+                                    <div 
+                                      onClick={(e) => e.stopPropagation()} 
+                                      style={{ 
+                                        position: 'absolute', 
+                                        top: '6px', 
+                                        right: '6px', 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        background: 'rgba(0,0,0,0.6)', 
+                                        borderRadius: '12px',
+                                        border: '1px solid var(--border-color)',
+                                        zIndex: 5
+                                      }}
+                                    >
+                                      <button 
+                                        style={{ background: 'transparent', border: 'none', color: 'white', padding: '2px 8px', cursor: 'pointer' }}
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          setQuantities(prev => ({
+                                            ...prev,
+                                            [prod.id]: Math.max(1, (prev[prod.id] || 1) - 1)
+                                          }))
+                                        }}
+                                      >-</button>
+                                      <span style={{ fontSize: '13px', fontWeight: 'bold', padding: '0 4px', minWidth: '20px', textAlign: 'center' }}>
+                                        {quantities[prod.id] || 1}
+                                      </span>
+                                      <button 
+                                        style={{ background: 'transparent', border: 'none', color: 'white', padding: '2px 8px', cursor: 'pointer' }}
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          const current = quantities[prod.id] || 1
+                                          const limit = prod.limite_cantidades || 99
+                                          if (current < limit) {
+                                            setQuantities(prev => ({ ...prev, [prod.id]: current + 1 }))
+                                          } else {
+                                            alert(`El límite para este producto es de ${limit} unidades por compra.`)
+                                          }
+                                        }}
+                                      >+</button>
                                     </div>
                                   )}
 
