@@ -1683,18 +1683,21 @@ export default function Landing({ onNavigate }) {
                                       onClick={(e) => e.stopPropagation()} 
                                       style={{ 
                                         position: 'absolute', 
-                                        top: '6px', 
-                                        right: '6px', 
+                                        top: '50%', 
+                                        right: '16px', 
+                                        transform: 'translateY(-50%)',
                                         display: 'flex', 
                                         alignItems: 'center', 
-                                        background: 'rgba(0,0,0,0.6)', 
+                                        background: 'rgba(0,0,0,0.85)', 
                                         borderRadius: '12px',
-                                        border: '1px solid var(--border-color)',
-                                        zIndex: 5
+                                        border: '1px solid var(--accent-primary)',
+                                        zIndex: 5,
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                                        padding: '2px'
                                       }}
                                     >
                                       <button 
-                                        style={{ background: 'transparent', border: 'none', color: 'white', padding: '2px 8px', cursor: 'pointer' }}
+                                        style={{ background: 'transparent', border: 'none', color: 'white', padding: '6px 14px', cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                         onClick={(e) => {
                                           e.stopPropagation()
                                           setQuantities(prev => ({
@@ -1703,11 +1706,11 @@ export default function Landing({ onNavigate }) {
                                           }))
                                         }}
                                       >-</button>
-                                      <span style={{ fontSize: '13px', fontWeight: 'bold', padding: '0 4px', minWidth: '20px', textAlign: 'center' }}>
+                                      <span style={{ fontSize: '16px', fontWeight: 'bold', padding: '0 8px', minWidth: '30px', textAlign: 'center', color: '#fff' }}>
                                         {quantities[prod.id] || 1}
                                       </span>
                                       <button 
-                                        style={{ background: 'transparent', border: 'none', color: 'white', padding: '2px 8px', cursor: 'pointer' }}
+                                        style={{ background: 'transparent', border: 'none', color: 'white', padding: '6px 14px', cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                         onClick={(e) => {
                                           e.stopPropagation()
                                           const current = quantities[prod.id] || 1
