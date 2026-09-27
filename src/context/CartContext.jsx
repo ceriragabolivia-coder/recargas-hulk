@@ -60,14 +60,14 @@ export function CartProvider({ children }) {
       venta_usd: finalPrice.venta_usd,
       ...rechargeData,
       nickname: rechargeData.nickname || null,
-      quantity: 1,
+      quantity: rechargeData.quantity || 1,
       added_at: Date.now()
     }
 
     setCart(prev => {
       const existing = prev.find(item => item.cart_id === cartId)
       if (existing) {
-        return prev.map(item => item.cart_id === cartId ? { ...item, quantity: item.quantity + 1 } : item)
+        return prev.map(item => item.cart_id === cartId ? { ...item, quantity: item.quantity + (rechargeData.quantity || 1) } : item)
       }
       return [...prev, itemToAdd]
     })

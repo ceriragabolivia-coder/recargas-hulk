@@ -983,7 +983,10 @@ export default function Checkout({ onFinish, embedded = false }) {
                       {item.icono_url ? <img loading="lazy" decoding="async" src={item.icono_url} alt="" style={{ width: '80%', height: '80%', objectFit: 'contain' }} /> : '📦'}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 800, fontSize: '16px', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.nombre}</div>
+                      <div style={{ fontWeight: 800, fontSize: '16px', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {item.nombre}
+                        {item.quantity > 1 && <span style={{ marginLeft: '8px', color: 'var(--accent-primary)', fontSize: '14px' }}>(x{item.quantity})</span>}
+                      </div>
                       <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>{item.juego}</div>
                       <div className="checkout-details-box" style={{ display: 'inline-block', padding: '6px 12px', backgroundColor: 'rgba(56, 239, 125, 0.1)', color: '#38ef7d', borderRadius: '20px', fontSize: '11px', fontWeight: 700, border: '1px solid rgba(56, 239, 125, 0.2)', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', boxSizing: 'border-box' }}>
                          {item.metodo_recarga === 'solo_correo' ? `📧 ${item.account_email}`

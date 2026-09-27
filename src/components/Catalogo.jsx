@@ -144,6 +144,19 @@ export default function Catalogo() {
   const [verificacionResultado, setVerificacionResultado] = useState(null)
   const [showTutorialModal, setShowTutorialModal] = useState(false)
 
+  const [quantities, setQuantities] = useState({})
+
+  const handleQuantityChange = (e, pId, max, delta) => {
+    e.stopPropagation();
+    setQuantities(prev => {
+      let current = prev[pId] || 1;
+      let next = current + delta;
+      if (next < 1) next = 1;
+      if (max && next > max) next = max;
+      return { ...prev, [pId]: next };
+    })
+  }
+
   const handleVerificarJugador = async () => {
     if (!localRechargeData.player_id.trim()) {
       alert('Por favor introduce primero el ID del jugador.')
@@ -1104,6 +1117,7 @@ export default function Catalogo() {
                           finalPrice, 
                           localRechargeData: {
                             ...localRechargeData,
+                            quantity: quantities[p.id] || 1,
                             nickname: (verificacionResultado?.success && verificacionResultado.verified_id === localRechargeData.player_id) 
                                       ? verificacionResultado.nickname : null
                           } 
@@ -1156,6 +1170,31 @@ export default function Catalogo() {
                       {p.en_mantenimiento && (
                         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', backgroundColor: 'rgba(239, 68, 68, 0.9)', color: 'white', padding: '6px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', whiteSpace: 'nowrap', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
                           En Mantenimiento
+                        </div>
+                      )}
+
+                      {p.permitir_cantidades && !p.en_mantenimiento && (
+                        <div 
+                          onClick={(e) => e.stopPropagation()} 
+                          style={{ 
+                            position: 'absolute', right: '8px', bottom: '8px',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center',
+                            backgroundColor: 'transparent', borderRadius: '8px',
+                            border: '1px solid #ff2a2a', overflow: 'hidden',
+                            zIndex: 2, boxShadow: '0 4px 8px rgba(0,0,0,0.3)'
+                          }}
+                        >
+                          <button 
+                            onClick={(e) => handleQuantityChange(e, p.id, p.limite_cantidades, 1)}
+                            style={{ width: '28px', height: '24px', background: 'transparent', color: '#ff2a2a', border: 'none', borderBottom: '1px solid #ff2a2a', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >+</button>
+                          <div style={{ width: '28px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '12px', color: 'var(--text-primary)' }}>
+                            {quantities[p.id] || 1}
+                          </div>
+                          <button 
+                            onClick={(e) => handleQuantityChange(e, p.id, p.limite_cantidades, -1)}
+                            style={{ width: '28px', height: '24px', background: 'transparent', color: '#ff2a2a', border: 'none', borderTop: '1px solid #ff2a2a', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >-</button>
                         </div>
                       )}
                     </div>

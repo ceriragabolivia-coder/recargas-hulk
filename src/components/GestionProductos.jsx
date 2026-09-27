@@ -1190,6 +1190,7 @@ export default function GestionProductos() {
               <tr>
                 <th style={{ width: 40, padding: '8px 4px', textAlign: 'center' }}>Ord.</th>
                 <th style={{ padding: '8px 4px' }}>Paquete</th>
+                <th style={{ padding: '8px 4px', textAlign: 'center' }}>Cantidades</th>
                 <th style={{ padding: '8px 4px' }}>Costo</th>
                 <th style={{ padding: '8px 4px', textAlign: 'center' }}>% Margen</th>
                 <th style={{ padding: '8px 4px' }}>Venta ($)</th>
@@ -1280,6 +1281,45 @@ export default function GestionProductos() {
                         <span className="font-bold" style={{ color: isDisabled ? 'var(--text-muted)' : 'var(--text-primary)', fontSize: '12px' }}>{prod.nombre}</span>
                         {prod.en_mantenimiento && (
                           <span style={{ marginLeft: '8px', fontSize: '10px', backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold', textTransform: 'uppercase' }}>En Mantenimiento</span>
+                        )}
+                      </div>
+                    </td>
+                    <td style={{ padding: '4px', textAlign: 'center' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                        <button
+                          onClick={() => updateProducto(prod.id, { permitir_cantidades: !prod.permitir_cantidades })}
+                          style={{
+                            padding: '2px 6px',
+                            borderRadius: '12px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontSize: '9px',
+                            fontWeight: 'bold',
+                            backgroundColor: prod.permitir_cantidades ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                            color: prod.permitir_cantidades ? '#22c55e' : 'var(--text-muted)'
+                          }}
+                        >
+                          {prod.permitir_cantidades ? 'ON' : 'OFF'}
+                        </button>
+                        {prod.permitir_cantidades && (
+                          <input 
+                            type="number" 
+                            min="1" 
+                            max="999"
+                            value={prod.limite_cantidades || 1} 
+                            onChange={e => updateProducto(prod.id, { limite_cantidades: parseInt(e.target.value) || 1 })}
+                            style={{ 
+                              width: '40px', 
+                              padding: '2px', 
+                              fontSize: '10px', 
+                              textAlign: 'center', 
+                              backgroundColor: 'var(--bg-card)', 
+                              border: '1px solid var(--border-color)', 
+                              borderRadius: '4px',
+                              color: 'var(--text-primary)'
+                            }}
+                            title="Límite máximo por compra"
+                          />
                         )}
                       </div>
                     </td>
