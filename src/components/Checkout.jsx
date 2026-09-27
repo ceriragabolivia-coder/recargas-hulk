@@ -1554,7 +1554,7 @@ export default function Checkout({ onFinish, embedded = false }) {
                           <span style={{ fontWeight: 800, fontSize: '15px' }}>Total Pagar:</span>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ color: 'var(--accent-success)', fontSize: '22px', fontWeight: 900 }}>
-                              {useWalletBs && !hasEnoughBalanceBs ? formatBs(remainingBsFromWallet) : formatBs(remainingBs)}
+                              {isWalletOnly ? formatUSD(discountedTotalUSD) : isWalletBsOnly ? formatBs(discountedTotalBs) : formatBs(remainingBs)}
                             </div>
                           </div>
                         </div>
