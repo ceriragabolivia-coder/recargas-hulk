@@ -4485,31 +4485,41 @@ export default function Pedidos({
                 Paquetes (Actualizado)
               </h3>
               <div style={{ display: "grid", gap: "8px" }}>
-                {(selectedPedido.pedido_items || []).map((item, idx) => (
+                {(selectedPedido.pedido_items || []).map((item, idx, arr) => {
+                  const isFirstOfGroup = idx === 0 || arr[idx - 1].producto_id !== item.producto_id || arr[idx - 1].estado !== item.estado;
+                  const isLastOfGroup = idx === arr.length - 1 || arr[idx + 1].producto_id !== item.producto_id || arr[idx + 1].estado !== item.estado;
+                  
+                  return (
                   <div
                     key={idx}
                     style={{
                       padding: "12px",
+                      paddingTop: isFirstOfGroup ? "12px" : "0px",
+                      paddingBottom: isLastOfGroup ? "12px" : "6px",
                       backgroundColor: "var(--bg-card)",
-                      borderRadius: "12px",
-                      border: `2px solid ${
-                        item.estado === "completado"
-                          ? "rgba(34, 197, 94, 0.4)"
-                          : item.estado === "fallido"
-                          ? "rgba(239, 68, 68, 0.4)"
-                          : "var(--border-color)"
-                      }`,
+                      borderTopLeftRadius: isFirstOfGroup ? "12px" : "0px",
+                      borderTopRightRadius: isFirstOfGroup ? "12px" : "0px",
+                      borderBottomLeftRadius: isLastOfGroup ? "12px" : "0px",
+                      borderBottomRightRadius: isLastOfGroup ? "12px" : "0px",
+                      borderTop: isFirstOfGroup ? `2px solid ${item.estado === "completado" ? "rgba(34, 197, 94, 0.4)" : item.estado === "fallido" ? "rgba(239, 68, 68, 0.4)" : "var(--border-color)"}` : "none",
+                      borderLeft: `2px solid ${item.estado === "completado" ? "rgba(34, 197, 94, 0.4)" : item.estado === "fallido" ? "rgba(239, 68, 68, 0.4)" : "var(--border-color)"}`,
+                      borderRight: `2px solid ${item.estado === "completado" ? "rgba(34, 197, 94, 0.4)" : item.estado === "fallido" ? "rgba(239, 68, 68, 0.4)" : "var(--border-color)"}`,
+                      borderBottom: isLastOfGroup ? `2px solid ${item.estado === "completado" ? "rgba(34, 197, 94, 0.4)" : item.estado === "fallido" ? "rgba(239, 68, 68, 0.4)" : "var(--border-color)"}` : "none",
                       transition: "all 0.3s ease",
+                      marginBottom: isLastOfGroup ? "0px" : "-8px", // overlap the gap
+                      position: "relative",
+                      zIndex: isLastOfGroup ? 1 : 2
                     }}
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        marginBottom: "8px",
-                        alignItems: "flex-start",
-                      }}
-                    >
+                    {isFirstOfGroup && (
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          marginBottom: "8px",
+                          alignItems: "flex-start",
+                        }}
+                      >
                       <div
                         style={{
                           display: "flex",
@@ -4788,19 +4798,8 @@ export default function Pedidos({
                       </div>
                     </div>
 
-                    <div
-                      style={{
-                        fontSize: "13px",
-                        color: "var(--text-muted)",
-                        marginBottom: "12px",
-                      }}
-                    >
-                      🎮{" "}
-                      {item.juego_nombre ||
-                        item.productos?.juegos?.nombre ||
-                        "Juego"}{" "}
-                      · Cantidad: {item.cantidad}
-                    </div>
+                      </div>
+                    )}
 
                     {/* CAJA DE REFERENCIA (ADMIN -> CLIENTE) */}
                     {canManage && selectedPedido.estado !== "completado" ? (
@@ -4879,14 +4878,15 @@ export default function Pedidos({
                     )}
 
                     {/* Datos de recarga */}
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        gap: "12px",
-                      }}
-                    >
+                    {isFirstOfGroup && (
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: "12px",
+                        }}
+                      >
                       <div
                         style={{
                           display: "flex",
@@ -5105,8 +5105,10 @@ export default function Pedidos({
                               }}
                             />
                           </div>
+                          </div>
                         )}
-                    </div>
+                      </div>
+                    )}
 
                     {/* CÓDIGO ENTREGADO (BAÚL) */}
                     {item.codigo_entregado && (
@@ -5443,7 +5445,7 @@ export default function Pedidos({
                       })()}
 
                     {/* TUTORIAL DEL JUEGO SI LO HAY */}
-                    {(item.productos?.juegos?.tutorial_banner_img ||
+                    {isLastOfGroup && (item.productos?.juegos?.tutorial_banner_img ||
                       item.productos?.juegos?.tutorial_video_url) && (
                       <div
                         className="tutorial-banner-card"
