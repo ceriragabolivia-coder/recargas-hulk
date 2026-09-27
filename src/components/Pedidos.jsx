@@ -4484,10 +4484,10 @@ export default function Pedidos({
               >
                 Paquetes (Actualizado)
               </h3>
-              <div style={{ display: "grid", gap: "8px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0px" }}>
                 {(selectedPedido.pedido_items || []).map((item, idx, arr) => {
-                  const isFirstOfGroup = idx === 0 || arr[idx - 1].producto_id !== item.producto_id || arr[idx - 1].estado !== item.estado;
-                  const isLastOfGroup = idx === arr.length - 1 || arr[idx + 1].producto_id !== item.producto_id || arr[idx + 1].estado !== item.estado;
+                  const isFirstOfGroup = idx === 0 || arr[idx - 1].producto_nombre !== item.producto_nombre || arr[idx - 1].estado !== item.estado;
+                  const isLastOfGroup = idx === arr.length - 1 || arr[idx + 1].producto_nombre !== item.producto_nombre || arr[idx + 1].estado !== item.estado;
                   
                   return (
                   <div
@@ -4506,7 +4506,7 @@ export default function Pedidos({
                       borderRight: `2px solid ${item.estado === "completado" ? "rgba(34, 197, 94, 0.4)" : item.estado === "fallido" ? "rgba(239, 68, 68, 0.4)" : "var(--border-color)"}`,
                       borderBottom: isLastOfGroup ? `2px solid ${item.estado === "completado" ? "rgba(34, 197, 94, 0.4)" : item.estado === "fallido" ? "rgba(239, 68, 68, 0.4)" : "var(--border-color)"}` : "none",
                       transition: "all 0.3s ease",
-                      marginBottom: isLastOfGroup ? "0px" : "-8px", // overlap the gap
+                      marginBottom: isLastOfGroup ? "8px" : "0px",
                       position: "relative",
                       zIndex: isLastOfGroup ? 1 : 2
                     }}
