@@ -1697,7 +1697,7 @@ export default function Landing({ onNavigate }) {
                                       }}
                                     >
                                       <button 
-                                        style={{ background: 'transparent', border: 'none', color: 'white', padding: '6px 14px', cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                        style={{ background: 'transparent', border: 'none', color: 'white', padding: '4px 10px', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                         onClick={(e) => {
                                           e.stopPropagation()
                                           setQuantities(prev => ({
@@ -1706,11 +1706,11 @@ export default function Landing({ onNavigate }) {
                                           }))
                                         }}
                                       >-</button>
-                                      <span style={{ fontSize: '16px', fontWeight: 'bold', padding: '0 8px', minWidth: '30px', textAlign: 'center', color: '#fff' }}>
+                                      <span style={{ fontSize: '14px', fontWeight: 'bold', padding: '0 6px', minWidth: '24px', textAlign: 'center', color: '#fff' }}>
                                         {quantities[prod.id] || 1}
                                       </span>
                                       <button 
-                                        style={{ background: 'transparent', border: 'none', color: 'white', padding: '6px 14px', cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                        style={{ background: 'transparent', border: 'none', color: 'white', padding: '4px 10px', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                         onClick={(e) => {
                                           e.stopPropagation()
                                           const current = quantities[prod.id] || 1
