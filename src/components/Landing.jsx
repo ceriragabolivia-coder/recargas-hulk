@@ -15,7 +15,6 @@ import DOMPurify from 'dompurify'
 import TutorialVideoModal from './TutorialVideoModal'
 import MandatoryTutorialModal from './MandatoryTutorialModal'
 import FloatingBackground from './FloatingBackground'
-import ConfettiCelebration from './ConfettiCelebration'
 import './Landing.css'
 export default function Landing({ onNavigate }) {
   const navigate = useNavigate()
@@ -2524,7 +2523,6 @@ export default function Landing({ onNavigate }) {
         .faq-question { padding: 16px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .faq-answer { padding: 0 16px 16px; color: var(--text-muted); font-size: 14px; line-height: 1.6; }
       `}} />
-      <ConfettiCelebration />
     </div>
   )
 }
