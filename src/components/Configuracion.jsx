@@ -85,6 +85,7 @@ export default function Configuracion() {
   const [permitirPagoDirecto, setPermitirPagoDirecto] = useState(true)
   const [permitirRecargasUsd, setPermitirRecargasUsd] = useState(true)
   const [permitirRecargasBs, setPermitirRecargasBs] = useState(true)
+  const [billeteraComprobanteFoto, setBilleteraComprobanteFoto] = useState(true)
   
   // Estados para Banners dinámicos
   const [promoBannerTexto, setPromoBannerTexto] = useState('')
@@ -158,6 +159,7 @@ export default function Configuracion() {
       setPermitirPagoDirecto(config.permitir_pago_directo !== 'false')
       setPermitirRecargasUsd(config.permitir_recargas_usd !== 'false')
       setPermitirRecargasBs(config.permitir_recargas_bs !== 'false')
+      setBilleteraComprobanteFoto(config.billetera_comprobante_foto !== 'false')
       
       // Banners
       setPromoBannerTexto(config.promo_banner_texto || '')
@@ -826,6 +828,33 @@ export default function Configuracion() {
                               setPermitirRecargasBs(newVal)
                               updateConfig('permitir_recargas_bs', newVal.toString(), true).then(() => 
                                 setAlertModal({ type: 'success', message: 'Configuración de recargas Bs actualizada' })
+                              )
+                            }}
+                          />
+                          <span className="toggle-slider"></span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'rgba(0, 210, 255, 0.05)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: '300px' }}>
+                        <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '4px' }}>📸 Adjuntar Comprobante con Foto (Billetera)</h3>
+                        <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                          Si está desactivado, los usuarios no subirán captura de comprobante en la billetera y solo ingresarán el número de referencia (máx. 20 dígitos).
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <label className="toggle-switch">
+                          <input 
+                            type="checkbox" 
+                            checked={billeteraComprobanteFoto}
+                            onChange={(e) => {
+                              const newVal = e.target.checked
+                              setBilleteraComprobanteFoto(newVal)
+                              updateConfig('billetera_comprobante_foto', newVal.toString(), true).then(() => 
+                                setAlertModal({ type: 'success', message: 'Configuración de comprobante en billetera actualizada' })
                               )
                             }}
                           />

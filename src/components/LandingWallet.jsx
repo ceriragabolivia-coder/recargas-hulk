@@ -60,6 +60,7 @@ export default function LandingWallet({ onClose }) {
 
   const permitirRecargasUSD = config?.permitir_recargas_usd !== 'false';
   const permitirRecargasBs = config?.permitir_recargas_bs !== 'false';
+  const allowPhotoReceipt = config?.billetera_comprobante_foto !== 'false';
 
   useEffect(() => {
     if (hasWalletBs && !hasWalletUSD) setMonedaRecarga('bs');
@@ -207,8 +208,13 @@ export default function LandingWallet({ onClose }) {
       return
     }
 
-    if (referencia.trim().length < 6) {
+    if (allowPhotoReceipt && referencia.trim().length < 6) {
       setAlert({ type: 'warning', message: 'La referencia debe contener al menos los últimos 6 dígitos del comprobante.' })
+      return
+    }
+
+    if (!allowPhotoReceipt && referencia.trim().length < 4) {
+      setAlert({ type: 'warning', message: 'Por favor ingresa un número de referencia válido.' })
       return
     }
 
@@ -228,8 +234,8 @@ export default function LandingWallet({ onClose }) {
         throw err
       }
 
-      const refFinal = referencia.trim().slice(-6);
-      const { error } = await solicitarRecarga(Number(monto), metodoId, refFinal, comprobanteUrl, monedaRecarga, ocrReferencia)
+      const refFinal = allowPhotoReceipt ? referencia.trim().slice(-6) : referencia.trim();
+      const { error } = await solicitarRecarga(Number(monto), metodoId, refFinal, allowPhotoReceipt ? comprobanteUrl : null, monedaRecarga, allowPhotoReceipt ? ocrReferencia : null)
       if (error) throw error
 
       setAlert({ type: 'success', message: 'Solicitud enviada con éxito. Se actualizará al ser verificada.' })
@@ -686,67 +692,113 @@ export default function LandingWallet({ onClose }) {
               {/* ===== SECCIÓN NORMAL (Pago Móvil, etc.): Comprobante + referencia ===== */}
               {!isBinancePay && (
                 <>
-                  <div className="form-group">
-                    <label style={{ fontSize: '13px', fontWeight: 800, color: '#00d2ff', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', display: 'block', textShadow: '0 0 10px rgba(0, 210, 255, 0.3)' }}>Adjuntar Comprobante</label>
-                    <div style={{
-                      padding: '32px 24px', border: '2px dashed rgba(0, 210, 255, 0.4)', borderRadius: '20px',
-                      textAlign: 'center', position: 'relative', backgroundColor: 'rgba(0, 210, 255, 0.03)',
-                      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)', cursor: 'pointer',
-                      boxShadow: '0 0 20px rgba(0, 210, 255, 0.1), inset 0 0 15px rgba(0, 210, 255, 0.05)'
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.08)'; e.currentTarget.style.borderColor = '#00d2ff'; e.currentTarget.style.boxShadow = '0 0 30px rgba(0, 210, 255, 0.3), inset 0 0 20px rgba(0, 210, 255, 0.15)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.03)'; e.currentTarget.style.borderColor = 'rgba(0, 210, 255, 0.4)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 210, 255, 0.1), inset 0 0 15px rgba(0, 210, 255, 0.05)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                    >
-                      {comprobanteUrl ? (
-                        <img loading="lazy" decoding="async" src={getOptimizedImageUrl(comprobanteUrl, 400)} alt="Comprobante" className="preview-img" style={{ borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.3)' }} />
-                      ) : (
-                        <div>
-                          <div style={{ fontSize: '42px', marginBottom: '12px', filter: 'drop-shadow(0 0 10px rgba(0, 210, 255, 0.5))' }}>{uploading ? '⏳' : isExtractingRef ? '🔍' : '📷'}</div>
-                          <span style={{ fontSize: '15px', fontWeight: 800, color: '#fff', textShadow: '0 0 8px rgba(255,255,255,0.3)', display: 'block' }}>
-                            {uploading ? 'Subiendo archivo...' : isExtractingRef ? 'Analizando imagen mágicamente...' : 'Sube tu comprobante aquí'}
-                          </span>
-                          {!uploading && !isExtractingRef && (
-                            <span style={{ fontSize: '12px', color: '#00d2ff', opacity: 0.8, marginTop: '8px', display: 'block', fontWeight: 600 }}>Validación ultra-rápida automática ⚡</span>
+                  {allowPhotoReceipt ? (
+                    <>
+                      <div className="form-group">
+                        <label style={{ fontSize: '13px', fontWeight: 800, color: '#00d2ff', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', display: 'block', textShadow: '0 0 10px rgba(0, 210, 255, 0.3)' }}>Adjuntar Comprobante</label>
+                        <div style={{
+                          padding: '32px 24px', border: '2px dashed rgba(0, 210, 255, 0.4)', borderRadius: '20px',
+                          textAlign: 'center', position: 'relative', backgroundColor: 'rgba(0, 210, 255, 0.03)',
+                          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)', cursor: 'pointer',
+                          boxShadow: '0 0 20px rgba(0, 210, 255, 0.1), inset 0 0 15px rgba(0, 210, 255, 0.05)'
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.08)'; e.currentTarget.style.borderColor = '#00d2ff'; e.currentTarget.style.boxShadow = '0 0 30px rgba(0, 210, 255, 0.3), inset 0 0 20px rgba(0, 210, 255, 0.15)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(0, 210, 255, 0.03)'; e.currentTarget.style.borderColor = 'rgba(0, 210, 255, 0.4)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 210, 255, 0.1), inset 0 0 15px rgba(0, 210, 255, 0.05)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                        >
+                          {comprobanteUrl ? (
+                            <img loading="lazy" decoding="async" src={getOptimizedImageUrl(comprobanteUrl, 400)} alt="Comprobante" className="preview-img" style={{ borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.3)' }} />
+                          ) : (
+                            <div>
+                              <div style={{ fontSize: '42px', marginBottom: '12px', filter: 'drop-shadow(0 0 10px rgba(0, 210, 255, 0.5))' }}>{uploading ? '⏳' : isExtractingRef ? '🔍' : '📷'}</div>
+                              <span style={{ fontSize: '15px', fontWeight: 800, color: '#fff', textShadow: '0 0 8px rgba(255,255,255,0.3)', display: 'block' }}>
+                                {uploading ? 'Subiendo archivo...' : isExtractingRef ? 'Analizando imagen mágicamente...' : 'Sube tu comprobante aquí'}
+                              </span>
+                              {!uploading && !isExtractingRef && (
+                                <span style={{ fontSize: '12px', color: '#00d2ff', opacity: 0.8, marginTop: '8px', display: 'block', fontWeight: 600 }}>Validación ultra-rápida automática ⚡</span>
+                              )}
+                            </div>
                           )}
+                          <input type="file" accept="image/*" onChange={handleFileUpload} disabled={uploading || isExtractingRef} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
+                        </div>
+                        <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                          <span
+                            onClick={() => setShowManualRef(!showManualRef)}
+                            style={{ fontSize: '11px', color: 'var(--text-muted)', cursor: 'pointer', textDecoration: 'underline' }}
+                          >
+                            (Tengo solamente los últimos 6 dígitos de la referencia)
+                          </span>
+                        </div>
+                      </div>
+
+                      {showManualRef && (
+                        <div className="form-group fade-in">
+                          <label>Número de Referencia <span style={{ fontSize: '10px', opacity: 0.8 }}>(Hasta 18 dígitos, usaremos los últimos 6)</span></label>
+                          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                            <input
+                              type="text"
+                              placeholder="Escribe o pega la referencia aquí..."
+                              value={referencia}
+                              maxLength={18}
+                              onChange={e => setReferencia(e.target.value.replace(/\D/g, '').slice(-18))}
+                              onPaste={e => {
+                                e.preventDefault();
+                                const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(-18);
+                                setReferencia(pasteData);
+                              }}
+                              style={{ letterSpacing: '2px', fontSize: '16px', fontWeight: 600, paddingRight: '40px', width: '100%' }}
+                              required={showManualRef}
+                            />
+                            <button 
+                              type="button" 
+                              onClick={async () => {
+                                try {
+                                  const text = await navigator.clipboard.readText();
+                                  const val = text.replace(/\D/g, '').slice(-18);
+                                  if(val) setReferencia(val);
+                                } catch (err) {
+                                  console.error('Error al pegar: ', err);
+                                }
+                              }}
+                              style={{
+                                position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer',
+                                fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px'
+                              }}
+                              title="Pegar del portapapeles"
+                            >📋</button>
+                          </div>
+                          <div style={{ fontSize: '11px', color: 'var(--accent-warning)', marginTop: '6px', fontWeight: 600 }}>
+                            ⚠️ Recuerda que tomaremos los 6 últimos números de la referencia de tu pago.
+                          </div>
                         </div>
                       )}
-                      <input type="file" accept="image/*" onChange={handleFileUpload} disabled={uploading || isExtractingRef} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
-                    </div>
-                    <div style={{ textAlign: 'center', marginTop: '16px' }}>
-                      <span
-                        onClick={() => setShowManualRef(!showManualRef)}
-                        style={{ fontSize: '11px', color: 'var(--text-muted)', cursor: 'pointer', textDecoration: 'underline' }}
-                      >
-                        (Tengo solamente los últimos 6 dígitos de la referencia)
-                      </span>
-                    </div>
-                  </div>
-
-                  {showManualRef && (
-                    <div className="form-group fade-in">
-                      <label>Número de Referencia <span style={{ fontSize: '10px', opacity: 0.8 }}>(Hasta 18 dígitos, usaremos los últimos 6)</span></label>
+                    </>
+                  ) : (
+                    <div className="form-group">
+                      <label style={{ fontSize: '13px', fontWeight: 800, color: '#00d2ff', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px', display: 'block', textShadow: '0 0 10px rgba(0, 210, 255, 0.3)' }}>
+                        Número de Referencia
+                      </label>
                       <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                         <input
                           type="text"
                           placeholder="Escribe o pega la referencia aquí..."
                           value={referencia}
-                          maxLength={18}
-                          onChange={e => setReferencia(e.target.value.replace(/\D/g, '').slice(-18))}
+                          maxLength={20}
+                          onChange={e => setReferencia(e.target.value.replace(/\D/g, '').slice(0, 20))}
                           onPaste={e => {
                             e.preventDefault();
-                            const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(-18);
+                            const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 20);
                             setReferencia(pasteData);
                           }}
                           style={{ letterSpacing: '2px', fontSize: '16px', fontWeight: 600, paddingRight: '40px', width: '100%' }}
-                          required={showManualRef}
+                          required
                         />
                         <button 
                           type="button" 
                           onClick={async () => {
                             try {
                               const text = await navigator.clipboard.readText();
-                              const val = text.replace(/\D/g, '').slice(-18);
-                              if(val) setReferencia(val);
+                              const val = text.replace(/\D/g, '').slice(0, 20);
+                              if (val) setReferencia(val);
                             } catch (err) {
                               console.error('Error al pegar: ', err);
                             }
@@ -757,9 +809,6 @@ export default function LandingWallet({ onClose }) {
                           }}
                           title="Pegar del portapapeles"
                         >📋</button>
-                      </div>
-                      <div style={{ fontSize: '11px', color: 'var(--accent-warning)', marginTop: '6px', fontWeight: 600 }}>
-                        ⚠️ Recuerda que tomaremos los 6 últimos números de la referencia de tu pago.
                       </div>
                     </div>
                   )}
@@ -773,7 +822,7 @@ export default function LandingWallet({ onClose }) {
                   <button
                     type="submit"
                     className="btn-submit-recharge"
-                    disabled={isProcessing || uploading || (referencia.trim().length < 6)}
+                    disabled={isProcessing || (allowPhotoReceipt && uploading) || (referencia.trim().length < (allowPhotoReceipt ? 6 : 4))}
                   >
                     {isProcessing ? 'Procesando...' : 'Enviar Reporte'}
                   </button>
