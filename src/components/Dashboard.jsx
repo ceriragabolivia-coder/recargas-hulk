@@ -5,6 +5,7 @@ import {
 } from 'recharts'
 import { useVentas, useConfiguracion, useTodosLosProductos, useJuegos, useProductos, useAuth } from '../hooks/useData'
 import { formatUSD, formatBs, calcularPrecioVenta, getLocalDateString, playCashRegisterSound } from '../utils/helpers'
+import ConfettiCelebration from './ConfettiCelebration'
 
 
 const COLORS = ['#00d2ff', '#7b2ff7', '#00f5d4', '#ffd166', '#ff6b6b']
@@ -559,6 +560,7 @@ export default function Dashboard() {
   // Render main dashboard UI; show loading overlay while charts are loading
   return (
     <div>
+      <ConfettiCelebration duration={4000} />
       <div className="page-header mb-24" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         {showDebug && (
           <pre style={{ background: '#111', color: '#0f0', padding: '10px', borderRadius: '8px', maxHeight: '200px', overflow: 'auto' }}>
