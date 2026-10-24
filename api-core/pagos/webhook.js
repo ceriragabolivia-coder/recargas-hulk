@@ -12,6 +12,7 @@ const supabaseKey =
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 import { fetchPinCentral } from '../pincentral/client.js';
+import { createOrder as xanlerCreateOrder, checkOrderStatus as xanlerCheckOrderStatus } from '../xanler/client.js';
 
 // --- HELPER: Procesar pedido con PinCentral API ---
 async function procesarPedidoConPinCentral(pedidoId, apiKey, apiSecret) {
@@ -163,6 +164,8 @@ async function procesarPedidoConApi(pedidoId, apiKey) {
       prod?.proveedor_api_id &&
       effectiveProvider !== "fazercards" &&
       effectiveProvider !== "pincentral" &&
+      effectiveProvider !== "centralone" &&
+      effectiveProvider !== "xanler" &&
       !item.proveedor_pedido_id &&
       !item.estado_proveedor
     ) {
@@ -435,6 +438,118 @@ async function procesarPedidoConFazerCards(pedidoId, apiKey) {
   return { anySent, allCompleted };
 }
 
+// --- HELPER: Procesar pedido con Xanler API ---
+async function procesarPedidoConXanler(pedidoId, apiKey, apiSecret) {
+  let anySent = false;
+  let allCompleted = true;
+
+  const { data: pedidoActual } = await supabase
+    .from("pedidos")
+    .select(
+      "*, pedido_items(*, productos(*, juegos(procesamiento_automatico_api, api_provider, api_provider_category_id)))"
+    )
+    .eq("id", pedidoId)
+    .single();
+
+  if (!pedidoActual?.pedido_items)
+    return { anySent: false, allCompleted: false };
+
+  for (const item of pedidoActual.pedido_items) {
+    const prod = Array.isArray(item.productos)
+      ? item.productos[0]
+      : item.productos;
+    const j = Array.isArray(prod?.juegos) ? prod.juegos[0] : prod?.juegos;
+    const effectiveProvider = prod?.api_provider || j?.api_provider;
+    const isXanler = effectiveProvider === "xanler";
+
+    if (
+      prod?.proveedor_api_id &&
+      j?.procesamiento_automatico_api &&
+      isXanler &&
+      !item.proveedor_pedido_id &&
+      !item.estado_proveedor
+    ) {
+      anySent = true;
+      try {
+        console.log(`🚀 [Webhook] Enviando item ${item.id} a Xanler...`);
+        const item_id = parseInt(prod.proveedor_api_id, 10);
+        if (isNaN(item_id)) {
+          throw new Error(`ID de item de Xanler inválido: "${prod.proveedor_api_id}"`);
+        }
+
+        let target = "";
+        if (item.player_id) {
+          const playerId = String(item.player_id).trim();
+          if (item.zone_id) {
+            target = `${playerId},${String(item.zone_id).trim()}`;
+          } else {
+            target = playerId;
+          }
+        } else if (item.account_user) {
+          target = String(item.account_user).trim();
+        } else if (item.account_email) {
+          target = String(item.account_email).trim();
+        } else {
+          target = "N/A";
+        }
+
+        const email = item.account_email || pedidoActual.email || "recargashulk@gmail.com";
+
+        const orderData = await xanlerCreateOrder({ itemId: item_id, target, email }, apiKey, apiSecret);
+
+        if (orderData && orderData.status && orderData.data?.order_id) {
+          const orderId = orderData.data.order_id;
+          console.log(`✅ [Webhook] Orden creada en Xanler con ID: ${orderId}`);
+
+          let statusText = "processing";
+          let note = "";
+          let nickname = "";
+          try {
+            const statusRes = await xanlerCheckOrderStatus(orderId, apiKey, apiSecret);
+            if (statusRes && statusRes.status && statusRes.data) {
+              statusText = (statusRes.data.status || "processing").toLowerCase();
+              note = statusRes.data.note || "";
+              nickname = statusRes.data.nickname || "";
+            }
+          } catch (stErr) {
+            console.warn(`[Webhook] Error consultando status Xanler para ${orderId}:`, stErr.message);
+          }
+
+          const isCompleted = statusText === "success" || statusText === "completed";
+          if (!isCompleted) {
+            allCompleted = false;
+          }
+
+          await supabase.rpc("webhook_update_pedido_item", {
+            p_item_id: item.id,
+            p_estado_proveedor: statusText,
+            p_proveedor_pedido_id: orderId,
+            p_mensaje_proveedor: note ? `Nota: ${note}${nickname ? ` | Nick: ${nickname}` : ''}` : (isCompleted ? "Completado por Xanler" : "Procesando en Xanler"),
+            p_estado: isCompleted ? "completado" : "procesando",
+            p_codigo_entregado: isCompleted ? (note || "Recarga Completada") : null,
+          });
+        } else {
+          throw new Error(orderData?.message || "Error en respuesta de Xanler");
+        }
+      } catch (e) {
+        console.error(`❌ [Webhook] Error en item ${item.id} con Xanler:`, e.message);
+        allCompleted = false;
+        await supabase.rpc("webhook_update_pedido_item", {
+          p_item_id: item.id,
+          p_estado_proveedor: "error",
+          p_mensaje_proveedor: e.message,
+        });
+      }
+    } else if (isXanler) {
+      if (item.estado !== "completado") {
+        allCompleted = false;
+      }
+    }
+  }
+
+  return { anySent, allCompleted };
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -599,7 +714,7 @@ export default async function handler(req, res) {
             const configRows = await supabase
               .from("configuracion")
               .select("clave, valor, valor_texto")
-              .in("clave", ["fazercards_api_key", "tiendagiftven_api_key", "pincentral_api_key", "pincentral_api_secret"]);
+              .in("clave", ["fazercards_api_key", "tiendagiftven_api_key", "pincentral_api_key", "pincentral_api_secret", "xanler_api_key", "xanler_api_secret"]);
 
             let apiKey = "";
             let apiSecret = "";
@@ -607,13 +722,16 @@ export default async function handler(req, res) {
             if (providerName === "pincentral") {
               apiKey = configRows.data?.find(r => r.clave === 'pincentral_api_key')?.valor_texto;
               apiSecret = configRows.data?.find(r => r.clave === 'pincentral_api_secret')?.valor_texto;
+            } else if (providerName === "xanler") {
+              apiKey = configRows.data?.find(r => r.clave === 'xanler_api_key')?.valor_texto;
+              apiSecret = configRows.data?.find(r => r.clave === 'xanler_api_secret')?.valor_texto;
             } else {
               const configKey = providerName === "fazercards" ? "fazercards_api_key" : "tiendagiftven_api_key";
               const row = configRows.data?.find(r => r.clave === configKey);
               apiKey = row?.valor_texto || row?.valor;
             }
 
-            if (apiKey && (providerName !== "pincentral" || apiSecret)) {
+            if (apiKey && (providerName !== "pincentral" || apiSecret) && (providerName !== "xanler" || apiSecret)) {
               // Marcar como procesando
               await supabase.rpc("webhook_update_pedido", {
                 p_pedido_id: pedido.id,
@@ -636,6 +754,14 @@ export default async function handler(req, res) {
                 allCompleted = resProvider.allCompleted;
               } else if (providerName === "pincentral") {
                 const resProvider = await procesarPedidoConPinCentral(
+                  pedido.id,
+                  apiKey,
+                  apiSecret
+                );
+                anySent = resProvider.anySent;
+                allCompleted = resProvider.allCompleted;
+              } else if (providerName === "xanler") {
+                const resProvider = await procesarPedidoConXanler(
                   pedido.id,
                   apiKey,
                   apiSecret

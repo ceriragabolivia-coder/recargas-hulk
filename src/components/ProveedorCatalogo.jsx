@@ -45,6 +45,27 @@ export default function ProveedorCatalogo() {
   const [loadingCoProductos, setLoadingCoProductos] = useState(false);
   const [searchTermCO, setSearchTermCO] = useState('');
 
+  // Xanler state
+  const [xanlerApiKey, setXanlerApiKey] = useState('');
+  const [xanlerApiSecret, setXanlerApiSecret] = useState('');
+  const [xanlerSaldo, setXanlerSaldo] = useState(null);
+  const [xanlerUsername, setXanlerUsername] = useState('');
+  const [loadingXanlerSaldo, setLoadingXanlerSaldo] = useState(false);
+  const [xanlerProductos, setXanlerProductos] = useState([]);
+  const [loadingXanlerProductos, setLoadingXanlerProductos] = useState(false);
+  const [xanlerItems, setXanlerItems] = useState({});
+  const [loadingXanlerItems, setLoadingXanlerItems] = useState({});
+  const [expandedXanlerProducts, setExpandedXanlerProducts] = useState({});
+  const [searchTermXanler, setSearchTermXanler] = useState('');
+  const [copiedId, setCopiedId] = useState(null);
+
+  const handleCopy = (text) => {
+    if (!text) return;
+    navigator.clipboard.writeText(String(text));
+    setCopiedId(String(text));
+    setTimeout(() => setCopiedId(null), 1800);
+  };
+
   // Cargar API Key inicial
   useEffect(() => {
     if (config?.tiendagiftven_api_key) {
@@ -58,6 +79,12 @@ export default function ProveedorCatalogo() {
     }
     if (config?.pincentral_api_secret) {
       setPcApiSecret(config.pincentral_api_secret);
+    }
+    if (config?.xanler_api_key) {
+      setXanlerApiKey(config.xanler_api_key);
+    }
+    if (config?.xanler_api_secret) {
+      setXanlerApiSecret(config.xanler_api_secret);
     }
   }, [config]);
 
@@ -326,6 +353,120 @@ export default function ProveedorCatalogo() {
     setLoadingCoProductos(false);
   };
 
+  // Consultar Saldo Xanler
+  const fetchXanlerSaldo = async (keyToUse = xanlerApiKey, secretToUse = xanlerApiSecret) => {
+    if (!keyToUse || !secretToUse) return;
+    setLoadingXanlerSaldo(true);
+    try {
+      const res = await fetch('/api/xanler/proxy?endpoint=profile', {
+        headers: {
+          'X-API-Key': keyToUse,
+          'X-API-Secret': secretToUse
+        }
+      });
+      const data = await res.json();
+      if (data.ok && data.saldo !== undefined) {
+        setXanlerSaldo(data.saldo);
+        setXanlerUsername(data.username || '');
+      } else {
+        setXanlerSaldo(null);
+        setXanlerUsername('');
+      }
+    } catch (e) {
+      setXanlerSaldo(null);
+      setXanlerUsername('');
+    }
+    setLoadingXanlerSaldo(false);
+  };
+
+  // Consultar Productos Xanler
+  const fetchXanlerProductos = async (keyToUse = xanlerApiKey, secretToUse = xanlerApiSecret) => {
+    if (!keyToUse || !secretToUse) return;
+    setLoadingXanlerProductos(true);
+    try {
+      const res = await fetch('/api/xanler/proxy?endpoint=product', {
+        headers: {
+          'X-API-Key': keyToUse,
+          'X-API-Secret': secretToUse
+        }
+      });
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.productos)) {
+        setXanlerProductos(data.productos);
+      } else {
+        setXanlerProductos([]);
+        if (data.error) {
+          setAlertModal({ type: 'error', message: data.error });
+        }
+      }
+    } catch (e) {
+      setAlertModal({ type: 'error', message: 'Error de red al consultar productos de Xanler' });
+    }
+    setLoadingXanlerProductos(false);
+  };
+
+  // Consultar Items de un Producto de Xanler
+  const fetchXanlerItems = async (productId) => {
+    if (!xanlerApiKey || !xanlerApiSecret) return;
+
+    // Toggle expansión
+    setExpandedXanlerProducts(prev => ({
+      ...prev,
+      [productId]: !prev[productId]
+    }));
+
+    if (xanlerItems[productId]) return;
+
+    setLoadingXanlerItems(prev => ({ ...prev, [productId]: true }));
+    try {
+      const res = await fetch('/api/xanler/proxy?endpoint=item', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': xanlerApiKey,
+          'X-API-Secret': xanlerApiSecret
+        },
+        body: JSON.stringify({ id: productId })
+      });
+      const data = await res.json();
+      if (data.ok && data.items) {
+        setXanlerItems(prev => ({ ...prev, [productId]: data.items }));
+      } else {
+        setAlertModal({ type: 'error', message: data.error || 'No se pudieron obtener items para este producto' });
+      }
+    } catch (e) {
+      console.error('Error fetching Xanler items:', e);
+    }
+    setLoadingXanlerItems(prev => ({ ...prev, [productId]: false }));
+  };
+
+  const handleSaveXanlerApi = async () => {
+    if (!xanlerApiKey.trim() || !xanlerApiSecret.trim()) {
+      setAlertModal({ type: 'error', message: 'Debes ingresar API Key y API Secret de Xanler' });
+      return;
+    }
+    try {
+      const res = await fetch('/api/xanler/proxy?endpoint=profile', {
+        headers: {
+          'X-API-Key': xanlerApiKey.trim(),
+          'X-API-Secret': xanlerApiSecret.trim()
+        }
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        setAlertModal({ type: 'error', message: data.error || 'Credenciales de Xanler inválidas o error de conexión' });
+        return;
+      }
+      await updateConfig('xanler_api_key', xanlerApiKey.trim(), true);
+      await updateConfig('xanler_api_secret', xanlerApiSecret.trim(), true);
+      setAlertModal({ type: 'success', message: `¡Conexión exitosa con Xanler! ${data.username ? `Usuario: ${data.username}` : ''}` });
+      fetchXanlerSaldo(xanlerApiKey.trim(), xanlerApiSecret.trim());
+      fetchXanlerProductos(xanlerApiKey.trim(), xanlerApiSecret.trim());
+    } catch (e) {
+      setAlertModal({ type: 'error', message: 'Error de conexión con Xanler: ' + e.message });
+    }
+  };
+
   useEffect(() => {
     if (config?.tiendagiftven_api_key) {
       fetchSaldo(config.tiendagiftven_api_key);
@@ -343,7 +484,12 @@ export default function ProveedorCatalogo() {
     // Central One no necesita key manual
     fetchCoSaldo();
     fetchCoProductos();
-  }, [config?.tiendagiftven_api_key, config?.fazercards_api_key, config?.pincentral_api_key, config?.pincentral_api_secret]);
+
+    if (config?.xanler_api_key && config?.xanler_api_secret) {
+      fetchXanlerSaldo(config.xanler_api_key, config.xanler_api_secret);
+      fetchXanlerProductos(config.xanler_api_key, config.xanler_api_secret);
+    }
+  }, [config?.tiendagiftven_api_key, config?.fazercards_api_key, config?.pincentral_api_key, config?.pincentral_api_secret, config?.xanler_api_key, config?.xanler_api_secret]);
 
   const handleSaveApi = async () => {
     if (!apiKey.trim()) {
@@ -459,6 +605,17 @@ export default function ProveedorCatalogo() {
           }}
         >
           Central One
+        </button>
+        <button 
+          onClick={() => setActiveTab('xanler')}
+          style={{ 
+            background: 'none', border: 'none', color: activeTab === 'xanler' ? '#00d2ff' : 'var(--text-muted)', 
+            fontSize: '18px', fontWeight: activeTab === 'xanler' ? 800 : 500, cursor: 'pointer', padding: '8px 16px',
+            borderBottom: activeTab === 'xanler' ? '2px solid #00d2ff' : '2px solid transparent',
+            display: 'flex', alignItems: 'center', gap: '6px'
+          }}
+        >
+          <span>⚡ Xanler</span>
         </button>
       </div>
 
@@ -859,6 +1016,254 @@ export default function ProveedorCatalogo() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'xanler' && (
+        <div className="fade-in">
+          <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800 }}>⚡ Proveedor: Xanler</h1>
+              <p style={{ margin: '4px 0 0', color: 'var(--text-muted)' }}>
+                Catálogo y configuración de conexión con la API de Xanler (Host to Host)
+              </p>
+            </div>
+            <a 
+              href="https://docs.xanler.com/" 
+              target="_blank" 
+              rel="noreferrer"
+              className="btn btn-ghost btn-sm"
+              style={{ border: '1px solid rgba(255,255,255,0.1)', color: '#00d2ff' }}
+            >
+              📖 Ver Documentación Oficial
+            </a>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+            <div className="card">
+              <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '16px' }}>🔑 Credenciales API</h3>
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label>API Key de tu cuenta Xanler</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  placeholder="Ej: xanler_key_..."
+                  value={xanlerApiKey}
+                  onChange={(e) => setXanlerApiKey(e.target.value)}
+                />
+              </div>
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label>API Secret de tu cuenta Xanler</label>
+                <input 
+                  type="password" 
+                  className="form-input" 
+                  placeholder="Ej: xanler_secret_..."
+                  value={xanlerApiSecret}
+                  onChange={(e) => setXanlerApiSecret(e.target.value)}
+                />
+              </div>
+              <button className="btn btn-primary" onClick={handleSaveXanlerApi}>
+                Guardar y Conectar
+              </button>
+              
+              <div style={{ marginTop: '16px', fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+                <strong>Endpoint URL base:</strong><br />
+                <code style={{ color: '#00d2ff', fontSize: '11px' }}>https://xanler.com/api/v1/{'{action}'}</code>
+                <br />
+                <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                  Autenticación directa vía headers <code>API_KEY</code> y <code>API_SECRET</code>.
+                </span>
+              </div>
+            </div>
+
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', backgroundColor: 'rgba(0, 210, 255, 0.05)', border: '1px solid rgba(0, 210, 255, 0.1)' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px' }}>Saldo Disponible (Xanler)</h3>
+              {loadingXanlerSaldo ? (
+                <div style={{ fontSize: '32px', fontWeight: 800 }}>Cargando...</div>
+              ) : xanlerSaldo !== null ? (
+                <>
+                  <div style={{ fontSize: '42px', fontWeight: 900, color: '#fff', textShadow: '0 0 20px rgba(0, 210, 255, 0.4)' }}>
+                    ${parseFloat(xanlerSaldo).toFixed(2)}
+                  </div>
+                  {xanlerUsername && (
+                    <div style={{ fontSize: '13px', color: 'var(--accent-primary)', marginTop: '4px', fontWeight: 600 }}>
+                      👤 Usuario: {xanlerUsername}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div style={{ fontSize: '18px', fontWeight: 600, color: 'var(--accent-error)' }}>No conectado</div>
+              )}
+              <button 
+                className="btn btn-ghost btn-sm" 
+                style={{ marginTop: '12px' }} 
+                onClick={() => fetchXanlerSaldo()}
+                disabled={loadingXanlerSaldo}
+              >
+                🔄 Actualizar Saldo
+              </button>
+            </div>
+          </div>
+
+          {/* Banner de Guía Rápida */}
+          <div style={{ 
+            marginBottom: '24px', 
+            padding: '16px 20px', 
+            backgroundColor: 'rgba(251, 191, 36, 0.08)', 
+            border: '1px solid rgba(251, 191, 36, 0.25)', 
+            borderRadius: '12px',
+            fontSize: '13px',
+            lineHeight: '1.6'
+          }}>
+            <div style={{ fontWeight: 800, color: '#fbbf24', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>💡 ¿Cómo vincular productos de Xanler en Ceriraga?</span>
+            </div>
+            <ol style={{ margin: 0, paddingLeft: '20px', color: '#e2e8f0' }}>
+              <li>
+                <strong>Paso 1:</strong> En <em>Gestión de Productos → Juego</em>, activa <strong>⚡ Auto-procesar con API</strong> y selecciona <strong>Xanler</strong> como proveedor.
+              </li>
+              <li>
+                <strong>Paso 2:</strong> Copia el <strong>Product ID</strong> del juego que ves abajo (ej: <code>3</code> para Mobile Legends) y pégalo en <strong>Category ID del Proveedor API</strong> del juego.
+              </li>
+              <li>
+                <strong>Paso 3:</strong> En cada paquete de ese juego, haz clic en <em>"Ver Items y Precios"</em>, copia el <strong>Item ID</strong> (ej: <code>181</code>) y pégalo en <strong>ID Producto Proveedor</strong>. ¡El costo se sincronizará automáticamente!
+              </li>
+            </ol>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: 800, margin: 0 }}>📚 Catálogo de Productos Xanler</h2>
+              <button 
+                className="btn btn-ghost btn-sm" 
+                onClick={() => fetchXanlerProductos()} 
+                disabled={loadingXanlerProductos}
+              >
+                🔄 Recargar Catálogo
+              </button>
+            </div>
+            <input 
+              type="text" 
+              placeholder="🔍 Buscar juego o publisher en Xanler..." 
+              className="form-input" 
+              style={{ maxWidth: '320px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+              value={searchTermXanler}
+              onChange={(e) => setSearchTermXanler(e.target.value)}
+            />
+          </div>
+
+          {loadingXanlerProductos ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              Cargando catálogo desde la API de Xanler...
+            </div>
+          ) : xanlerProductos.length === 0 ? (
+            <div style={{ padding: '40px', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed var(--border-color)', color: 'var(--text-muted)' }}>
+              No se pudieron cargar los productos. Asegúrate de haber guardado las credenciales de Xanler (API Key y Secret).
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
+              {xanlerProductos
+                .filter(p => 
+                  (p.product || '').toLowerCase().includes(searchTermXanler.toLowerCase()) || 
+                  (p.sub_title || '').toLowerCase().includes(searchTermXanler.toLowerCase()) ||
+                  String(p.id).includes(searchTermXanler)
+                )
+                .map(prod => (
+                  <div key={prod.id} className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                      <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>{prod.product}</h4>
+                      {prod.sub_title && (
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', backgroundColor: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '6px' }}>
+                          {prod.sub_title}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '14px', backgroundColor: 'rgba(0,0,0,0.2)', padding: '6px 10px', borderRadius: '8px' }}>
+                      <span>Product ID (Category ID): <strong style={{ color: '#00d2ff', fontSize: '13px' }}>{prod.id}</strong></span>
+                      <button 
+                        className="btn btn-ghost btn-sm" 
+                        style={{ padding: '2px 8px', fontSize: '11px' }}
+                        onClick={() => handleCopy(prod.id)}
+                        title="Copiar Category ID para el Juego"
+                      >
+                        {copiedId === String(prod.id) ? '✅ Copiado' : '📋 Copiar'}
+                      </button>
+                    </div>
+
+                    <button 
+                      className="btn btn-ghost btn-sm" 
+                      style={{ width: '100%', marginTop: 'auto', border: '1px solid rgba(255,255,255,0.1)' }}
+                      onClick={() => fetchXanlerItems(prod.id)}
+                    >
+                      {expandedXanlerProducts[prod.id] ? '🔼 Ocultar Items y Precios' : '🔽 Ver Items y Precios'}
+                    </button>
+
+                    {expandedXanlerProducts[prod.id] && (
+                      <div style={{ marginTop: '16px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px' }}>
+                        {loadingXanlerItems[prod.id] ? (
+                          <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-muted)', padding: '12px' }}>
+                            Cargando items de Xanler...
+                          </div>
+                        ) : xanlerItems[prod.id] && xanlerItems[prod.id].length > 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '350px', overflowY: 'auto', paddingRight: '4px' }}>
+                            {xanlerItems[prod.id].map(it => (
+                              <div 
+                                key={it.id} 
+                                style={{ 
+                                  display: 'flex', 
+                                  justifyContent: 'space-between', 
+                                  alignItems: 'center', 
+                                  backgroundColor: 'rgba(0,0,0,0.25)', 
+                                  padding: '8px 12px', 
+                                  borderRadius: '8px', 
+                                  gap: '8px' 
+                                }}
+                              >
+                                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                    <span style={{ fontSize: '13px', fontWeight: 600 }}>{it.item}</span>
+                                    <span style={{ 
+                                      fontSize: '10px', 
+                                      padding: '1px 6px', 
+                                      borderRadius: '4px',
+                                      fontWeight: 700,
+                                      backgroundColor: it.status?.toLowerCase() === 'ready' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                                      color: it.status?.toLowerCase() === 'ready' ? '#4ade80' : '#f87171'
+                                    }}>
+                                      {it.status}
+                                    </span>
+                                  </div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                      Item ID: <strong style={{ color: '#fbbf24' }}>{it.id}</strong>
+                                    </span>
+                                    <button 
+                                      onClick={() => handleCopy(it.id)}
+                                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: '#00d2ff', padding: '0 4px' }}
+                                      title="Copiar Item ID para el producto"
+                                    >
+                                      {copiedId === String(it.id) ? '✅' : '📋'}
+                                    </button>
+                                  </div>
+                                </div>
+                                <span style={{ fontSize: '13px', color: 'var(--accent-primary)', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                                  ${parseFloat(it.price).toFixed(2)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-muted)', padding: '12px' }}>
+                            No se encontraron items disponibles para este producto.
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
             </div>
           )}
         </div>

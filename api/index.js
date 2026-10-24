@@ -45,6 +45,10 @@ export default async function handler(req, res) {
     if (url === '/api/tiendagiftven/sync_order') return (await import('../api-core/tiendagiftven/sync_order.js')).default(req, res);
     if (url === '/api/tiendagiftven/webhook') return (await import('../api-core/tiendagiftven/webhook.js')).default(req, res);
     
+    // Xanler
+    if (url === '/api/xanler/proxy') return (await import('../api-core/xanler/proxy.js')).default(req, res);
+    if (url === '/api/xanler/sync_order') return (await import('../api-core/xanler/sync_order.js')).default(req, res);
+    
     // Root
     if (url === '/api/env_check') return (await import('../api-core/env_check.js')).default(req, res);
     

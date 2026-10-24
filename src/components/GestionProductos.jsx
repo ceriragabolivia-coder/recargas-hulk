@@ -461,10 +461,45 @@ export default function GestionProductos() {
     
     const activeProvider = formData.api_provider || selectedJuego?.api_provider;
     const isFazerCards = activeProvider === 'fazercards';
+    const isXanler = activeProvider === 'xanler';
 
     setSincronizandoCosto(true)
     try {
-      if (isFazerCards) {
+      if (isXanler) {
+        const apiKey = config?.xanler_api_key;
+        const apiSecret = config?.xanler_api_secret;
+        if (!apiKey || !apiSecret) {
+          setAlertModal({ type: 'error', message: 'No has configurado las credenciales de Xanler (API Key y Secret).' });
+          return;
+        }
+        const categoryId = formData.api_provider_category_id || selectedJuego?.api_provider_category_id;
+        if (!categoryId) {
+          setAlertModal({ type: 'error', message: 'Falta el Product ID de Xanler (Category ID) para sincronizar el costo.' });
+          return;
+        }
+
+        const res = await fetch('/api/xanler/proxy?endpoint=item', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': apiKey,
+            'X-API-Secret': apiSecret
+          },
+          body: JSON.stringify({ id: categoryId })
+        });
+        const data = await res.json();
+        if (data.ok && data.items) {
+          const itemFound = data.items.find(it => String(it.id).trim() === String(id).trim());
+          if (itemFound) {
+            lastProveedorIdSincronizado.current = id;
+            setFormData(prev => ({ ...prev, costo_base: parseFloat(itemFound.price) }));
+          } else {
+            setAlertModal({ type: 'error', message: `No se encontró el item con ID ${id} en el producto ${categoryId} de Xanler.` });
+          }
+        } else {
+          setAlertModal({ type: 'error', message: data.error || 'Error consultando items en Xanler' });
+        }
+      } else if (isFazerCards) {
         const apiKey = config?.fazercards_api_key;
         if (!apiKey || apiKey === '0') {
           setAlertModal({ type: 'error', message: 'No has configurado la API Key de FazerCards.' })
@@ -1151,6 +1186,7 @@ export default function GestionProductos() {
             >
               <option value="tiendagiftven">TiendaGiftVen</option>
               <option value="fazercards">FazerCards</option>
+              <option value="xanler">Xanler</option>
             </select>
           )}
           <button className="btn btn-ghost btn-icon btn-sm" onClick={handleEditJuego} title="Editar Configuración del Juego">
@@ -1629,7 +1665,7 @@ export default function GestionProductos() {
           </div>
 
           <div className="form-group" style={{ marginBottom: '24px' }}>
-            <label className="form-label" style={{ color: '#fbbf24' }}>📦 ID Producto Proveedor (TiendaGiftVen o FazerCards)</label>
+            <label className="form-label" style={{ color: '#fbbf24' }}>📦 ID Producto Proveedor (TiendaGiftVen, FazerCards o Xanler)</label>
             <input
               type="text"
               className="form-input"
@@ -1639,7 +1675,7 @@ export default function GestionProductos() {
                 setFormData({ ...formData, proveedor_api_id: e.target.value })
               }}
               onBlur={e => sincronizarCostoProveedor(e.target.value)}
-              placeholder="Ej. 5 (TiendaGiftVen) o 110_diamonds (FazerCards)"
+              placeholder="Ej. 5 (TiendaGiftVen), 110_diamonds (FazerCards) o 181 (Xanler)"
               style={{ borderColor: formData.proveedor_api_id ? '#fbbf24' : '' }}
             />
             <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px' }}>
@@ -1663,15 +1699,16 @@ export default function GestionProductos() {
               <option value="">-- Heredar del Juego --</option>
               <option value="tiendagiftven">TiendaGiftVen</option>
               <option value="fazercards">FazerCards</option>
+              <option value="xanler">Xanler</option>
             </select>
 
-            <label className="form-label" style={{ fontSize: '12px' }}>Category ID del Proveedor API (Opcional - FazerCards)</label>
+            <label className="form-label" style={{ fontSize: '12px' }}>Category ID del Proveedor API (Opcional - FazerCards / Xanler Product ID)</label>
             <input
               type="text"
               className="form-input"
               value={formData.api_provider_category_id || ''}
               onChange={e => setFormData({ ...formData, api_provider_category_id: e.target.value })}
-              placeholder="Ej. giftcard:roblox_robux_us"
+              placeholder="Ej. giftcard:roblox_robux_us o 3"
               style={{ borderColor: formData.api_provider_category_id ? '#fbbf24' : '' }}
             />
           </div>
@@ -1934,18 +1971,18 @@ export default function GestionProductos() {
 
           <div className="form-group" style={{ marginBottom: '24px' }}>
             <label className="form-label" style={{ color: '#fbbf24' }}>
-              Category ID del Proveedor API (Opcional - FazerCards)
+              Category ID del Proveedor API (Opcional - FazerCards / Xanler Product ID)
             </label>
             <input
               type="text"
               className="form-input"
               value={formGame.api_provider_category_id || ''}
               onChange={e => setFormGame({ ...formGame, api_provider_category_id: e.target.value })}
-              placeholder="Ej. free_fire_latam"
+              placeholder="Ej. free_fire_latam (FazerCards) o 3 (Xanler)"
               style={{ borderColor: formGame.api_provider_category_id ? '#fbbf24' : '' }}
             />
             <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-              Si usas FazerCards como proveedor, ingresa aquí el código de categoría (Category ID).
+              Si usas FazerCards o Xanler como proveedor, ingresa aquí el código de categoría o Product ID.
             </p>
           </div>
 

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { getProductItems as getXanlerProductItems } from '../xanler/client.js';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
@@ -56,9 +57,11 @@ export default async function handler(req, res) {
     const errorsList = [];
 
     // 1. Obtener APIs Keys de la configuración
-    const { data: configRows } = await supabase.from('configuracion').select('clave, valor_texto').in('clave', ['tiendagiftven_api_key', 'fazercards_api_key']);
+    const { data: configRows } = await supabase.from('configuracion').select('clave, valor_texto').in('clave', ['tiendagiftven_api_key', 'fazercards_api_key', 'xanler_api_key', 'xanler_api_secret']);
     const tgvApiKey = configRows?.find(r => r.clave === 'tiendagiftven_api_key')?.valor_texto;
     const fcApiKey = configRows?.find(r => r.clave === 'fazercards_api_key')?.valor_texto;
+    const xanlerApiKey = configRows?.find(r => r.clave === 'xanler_api_key')?.valor_texto;
+    const xanlerApiSecret = configRows?.find(r => r.clave === 'xanler_api_secret')?.valor_texto;
 
     // 2. Obtener productos activos con proveedor_api_id
     const { data: productos, error: prodError } = await supabase
@@ -79,6 +82,10 @@ export default async function handler(req, res) {
     const fcProducts = productos.filter(p => {
       const effectiveProvider = p.api_provider || p.juegos?.api_provider || 'tiendagiftven';
       return effectiveProvider === 'fazercards';
+    });
+    const xanlerProducts = productos.filter(p => {
+      const effectiveProvider = p.api_provider || p.juegos?.api_provider || 'tiendagiftven';
+      return effectiveProvider === 'xanler';
     });
 
     // ============================================
@@ -196,6 +203,58 @@ export default async function handler(req, res) {
           }
         } catch (e) {
           errorsList.push(`Exception FC (${categoryId}): ${e.message}`);
+          totalErrors++;
+        }
+      }
+    }
+
+    // ============================================
+    // SINCRONIZACIÓN DE XANLER
+    // ============================================
+    if (xanlerApiKey && xanlerApiSecret && xanlerProducts.length > 0) {
+      console.log('📦 Sincronizando Xanler...');
+      const xanlerGroups = {};
+      xanlerProducts.forEach(p => {
+        const cat = p.api_provider_category_id || p.juegos?.api_provider_category_id;
+        if (cat) {
+          if (!xanlerGroups[cat]) xanlerGroups[cat] = [];
+          xanlerGroups[cat].push(p);
+        } else {
+          errorsList.push(`Xanler Prod ${p.id} no tiene api_provider_category_id configurado`);
+        }
+      });
+
+      for (const [categoryId, prods] of Object.entries(xanlerGroups)) {
+        try {
+          const result = await getXanlerProductItems(categoryId, xanlerApiKey, xanlerApiSecret);
+          if (result.status && result.data?.item) {
+            const providerMap = {};
+            result.data.item.forEach(it => {
+              providerMap[String(it.id).trim()] = parseFloat(it.price);
+            });
+
+            for (const prod of prods) {
+              const apiId = String(prod.proveedor_api_id).trim();
+              if (providerMap[apiId] !== undefined) {
+                const newCosto = providerMap[apiId];
+                if (Math.abs(parseFloat(prod.costo_base || 0) - newCosto) > 0.001) {
+                  const { error } = await supabase.from('productos').update({ costo_base: newCosto }).eq('id', prod.id);
+                  if (error) {
+                    errorsList.push(`Error Xanler Prod ${prod.id}: ${error.message}`);
+                    totalErrors++;
+                  } else {
+                    totalUpdated++;
+                  }
+                }
+              } else {
+                errorsList.push(`Xanler Prod ${prod.id} no encontrado en el producto ${categoryId} (ID: ${apiId})`);
+              }
+            }
+          } else {
+            errorsList.push(`Error al consultar items de Xanler para producto ${categoryId}`);
+          }
+        } catch (e) {
+          errorsList.push(`Exception Xanler (${categoryId}): ${e.message}`);
           totalErrors++;
         }
       }
