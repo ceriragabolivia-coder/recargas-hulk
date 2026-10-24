@@ -48,6 +48,7 @@ export default async function handler(req, res) {
     // Xanler
     if (url === '/api/xanler/proxy') return (await import('../api-core/xanler/proxy.js')).default(req, res);
     if (url === '/api/xanler/sync_order') return (await import('../api-core/xanler/sync_order.js')).default(req, res);
+    if (url === '/api/xanler/webhook') return (await import('../api-core/xanler/webhook.js')).default(req, res);
     
     // Root
     if (url === '/api/env_check') return (await import('../api-core/env_check.js')).default(req, res);

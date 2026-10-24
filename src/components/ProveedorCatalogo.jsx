@@ -1069,11 +1069,33 @@ export default function ProveedorCatalogo() {
               </button>
               
               <div style={{ marginTop: '16px', fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+                <div style={{ marginBottom: '12px', padding: '10px 12px', backgroundColor: 'rgba(0, 210, 255, 0.08)', borderRadius: '8px', border: '1px solid rgba(0, 210, 255, 0.2)' }}>
+                  <strong style={{ color: '#00d2ff', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                    🔗 URL Callback / Webhook:
+                  </strong>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <code style={{ color: '#fff', fontSize: '11px', wordBreak: 'break-all', flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', padding: '6px 8px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      {window.location.origin}/api/xanler/webhook
+                    </code>
+                    <button 
+                      className="btn btn-ghost btn-sm"
+                      style={{ padding: '4px 10px', fontSize: '11px', border: '1px solid rgba(0, 210, 255, 0.3)', whiteSpace: 'nowrap' }}
+                      onClick={() => handleCopy(`${window.location.origin}/api/xanler/webhook`)}
+                      type="button"
+                    >
+                      {copiedId === `${window.location.origin}/api/xanler/webhook` ? '✅ Copiado' : '📋 Copiar'}
+                    </button>
+                  </div>
+                  <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block', marginTop: '6px' }}>
+                    Envía esta URL al soporte de Xanler (WhatsApp) para recibir las confirmaciones automáticas de pedidos.
+                  </span>
+                </div>
+
                 <strong>Endpoint URL base:</strong><br />
                 <code style={{ color: '#00d2ff', fontSize: '11px' }}>https://xanler.com/api/v1/{'{action}'}</code>
                 <br />
                 <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-                  Autenticación directa vía headers <code>API_KEY</code> y <code>API_SECRET</code>.
+                  Autenticación vía headers <code>API-KEY</code> y <code>API-SECRET</code>.
                 </span>
               </div>
             </div>

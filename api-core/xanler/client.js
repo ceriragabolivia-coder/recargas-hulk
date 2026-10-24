@@ -22,11 +22,14 @@ export async function fetchXanler(action, body = null, apiKey = null, apiSecret 
 
   const url = `${BASE_URL}/${action}`;
 
+  const cleanKey = String(apiKey).trim();
+  const cleanSecret = String(apiSecret).trim();
+
   const headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'API_KEY': apiKey,
-    'API_SECRET': apiSecret,
+    'API-KEY': cleanKey,
+    'API-SECRET': cleanSecret,
     'User-Agent': 'HulkStore/1.0'
   };
 

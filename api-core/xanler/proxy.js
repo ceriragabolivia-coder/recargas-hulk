@@ -27,8 +27,8 @@ export default async function handler(req, res) {
 
   try {
     // 1. Obtener credenciales (de headers o de base de datos)
-    let apiKey = req.headers['x-api-key'] || req.headers['api_key'];
-    let apiSecret = req.headers['x-api-secret'] || req.headers['api_secret'];
+    let apiKey = (req.headers['x-api-key'] || req.headers['api-key'] || req.headers['api_key'] || '').trim();
+    let apiSecret = (req.headers['x-api-secret'] || req.headers['api-secret'] || req.headers['api_secret'] || '').trim();
 
     if (!apiKey || !apiSecret) {
       const supabase = getSupabase();
@@ -40,8 +40,8 @@ export default async function handler(req, res) {
       const keyRow = configRows?.find(r => r.clave === 'xanler_api_key');
       const secretRow = configRows?.find(r => r.clave === 'xanler_api_secret');
 
-      apiKey = apiKey || keyRow?.valor_texto || keyRow?.valor;
-      apiSecret = apiSecret || secretRow?.valor_texto || secretRow?.valor;
+      apiKey = apiKey || (keyRow?.valor_texto || keyRow?.valor || '').trim();
+      apiSecret = apiSecret || (secretRow?.valor_texto || secretRow?.valor || '').trim();
     }
 
     if (!apiKey || !apiSecret) {
