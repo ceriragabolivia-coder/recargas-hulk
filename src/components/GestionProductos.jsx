@@ -478,7 +478,7 @@ export default function GestionProductos() {
           return;
         }
 
-        const res = await fetch('/api/xanler/proxy?endpoint=item', {
+        const res = await fetch(`/api/xanler/proxy?endpoint=item&id=${encodeURIComponent(categoryId)}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

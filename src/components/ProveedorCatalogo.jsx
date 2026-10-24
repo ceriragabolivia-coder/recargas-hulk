@@ -406,25 +406,26 @@ export default function ProveedorCatalogo() {
   };
 
   // Consultar Items de un Producto de Xanler
-  const fetchXanlerItems = async (productId) => {
-    if (!xanlerApiKey || !xanlerApiSecret) return;
-
-    // Toggle expansión
+  const fetchXanlerItems = async (productId, forceExpand = null) => {
+    // Toggle o forzar expansión
     setExpandedXanlerProducts(prev => ({
       ...prev,
-      [productId]: !prev[productId]
+      [productId]: forceExpand !== null ? forceExpand : !prev[productId]
     }));
 
     if (xanlerItems[productId]) return;
 
     setLoadingXanlerItems(prev => ({ ...prev, [productId]: true }));
     try {
-      const res = await fetch('/api/xanler/proxy?endpoint=item', {
+      const keyToUse = (xanlerApiKey || config?.xanler_api_key || '').trim();
+      const secretToUse = (xanlerApiSecret || config?.xanler_api_secret || '').trim();
+
+      const res = await fetch(`/api/xanler/proxy?endpoint=item&id=${productId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': xanlerApiKey,
-          'X-API-Secret': xanlerApiSecret
+          'X-API-Key': keyToUse,
+          'X-API-Secret': secretToUse
         },
         body: JSON.stringify({ id: productId })
       });
@@ -436,8 +437,27 @@ export default function ProveedorCatalogo() {
       }
     } catch (e) {
       console.error('Error fetching Xanler items:', e);
+      setAlertModal({ type: 'error', message: 'Error al consultar items de Xanler: ' + e.message });
     }
     setLoadingXanlerItems(prev => ({ ...prev, [productId]: false }));
+  };
+
+  const handleToggleExpandAllXanler = async () => {
+    const anyClosed = xanlerProductos.some(p => !expandedXanlerProducts[p.id]);
+    const newState = anyClosed;
+    const newExpanded = {};
+    xanlerProductos.forEach(p => {
+      newExpanded[p.id] = newState;
+    });
+    setExpandedXanlerProducts(newExpanded);
+
+    if (newState) {
+      for (const prod of xanlerProductos) {
+        if (!xanlerItems[prod.id]) {
+          fetchXanlerItems(prod.id, true);
+        }
+      }
+    }
   };
 
   const handleSaveXanlerApi = async () => {
@@ -1156,7 +1176,7 @@ export default function ProveedorCatalogo() {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <h2 style={{ fontSize: '20px', fontWeight: 800, margin: 0 }}>📚 Catálogo de Productos Xanler</h2>
               <button 
                 className="btn btn-ghost btn-sm" 
@@ -1164,6 +1184,14 @@ export default function ProveedorCatalogo() {
                 disabled={loadingXanlerProductos}
               >
                 🔄 Recargar Catálogo
+              </button>
+              <button 
+                className="btn btn-primary btn-sm" 
+                onClick={handleToggleExpandAllXanler}
+                disabled={loadingXanlerProductos || xanlerProductos.length === 0}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}
+              >
+                👁️ {xanlerProductos.some(p => !expandedXanlerProducts[p.id]) ? 'Ver Todos los Precios' : 'Contraer Todos'}
               </button>
             </div>
             <input 
@@ -1196,11 +1224,15 @@ export default function ProveedorCatalogo() {
                   <div key={prod.id} className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                       <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>{prod.product}</h4>
-                      {prod.sub_title && (
+                      {xanlerItems[prod.id]?.length > 0 ? (
+                        <span style={{ fontSize: '11px', color: '#00d2ff', backgroundColor: 'rgba(0, 210, 255, 0.1)', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>
+                          {xanlerItems[prod.id].length} items (desde ${Math.min(...xanlerItems[prod.id].map(i => parseFloat(i.price) || 0)).toFixed(2)})
+                        </span>
+                      ) : prod.sub_title ? (
                         <span style={{ fontSize: '11px', color: 'var(--text-muted)', backgroundColor: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '6px' }}>
                           {prod.sub_title}
                         </span>
-                      )}
+                      ) : null}
                     </div>
                     
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '14px', backgroundColor: 'rgba(0,0,0,0.2)', padding: '6px 10px', borderRadius: '8px' }}>
@@ -1216,11 +1248,11 @@ export default function ProveedorCatalogo() {
                     </div>
 
                     <button 
-                      className="btn btn-ghost btn-sm" 
-                      style={{ width: '100%', marginTop: 'auto', border: '1px solid rgba(255,255,255,0.1)' }}
+                      className={`btn ${expandedXanlerProducts[prod.id] ? 'btn-ghost' : 'btn-primary'} btn-sm`} 
+                      style={{ width: '100%', marginTop: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', fontWeight: 700 }}
                       onClick={() => fetchXanlerItems(prod.id)}
                     >
-                      {expandedXanlerProducts[prod.id] ? '🔼 Ocultar Items y Precios' : '🔽 Ver Items y Precios'}
+                      {loadingXanlerItems[prod.id] ? '⏳ Cargando Precios...' : expandedXanlerProducts[prod.id] ? '🔼 Ocultar Precios' : '💰 Ver Paquetes y Precios'}
                     </button>
 
                     {expandedXanlerProducts[prod.id] && (

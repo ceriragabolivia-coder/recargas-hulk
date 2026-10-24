@@ -20,7 +20,17 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const { endpoint } = req.query;
+  // Extraer endpoint y parámetros de req.query o directamente de req.url
+  let endpoint = req.query?.endpoint;
+  let queryId = req.query?.id;
+  if (req.url && req.url.includes('?')) {
+    try {
+      const urlParams = new URLSearchParams(req.url.split('?')[1]);
+      if (!endpoint) endpoint = urlParams.get('endpoint');
+      if (!queryId) queryId = urlParams.get('id');
+    } catch (e) {}
+  }
+
   if (!endpoint) {
     return res.status(400).json({ ok: false, error: 'Falta el parámetro endpoint' });
   }
@@ -90,8 +100,15 @@ export default async function handler(req, res) {
 
       case 'item':
       case 'items': {
-        const body = req.body || {};
-        const productId = body.id || req.query.id;
+        let body = req.body || {};
+        if (typeof body === 'string') {
+          try {
+            body = JSON.parse(body);
+          } catch (e) {
+            body = {};
+          }
+        }
+        const productId = body.id || req.query?.id || queryId;
         if (!productId) {
           return res.status(400).json({ ok: false, error: 'Falta el id del producto' });
         }
